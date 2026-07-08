@@ -1,8 +1,9 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { Inter } from 'next/font/google';
 import { Zap, Search, History as HistoryIcon, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import './globals.css';
 
 const inter = Inter({
@@ -35,6 +36,21 @@ export const metadata: Metadata = {
     description: 'AI-Powered News Intelligence — Search. Scrape. Summarize.',
     type: 'website',
   },
+  // PWA: manifest is served by app/manifest.ts; these fields make iOS Safari
+  // treat the app as an installable standalone Home Screen app named "Governor".
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'Governor',
+    statusBarStyle: 'black-translucent',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0f',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -86,6 +102,7 @@ export default function RootLayout({
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+        <ServiceWorkerRegister />
         <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
           <p>
             Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}
