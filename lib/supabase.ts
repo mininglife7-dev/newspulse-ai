@@ -3,14 +3,30 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 // =============================================================================
 // Public (browser-safe) client — uses the anon / publishable key.
 // This is the canonical export per the project spec.
+//
+// Instantiated lazily behind a Proxy so that merely importing this module
+// (e.g. for its exported types during `next build` page-data collection)
+// never calls `createClient` with missing env vars. The real client is
+// created on first property access.
 // =============================================================================
-export const supabase: SupabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: { persistSession: false },
-  }
-);
+let _browser: SupabaseClient | null = null;
+function getBrowserClient(): SupabaseClient {
+  if (_browser) return _browser;
+  _browser = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: { persistSession: false },
+    }
+  );
+  return _browser;
+}
+
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getBrowserClient(), prop, receiver);
+  },
+});
 
 // =============================================================================
 // Server-only admin client — uses the service-role / secret key.

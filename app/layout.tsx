@@ -11,7 +11,12 @@ const inter = Inter({
   display: 'swap',
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
+  'http://localhost:3000';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'NewsPulse AI — AI-Powered News Intelligence',
   description:
     'Search. Scrape. Summarize. Real-time AI summaries of news from across the web, with saved search history.',
