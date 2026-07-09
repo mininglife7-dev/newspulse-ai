@@ -53,8 +53,9 @@ unit-testable without network or database:
 | `store.ts`           | —                       | Supabase persistence (best-effort, logged errors)                   |
 | `pipeline.ts`        | —                       | the orchestrated cycle                                              |
 
-Tests: `tests/ceis/*.test.ts` (vitest, `npm test`, runs in CI). 55 tests cover
-every pure module; no test touches the network or a real database.
+Tests: `tests/ceis/*.test.ts` (vitest, `npm test`, runs in CI). 61 tests cover
+every pure module plus the pipeline orchestrator (with mocked I/O
+boundaries); no test touches the network or a real database.
 
 ## Extending CEIS
 
