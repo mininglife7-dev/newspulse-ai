@@ -1,5 +1,8 @@
 # GO / NO-GO Report — 2026-07-09
 
+> **Addendum (08:55 UTC):** PR #1 was merged to `main` while this branch was under review — `main` now builds and its CI is green (run 29005611775). This branch was rebased onto it; the "Main" column below describes main *as originally audited* (commit 1f52ef3), which is the honest baseline for the before/after. Everything in this PR beyond the build fix (tests, E2E, security hardening, transparency label, docs) remains unmerged and pending.
+> Also observed: at least eight parallel Claude branches are now active on this repository (`founder-advisor-constitution`, `cathedral-evolution-system`, `dashboard-integrity-governor`, …). The merge-discipline warning in the mission register (V2-10) has become more urgent, not less.
+
 **Scope audited:** `mininglife7-dev/newspulse-ai` (the only repository accessible to this account).
 **Method:** every claim below is backed by a verifiable artifact — a file in this repo, a command output, a GitHub Actions log, or a GitHub PR. Nothing is scored on optimism.
 

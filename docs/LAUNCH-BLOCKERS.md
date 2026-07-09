@@ -10,7 +10,7 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 - **Problem:** `npm run build` exits 1; the app cannot be deployed at all.
 - **Evidence:** E1 — "Failed to collect page data for /api/history/[id]"; root cause is `lib/supabase.ts` creating the browser client at module top-level with missing env.
 - **Impact:** Absolute blocker — nothing downstream (deploy, demo, pilot) is possible.
-- **Solution implemented:** Lazy `Proxy`-based browser client; throws only on first *use* without env, never on import. Same approach as open PR #1 (which should be closed as superseded, or merged first).
+- **Solution implemented:** Lazy `Proxy`-based browser client; throws only on first *use* without env, never on import. PR #1 (same approach) was merged to `main` on 2026-07-09; this branch is rebased on top and keeps the variant with an explicit missing-env error message, locked in by tests.
 - **Verification:** `npm run build` exit 0 with zero env vars (E2); `tests/supabase.test.ts` locks the behavior in.
 - **Regression tests:** `tests/supabase.test.ts` — import-without-env, throw-on-first-use, admin memoization.
 - **Rollback:** revert the single edit to `lib/supabase.ts`.
