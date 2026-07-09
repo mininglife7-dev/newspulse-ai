@@ -105,26 +105,27 @@ export async function saveSearch(
   }
 }
 
-/** Fetch the most recent searches, newest first. */
+/**
+ * Fetch the most recent searches, newest first.
+ *
+ * Throws on failure instead of returning [] — an empty list means
+ * "you have no history", which is the wrong thing to show the user
+ * when the real state is "the database is unreachable".
+ */
 export async function getSearchHistory(
   limit = 50
 ): Promise<SearchHistoryRow[]> {
-  try {
-    const { data, error } = await getSupabaseAdmin()
-      .from('news_searches')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+  const { data, error } = await getSupabaseAdmin()
+    .from('news_searches')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
-    if (error) {
-      console.error('[supabase] getSearchHistory error:', error);
-      return [];
-    }
-    return (data ?? []) as SearchHistoryRow[];
-  } catch (err) {
-    console.error('[supabase] getSearchHistory exception:', err);
-    return [];
+  if (error) {
+    console.error('[supabase] getSearchHistory error:', error);
+    throw new Error(`Failed to load search history: ${error.message}`);
   }
+  return (data ?? []) as SearchHistoryRow[];
 }
 
 /** Delete every row in `news_searches`. Used by the "Clear History" button. */
