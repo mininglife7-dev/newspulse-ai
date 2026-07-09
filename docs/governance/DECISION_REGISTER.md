@@ -7,6 +7,34 @@ are never requested from the Founder.
 
 ---
 
+## DR-0004 — Patch `next` 14.2.15 → 14.2.35; defer major upgrade to a dedicated PR
+
+- **Decision:** Bump `next` and `eslint-config-next` to 14.2.35 (latest 14.x, pinned
+  exact) now, and queue a dedicated Next 16 migration for the remaining advisories.
+- **Reason:** 14.2.35 carries all security fixes ever backported to the 14.x line
+  (including the 2025-12-11 update flagged on install of 14.2.15) at near-zero risk —
+  lint, type-check, and production build all verified green. `npm audit` shows the
+  remaining high-severity advisories are fixed only in Next 16 (14.x is EOL, no
+  backports), which is a breaking major-version migration — too large and risky to
+  ride along in a governance PR.
+- **Alternatives considered:**
+  1. Jump straight to `next@16` here — full remediation, but a breaking migration
+     (React 19, async request APIs) buried in an unrelated PR; poor reviewability.
+  2. Do nothing until the major migration — leaves backported fixes unapplied for
+     no benefit.
+  3. Ship this bump as a separate PR — preferred in principle, but this session is
+     restricted to the current branch; adjusted to a distinct, clearly-scoped commit.
+- **Evidence:** `npm view next dist-tags` (`next-14: 14.2.35`); `npm audit --omit=dev`
+  on 14.2.35 lists remaining advisories with "fix available: next@16.2.10 (breaking)";
+  local verification: lint 0 errors, `tsc --noEmit` clean, `next build` succeeds.
+- **Confidence:** High
+- **Expected impact:** All backportable CVE fixes applied; install-time security
+  deprecation warning resolved; clear, documented path to full remediation.
+- **Risk assessment:** Low — patch-level bump within the same minor line, exact-pinned,
+  fully verified; reversible by reverting the commit. Residual risk (EOL advisories)
+  is documented in the Founder Brief until the Next 16 migration lands.
+- **Timestamp:** 2026-07-09
+
 ## DR-0003 — Fix broken CI by committing `package-lock.json`
 
 - **Decision:** Generate and commit `package-lock.json` to repair the "Lint & Build"

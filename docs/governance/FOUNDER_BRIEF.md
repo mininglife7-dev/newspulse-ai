@@ -37,12 +37,15 @@ Updated continuously; read this instead of being interrupted.
 - **DR-0002** — Governance docs in `docs/governance/`, wired via `CLAUDE.md`.
 - **DR-0003** — Committed `package-lock.json` to repair CI, which had been broken
   since the initial scaffold (`npm ci` and `cache: npm` both require a lockfile).
+- **DR-0004** — Patched `next` to 14.2.35 (all backported CVE fixes); deferred the
+  breaking Next 16 migration to a dedicated PR.
 
 ## Risks
 
-- `next@14.2.15` carries a known security vulnerability (see the Next.js
-  2025-12-11 security update). Not fixed in this PR to keep it reviewable;
-  queued as next planned work.
+- **Residual (accepted until migration):** Next 14.x is end-of-life; `npm audit`
+  lists high-severity advisories (DoS, cache poisoning, request smuggling, XSS
+  variants) whose fixes exist only in Next 16. 14.2.35 applies everything
+  backportable; full remediation requires the queued Next 16 migration.
 
 ## Assumptions
 
@@ -52,8 +55,8 @@ Updated continuously; read this instead of being interrupted.
 
 ## Next planned work
 
-- Upgrade `next` to the patched release addressing the 2025-12-11 security advisory
-  (separate PR, per the Security gate on launch readiness).
+- Migrate to Next 16 (breaking: React 19, async request APIs) in a dedicated PR to
+  clear the remaining EOL security advisories.
 - Awaiting next DNA from the Founder, or autonomous continuation of launch-readiness
   work (screenshots for README, CI hardening, test coverage) per the Constitution.
 
