@@ -1,5 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// @supabase/realtime-js requires a WebSocket implementation at client
+// construction time. Node < 22 has no native WebSocket, so give it a stub —
+// these tests never open a realtime connection.
+if (typeof globalThis.WebSocket === 'undefined') {
+  vi.stubGlobal(
+    'WebSocket',
+    class {
+      close() {}
+    }
+  );
+}
+
 describe('lib/supabase without environment variables', () => {
   beforeEach(() => {
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
