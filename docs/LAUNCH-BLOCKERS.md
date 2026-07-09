@@ -43,17 +43,17 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 - **Rollback:** branch revert.
 - **Dependencies:** M-01, M-02 merged first. **Risk:** medium (breaking changes).
 
-## M-05 — Destructive endpoints are unauthenticated ⏳ OPEN (founder decision + ~0.5 day code)
+## M-05 — Destructive endpoints are unauthenticated 🔶 IMPLEMENTED opt-in (this branch) — founder enables with one env var
 
 - **Problem:** `DELETE /api/history` wipes the entire database table; `DELETE /api/history/[id]` deletes any row. No authentication exists anywhere in the app. Anyone with the URL can destroy all data.
 - **Evidence:** E8.
 - **Impact:** High for any public launch; acceptable only for a private demo.
 - **Mitigation implemented (this branch):** rate limiting now covers these endpoints (60/min/IP) — vandalism is throttled, not prevented.
-- **Recommended solution:** smallest viable: a shared `ADMIN_TOKEN` env var checked in the DELETE handlers + sent by the UI after a confirm dialog. Full solution: Supabase Auth with per-user rows (schema change: `user_id` column + RLS per user).
-- **Why not implemented now:** choosing the auth model changes product scope (single-user tool vs multi-user SaaS) — a customer-specific decision reserved for the founder (Rule 9).
-- **Verification:** curl DELETE without token → 401; with token → 200; regression tests added alongside.
-- **Rollback:** feature-flag via env var absence = current behavior.
-- **Risk:** low (additive).
+- **Implemented (opt-in):** the shared-token variant now exists in code. Set `ADMIN_TOKEN` in the deployment env → both DELETE endpoints require `Authorization: Bearer <token>`, and the UI prompts for the token when it receives 401. Env var unset = exactly the old behavior, so nothing breaks before the founder opts in.
+- **Verification:** 7 unit tests cover allowed/denied/wrong-token/GET-stays-public paths (`tests/api-history.test.ts`).
+- **Still open (founder):** actually setting `ADMIN_TOKEN` in Vercel, and the longer-term decision on real multi-user auth (Supabase Auth + per-user rows) if this becomes a SaaS.
+- **Rollback:** unset the env var.
+- **Risk:** low (additive, feature-flagged).
 
 ## M-06 — No monitoring, no alerting ⏳ OPEN (founder + ~1h)
 
@@ -67,15 +67,15 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 
 - **Problem:** No privacy policy, terms, or imprint. The app stores user search queries (personal data under GDPR) in Supabase (EU hosting status unverified). For an EU-facing launch this is a legal blocker; for a private demo it is not.
 - **Evidence:** file listing — no legal docs exist.
-- **Solution:** privacy policy + terms pages (`/privacy`, `/terms`), data-retention statement ("history stored until deleted"), AI-transparency note on summaries (also closes part of the EU AI Act transparency gap). Draft with counsel — **not** auto-generated as binding text (Rule 9: legal commitments are founder-only).
+- **Solution:** privacy policy + terms pages (`/privacy`, `/terms`) and a data-retention statement ("history stored until deleted"). Draft with counsel — **not** auto-generated as binding text (Rule 9: legal commitments are founder-only). *Progress:* the AI-transparency portion is done — every summary in the UI now carries an "AI-generated summary" label.
 - **Verification:** pages live, linked in footer.
 - **Risk:** none technical.
 
-## M-08 — No UI/E2E test coverage ⏳ OPEN (code, ~1 day)
+## M-08 — No UI/E2E test coverage ✅ RESOLVED (this branch)
 
-- **Problem:** 46 unit/integration tests cover libs, middleware, and API validation; page components and user flows have zero coverage.
-- **Solution:** Playwright smoke suite (search happy path with mocked APIs, history browse, clear-with-confirm) run in CI.
-- **Dependencies:** none. **Risk:** none.
+- **Solution implemented:** 6-test Playwright smoke suite driving the real app in a real browser against a full mock of Firecrawl/OpenAI/Supabase (`tests/e2e/`, `npm run test:e2e`) — health check, search happy path (with AI-label assertion), history browse + expand, clear-with-confirm, input validation. Runs as its own CI job; needs no secrets. Screenshots for the README are captured from the live run.
+- **Verification:** suite passes locally and in CI.
+- **Rollback:** delete the `e2e` CI job (tests are additive).
 
 ## M-09 — Rate limiter is per-instance, in-memory ⏳ OPEN (code, ~0.5 day, needs credentials)
 

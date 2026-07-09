@@ -53,9 +53,9 @@ Scores are 0–100. "Now" = this branch. Owner: F = founder, C = code (done in t
 | Cloud readiness | 50 | 60 | 85 | P1 | F | vercel.json valid, 60s function budget; never exercised in production |
 | **Security — dependencies** | **20** | **80** | 95 | **P0** | C | next@14.2.15: 1 critical (middleware auth bypass, CVE range <14.2.25) + highs → 14.2.35; residual 1 high/1 moderate need Next 15.5.16+ (M-04) |
 | **Security — data (RLS)** | **20** | **85** | 95 | **P0** | F+C | schema.sql granted anon (public-key) SELECT+INSERT on all rows → removed; founder must re-run script |
-| Security — API abuse | 40 | 70 | 90 | P1 | F+C | Rate limit covered only /api/search; destructive DELETE endpoints unprotected → now limited. No auth (M-05) |
-| Testing | 0 | 75 | 90 | P0 | C | 0 test files on main → 46 passing tests (6 files), wired into CI |
-| Regression safety | 0 | 70 | 85 | P1 | C | Same suite; UI/E2E still absent (M-08) |
+| Security — API abuse | 40 | 80 | 90 | P1 | F | Rate limits on all API routes + opt-in ADMIN_TOKEN guard on destructive DELETEs (UI prompts on 401). Founder enables by setting one env var (M-05) |
+| Testing | 0 | 85 | 90 | P0 | C | 0 test files on main → 53 unit tests + 6-test Playwright E2E smoke suite (search→history→clear, fully mocked externals), both in CI |
+| Regression safety | 0 | 80 | 85 | P1 | C | Unit + E2E suites cover libs, API validation, auth guard, and the primary user journey |
 | Performance | 40 | 45 | 75 | P2 | C | Bounded concurrency (4) + 60s budget exist; no load evidence |
 | Reliability / error handling | 60 | 65 | 85 | P2 | C | Graceful fallbacks verified by tests (OpenAI failure → fallback summary) |
 | Logging | 30 | 30 | 70 | P2 | C | console.error only; no structured logs |
@@ -67,10 +67,10 @@ Scores are 0–100. "Now" = this branch. Owner: F = founder, C = code (done in t
 | Technical documentation | 70 | 75 | 85 | P2 | C | README is strong for devs; this docs/ set adds ops+audit docs |
 | Customer / pilot / partner docs | 0 | 5 | 70 | P1 | F | None exist |
 | German localization | 0 | 0 | n/a | P3 | F | UI is English-only, no i18n framework; defer until a paying DE pilot demands it (Rule 5) |
-| Explainability / transparency | 20 | 20 | 70 | P2 | C | Summaries not labelled as AI-generated in UI; no source-confidence signal |
-| UX / dashboard quality | 65 | 65 | 80 | P2 | C | Polished dark UI per code review; not verified in browser (no keys) |
+| Explainability / transparency | 20 | 60 | 70 | P2 | C | Every summary now carries an "AI-generated summary" label in the UI (EU AI Act transparency); source domain + date shown per card |
+| UX / dashboard quality | 65 | 75 | 80 | P2 | C | Verified working in a real browser via E2E; screenshots captured (public/screenshots/) |
 | Mobile readiness | 40 | 40 | 75 | P2 | C | PR #2 (open) adds full PWA/A2HS support — merge it |
-| Commercial (pricing/ROI/demo) | 0 | 5 | 70 | P1 | F | No pricing, no demo assets, no screenshots (README placeholders still empty) |
+| Commercial (pricing/ROI/demo) | 0 | 20 | 70 | P1 | F | Real screenshots now in README (auto-captured by E2E); pricing/ROI still absent |
 | Versioning / release process | 20 | 25 | 70 | P2 | C | v1.0.0 static; no tags, no changelog, no release flow |
 | Founder readiness | — | 40 | 80 | P1 | F | This report + blocker register is the founder brief |
 
@@ -93,6 +93,7 @@ Scores are 0–100. "Now" = this branch. Owner: F = founder, C = code (done in t
 | E11 | No EURO AI / Mission 99 artifact anywhere accessible | repo grep, 0 GitHub issues, empty `list_repos` |
 | E12 | App has never verifiably run in production: no deployment succeeded, README screenshot slots empty | E3/E4 + README.md lines 24–30 |
 | E13 | **Vercel Git integration is active and works**: PR #4's branch built and deployed a preview ("Ready", 2026-07-09) — the failed Actions deploy workflow is a redundant path, not the only one. Runtime env vars on Vercel remain unverified (preview `/api/health` not reachable from this sandbox) | vercel[bot] comment on PR #4, project `lalit-kumar-d-s-projects/newspulse-ai` |
+| E14 | **The app verifiably works end-to-end**: 6-test Playwright smoke suite (health, search happy path, history, clear-with-confirm, validation) passes against a full mock of Firecrawl/OpenAI/Supabase; screenshots captured from the live run | `npm run test:e2e` output; public/screenshots/*.png |
 
 ---
 
