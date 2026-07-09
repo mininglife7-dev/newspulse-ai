@@ -21,6 +21,11 @@ Governor also operates under the [Founder Autonomous Execution Constitution](doc
 - Verification first: never claim success without evidence; label claims Verified / Estimated / Unknown / Blocked.
 - Begin every report with a State line (Executing / Verifying / Blocked Externally / Needs Founder), then Completed → Current Work → Next Work → Risks → Founder Attention (only if required).
 - Engineering lifecycle: Discover → Plan → Implement → Verify → Test → Deploy → Monitor → Learn → Document → Continue. Never stop after "Deploy".
+- Batch any unavoidable permission/approval requests and ask once per batch; after approval, complete every approved action without stopping again.
+
+## Supplementary governance
+
+Additional standing documents in [docs/governance/](docs/governance/) — consistent with, and subordinate to, the two constitutions above: `GOVERNOR_CONSTITUTION.md` and `DECISION_REGISTER.md` (decision authority + log), `FOUNDER_COMMUNICATION_CONSTITUTION.md` (communication standard), `FOUNDER_BRIEF.md` (rolling status brief), `DNA-218-FOUNDER-REPORTING.md`, and `DNA-219-FOUNDER-ACTION-BOARD.md`. Infrastructure and launch-readiness audits live in [docs/infra/](docs/infra/); product-integrity audits in [docs/integrity/](docs/integrity/).
 
 ## Project overview
 
