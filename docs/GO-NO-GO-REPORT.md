@@ -49,7 +49,7 @@ Scores are 0–100. "Now" = this branch. Owner: F = founder, C = code (done in t
 | Installation / onboarding (dev) | 70 | 80 | 85 | P2 | C | README setup works; `check-env` script verified present; build no longer crashes |
 | **Build** | **0** | **95** | 95 | **P0** | C | `npm run build` exit 1 on main (evidence: before-build.txt, PR #1) → exit 0 here |
 | **CI** | **0** | **90** | 95 | **P0** | C | CI failed on main push (run 25533740915: no lockfile). Lockfile + test step added |
-| **Deployment** | **0** | **40** | 90 | **P0** | **F** | Deploy workflow failed on main; `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` empty in logs. Needs founder secrets |
+| **Deployment** | **0** | **65** | 90 | **P0** | **F** | Actions deploy failed on main (empty secrets, E4) — but the Vercel *Git integration* deployed this branch's preview successfully (E13). Remaining: main must build (merge this PR) + verify runtime env vars via `/api/health` |
 | Cloud readiness | 50 | 60 | 85 | P1 | F | vercel.json valid, 60s function budget; never exercised in production |
 | **Security — dependencies** | **20** | **80** | 95 | **P0** | C | next@14.2.15: 1 critical (middleware auth bypass, CVE range <14.2.25) + highs → 14.2.35; residual 1 high/1 moderate need Next 15.5.16+ (M-04) |
 | **Security — data (RLS)** | **20** | **85** | 95 | **P0** | F+C | schema.sql granted anon (public-key) SELECT+INSERT on all rows → removed; founder must re-run script |
@@ -92,6 +92,7 @@ Scores are 0–100. "Now" = this branch. Owner: F = founder, C = code (done in t
 | E10 | Two open draft PRs, both unmerged: #1 (build fix), #2 (PWA) | GitHub PR list |
 | E11 | No EURO AI / Mission 99 artifact anywhere accessible | repo grep, 0 GitHub issues, empty `list_repos` |
 | E12 | App has never verifiably run in production: no deployment succeeded, README screenshot slots empty | E3/E4 + README.md lines 24–30 |
+| E13 | **Vercel Git integration is active and works**: PR #4's branch built and deployed a preview ("Ready", 2026-07-09) — the failed Actions deploy workflow is a redundant path, not the only one. Runtime env vars on Vercel remain unverified (preview `/api/health` not reachable from this sandbox) | vercel[bot] comment on PR #4, project `lalit-kumar-d-s-projects/newspulse-ai` |
 
 ---
 

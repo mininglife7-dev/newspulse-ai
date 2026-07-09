@@ -83,11 +83,11 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 - **Solution:** Upstash Redis (or Vercel KV) sliding window. Requires founder-provisioned credentials (Rule 9 stop).
 - **Risk:** low.
 
-## M-10 — Deployment has never succeeded ⏳ OPEN (founder, ~30 min) — **the** critical-path item
+## M-10 — Production deployment never verified ⏳ OPEN (founder, ~30 min) — **the** critical-path item
 
-- **Problem:** No production deployment has ever completed. Secrets `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` are unset (verified empty in job logs), runtime env vars unverified, Supabase schema not confirmed applied.
-- **Evidence:** E3, E4, E12.
-- **Steps:** `vercel link` → set 3 GitHub secrets → set 5 Vercel env vars → re-run `supabase/schema.sql` (updated on this branch) → push/dispatch deploy workflow → verify `/api/health` = `healthy` → run one real search → screenshot for README.
+- **Problem:** No production deployment has ever completed. The Actions deploy workflow fails (secrets empty, E4). **Update 2026-07-09:** the Vercel *Git integration* is active and successfully deployed a preview of this branch (E13) — so the path to production is simply: make `main` build, then verify runtime config. The Actions deploy workflow is now redundant; either delete it or configure its secrets.
+- **Evidence:** E3, E4, E12, E13.
+- **Steps:** merge this PR → Vercel auto-deploys main → open `<production-url>/api/health` and confirm `"status": "healthy"` (it reports which env vars are missing without leaking values) → set any missing env vars in Vercel dashboard → re-run `supabase/schema.sql` (updated on this branch) → run one real search → screenshot for README → delete or fix `.github/workflows/deploy.yml`.
 - **Verification:** green Deploy run + healthy endpoint + persisted search visible in /history.
 - **Rollback:** Vercel instant rollback to previous deployment (none exists yet — first deploy is the baseline).
 - **Risk:** low; blocked exclusively on external credentials (Rule 9 stop).
