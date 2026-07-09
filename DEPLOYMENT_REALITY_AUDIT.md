@@ -63,13 +63,16 @@ For a product positioned around **EU AI governance and sovereignty**, "Alpha/Bet
 
 ### 2b. Live infrastructure (Unknown — only you can confirm, by logging in)
 
-I want to be honest rather than guess. The following **cannot be verified from the repository** and require you to open two dashboards and look. **None of these are technical questions** — you just log in and read what's on screen:
+I want to be honest rather than guess. The following **cannot be fully verified from the repository** and require you to open two dashboards and look. **None of these are technical questions** — you just log in and read what's on screen.
+
+> **Update (Verified during this audit):** The pull request that carries this document triggered a **live Vercel preview deployment**, which proves **Vercel is connected and the deploy pipeline works.** The Vercel project is **`newspulse-ai`** under the account **`lalit-kumar-d-s-projects`**, and it produced a working preview URL (`newspulse-ai-git-…-lalit-kumar-d-s-projects.vercel.app`). So "is Vercel wired up?" is now answered — **yes.** What remains unknown is the **region**, whether a stable **production** URL is being served, and the **Supabase** state.
 
 | Question | Status | How to confirm (5 minutes each) |
 |----------|--------|----------------------------------|
+| Is **Vercel connected & deploying**? | **Verified: YES** (this PR built a preview) | Confirmed via the PR's own Vercel preview deployment. |
 | Is there a live **production URL**? | **Unknown** | Vercel dashboard → the project → "Domains" / "Deployments". If you see a `*.vercel.app` URL marked "Production", it's live. |
-| Is it only a **Vercel preview**, or real production? | **Unknown** | Same screen — preview deployments are tied to PRs; production is the `main` deployment. |
-| Is the **backend live**? | **Unknown** (backend ships *with* the frontend on Vercel — if the URL loads, the API is live) | Visit `<your-url>/api/health` in a browser. |
+| Is it only a **Vercel preview**, or real production? | **Partly known** — previews are confirmed working; production status still to confirm | Same screen — preview deployments are tied to PRs; production is the `main` deployment. |
+| Is the **backend live**? | **Likely yes on preview** (backend ships *with* the frontend on Vercel — if the URL loads, the API is live) | Visit `<your-url>/api/health` in a browser. |
 | Is the **database live**? | **Unknown** | Supabase dashboard → is there a project, is it "Active" (free-tier projects pause after inactivity)? |
 | Is **auth** live or mocked? | **Verified: neither — it does not exist.** | (No dashboard needed — there is no auth in the code.) |
 | Are **logs** live or file-only? | **Verified: ephemeral console logs only.** | Vercel → project → "Logs" shows runtime console output; nothing is persisted or audit-grade. |
