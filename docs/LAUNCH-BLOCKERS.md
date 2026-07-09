@@ -1,0 +1,104 @@
+# Launch Blocker Register
+
+Every blocker is one executable mission. Status reflects this branch (2026-07-09).
+Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
+
+---
+
+## M-01 — Production build is broken on main ✅ RESOLVED (this branch)
+
+- **Problem:** `npm run build` exits 1; the app cannot be deployed at all.
+- **Evidence:** E1 — "Failed to collect page data for /api/history/[id]"; root cause is `lib/supabase.ts` creating the browser client at module top-level with missing env.
+- **Impact:** Absolute blocker — nothing downstream (deploy, demo, pilot) is possible.
+- **Solution implemented:** Lazy `Proxy`-based browser client; throws only on first *use* without env, never on import. Same approach as open PR #1 (which should be closed as superseded, or merged first).
+- **Verification:** `npm run build` exit 0 with zero env vars (E2); `tests/supabase.test.ts` locks the behavior in.
+- **Regression tests:** `tests/supabase.test.ts` — import-without-env, throw-on-first-use, admin memoization.
+- **Rollback:** revert the single edit to `lib/supabase.ts`.
+- **Risk:** minimal — the eager export was verified unused (`grep` shows no importer).
+
+## M-02 — CI has never passed on main ✅ RESOLVED (this branch)
+
+- **Problem:** `npm ci` and setup-node cache require a lockfile; none was committed. CI on main: failure.
+- **Evidence:** E3, E4 — job log: "Dependencies lock file is not found".
+- **Solution implemented:** `package-lock.json` committed; `npm test` step added to CI.
+- **Verification:** CI on this PR must go green — that is the acceptance test.
+- **Rollback:** revert lockfile commit (not recommended).
+- **Risk:** none.
+
+## M-03 — Critical dependency vulnerabilities ✅ RESOLVED (this branch), residual → M-04
+
+- **Problem:** next@14.2.15 carried a **critical** middleware authorization bypass (the app's rate limiting lives entirely in middleware) plus high-severity DoS advisories.
+- **Evidence:** E5.
+- **Solution implemented:** upgrade to next\@14.2.35 + eslint-config-next\@14.2.35 (patch-level, zero API change).
+- **Verification:** `npm audit --omit=dev` → critical gone (E6); build + 46 tests pass.
+- **Rollback:** pin back to 14.2.15 (not recommended).
+- **Risk:** minimal (same minor version).
+
+## M-04 — Residual advisories require Next 15.5.16+ ⏳ OPEN (code, ~0.5–1 day)
+
+- **Problem:** 1 high (SSRF via WebSocket upgrades) + 1 moderate (RSC cache poisoning) remain; fixes only exist in Next ≥15.5.16 / 16, a breaking upgrade (React 19, async request APIs).
+- **Impact:** Moderate — advisories partially require configurations this app doesn't use, but auditors will flag any `npm audit` noise.
+- **Steps:** upgrade next→15.5.x LTS backport or 16.x, react→19, run codemods (`npx @next/codemod`), fix async `params` in `/api/history/[id]` and `/history/[id]`, re-run suite.
+- **Verification:** `npm audit --omit=dev` clean; build + tests green; manual smoke.
+- **Rollback:** branch revert.
+- **Dependencies:** M-01, M-02 merged first. **Risk:** medium (breaking changes).
+
+## M-05 — Destructive endpoints are unauthenticated ⏳ OPEN (founder decision + ~0.5 day code)
+
+- **Problem:** `DELETE /api/history` wipes the entire database table; `DELETE /api/history/[id]` deletes any row. No authentication exists anywhere in the app. Anyone with the URL can destroy all data.
+- **Evidence:** E8.
+- **Impact:** High for any public launch; acceptable only for a private demo.
+- **Mitigation implemented (this branch):** rate limiting now covers these endpoints (60/min/IP) — vandalism is throttled, not prevented.
+- **Recommended solution:** smallest viable: a shared `ADMIN_TOKEN` env var checked in the DELETE handlers + sent by the UI after a confirm dialog. Full solution: Supabase Auth with per-user rows (schema change: `user_id` column + RLS per user).
+- **Why not implemented now:** choosing the auth model changes product scope (single-user tool vs multi-user SaaS) — a customer-specific decision reserved for the founder (Rule 9).
+- **Verification:** curl DELETE without token → 401; with token → 200; regression tests added alongside.
+- **Rollback:** feature-flag via env var absence = current behavior.
+- **Risk:** low (additive).
+
+## M-06 — No monitoring, no alerting ⏳ OPEN (founder + ~1h)
+
+- **Problem:** If production dies, nobody learns it from the system.
+- **Evidence:** repo contains no monitor config; only `/api/health` exists.
+- **Solution:** point any free uptime monitor (UptimeRobot/BetterStack/Vercel checks) at `/api/health` (this branch guarantees it is never rate-limited); alert to founder email.
+- **Verification:** kill an env var in preview → monitor alerts within 5 min.
+- **Dependencies:** a live deployment (M-Deploy). **Risk:** none.
+
+## M-07 — Zero legal surface ⏳ OPEN (founder + legal, 1–2 days)
+
+- **Problem:** No privacy policy, terms, or imprint. The app stores user search queries (personal data under GDPR) in Supabase (EU hosting status unverified). For an EU-facing launch this is a legal blocker; for a private demo it is not.
+- **Evidence:** file listing — no legal docs exist.
+- **Solution:** privacy policy + terms pages (`/privacy`, `/terms`), data-retention statement ("history stored until deleted"), AI-transparency note on summaries (also closes part of the EU AI Act transparency gap). Draft with counsel — **not** auto-generated as binding text (Rule 9: legal commitments are founder-only).
+- **Verification:** pages live, linked in footer.
+- **Risk:** none technical.
+
+## M-08 — No UI/E2E test coverage ⏳ OPEN (code, ~1 day)
+
+- **Problem:** 46 unit/integration tests cover libs, middleware, and API validation; page components and user flows have zero coverage.
+- **Solution:** Playwright smoke suite (search happy path with mocked APIs, history browse, clear-with-confirm) run in CI.
+- **Dependencies:** none. **Risk:** none.
+
+## M-09 — Rate limiter is per-instance, in-memory ⏳ OPEN (code, ~0.5 day, needs credentials)
+
+- **Problem:** On Vercel, each serverless/edge instance has its own `Map` — real limit is N×30/min and resets on cold start. Documented in code since day 1.
+- **Solution:** Upstash Redis (or Vercel KV) sliding window. Requires founder-provisioned credentials (Rule 9 stop).
+- **Risk:** low.
+
+## M-10 — Deployment has never succeeded ⏳ OPEN (founder, ~30 min) — **the** critical-path item
+
+- **Problem:** No production deployment has ever completed. Secrets `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` are unset (verified empty in job logs), runtime env vars unverified, Supabase schema not confirmed applied.
+- **Evidence:** E3, E4, E12.
+- **Steps:** `vercel link` → set 3 GitHub secrets → set 5 Vercel env vars → re-run `supabase/schema.sql` (updated on this branch) → push/dispatch deploy workflow → verify `/api/health` = `healthy` → run one real search → screenshot for README.
+- **Verification:** green Deploy run + healthy endpoint + persisted search visible in /history.
+- **Rollback:** Vercel instant rollback to previous deployment (none exists yet — first deploy is the baseline).
+- **Risk:** low; blocked exclusively on external credentials (Rule 9 stop).
+
+---
+
+## Non-blockers (explicitly deferred, Rule 5)
+
+| Item | Why deferred |
+|---|---|
+| German localization | No verified German pilot/customer exists; i18n before demand is cosmetic |
+| Investor/partner decks, pricing, ROI docs | No product identity confirmed ("EURO AI" vs NewsPulse); founder input required first |
+| EU AI Act full classification dossier | Minimal-risk use case; the AI-transparency label (M-07) is the only near-term obligation with real effect |
+| Structured logging / observability stack | Right-sized only after real traffic exists |
