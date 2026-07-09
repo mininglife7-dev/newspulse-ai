@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Inter } from 'next/font/google';
-import { Zap, Search, History as HistoryIcon } from 'lucide-react';
+import { Zap, Search, History as HistoryIcon, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import './globals.css';
 
@@ -74,6 +74,14 @@ export default function RootLayout({
               >
                 <HistoryIcon className="h-4 w-4" />
                 History
+              </Link>
+              <Link
+                href="/founder"
+                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
+                title="Founder Infrastructure Dashboard"
+              >
+                <Activity className="h-4 w-4" />
+                Founder
               </Link>
             </nav>
           </div>
