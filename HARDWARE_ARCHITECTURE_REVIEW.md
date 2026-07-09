@@ -17,11 +17,12 @@
 
 ### Where is the app running now?
 
-**Nowhere in production.** This is the single most important finding.
+**No verified production deployment.** A Vercel project is connected and builds PR previews (discovered during this review — see table), but the repo's own deploy pipeline has never gone green, and the last audited deploy logs showed empty env vars. Until the founder confirms otherwise in the Vercel dashboard, treat production as **not running**.
 
 | Question | Answer | Evidence |
 |---|---|---|
-| Cloud deployment | **None succeeded.** The only push to `main` (2026-05-08) failed both the CI and the "Deploy to Vercel" workflows | GitHub Actions run history: `CI / main / push / failure`, `Deploy to Vercel / main / push / failure` |
+| Cloud deployment | **No production deploy has ever gone green through the repo's pipeline.** The only push to `main` (2026-05-08) failed both the CI and the "Deploy to Vercel" workflows | GitHub Actions run history: `CI / main / push / failure`, `Deploy to Vercel / main / push / failure` |
+| Vercel project | **Exists and is connected** via the Vercel GitHub integration (separate from the broken Actions workflow): project `newspulse-ai`, team `lalit-kumar-d-s-projects`, auto-builds PR previews. Whether its **production** deployment works and has real env vars is unverified from here — a prior audit (PR #4) found the env empty in deploy logs. **Founder to-do: open the Vercel dashboard and verify production state + env vars** | `vercel[bot]` preview-build comment observed on PR #6 (2026-07-09) |
 | Why the deploy failed | No `package-lock.json` in the repo → `npm ci` and the Actions npm cache fail; Vercel secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) apparently never set | Reproduced locally: `npm ci` → "loadVirtual requires existing shrinkwrap file"; PR #4 verified env empty in deploy logs |
 | Where it actually runs | Founder's local **Windows machine**, as the **Administrator** account, via `npm run dev` on `localhost:3000` | `push_to_github.ps1` references `C:\Users\Administrator\Documents\Claude\Projects\Hackathon Outskill` |
 | Intended target | Vercel (serverless) + Supabase (managed Postgres) + Firecrawl + OpenAI | `vercel.json`, `.github/workflows/deploy.yml`, `lib/*.ts` |
