@@ -23,7 +23,7 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 
 ## 📸 Screenshots
 
-> _Add screenshots here once you've deployed — drop them in `/public/screenshots/` and reference below._
+> _Screenshots below show the live UI populated with representative sample data._
 
 | Search | History |
 |---|---|

@@ -11,6 +11,8 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "check-env": "node --env-file=.env.local scripts/check-env.mjs"
   },
   "dependencies": {
@@ -33,7 +35,8 @@
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "tailwindcss": "^3.4.13",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=18.17.0"
