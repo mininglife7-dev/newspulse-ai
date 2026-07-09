@@ -41,3 +41,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-stub
           SUPABASE_SERVICE_ROLE_KEY: build-time-stub
+
+      - name: Smoke test (pages, buttons' endpoints, API truthfulness)
+        run: npm run test:smoke

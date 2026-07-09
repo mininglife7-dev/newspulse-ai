@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { SUMMARY_MODEL } from './constants';
 
 let _client: OpenAI | null = null;
 
@@ -38,7 +39,7 @@ export async function summarizeArticle(args: {
 
   try {
     const completion = await client().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: SUMMARY_MODEL,
       temperature: 0.3,
       max_tokens: 180,
       messages: [

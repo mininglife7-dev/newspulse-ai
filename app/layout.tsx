@@ -12,6 +12,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  ),
   title: 'NewsPulse AI — AI-Powered News Intelligence',
   description:
     'Search. Scrape. Summarize. Real-time AI summaries of news from across the web, with saved search history.',

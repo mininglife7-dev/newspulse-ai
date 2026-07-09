@@ -9,7 +9,6 @@ import {
   RotateCw,
   History as HistoryIcon,
   Search as SearchIcon,
-  ExternalLink,
   Loader2,
 } from 'lucide-react';
 import NewsCard from '@/components/NewsCard';
@@ -51,6 +50,21 @@ export default function HistoryPage() {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleDeleteOne = useCallback(async (id: string) => {
+    const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || `Delete failed (${res.status})`);
+    }
+    setHistory((prev) => prev.filter((entry) => entry.id !== id));
+    setExpanded((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
       return next;
     });
   }, []);
@@ -174,6 +188,7 @@ export default function HistoryPage() {
                     entry={entry}
                     isOpen={isOpen}
                     onToggle={() => toggle(entry.id)}
+                    onDelete={handleDeleteOne}
                   />
                 );
               })}
@@ -191,12 +206,27 @@ function Row({
   entry,
   isOpen,
   onToggle,
+  onDelete,
 }: {
   entry: SearchHistoryRow;
   isOpen: boolean;
   onToggle: () => void;
+  onDelete: (id: string) => Promise<void>;
 }) {
+  const [deleting, setDeleting] = useState(false);
   const articles = Array.isArray(entry.results) ? entry.results : [];
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete the saved search "${entry.keyword}"?`)) return;
+    setDeleting(true);
+    try {
+      await onDelete(entry.id);
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || 'Failed to delete search.');
+      setDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -219,13 +249,21 @@ function Row({
             )}
           </button>
         </td>
-        <td className="px-4 py-3 font-medium text-white">{entry.keyword}</td>
+        <td className="px-4 py-3 font-medium">
+          <Link
+            href={`/history/${entry.id}`}
+            className="text-white transition hover:text-accent-300"
+            title="Open this saved search"
+          >
+            {entry.keyword}
+          </Link>
+        </td>
         <td className="px-4 py-3 text-white/60">
           {formatAbsoluteDate(entry.created_at)}
         </td>
         <td className="px-4 py-3 text-center">
           <span className="inline-flex items-center justify-center rounded-full bg-accent-900/40 px-2.5 py-0.5 text-xs font-medium text-accent-300 ring-1 ring-inset ring-accent-500/20">
-            {entry.result_count}
+            {articles.length}
           </span>
         </td>
         <td className="px-4 py-3">
@@ -241,9 +279,23 @@ function Row({
               className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs text-white/80 transition hover:border-accent-500/60 hover:text-accent-300"
               title="Re-run this search"
             >
-              <ExternalLink className="h-3 w-3" />
+              <RotateCw className="h-3 w-3" />
               Re-run
             </Link>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              aria-label={`Delete saved search "${entry.keyword}"`}
+              title="Delete this saved search"
+              className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-950/30 px-2.5 py-1 text-xs text-red-300 transition hover:border-red-400 hover:bg-red-950/60 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {deleting ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2 className="h-3 w-3" />
+              )}
+              Delete
+            </button>
           </div>
         </td>
       </tr>

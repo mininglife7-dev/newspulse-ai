@@ -2,15 +2,25 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // =============================================================================
 // Public (browser-safe) client — uses the anon / publishable key.
-// This is the canonical export per the project spec.
+// Lazily created: the previous eager module-level createClient() crashed
+// every build and server boot when env vars were absent, even though no
+// code path ever used the client.
 // =============================================================================
-export const supabase: SupabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: { persistSession: false },
+let _public: SupabaseClient | null = null;
+export function getSupabasePublic(): SupabaseClient {
+  if (_public) return _public;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error(
+      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    );
   }
-);
+  _public = createClient(url, key, {
+    auth: { persistSession: false },
+  });
+  return _public;
+}
 
 // =============================================================================
 // Server-only admin client — uses the service-role / secret key.
@@ -86,26 +96,27 @@ export async function saveSearch(
   }
 }
 
-/** Fetch the most recent searches, newest first. */
+/**
+ * Fetch the most recent searches, newest first.
+ *
+ * Throws on failure instead of returning [] — an empty list means
+ * "you have no history", which is the wrong thing to show the user
+ * when the real state is "the database is unreachable".
+ */
 export async function getSearchHistory(
   limit = 50
 ): Promise<SearchHistoryRow[]> {
-  try {
-    const { data, error } = await getSupabaseAdmin()
-      .from('news_searches')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+  const { data, error } = await getSupabaseAdmin()
+    .from('news_searches')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
-    if (error) {
-      console.error('[supabase] getSearchHistory error:', error);
-      return [];
-    }
-    return (data ?? []) as SearchHistoryRow[];
-  } catch (err) {
-    console.error('[supabase] getSearchHistory exception:', err);
-    return [];
+  if (error) {
+    console.error('[supabase] getSearchHistory error:', error);
+    throw new Error(`Failed to load search history: ${error.message}`);
   }
+  return (data ?? []) as SearchHistoryRow[];
 }
 
 /** Delete every row in `news_searches`. Used by the "Clear History" button. */
