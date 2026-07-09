@@ -97,6 +97,7 @@ Scores are 0–100. "Now" = this branch. Owner: F = founder, C = code (done in t
 | E12 | App has never verifiably run in production: no deployment succeeded, README screenshot slots empty | E3/E4 + README.md lines 24–30 |
 | E13 | **Vercel Git integration is active and works**: PR #4's branch built and deployed a preview ("Ready", 2026-07-09) — the failed Actions deploy workflow is a redundant path, not the only one. Runtime env vars on Vercel remain unverified (preview `/api/health` not reachable from this sandbox) | vercel[bot] comment on PR #4, project `lalit-kumar-d-s-projects/newspulse-ai` |
 | E14 | **The app verifiably works end-to-end**: 6-test Playwright smoke suite (health, search happy path, history, clear-with-confirm, validation) passes against a full mock of Firecrawl/OpenAI/Supabase; screenshots captured from the live run | `npm run test:e2e` output; public/screenshots/*.png |
+| E15 | **Remote verification green on head dbbe7b6** (2026-07-09 09:04 UTC): CI "Lint & Build" success, first remote "E2E smoke" run success, Vercel preview deployment Ready | Actions run 29006531898 (jobs 86079330268, 86079330253); vercel[bot] deployment DP3qDERbPKbGe1ajpcYdr9xfFLXz |
 
 ---
 
