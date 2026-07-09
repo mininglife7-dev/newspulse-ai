@@ -45,6 +45,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-stub
           SUPABASE_SERVICE_ROLE_KEY: build-time-stub
 
+      - name: Smoke test (pages, buttons' endpoints, API truthfulness)
+        run: npm run test:smoke
+
   e2e:
     name: E2E smoke
     runs-on: ubuntu-latest
