@@ -40,6 +40,7 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 - 🎨 **Dark, polished UI** — Tailwind + lucide-react + Inter font
 - ⚡ **API-first** — `POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`
 - 🚀 **Vercel-ready** — auto-deploy on push to `main` via GitHub Actions
+- 🧬 **Evolution engine (CEIS)** — a self-improvement subsystem that studies public AI knowledge weekly, extracts principles, and proposes evidence-based missions behind quality gates — see [`docs/CEIS.md`](./docs/CEIS.md)
 
 ---
 
@@ -78,6 +79,8 @@ npm run check-env
 ### 3. Run the Supabase schema
 
 Open the **Supabase SQL editor** and paste the contents of [`supabase/schema.sql`](./supabase/schema.sql). It creates the `news_searches` table, indexes, and RLS policies.
+
+To enable the Evolution engine, also run [`supabase/ceis-schema.sql`](./supabase/ceis-schema.sql) (five `ceis_*` tables). See [`docs/CEIS.md`](./docs/CEIS.md) for the full architecture and the founder/CTO/user guides in [`docs/`](./docs).
 
 ### 4. Start the dev server
 
@@ -191,6 +194,7 @@ npm run lint          # next lint
 npm run type-check    # tsc --noEmit
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
+npm test              # vitest unit tests (CEIS engine)
 ```
 
 ---

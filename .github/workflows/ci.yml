@@ -32,6 +32,12 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
+      - name: Test
+        run: npm test
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-stub
+
       - name: Build
         run: npm run build
         env:

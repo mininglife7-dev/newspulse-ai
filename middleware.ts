@@ -35,7 +35,9 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl;
 
   // Only apply to API routes that perform expensive work
-  const isExpensive = url.pathname.startsWith('/api/search');
+  const isExpensive =
+    url.pathname.startsWith('/api/search') ||
+    url.pathname.startsWith('/api/ceis/run');
   if (!isExpensive) return NextResponse.next();
 
   const ip =
@@ -68,5 +70,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/search/:path*'],
+  matcher: ['/api/search/:path*', '/api/ceis/run/:path*'],
 };

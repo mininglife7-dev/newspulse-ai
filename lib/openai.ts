@@ -2,7 +2,11 @@ import OpenAI from 'openai';
 
 let _client: OpenAI | null = null;
 
-function client(): OpenAI {
+/**
+ * Shared lazily-initialized OpenAI client. Reused by the summarizer below
+ * and by the CEIS subsystem (lib/ceis) so the app holds a single client.
+ */
+export function getOpenAIClient(): OpenAI {
   if (_client) return _client;
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -37,7 +41,7 @@ export async function summarizeArticle(args: {
   }
 
   try {
-    const completion = await client().chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: 'gpt-4o-mini',
       temperature: 0.3,
       max_tokens: 180,

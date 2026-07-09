@@ -8,6 +8,15 @@
   "functions": {
     "app/api/search/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/ceis/run/route.ts": {
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/ceis/run",
+      "schedule": "0 6 * * 1"
+    }
+  ]
 }
