@@ -55,6 +55,29 @@ export default function HistoryPage() {
     });
   }, []);
 
+  // Deployments can protect destructive endpoints with ADMIN_TOKEN; when the
+  // server answers 401, ask once for the token and retry with it.
+  const deleteWithAuth = useCallback(async (url: string) => {
+    const stored = sessionStorage.getItem('newspulse_admin_token');
+    const headers: HeadersInit = stored
+      ? { Authorization: `Bearer ${stored}` }
+      : {};
+    let res = await fetch(url, { method: 'DELETE', headers });
+    if (res.status === 401) {
+      const entered = prompt(
+        'Deleting is protected on this deployment. Enter the admin token:'
+      );
+      if (entered) {
+        sessionStorage.setItem('newspulse_admin_token', entered);
+        res = await fetch(url, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${entered}` },
+        });
+      }
+    }
+    return res;
+  }, []);
+
   const handleClearAll = useCallback(async () => {
     if (
       !confirm(
@@ -65,7 +88,7 @@ export default function HistoryPage() {
     }
     setClearing(true);
     try {
-      const res = await fetch('/api/history', { method: 'DELETE' });
+      const res = await deleteWithAuth('/api/history');
       const json = await res.json();
       if (!res.ok || !json.ok) {
         throw new Error(json.error || `Delete failed (${res.status})`);
@@ -78,7 +101,7 @@ export default function HistoryPage() {
     } finally {
       setClearing(false);
     }
-  }, [history.length]);
+  }, [history.length, deleteWithAuth]);
 
   return (
     <div className="flex flex-col gap-6">

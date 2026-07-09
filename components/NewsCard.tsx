@@ -44,8 +44,13 @@ export default function NewsCard({ article, index = 0 }: NewsCardProps) {
         </a>
       </h3>
 
-      {/* AI Summary */}
-      <p className="text-sm leading-relaxed text-white/70">{ai_summary}</p>
+      {/* AI Summary — explicitly labelled as machine-generated (transparency) */}
+      <div className="flex flex-col gap-1">
+        <span className="inline-flex w-fit items-center gap-1 rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/40 ring-1 ring-inset ring-white/10">
+          AI-generated summary
+        </span>
+        <p className="text-sm leading-relaxed text-white/70">{ai_summary}</p>
+      </div>
 
       {/* Footer / URL */}
       <footer className="mt-auto flex items-center justify-between border-t border-border/60 pt-3 text-xs">

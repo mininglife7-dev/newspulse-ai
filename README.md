@@ -23,7 +23,7 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 
 ## 📸 Screenshots
 
-> _Add screenshots here once you've deployed — drop them in `/public/screenshots/` and reference below._
+> Captured automatically by the E2E smoke suite (`npm run test:e2e`) against mocked APIs.
 
 | Search | History |
 |---|---|
@@ -178,9 +178,18 @@ npm run build         # production build
 npm run start         # production server
 npm run lint          # next lint
 npm run type-check    # tsc --noEmit
+npm test              # unit/integration tests (vitest)
+npm run test:e2e      # Playwright smoke suite against mocked APIs (no secrets needed)
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
 ```
+
+### Optional hardening
+
+Set `ADMIN_TOKEN` in the deployment environment to protect the destructive
+endpoints (`DELETE /api/history`, `DELETE /api/history/:id`). When set, the
+UI prompts for the token before clearing history. When unset, behavior is
+unchanged (open deletes — fine for a private demo, not for a public URL).
 
 ---
 
