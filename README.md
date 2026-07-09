@@ -39,7 +39,7 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 - 📋 **History table** — keyword, date, count, expand-to-view, re-run, clear all
 - 🎨 **Dark, polished UI** — Tailwind + lucide-react + Inter font
 - ⚡ **API-first** — `POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`
-- 🚀 **Vercel-ready** — auto-deploy on push to `main` via GitHub Actions
+- 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
 
 ---
 
@@ -105,19 +105,9 @@ vercel env add SUPABASE_SERVICE_ROLE_KEY
 vercel --prod
 ```
 
-### Option B — GitHub auto-deploy
+### Option B — GitHub auto-deploy (active)
 
-Push to `main`. The included [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) builds and deploys to Vercel automatically. Set three GitHub secrets first:
-
-- `VERCEL_TOKEN` — from https://vercel.com/account/tokens
-- `VERCEL_ORG_ID` — from `.vercel/project.json` after `vercel link`
-- `VERCEL_PROJECT_ID` — from `.vercel/project.json` after `vercel link`
-
-```bash
-gh secret set VERCEL_TOKEN
-gh secret set VERCEL_ORG_ID
-gh secret set VERCEL_PROJECT_ID
-```
+Connect the repository to the Vercel project (Vercel Dashboard → Project → Settings → Git). Vercel then builds and deploys automatically: every push to `main` goes to production, and every pull request gets a preview deployment with its own URL commented on the PR.
 
 ---
 
@@ -168,8 +158,7 @@ newspulse-ai/
 ├── types/
 │   └── index.ts                     # shared API types
 ├── .github/workflows/
-│   ├── ci.yml                       # lint, type-check, build
-│   └── deploy.yml                   # Vercel production deploy on push to main
+│   └── ci.yml                       # lint, type-check, build
 ├── .env.example
 ├── middleware.ts                    # rate limit on /api/search
 ├── next.config.js

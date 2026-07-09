@@ -35,4 +35,4 @@ NewsPulse AI is a Next.js 14 (App Router, TypeScript) news-intelligence app: Fir
 ## Conventions
 
 - TypeScript strict; Prettier + ESLint are configured — match existing style.
-- Deploys to Vercel on push to `main` via GitHub Actions (`.github/workflows/`).
+- Deploys to Vercel via the Vercel GitHub integration: pushes to `main` go to production, PRs get preview deployments. CI (`.github/workflows/ci.yml`) runs lint, type-check, and build.
