@@ -1,0 +1,63 @@
+# 📒 Decision Register
+
+Autonomous engineering decisions made under the
+[Governor Autonomous Decision Constitution](./GOVERNOR_CONSTITUTION.md).
+Newest entries first. Every non-trivial decision gets an entry — routine approvals
+are never requested from the Founder.
+
+---
+
+## DR-0002 — Store governance docs in `docs/governance/`, wired via `CLAUDE.md`
+
+- **Decision:** Codify the Constitution as versioned markdown under `docs/governance/`
+  (constitution, this register, and the Founder Brief), and reference it from a root
+  `CLAUDE.md` so every future agent session in this repository loads it as standing
+  operating policy automatically.
+- **Reason:** Versioned-in-repo policy survives across sessions, machines, and
+  contributors; `CLAUDE.md` is the mechanism the agent harness reads on session start,
+  making the policy self-enforcing rather than dependent on the Founder re-pasting it.
+- **Alternatives considered:**
+  1. Keep the constitution only in conversation context — lost when the session ends.
+  2. Single flat `GOVERNANCE.md` at repo root — works, but mixes constitution, log, and
+     brief into one file that grows unboundedly.
+  3. `.github/` directory — conventionally for GitHub metadata, not operating policy.
+- **Evidence:** Repository had no existing `docs/` or `CLAUDE.md`; no conflicting
+  conventions found in `README.md` or `CONTRIBUTING.md`.
+- **Confidence:** High
+- **Expected impact:** All future sessions operate under the Constitution without
+  Founder intervention; decisions and briefs accumulate in a stable, reviewable place.
+- **Risk assessment:** Minimal — documentation only, fully reversible via git revert.
+- **Timestamp:** 2026-07-09
+
+## DR-0001 — Adopt the Governor Autonomous Decision Constitution
+
+- **Decision:** Accept the Founder's standing delegation of routine engineering
+  decision authority, effective immediately.
+- **Reason:** Direct Founder instruction; eliminates approval-latency on reversible
+  engineering work while keeping the seven Founder Gates as hard stops.
+- **Alternatives considered:** None — Founder directive.
+- **Evidence:** Founder instruction dated 2026-07-09.
+- **Confidence:** High
+- **Expected impact:** Continuous execution; Founder interruptions limited to gated
+  categories (money, legal, strategy, irreversible/destructive, risky production,
+  secrets, explicitly reserved decisions).
+- **Risk assessment:** Low — the Founder Gates and the reversibility requirement bound
+  the delegated authority; all decisions are logged here for after-the-fact review.
+- **Timestamp:** 2026-07-09
+
+---
+
+## Entry template
+
+```markdown
+## DR-NNNN — <short title>
+
+- **Decision:**
+- **Reason:**
+- **Alternatives considered:**
+- **Evidence:**
+- **Confidence:** High | Medium | Low
+- **Expected impact:**
+- **Risk assessment:**
+- **Timestamp:** YYYY-MM-DD
+```
