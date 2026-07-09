@@ -29,32 +29,24 @@ create index if not exists news_searches_keyword_idx
 
 -- ---------------------------------------------------------------
 -- Row Level Security
--- The Next.js server uses the service-role key, which bypasses RLS,
--- so we keep RLS enabled but allow the anon role read-only access
--- for client-side fetches if you ever want them.
+-- All data access goes through the Next.js server using the
+-- service-role key, which bypasses RLS. The anon (publishable) key
+-- ships to every browser, so an anon policy is effectively public
+-- access: anon SELECT exposes the entire search history to anyone,
+-- and anon INSERT lets anyone write rows directly to the table.
+-- RLS stays enabled with NO anon policies — deny by default.
 -- ---------------------------------------------------------------
 alter table public.news_searches enable row level security;
 
--- Drop existing policies if re-running this script
+-- Drop the permissive policies created by earlier revisions of this
+-- script (safe to re-run).
 drop policy if exists "Allow anon read access" on public.news_searches;
 drop policy if exists "Allow anon insert"      on public.news_searches;
 
-create policy "Allow anon read access"
-    on public.news_searches
-    for select
-    to anon
-    using (true);
-
--- Allow client-side inserts as well (optional). Comment out if you
--- want all writes to go through the service-role key on the server.
-create policy "Allow anon insert"
-    on public.news_searches
-    for insert
-    to anon
-    with check (true);
-
 -- ---------------------------------------------------------------
 -- Convenience view: most recent searches first
+-- Granted to authenticated only — anon exposure would leak the
+-- search history to anyone holding the public key.
 -- ---------------------------------------------------------------
 create or replace view public.news_searches_recent as
     select id, keyword, result_count, created_at
@@ -62,4 +54,5 @@ create or replace view public.news_searches_recent as
     order by created_at desc
     limit 100;
 
-grant select on public.news_searches_recent to anon, authenticated;
+revoke select on public.news_searches_recent from anon;
+grant select on public.news_searches_recent to authenticated;

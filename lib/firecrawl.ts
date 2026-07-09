@@ -3,7 +3,9 @@
  * Docs: https://docs.firecrawl.dev/features/search
  */
 
-const FIRECRAWL_BASE = 'https://api.firecrawl.dev';
+// Overridable so tests can point at a local mock server.
+const FIRECRAWL_BASE =
+  process.env.FIRECRAWL_BASE_URL || 'https://api.firecrawl.dev';
 
 export interface FirecrawlSearchResult {
   url: string;
