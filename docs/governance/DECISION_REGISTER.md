@@ -7,6 +7,27 @@ are never requested from the Founder.
 
 ---
 
+## DR-0003 — Fix broken CI by committing `package-lock.json`
+
+- **Decision:** Generate and commit `package-lock.json` to repair the "Lint & Build"
+  CI job, which has been failing since the initial scaffold.
+- **Reason:** `ci.yml` uses both `actions/setup-node` with `cache: npm` and `npm ci` —
+  each hard-requires a lockfile that was never committed. A lockfile also gives
+  reproducible installs and enables dependency caching.
+- **Alternatives considered:**
+  1. Remove `cache: npm` and switch `npm ci` → `npm install` — hides the problem,
+     loses reproducibility and caching.
+  2. Vendor a lockfile only in CI — non-standard, drifts from local installs.
+- **Evidence:** CI run 28998170205 failed with "Dependencies lock file is not found";
+  after generating the lockfile, all four CI steps (`npm ci`, lint, `tsc --noEmit`,
+  `next build`) passed locally.
+- **Confidence:** High
+- **Expected impact:** CI goes green for this and all future PRs; installs become
+  reproducible.
+- **Risk assessment:** Low — lockfile pins the exact versions already resolved from
+  `package.json`; reversible by deleting the file.
+- **Timestamp:** 2026-07-09
+
 ## DR-0002 — Store governance docs in `docs/governance/`, wired via `CLAUDE.md`
 
 - **Decision:** Codify the Constitution as versioned markdown under `docs/governance/`

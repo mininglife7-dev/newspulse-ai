@@ -27,17 +27,22 @@ Updated continuously; read this instead of being interrupted.
 
 ## Tests executed / verification status
 
-- No runtime code touched; verification limited to confirming the change is
-  documentation-only and does not affect lint, type-check, or build inputs.
+- Full CI pipeline verified locally against the new lockfile: `npm ci` (426 packages),
+  `npm run lint` (0 warnings/errors), `tsc --noEmit` (clean), `next build` with CI stub
+  env vars (succeeds).
 
 ## Important decisions
 
 - **DR-0001** — Adopted the Constitution as standing operating policy.
 - **DR-0002** — Governance docs in `docs/governance/`, wired via `CLAUDE.md`.
+- **DR-0003** — Committed `package-lock.json` to repair CI, which had been broken
+  since the initial scaffold (`npm ci` and `cache: npm` both require a lockfile).
 
 ## Risks
 
-- None introduced. Documentation-only change; fully reversible.
+- `next@14.2.15` carries a known security vulnerability (see the Next.js
+  2025-12-11 security update). Not fixed in this PR to keep it reviewable;
+  queued as next planned work.
 
 ## Assumptions
 
@@ -47,6 +52,8 @@ Updated continuously; read this instead of being interrupted.
 
 ## Next planned work
 
+- Upgrade `next` to the patched release addressing the 2025-12-11 security advisory
+  (separate PR, per the Security gate on launch readiness).
 - Awaiting next DNA from the Founder, or autonomous continuation of launch-readiness
   work (screenshots for README, CI hardening, test coverage) per the Constitution.
 
