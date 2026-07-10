@@ -31,3 +31,35 @@ export function classifyRoute(pathname: string): RouteKind {
     return 'protected';
   return 'public';
 }
+
+/**
+ * Sanitize a post-auth `redirect`/`next` value into a safe **same-origin
+ * path**, or fall back to `/dashboard`.
+ *
+ * A naive `startsWith('/') && !startsWith('//')` guard is NOT enough: the
+ * WHATWG URL parser normalizes backslashes to slashes for http(s), so
+ * `"/\evil.com"` passes that guard yet `new URL()` resolves it to
+ * `https://evil.com`. This resolves the candidate against a throwaway origin
+ * and rejects anything that escapes it (different origin, protocol-relative,
+ * scheme, backslash, or control characters), returning only the in-origin
+ * path+query+hash.
+ */
+export function safeRedirectPath(
+  value: string | null | undefined,
+  fallback = '/dashboard'
+): string {
+  if (!value || typeof value !== 'string') return fallback;
+  // Must be a root-relative path and contain no backslashes or control chars.
+  if (value[0] !== '/') return fallback;
+  if (/[\\\x00-\x1f\x7f]/.test(value)) return fallback;
+  if (value.startsWith('//')) return fallback;
+
+  const SENTINEL = 'https://newspulse.internal.invalid';
+  try {
+    const resolved = new URL(value, SENTINEL);
+    if (resolved.origin !== SENTINEL) return fallback;
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+  } catch {
+    return fallback;
+  }
+}

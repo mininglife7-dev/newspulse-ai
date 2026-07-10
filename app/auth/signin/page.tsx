@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { signIn } from "@/lib/auth";
+import { safeRedirectPath } from "@/lib/routes";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -48,11 +49,7 @@ export default function SignInPage() {
       const redirect = new URLSearchParams(window.location.search).get(
         "redirect"
       );
-      const target =
-        redirect && redirect.startsWith("/") && !redirect.startsWith("//")
-          ? redirect
-          : "/dashboard";
-      router.push(target);
+      router.push(safeRedirectPath(redirect));
     } catch (err: any) {
       setError(
         err?.message || "Invalid email or password. Please try again."
