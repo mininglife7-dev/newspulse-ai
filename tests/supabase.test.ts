@@ -32,7 +32,7 @@ describe('lib/supabase without environment variables', () => {
   });
 
   it('getSupabaseAdmin throws a clear error when env is missing', async () => {
-    const { getSupabaseAdmin } = await import('@/lib/supabase');
+    const { getSupabaseAdmin } = await import('@/lib/supabase-admin');
     expect(() => getSupabaseAdmin()).toThrow(/SUPABASE_SERVICE_ROLE_KEY/);
   });
 });
@@ -51,7 +51,7 @@ describe('lib/supabase with environment variables', () => {
   });
 
   it('getSupabaseAdmin returns a memoized client', async () => {
-    const { getSupabaseAdmin } = await import('@/lib/supabase');
+    const { getSupabaseAdmin } = await import('@/lib/supabase-admin');
     expect(getSupabaseAdmin()).toBe(getSupabaseAdmin());
   });
 });
