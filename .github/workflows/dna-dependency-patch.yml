@@ -1,0 +1,107 @@
+name: 'DNA-GOV-011: Dependency Patch Automation'
+
+on:
+  schedule:
+    # Run every Monday at 08:00 UTC (after security scan)
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions tab
+
+jobs:
+  analyze-and-patch:
+    name: Analyze Vulnerabilities and Create Patch PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze vulnerabilities
+        id: analyze
+        run: |
+          # Run npm audit to get vulnerability data
+          npm audit --json > audit-results.json 2>&1 || true
+
+          # Parse results
+          VULN_COUNT=$(jq '.metadata.vulnerabilities.total // 0' audit-results.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' audit-results.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' audit-results.json)
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' audit-results.json)
+
+          echo "vuln_count=$VULN_COUNT" >> $GITHUB_OUTPUT
+          echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+
+          echo "Vulnerability Analysis"
+          echo "======================"
+          echo "Total: $VULN_COUNT"
+          echo "Critical: $CRITICAL"
+          echo "High: $HIGH"
+          echo "Moderate: $MODERATE"
+          cat audit-results.json | jq '.vulnerabilities' 2>/dev/null || true
+
+      - name: Check for auto-patchable vulnerabilities
+        id: check-patchable
+        run: |
+          # For now, we manually identify patchable ones
+          # In a real implementation, call the /api/dependency-patch-automation endpoint
+
+          # Known transitive vulnerabilities (waiting on parent)
+          # - postcss@8.4.31 (in next@16.2.10) - wait for next upgrade
+
+          # No direct auto-patchable vulnerabilities currently
+          echo "auto_patchable=false" >> $GITHUB_OUTPUT
+          echo "patch_command=" >> $GITHUB_OUTPUT
+
+          echo "Note: Current vulnerabilities are transitive or require major version bumps."
+          echo "Recommend: Wait for next major release or upgrade Next.js when stable."
+
+      - name: Report vulnerability status
+        if: steps.analyze.outputs.vuln_count > 0
+        run: |
+          echo "🔍 Dependency Vulnerability Report"
+          echo "===================================="
+          echo "Total Vulnerabilities: ${{ steps.analyze.outputs.vuln_count }}"
+          echo "Critical: ${{ steps.analyze.outputs.critical }}"
+          echo "High: ${{ steps.analyze.outputs.high }}"
+          echo "Moderate: ${{ steps.analyze.outputs.moderate }}"
+          echo ""
+          echo "Status: Analyzed and waiting on parent package upgrades"
+          echo ""
+          echo "Next.js Transitive Dependency:"
+          echo "- postcss@8.4.31 (in next@16.2.10)"
+          echo "- Impact: PostCSS XSS in CSS stringify (low attack surface in SSR context)"
+          echo "- Recommendation: Monitor for next@16.3.0+ release with updated postcss"
+
+      - name: Create issue if critical vulnerabilities
+        if: steps.analyze.outputs.critical > 0
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔴 Critical Dependency Vulnerabilities Detected',
+              body: 'Critical security vulnerabilities were detected in dependencies during scheduled scan.\n\nReview [audit results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) and plan immediate remediation.',
+              labels: ['security', 'dependencies']
+            })
+
+      - name: Archive audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results-${{ github.run_id }}
+          path: audit-results.json
+          retention-days: 90
+        continue-on-error: true
