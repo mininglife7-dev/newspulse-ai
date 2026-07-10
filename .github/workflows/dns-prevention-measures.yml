@@ -24,68 +24,30 @@ jobs:
 
       - run: npm ci
 
-      - name: DNS-024 Prevention Measure Orchestration
-        run: |
-          echo "=== DNS-024: Prevention Measure Issue Orchestration ==="
-          echo ""
-          echo "Core Capability: Convert prevention measures from post-mortems into tracked GitHub issues"
-          echo ""
-          echo "Workflow:"
-          echo "1. Fetch recent post-mortems with 'draft' status"
-          echo "2. Extract prevention measures from each post-mortem"
-          echo "3. For each measure:"
-          echo "   - Generate GitHub issue title and body"
-          echo "   - Create issue with incident + regression links"
-          echo "   - Assign based on ownership (measure.owner)"
-          echo "   - Label with priority (P0/P1/P2) and category (type/monitoring, etc)"
-          echo ""
-          echo "2. Link prevention issues to:"
-          echo "   - Incident ID (incident-XXX label)"
-          echo "   - Related regressions (regression-YYY label)"
-          echo ""
-          echo "3. Track lifecycle:"
-          echo "   - Monitor closure status"
-          echo "   - Validate effectiveness (compare to regression recurrence)"
-          echo "   - Update post-mortem with issue links"
-          echo ""
-          echo "Effectiveness Metrics:"
-          echo "- % of prevention measures closed"
-          echo "- % of closed measures that prevented recurrence"
-          echo "- Average closure time (indicates priority)"
-          echo "- By severity: critical measures should close fastest"
-          echo ""
-          echo "Integration Points:"
-          echo "- DNS-019 (Post-Mortem System): Source of prevention measures"
-          echo "- DNS-025 (Regression Alerting): Validates measure effectiveness"
-          echo "- DNS-021 (Playbook Optimization): Uses prevention results"
-          echo "- GitHub Issues: Storage and tracking system"
-          echo ""
-          echo "Expected Behavior:"
-          echo "- Critical incident prevention measures → P0 issues, assigned immediately"
-          echo "- High incident measures → P1 issues, due within 3-5 days"
-          echo "- Medium incident measures → P2 issues, due within 1-2 weeks"
-          echo ""
-          echo "Closing Prevention Issues:"
-          echo "1. Implementation complete (measure deployed)"
-          echo "2. Validation: linked regression rate stays below baseline"
-          echo "3. Documentation updated"
-          echo "4. Issue closed with validation evidence"
-          echo ""
-          echo "Feedback Loop:"
-          echo "Post-Mortem (DNS-019) → Prevention Plan → Issues (DNS-024) → Effectiveness (DNS-025)"
-          echo ""
-          echo "Status: Ready for orchestration"
-
       - name: Run type-check
         run: npm run type-check
 
-      - name: Run tests
-        run: npm test -- prevention-measure-orchestration
+      - name: Run lint
+        run: npm run lint
 
-      - name: Post success notification
+      - name: Run tests
+        run: npm test
+
+      - name: DNS-024 Verification
         if: success()
         run: |
           echo "✅ DNS-024 Prevention Measure Orchestration verified"
-          echo "   - Prevention issues are being orchestrated from post-mortems"
-          echo "   - Effectiveness tracking is active"
-          echo "   - All tests passing (35 tests)"
+          echo ""
+          echo "Core Capability: Convert prevention measures from post-mortems into tracked GitHub issues"
+          echo ""
+          echo "Integration:"
+          echo "- DNS-019 (Post-Mortem System) → source of prevention measures"
+          echo "- DNS-025 (Regression Alerting) → validates effectiveness"
+          echo ""
+          echo "Features:"
+          echo "- Auto-create GitHub issues from prevention measures"
+          echo "- Link to incidents and related regressions"
+          echo "- Track lifecycle (open → in-progress → closed)"
+          echo "- Measure effectiveness via regression monitoring"
+          echo ""
+          echo "All tests passing, type-check green, lint clean"
