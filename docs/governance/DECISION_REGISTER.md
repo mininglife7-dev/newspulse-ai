@@ -7,6 +7,32 @@ are never requested from the Founder.
 
 ---
 
+## DR-0005 — Pause Next 16 migration; reconcile Founder Brief to portfolio reality
+
+- **Decision:** Pause the queued Next 16 migration and instead verify `main` and
+  update the Founder Brief with a full open-PR portfolio analysis, surfacing the one
+  Founder-gated decision (PR #22 product pivot) that sequences all other work.
+- **Reason:** PR #22 rewrites or deletes large parts of the codebase (layout,
+  middleware, news routes). A breaking framework migration now would conflict with
+  it wholesale and could be discarded by it. Meanwhile the brief on `main` still
+  described the pre-consolidation state, hiding the portfolio conflict from the
+  Founder. Reconciling truth first is the highest-value non-conflicting task.
+- **Alternatives considered:**
+  1. Proceed with Next 16 migration — high conflict risk with #22; possibly wasted.
+  2. Merge open engineering PRs autonomously — #21/#5/#2 conflict with #22; #22
+     itself is product vision (Founder gate). Sequencing requires the gate first.
+  3. Idle until instructed — violates continuous-execution mandate.
+- **Evidence:** `main` verified 2026-07-10: 55/55 vitest tests, lint 0 errors,
+  `tsc --noEmit` clean, `next build` succeeds. PR list inspected: #22 (base current,
+  deletes `app/api/search`, `app/history`, rewrites `middleware.ts`, `app/layout.tsx`);
+  conflicts mapped against #21, #5, #2; #18/#17/#15 on stale bases.
+- **Confidence:** High
+- **Expected impact:** Founder gets an accurate board and a single decision to make;
+  no conflicting engineering work is generated in the meantime.
+- **Risk assessment:** Minimal — documentation only, reversible; the paused migration
+  is explicitly re-queued behind the #22 decision.
+- **Timestamp:** 2026-07-10
+
 ## DR-0004 — Patch `next` 14.2.15 → 14.2.35; defer major upgrade to a dedicated PR
 
 - **Decision:** Bump `next` and `eslint-config-next` to 14.2.35 (latest 14.x, pinned
