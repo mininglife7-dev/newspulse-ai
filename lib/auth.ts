@@ -78,3 +78,12 @@ export async function updatePassword(newPassword: string) {
 
   if (error) throw error;
 }
+
+export async function resendEmailConfirmation(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+  });
+
+  if (error) throw error;
+}
