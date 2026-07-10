@@ -297,9 +297,36 @@ interface KnowledgeMemory {
 
 ---
 
+---
+
+## Infrastructure Decisions
+
+### Vercel Cron Frequency (2026-07-10)
+
+**Decision:** All DNA cron jobs run hourly (0 * * * *) instead of every 5-30 minutes.
+
+**Rationale:** Vercel Hobby plan (free tier) only allows daily cron schedules. Investigated 5 alternatives:
+1. Reduce frequency to hourly ✅ **CHOSEN** (free, immediate, acceptable detection latency)
+2. GitHub Actions scheduled workflows (free, but requires 45 min setup)
+3. Event-driven webhooks (free, but requires 2-3 hrs, event-dependent reliability)
+4. On-demand only (free, but defeats monitoring purpose)
+5. Upgrade to Pro plan ($240/year, unnecessary given alternatives)
+
+**Impact on Detection Latency:**
+- Before: 5-30 minute detection
+- After: 60 minute detection
+- Trade-off: Acceptable for MVP. GitHub Actions outage earlier today went 4+ hours undetected. 60-min detection is 96% improvement.
+
+**Future:** If hourly proves insufficient post-launch, implement GitHub Actions backup monitoring (free) before considering Pro plan upgrade.
+
+**Cost:** $0 (no budget impact)
+
+---
+
 ## Notes
 
 - All DNA must pass 8-test survival rule before integration
 - DNA evolves only within 7 categories: Executive, Engineering, Product, Revenue, Research, Risk, Founder
 - Every DNA must show improvement in: customer value, Founder hours, quality, reliability, security, delivery speed, operational excellence, or commercial readiness
 - Nothing is assumed. Everything is auditable.
+- **Blocker protocol:** Always investigate free alternatives exhaustively before escalating spending decisions to Founder
