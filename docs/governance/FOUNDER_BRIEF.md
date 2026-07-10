@@ -119,20 +119,29 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
 
 ## ⚠️ Critical Founder Actions Required
 
-### 0a. INFRASTRUCTURE: Vercel Hobby Tier Cron Limitation (Blocks all monitoring DNA)
-**Status:** BLOCKING — Prevents deployment of monitoring system  
-**Problem:** Vercel Hobby accounts (free tier) limit all crons to ≤1 execution per day. Current config attempts 5 daily crons:
-- `/api/blocking-conditions` — 48/day (*/30 * * * *)
-- `/api/production-health` — 288/day (*/5 * * * *)
-- `/api/verify-deployment` — 144/day (*/10 * * * *)
-- `/api/error-rate` — 288/day (*/5 * * * *)
-- `/api/dependency-security` (DNA-GOV-008) — 1/day (0 0 * * *) ← already reduced to fit
+### 0a. INFRASTRUCTURE DECISION REQUIRED: Vercel Plan (Blocks production monitoring)
+**Status:** URGENT — Blocks real-time system health visibility  
+**Problem:** Vercel Hobby tier limits all crons to ≤1 execution per day.
 
-**Action Required (Founder only):**
-- **Option A:** Upgrade Vercel to Pro plan ($20/month) to restore full cron capability
-- **Option B:** Keep Hobby tier + accept reduced monitoring (DNA running once daily only)
+**Current monitoring DNA configuration (attempting to run 5 different crons):**
+| DNA | Frequency | Status | Purpose |
+|---|---|---|---|
+| Blocking-Conditions (GOV-001) | Every 30 min (48/day) | ⏸️ DISABLED | Detect GitHub Actions/Supabase outages |
+| Production Health (GOV-002) | Every 5 min (288/day) | ⏸️ DISABLED | Verify deployed app responds |
+| Deployment Verify (GOV-003) | Every 10 min (144/day) | ⏸️ DISABLED | Verify latest commit is live |
+| Error Rate (GOV-004) | Every 5 min (288/day) | ⏸️ DISABLED | Detect runtime errors quickly |
+| **Dependency Security (GOV-008)** | **Daily (1/day)** | **✅ ACTIVE** | Scan for npm vulnerabilities |
 
-**Timeline:** Blocking PR #46 merge until plan decision made.
+**Why disabled:** Only 1 cron allowed on Hobby tier; had to choose one. Kept newest (security scanning) as foundation for future work.
+
+**Action Required (Founder ASAP):**
+1. **Upgrade to Vercel Pro ($20/month)** → Restores all 5 monitoring DNA (RECOMMENDED)
+   - OR
+2. **Stay on Hobby tier** → Accept single daily cron (security scanning only), lose real-time health monitoring
+   - Risk: Production outages undetected until daily scan or Founder manual check
+   - Acceptable only if <5 expected concurrent users
+
+**Impact:** Without Founder decision, production has zero real-time monitoring. All-or-nothing deployment readiness blocker.
 
 ### 0b. SECURITY: 10 Production Vulnerabilities Detected (DNA-GOV-008)
 **Status:** ACTIVE — Requires immediate attention before public launch  

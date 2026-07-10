@@ -29,24 +29,30 @@
   },
   "crons": [
     {
+      "path": "/api/dependency-security",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "disabled_crons": [
+    {
       "path": "/api/blocking-conditions",
-      "schedule": "*/30 * * * *"
+      "schedule": "*/30 * * * *",
+      "reason": "Vercel Hobby tier limit: max 1 daily cron. Upgrade to Pro plan to re-enable."
     },
     {
       "path": "/api/production-health",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/5 * * * *",
+      "reason": "Vercel Hobby tier limit: max 1 daily cron. Upgrade to Pro plan to re-enable."
     },
     {
       "path": "/api/verify-deployment",
-      "schedule": "*/10 * * * *"
+      "schedule": "*/10 * * * *",
+      "reason": "Vercel Hobby tier limit: max 1 daily cron. Upgrade to Pro plan to re-enable."
     },
     {
       "path": "/api/error-rate",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/dependency-security",
-      "schedule": "0 0 * * *"
+      "schedule": "*/5 * * * *",
+      "reason": "Vercel Hobby tier limit: max 1 daily cron. Upgrade to Pro plan to re-enable."
     }
   ]
 }
