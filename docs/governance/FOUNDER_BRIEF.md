@@ -115,6 +115,7 @@ with a timer.
   - GitHub Actions scheduled workflow (daily 09:00 UTC)
   - New/resolved vulnerability detection with caching
   - Endpoint: GET /api/security-scan
+  - **INTEGRATED with DNA-GOV-005:** Security alerts now appear in unified /api/alerts dashboard
 
 **Critical Infrastructure Decision (Resolved):**
 - **Vercel Hobby Cron Limitation:** Hobby accounts limited to 1 cron/day; DNA required 4 frequent monitors

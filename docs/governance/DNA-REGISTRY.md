@@ -442,7 +442,11 @@ interface Vulnerability {
 5. **Operational efficiency:** Scanning and alerting fully automated (0 manual work per day)
 
 #### Next Steps
-1. **Integration with alert hub:** DNS-008 results feed into DNA-GOV-005 (Founder Alert Hub)
+1. ✅ **Integration with alert hub:** DNA-008 results feed into DNA-GOV-005 (Founder Alert Hub) — IMPLEMENTED
+   - Security alerts now appear in unified /api/alerts dashboard
+   - Critical vulns → critical severity alerts
+   - High-severity vulns → warning alerts
+   - Resolved vulns → info alerts
 2. **Patch automation:** Auto-open PRs for patchable vulns (npm audit fix)
 3. **Policy enforcement:** CI fails on critical/high vulns; blocks merge until resolved
 4. **Compliance reporting:** Generate monthly security report for customer compliance requirements
