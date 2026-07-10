@@ -74,6 +74,26 @@ export default function RemediationPage() {
         data.assessment.assessment_data?.responses ?? []
       );
       setRemediationPlan(plan);
+
+      // Persist obligations to database (idempotent — safe to call multiple times)
+      if (plan.obligations.length > 0) {
+        try {
+          const obligationsRes = await fetch('/api/obligations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              assessment_id: assessmentId,
+              ai_system_id: data.assessment.ai_system_id,
+              obligations: plan.obligations,
+            }),
+          });
+          if (!obligationsRes.ok) {
+            console.warn('Failed to persist obligations (non-critical):', await obligationsRes.json());
+          }
+        } catch (err) {
+          console.warn('Failed to persist obligations (non-critical):', err);
+        }
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to load remediation plan');
     } finally {
