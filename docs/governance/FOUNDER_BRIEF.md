@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (Mission complete → DNA-GOV-001 deployed → DNA-GOV-002 implemented)
-**State:** Executing → Verifying (DNA-GOV-001 live, DNA-GOV-002 ready; awaiting Founder console actions for customer onboarding)
+**Last updated:** 2026-07-10 (EURO AI complete → DNA-GOV-001 deployed → DNA-GOV-002 implemented → DNA-GOV-003 ready)
+**State:** Executing (DNA-GOV-001 live, DNA-GOV-002/003 ready; awaiting Vercel secret + Founder console actions)
 
 ---
 
@@ -106,29 +106,46 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
   - Verification: 17/17 tests, Vercel cron every 5 min (ready to configure)
   - Impact: Reduce MTTR from unknown → <5 minutes
 
+- **DNA-GOV-003: Dependency Health** — Autonomously monitors npm vulnerabilities and outdated packages
+  - Status: Implemented and tested ✅, ready for production deployment
+  - Verification: 19/19 tests, Vercel cron daily at 2 AM UTC (daily security briefing)
+  - Impact: Detect supply-chain vulnerabilities within 24 hours (vs. manual/unknown)
+  - Current finding: 10 npm vulnerabilities detected (4 moderate, 5 high, 1 critical)
+  - Deployment status: ⏳ Blocked by missing Vercel secret (see critical actions below)
+
 **Next DNA candidates:**
-- DNA-GOV-003: Dependency Health (npm advisories, security alerts)
 - DNA-GOV-004: Cost Anomaly Detection (Vercel, Supabase spend monitoring)
 
 ---
 
 ## ⚠️ Critical Founder Actions Required
 
-### 1. GitHub Actions outage
+### 1. Vercel environment secret (NEW — blocks DNA deployment)
+**Status:** Deployment failing; missing Vercel secret  
+**Details:** `vercel.json` references `@github-token` secret which doesn't exist  
+**Impact:** Blocks deployment of DNA-GOV-001, DNA-GOV-002, DNA-GOV-003  
+**Action:** Create secret in Vercel project:
+  - Go to Vercel project settings → Environment Variables
+  - Create secret: Name = `github-token`, Value = (a GitHub personal access token with repo read permissions)
+  - Save and redeploy
+**Why needed:** DNA-GOV-001 (blocking condition detector) requires GitHub API access to check Actions health  
+**Evidence:** https://github.com/mininglife7-dev/newspulse-ai/pull/49 (Vercel deployment failed)
+
+### 2. GitHub Actions outage
 **Status:** Stopped creating workflow runs repo-wide at ~04:15 UTC  
 **Symptom:** Every event after that (PR opens, pushes) produces no CI run while Vercel builds fine  
 **Cause:** Likely Actions minutes/spending limit exhausted by ~14 parallel sessions today  
 **Action:** Check GitHub billing → Actions → spending. Only you can fix.  
 **Workaround:** Until restored, merges rely on local verification + Vercel (as #38 did)
 
-### 2. Supabase setup
+### 3. Supabase setup
 **Status:** Schema and RLS policies are code-ready; live project needs manual setup  
 **Actions (choose one or both):**
 - Run `supabase/schema.sql` in the Supabase SQL editor (copy-paste entire file, idempotent)
 - Enable "Email" auth method in Supabase → Project Settings → Auth
 - Confirm Supabase project region is EU
 
-### 3. Stale PRs disposition
+### 4. Stale PRs disposition
 **Status:** 5 pre-pivot branches (#39, #40, #41, #37, #36) have merge conflicts  
 **Recommendation:** See `docs/governance/MISSION-HANDOVER-2026-07-10.md` for full assessment  
 **Suggested action:** Close #39, #40 as "pre-pivot"; decide on #41, #37, #36 (critical infra work)
