@@ -12,6 +12,7 @@ import {
   FileCheck,
   TrendingUp,
   Download,
+  ClipboardList,
 } from 'lucide-react';
 
 interface ComplianceSummary {
@@ -34,6 +35,15 @@ interface ComplianceSummary {
     under_review: number;
     approved: number;
     rejected: number;
+  };
+  obligationMetrics: {
+    total: number;
+    identified: number;
+    in_progress: number;
+    completed: number;
+    not_applicable: number;
+    high_priority: number;
+    critical_priority: number;
   };
   complianceHealth: 'critical' | 'warning' | 'good' | 'excellent';
   readinessPercentage: number;
@@ -244,6 +254,20 @@ export default function CompliancePage() {
             {summary.evidenceMetrics.under_review} in review · {summary.evidenceMetrics.submitted} submitted
           </p>
         </div>
+
+        {/* Obligations Status */}
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm text-slate-400">Obligations</h3>
+            <ClipboardList className="h-5 w-5 text-purple-400" />
+          </div>
+          <div className="text-3xl font-bold text-white">
+            {summary.obligationMetrics.completed}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">
+            {summary.obligationMetrics.total} total · {summary.obligationMetrics.in_progress} in progress
+          </p>
+        </div>
       </div>
 
       {/* Detailed Status Sections */}
@@ -277,6 +301,44 @@ export default function CompliancePage() {
               { label: 'Finalized', count: summary.assessmentStatus.finalized, color: 'text-green-400' },
               { label: 'In Review', count: summary.assessmentStatus.in_review, color: 'text-amber-400' },
               { label: 'Draft', count: summary.assessmentStatus.draft, color: 'text-slate-400' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between">
+                <span className={`text-sm ${item.color}`}>{item.label}</span>
+                <span className="font-semibold text-white">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Obligation Status & Priority */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Obligation Status Breakdown */}
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+          <h3 className="font-semibold text-white mb-4">Obligation Status</h3>
+          <div className="space-y-3">
+            {[
+              { label: 'Completed', count: summary.obligationMetrics.completed, color: 'text-green-400' },
+              { label: 'In Progress', count: summary.obligationMetrics.in_progress, color: 'text-cyan-400' },
+              { label: 'Identified', count: summary.obligationMetrics.identified, color: 'text-amber-400' },
+              { label: 'Not Applicable', count: summary.obligationMetrics.not_applicable, color: 'text-slate-400' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between">
+                <span className={`text-sm ${item.color}`}>{item.label}</span>
+                <span className="font-semibold text-white">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Obligation Priority Breakdown */}
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+          <h3 className="font-semibold text-white mb-4">Obligation Priority</h3>
+          <div className="space-y-3">
+            {[
+              { label: 'Critical', count: summary.obligationMetrics.critical_priority, color: 'text-red-400' },
+              { label: 'High', count: summary.obligationMetrics.high_priority, color: 'text-orange-400' },
+              { label: 'Other', count: summary.obligationMetrics.total - summary.obligationMetrics.critical_priority - summary.obligationMetrics.high_priority, color: 'text-slate-400' },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className={`text-sm ${item.color}`}>{item.label}</span>
@@ -373,6 +435,22 @@ export default function CompliancePage() {
               <span className="text-red-400">⚠</span>
               <span className="text-red-400 font-medium">
                 URGENT: {summary.riskDistribution.unacceptable} unacceptable-risk system{summary.riskDistribution.unacceptable !== 1 ? 's' : ''} requires immediate action
+              </span>
+            </li>
+          )}
+          {summary.obligationMetrics.critical_priority > 0 && (
+            <li className="flex gap-3 text-sm">
+              <span className="text-red-400">⚠</span>
+              <span className="text-red-400 font-medium">
+                CRITICAL: {summary.obligationMetrics.critical_priority} critical obligation{summary.obligationMetrics.critical_priority !== 1 ? 's' : ''} need immediate attention
+              </span>
+            </li>
+          )}
+          {summary.obligationMetrics.identified > 0 && (
+            <li className="flex gap-3 text-sm">
+              <span className="text-amber-400">→</span>
+              <span className="text-slate-400">
+                Start tracking {summary.obligationMetrics.identified} identified obligation{summary.obligationMetrics.identified !== 1 ? 's' : ''}
               </span>
             </li>
           )}
