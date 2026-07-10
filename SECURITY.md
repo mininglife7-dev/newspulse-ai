@@ -27,8 +27,11 @@ These controls are implemented in this repository:
   git-ignored and never committed. The Supabase service-role key is used only
   in server-side code.
 - **Security headers** (`X-Frame-Options: DENY`, `X-Content-Type-Options:
-nosniff`, `Referrer-Policy`, `Permissions-Policy`) are applied to every
+  nosniff`, `Referrer-Policy`, `Permissions-Policy`) are applied to every
   response, and `X-Powered-By` is disabled.
+- **Content-Security-Policy** (navigation subset): `frame-ancestors 'none'`,
+  `base-uri 'self'`, `form-action 'self'`, `object-src 'none'`. A full
+  nonce-based `script-src` policy is a tracked follow-up.
 - **External links** use `rel="noopener noreferrer"` to prevent
   reverse-tabnabbing.
 - **Rate limiting** throttles `/api/search` per IP.
@@ -39,7 +42,8 @@ nosniff`, `Referrer-Policy`, `Permissions-Policy`) are applied to every
   access to saved search history (`GET /api/history`) is public.
 - The rate limiter is **in-memory** and per-instance; it resets on cold start.
   For multi-instance production, back it with a shared store (e.g. Upstash).
-- There is **no Content-Security-Policy** yet.
+- The CSP does **not yet restrict `script-src`/`style-src`** (would require
+  nonce plumbing for Next's hydration runtime).
 
 See `DEPLOYMENT_REALITY_AUDIT.md` and `REMEDIATION_ROADMAP.md` for the full
 gap analysis and the planned path to a production-grade posture.
