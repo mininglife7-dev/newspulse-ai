@@ -1,9 +1,24 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { translate } from '@/lib/i18n';
-import { getServerLocale } from '@/lib/i18n/server';
+import {
+  DEFAULT_LOCALE,
+  resolveClientLocale,
+  translate,
+  type Locale,
+} from '@/lib/i18n';
 
 export default function NotFound() {
-  const locale = getServerLocale();
+  // Localize on the client so this page (which is part of every route's tree)
+  // never calls cookies()/headers() server-side — doing so would force all
+  // routes to dynamic rendering and forfeit static generation. Starts at the
+  // default locale to match SSR, then upgrades after mount.
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  useEffect(() => {
+    setLocale(resolveClientLocale());
+  }, []);
+
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
       <div className="text-7xl font-black tracking-tight">
