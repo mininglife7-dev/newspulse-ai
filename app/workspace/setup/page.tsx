@@ -87,13 +87,14 @@ export default function WorkspaceSetupPage() {
       <div className="mb-8 space-y-2">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+          className="inline-flex items-center gap-1 text-slate-300 hover:text-white transition"
+          aria-label="Back to dashboard"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
         <h1 className="text-4xl font-bold text-white">Set up your workspace</h1>
-        <p className="text-slate-400">
+        <p className="text-slate-300">
           Tell us about your organization so we can tailor EURO AI for your
           needs
         </p>

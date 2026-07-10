@@ -21,7 +21,7 @@ export default function VerifyEmailPage() {
           <h1 className="text-3xl font-bold text-white">
             Verify your email
           </h1>
-          <p className="text-slate-400">
+          <p className="text-slate-300">
             We sent a verification link to{" "}
             <span className="text-white font-medium">{email}</span>
           </p>

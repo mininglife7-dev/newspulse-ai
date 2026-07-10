@@ -74,7 +74,12 @@ export default function DashboardPage() {
   if (data.error || !data.state) {
     return (
       <div className="flex min-h-screen flex-col gap-6 p-6">
-        <h1 className="text-3xl font-bold">Governor Dashboard</h1>
+        <div>
+          <h1 className="text-4xl font-bold">Governor Dashboard</h1>
+          <p className="mt-2 text-white/60">
+            Canonical source of truth for EURO AI launch readiness
+          </p>
+        </div>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{data.error || 'Unknown error'}</AlertDescription>

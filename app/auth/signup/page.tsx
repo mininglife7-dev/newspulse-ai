@@ -84,7 +84,8 @@ export default function SignUpPage() {
         <div className="space-y-2">
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+            className="inline-flex items-center gap-1 text-slate-300 hover:text-white transition"
+            aria-label="Back to home"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -92,7 +93,7 @@ export default function SignUpPage() {
           <h1 className="text-3xl font-bold text-white">
             Create your account
           </h1>
-          <p className="text-slate-400">
+          <p className="text-slate-300">
             Join companies across Europe simplifying AI governance
           </p>
         </div>

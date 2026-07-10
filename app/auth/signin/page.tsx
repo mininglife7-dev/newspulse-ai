@@ -68,13 +68,14 @@ export default function SignInPage() {
         <div className="space-y-2">
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+            className="inline-flex items-center gap-1 text-slate-300 hover:text-white transition"
+            aria-label="Back to home"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
           <h1 className="text-3xl font-bold text-white">Welcome back</h1>
-          <p className="text-slate-400">
+          <p className="text-slate-300">
             Sign in to your EURO AI account
           </p>
         </div>

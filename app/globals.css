@@ -82,3 +82,13 @@ a {
     transform: rotate(360deg);
   }
 }
+
+/* Focus indicators for keyboard navigation (WCAG AA 2.4.7) */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

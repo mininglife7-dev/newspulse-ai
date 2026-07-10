@@ -111,13 +111,14 @@ export default function InventoryPage() {
       <div className="space-y-2">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+          className="inline-flex items-center gap-1 text-slate-300 hover:text-white transition"
+          aria-label="Back to dashboard"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to dashboard
         </Link>
         <h1 className="text-3xl font-bold text-white">AI Systems Inventory</h1>
-        <p className="text-slate-400">
+        <p className="text-slate-300">
           Every AI system your organization uses, in one register — the
           foundation for EU AI Act risk classification.
         </p>
@@ -154,6 +155,7 @@ export default function InventoryPage() {
             <button
               onClick={() => setShowForm((v) => !v)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-blue-500/40"
+              aria-label={showForm ? 'Close add system form' : 'Add AI system'}
             >
               <Plus className="h-4 w-4" />
               Add AI system

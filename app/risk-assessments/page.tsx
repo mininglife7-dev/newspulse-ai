@@ -144,13 +144,14 @@ export default function RiskAssessmentsPage() {
       <div className="space-y-2">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+          className="inline-flex items-center gap-1 text-slate-300 hover:text-white transition"
+          aria-label="Back to dashboard"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to dashboard
         </Link>
         <h1 className="text-3xl font-bold text-white">EU AI Act Risk Assessment</h1>
-        <p className="text-slate-400">
+        <p className="text-slate-300">
           Evaluate each AI system against EU AI Act compliance requirements. The
           questionnaire classifies risk as low, medium, high, or unacceptable.
         </p>
@@ -243,6 +244,8 @@ export default function RiskAssessmentsPage() {
                             })
                           }
                           className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-800/30 transition"
+                          aria-expanded={isExpanded}
+                          aria-label={`${categoryLabels[category]} questions (${isExpanded ? 'expanded' : 'collapsed'})`}
                         >
                           <span className="font-medium text-white">
                             {categoryLabels[category]} ({categoryQuestions.length})
