@@ -1,8 +1,28 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+/**
+ * Best-effort rollback for the non-transactional create flow below. The four
+ * writes are separate statements, so a failure partway through would otherwise
+ * leave an orphaned, half-created tenant. Deleting the workspace we just made
+ * cascades to its membership/company rows (ON DELETE CASCADE in schema.sql), so
+ * creation is effectively all-or-nothing from the caller's point of view.
+ *
+ * Uses the service-role admin client because there is no RLS DELETE policy for
+ * a user's own client. Scope is tightly bounded: it only ever deletes the
+ * workspace id this request just generated, and it never masks the real error.
+ */
+async function rollbackWorkspace(workspaceId: string): Promise<void> {
+  try {
+    await getSupabaseAdmin().from('workspaces').delete().eq('id', workspaceId);
+  } catch (err) {
+    console.error('[api/workspace] rollback failed for', workspaceId, err);
+  }
+}
 
 export interface WorkspaceSetupBody {
   companyName: string;
@@ -97,6 +117,7 @@ export async function POST(req: Request) {
 
   if (memberError) {
     console.error('[api/workspace] member insert failed:', memberError);
+    await rollbackWorkspace(workspace.id);
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace membership' },
       { status: 500 }
@@ -121,6 +142,7 @@ export async function POST(req: Request) {
 
   if (companyError || !company) {
     console.error('[api/workspace] company insert failed:', companyError);
+    await rollbackWorkspace(workspace.id);
     return NextResponse.json(
       { ok: false, error: 'Could not create company profile' },
       { status: 500 }
