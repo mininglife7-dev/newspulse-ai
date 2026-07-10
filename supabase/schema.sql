@@ -29,29 +29,19 @@ create index if not exists news_searches_keyword_idx
 
 -- ---------------------------------------------------------------
 -- Row Level Security
--- The Next.js server uses the service-role key, which bypasses RLS,
--- so we keep RLS enabled but allow the anon role read-only access
--- for client-side fetches if you ever want them.
+-- All access goes through the Next.js server using the service-role key,
+-- which bypasses RLS. The browser (anon) key is NOT used for data access,
+-- so we grant the anon role NO policies: with RLS enabled and no policy,
+-- the public anon key cannot read or write this table directly. This keeps
+-- all writes behind the API's validation and rate limiting.
+--
+-- (Previously the anon role had open select+insert policies. Those are
+-- dropped below; re-run this script to remove them from an existing project.)
 -- ---------------------------------------------------------------
 alter table public.news_searches enable row level security;
 
--- Drop existing policies if re-running this script
 drop policy if exists "Allow anon read access" on public.news_searches;
 drop policy if exists "Allow anon insert"      on public.news_searches;
-
-create policy "Allow anon read access"
-    on public.news_searches
-    for select
-    to anon
-    using (true);
-
--- Allow client-side inserts as well (optional). Comment out if you
--- want all writes to go through the service-role key on the server.
-create policy "Allow anon insert"
-    on public.news_searches
-    for insert
-    to anon
-    with check (true);
 
 -- ---------------------------------------------------------------
 -- Convenience view: most recent searches first
@@ -62,7 +52,9 @@ create or replace view public.news_searches_recent as
     order by created_at desc
     limit 100;
 
-grant select on public.news_searches_recent to anon, authenticated;
+-- Server-only, consistent with the table above (anon has no table policies).
+grant select on public.news_searches_recent to authenticated;
+revoke select on public.news_searches_recent from anon;
 
 -- ---------------------------------------------------------------
 -- audit_log
