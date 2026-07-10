@@ -87,12 +87,19 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Link
               href="/compliance"
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-emerald-500/40"
             >
               View Compliance Status
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/obligations"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-purple-500/40"
+            >
+              Manage Obligations
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link

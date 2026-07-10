@@ -156,21 +156,31 @@ export default function CompliancePage() {
           <ArrowLeft className="h-4 w-4" />
           Back to dashboard
         </Link>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Compliance Dashboard</h1>
             <p className="text-slate-400">
               Your organization's AI governance compliance status and readiness
             </p>
           </div>
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-950/50 hover:border-amber-600/50"
-            title="Export compliance report as PDF"
-          >
-            <Download className="h-4 w-4" />
-            Export Report
-          </button>
+          <div className="flex gap-2">
+            <Link
+              href="/obligations"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-700/50 bg-cyan-950/30 px-4 py-2 text-sm font-medium text-cyan-300 transition hover:bg-cyan-950/50 hover:border-cyan-600/50"
+              title="View and manage all obligations"
+            >
+              <ClipboardList className="h-4 w-4" />
+              View Obligations
+            </Link>
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-950/50 hover:border-amber-600/50"
+              title="Export compliance report as PDF"
+            >
+              <Download className="h-4 w-4" />
+              Export Report
+            </button>
+          </div>
         </div>
       </div>
 
