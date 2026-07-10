@@ -113,8 +113,15 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
   - Current finding: 10 npm vulnerabilities detected (4 moderate, 5 high, 1 critical)
   - Deployment status: ⏳ Blocked by missing Vercel secret (see critical actions below)
 
+- **DNA-GOV-004: Cost Anomaly Detection** — Detects unexpected Vercel/Supabase spending to prevent bill shock
+  - Status: Implemented and tested ✅, ready for production deployment
+  - Verification: 26/26 tests, Vercel cron daily at 3 AM UTC
+  - Implementation: lib/vercel-cost.ts (anomaly detection), /api/cost-monitoring (cron orchestrator)
+  - Impact: <24 hour spend anomaly detection (vs. manual monthly billing review)
+  - Deployment status: ⏳ Blocked by missing Vercel secret
+
 **Next DNA candidates:**
-- DNA-GOV-004: Cost Anomaly Detection (Vercel, Supabase spend monitoring)
+- DNA-GOV-005: Deployment Health Monitoring (build failures, long deployments)
 
 ---
 
@@ -158,12 +165,21 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
   - Badges show live count of each risk level across workspace
   - Links directly to inventory for continuing assessments
 
-**Testing:**
-- `tests/api-risk-assessments.test.ts` — 19 comprehensive tests
+**Testing - Full Suite Status: 252/252 passing ✅**
+- `tests/api-risk-assessments.test.ts` — 19 tests
   - calculateRiskScore(): boundary testing (30, 60, 75 thresholds), all question types, empty/unknown responses
   - getProgressSummary(): progress calculation, duplicate handling, completion tracking
   - Question definitions: count, required fields, category distribution, type validation
-  - All 19 tests passing ✅
+- `tests/dna-gov-004.test.ts` — 26 tests (NEW)
+  - calculateStdDev(): edge cases (empty, single value, identical, large values)
+  - detectCostAnomaly(): spike detection, normal variation, threshold multipliers
+  - getAlertSeverity(): boundary classification, priority mapping
+  - Integration: realistic cost spike scenarios
+- `tests/api-obligations.test.ts` — 23 tests (NEW)
+  - Request validation, status filtering, priority management
+  - Obligation lifecycle, persistence, bulk operations
+  - Error handling (401, 404, 400, 500)
+- Plus: 184 existing tests across auth, routes, monitoring, health, utils
 
 - `app/remediation/page.tsx` — Compliance obligation planning UI
   - Generates action plan based on risk level and specific assessment answers
@@ -197,12 +213,28 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
 8. Dashboard shows risk level and compliance status across all systems
 9. Can continue or re-assess systems at any time
 
+**Phase 1 Follow-up: Obligation Tracking (NEW — COMPLETE)**
+- ✅ `/api/obligations` — Full CRUD API for compliance obligations
+  - POST: Persist obligations from assessment results (bulk support)
+  - GET: List obligations by status/priority/company
+  - PATCH: Update obligation status, due date, priority
+  - All endpoints RLS-scoped, full error handling
+- ✅ `/obligations` — Compliance obligations dashboard
+  - Real-time progress tracking (% complete, in-progress count)
+  - Filter by status (identified/in_progress/completed/not_applicable)
+  - Filter by priority (critical/high/medium/low)
+  - Inline status updates with expandable details
+  - Displays critical obligation count and timelines
+- ✅ Auto-persistence: Remediation page now persists obligations to database
+- ✅ Dashboard integration: Step 4 shows obligation progress on main dashboard
+- ✅ Tests: 23/23 passing for API, full integration verified
+
 **Next Phase 1 features (unblocked):**
 - Compliance recommendations engine: "For high-risk systems, implement X/Y/Z"
 - Bulk assessment export (PDF report aggregating all system assessments)
 - Assessment history and versioning (track improvements over time)
-- Obligation tracking: mark as complete/in-progress, assign ownership
 - Obligation evidence upload (attach documentation proving compliance)
+- Obligation ownership/assignment (delegate to team members)
 
 ---
 
