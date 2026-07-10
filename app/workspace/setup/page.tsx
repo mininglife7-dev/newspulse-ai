@@ -41,6 +41,16 @@ export default function WorkspaceSetupPage() {
       return;
     }
 
+    if (
+      !formData.companyName.trim() ||
+      !formData.country.trim() ||
+      !formData.industry.trim()
+    ) {
+      setError("Please fill in required fields");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/workspace", {
         method: "POST",
@@ -51,8 +61,13 @@ export default function WorkspaceSetupPage() {
         window.location.href = "/auth/signin?redirect=/workspace/setup";
         return;
       }
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status} ${res.statusText}`);
+      }
+      const data = await res.json().catch(() => {
+        throw new Error("Server error - unable to parse response");
+      });
+      if (!data.ok) {
         throw new Error(data.error || "Failed to save. Please try again.");
       }
       setSuccess(true);

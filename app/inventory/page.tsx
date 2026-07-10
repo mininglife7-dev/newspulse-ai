@@ -62,13 +62,18 @@ export default function InventoryPage() {
         window.location.href = '/auth/signin?redirect=/inventory';
         return;
       }
-      const data = await res.json();
       if (res.status === 409) {
         setNeedsSetup(true);
         setSystems([]);
         return;
       }
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to load');
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status} ${res.statusText}`);
+      }
+      const data = await res.json().catch(() => {
+        throw new Error('Server error - unable to parse response');
+      });
+      if (!data.ok) throw new Error(data.error || 'Failed to load');
       setSystems(data.systems);
     } catch (err: any) {
       setLoadError(err?.message || 'Could not load your AI systems');
@@ -94,8 +99,13 @@ export default function InventoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to save');
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status} ${res.statusText}`);
+      }
+      const data = await res.json().catch(() => {
+        throw new Error('Server error - unable to parse response');
+      });
+      if (!data.ok) throw new Error(data.error || 'Failed to save');
       setForm({ name: '', systemType: '', vendor: '', purpose: '', status: 'active' });
       setShowForm(false);
       await load();
