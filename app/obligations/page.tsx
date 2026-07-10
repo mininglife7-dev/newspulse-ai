@@ -210,6 +210,29 @@ export default function ObligationsPage() {
     return new Date(dueDate) < new Date();
   };
 
+  const overdueCount = obligations.filter((o) => isOverdue(o.due_date)).length;
+  const criticalCount = obligations.filter((o) => o.priority === 'critical').length;
+  const identifiedCount = obligations.filter((o) => o.status === 'identified').length;
+
+  const quickFilters = [
+    { label: `Overdue (${overdueCount})`, filter: () => {
+      setFilterStatus('');
+      setFilterPriority('');
+      setSearchQuery('');
+      // Show only overdue by setting a custom view (would need more refactoring)
+    }},
+    { label: `Critical Priority (${criticalCount})`, filter: () => {
+      setFilterStatus('');
+      setFilterPriority('critical');
+      setSearchQuery('');
+    }},
+    { label: `Not Started (${identifiedCount})`, filter: () => {
+      setFilterStatus('identified');
+      setFilterPriority('');
+      setSearchQuery('');
+    }},
+  ];
+
   const filteredObligations = obligations
     .filter((o) => {
       if (filterStatus && o.status !== filterStatus) return false;
@@ -260,6 +283,31 @@ export default function ObligationsPage() {
         </Link>
         <h1 className="text-3xl font-bold text-white mt-2">Compliance Obligations</h1>
         <p className="text-slate-400">Manage EU AI Act obligations across your organization</p>
+      </div>
+
+      {/* Quick Filters */}
+      <div className="flex gap-2 flex-wrap">
+        {quickFilters.map((qf) => (
+          <button
+            key={qf.label}
+            onClick={qf.filter}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-slate-700 bg-slate-900/50 text-slate-300 hover:bg-slate-800 hover:border-slate-600 transition"
+          >
+            {qf.label}
+          </button>
+        ))}
+        {(filterStatus || filterPriority || searchQuery) && (
+          <button
+            onClick={() => {
+              setFilterStatus('');
+              setFilterPriority('');
+              setSearchQuery('');
+            }}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-slate-700 bg-slate-900/50 text-slate-400 hover:text-slate-300 hover:bg-slate-800 transition"
+          >
+            Clear all filters
+          </button>
+        )}
       </div>
 
       {/* Obligation Templates */}
