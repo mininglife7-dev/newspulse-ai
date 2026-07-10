@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CheckCircle, ArrowRight, AlertCircle, Building2, AlertTriangle, Shield } from 'lucide-react';
+import { CheckCircle, ArrowRight, AlertCircle, Building2, AlertTriangle, Shield, Bell } from 'lucide-react';
 import { createRouteClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
@@ -83,16 +83,27 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Section */}
-      <div>
-        <h1 className="text-4xl font-bold text-white">
-          {firstName ? `Welcome, ${firstName}` : 'Welcome to EURO AI'}
-        </h1>
-        <p className="mt-2 text-lg text-slate-400">
-          {hasWorkspace
-            ? 'Here is where your organization stands'
-            : "Let's get your organization set up for AI governance"}
-        </p>
+      {/* Welcome Section with Notifications Link */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-bold text-white">
+            {firstName ? `Welcome, ${firstName}` : 'Welcome to EURO AI'}
+          </h1>
+          <p className="mt-2 text-lg text-slate-400">
+            {hasWorkspace
+              ? 'Here is where your organization stands'
+              : "Let's get your organization set up for AI governance"}
+          </p>
+        </div>
+        {hasWorkspace && (
+          <Link
+            href="/notifications"
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-800/50 border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50 transition"
+          >
+            <Bell className="h-4 w-4" />
+            Notifications
+          </Link>
+        )}
       </div>
 
       {hasWorkspace && (

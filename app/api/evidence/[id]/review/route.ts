@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logAuditEvent } from '@/lib/audit-log';
+import { createNotificationsForTeam } from '@/lib/notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -114,7 +115,7 @@ export async function PATCH(
     );
   }
 
-  // Log audit event
+  // Log audit event and create notifications
   const evidence = data?.[0];
   if (evidence) {
     const actionTypeMap: Record<string, string> = {
@@ -137,6 +138,37 @@ export async function PATCH(
         review_comments: body.review_comments || null,
       }
     );
+
+    // Create notifications for team
+    if (body.status === 'approved') {
+      await createNotificationsForTeam(
+        supabase,
+        ctx.workspaceId,
+        ctx.user.id,
+        'evidence_approved',
+        evidence.title || 'Evidence',
+        {
+          message: 'Evidence has been approved',
+          entityType: 'evidence',
+          entityId: evidence.id,
+          actionUrl: '/evidence-review',
+        }
+      );
+    } else if (body.status === 'rejected') {
+      await createNotificationsForTeam(
+        supabase,
+        ctx.workspaceId,
+        ctx.user.id,
+        'evidence_rejected',
+        evidence.title || 'Evidence',
+        {
+          message: body.review_comments || 'Evidence has been rejected',
+          entityType: 'evidence',
+          entityId: evidence.id,
+          actionUrl: '/evidence-review',
+        }
+      );
+    }
   }
 
   return NextResponse.json({

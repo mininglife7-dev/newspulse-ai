@@ -493,3 +493,57 @@ create policy "Members can read workspace audit_log"
 create policy "System can insert audit_log"
     on public.audit_log for insert
     with check (true);
+
+-- ---------------------------------------------------------------
+-- Notifications
+-- In-app notifications for deadline alerts, evidence reviews, plan updates
+-- ---------------------------------------------------------------
+create table if not exists public.notifications (
+    id                uuid        primary key default gen_random_uuid(),
+    workspace_id      uuid        not null references public.workspaces(id) on delete cascade,
+    user_id           uuid        not null references auth.users(id) on delete cascade,
+    type              text        not null, -- deadline_reminder, evidence_rejected, evidence_approved, plan_completed, member_added, assessment_completed
+    title             text        not null,
+    message           text,
+    entity_type       text,       -- remediation_plan, evidence, risk_assessment, workspace_member
+    entity_id         uuid,
+    is_read           boolean     not null default false,
+    action_url        text,       -- e.g., /compliance, /evidence-review, /assessments/[id]
+    created_at        timestamptz not null default now(),
+    read_at           timestamptz
+);
+
+create index if not exists notifications_workspace_user_idx on public.notifications (workspace_id, user_id);
+create index if not exists notifications_user_created_idx on public.notifications (user_id, created_at desc);
+create index if not exists notifications_is_read_idx on public.notifications (is_read);
+
+-- Notifications: users can only read their own workspace notifications
+alter table public.notifications enable row level security;
+
+create policy "Users can read their own notifications"
+    on public.notifications for select
+    using (
+        user_id = auth.uid()
+        and exists (
+            select 1 from public.workspace_members
+            where workspace_id = notifications.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Notifications: system can insert notifications (service operations)
+create policy "System can insert notifications"
+    on public.notifications for insert
+    with check (true);
+
+-- Notifications: users can mark their own notifications as read
+create policy "Users can update their own notifications"
+    on public.notifications for update
+    using (user_id = auth.uid())
+    with check (user_id = auth.uid());
+
+-- Notifications: users can delete their own notifications
+create policy "Users can delete their own notifications"
+    on public.notifications for delete
+    using (user_id = auth.uid());
