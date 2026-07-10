@@ -6,6 +6,135 @@ Permanent record of all DNA (capabilities) that have evolved through disciplined
 
 ## Active DNA
 
+### DNA-GOV-003: Error Tracking and Alerting
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Risk Officer + Observability Engineer  
+
+#### Purpose
+Capture, aggregate, and surface production errors to provide system observability without requiring Founder access to external monitoring tools. Automatically categorize errors (database, auth, validation, etc.), track patterns, and alert when error patterns emerge or severity escalates.
+
+#### Problem Discovered
+Production failures are invisible until a customer reports them or logs are manually reviewed. No automated system tracks error patterns, frequency, or severity. When errors occur, Founder has no structured way to understand what's failing, how often, or why. This creates a gap between "system is experiencing problems" and "Founder understands the problems."
+
+#### Evidence
+- **Weakness:** Zero error tracking; failures invisible until manual investigation or customer complaints
+- **Impact:** Blind spot between symptom (slow/broken feature) and diagnosis (root cause unknown); response latency increases from minutes to hours
+- **Root cause:** No automated error capture and aggregation; Founder relies on external tools or customer feedback
+- **Discovery method:** Identified while building autonomous remediation (DNA-GOV-011) — system can detect failures but needs context to fix them intelligently
+- **Risk:** Repeated failures go unfixed; same bug recurs after autonomous remediation restarts service; patterns unidentified
+
+#### Inputs
+- Error objects (JavaScript Error or string messages)
+- Error context: endpoint, userId, custom context dict
+- Error metadata: status codes, stack traces
+- Aggregation window: real-time in-memory tracking
+
+#### Outputs
+```typescript
+interface ErrorEvent {
+  id: string
+  timestamp: string
+  severity: 'critical' | 'high' | 'medium' | 'low'
+  category: 'runtime' | 'api' | 'database' | 'auth' | 'validation' | 'external-service' | 'unknown'
+  message: string
+  stack?: string
+  context?: Record<string, unknown>
+  userId?: string
+  endpoint?: string
+  statusCode?: number
+  affectedService: string
+  fingerprint: string  // Deduplication key
+}
+
+interface ErrorMetrics {
+  timestamp: string
+  totalErrors: number
+  criticalErrors: number
+  errorsByCategory: Record<string, number>
+  errorsBySeverity: Record<string, number>
+  errorsByService: Record<string, number>
+  uniquePatterns: number
+  errorRate: number  // Errors per minute
+  topPatterns: ErrorPattern[]
+  newPatternsLastHour: ErrorPattern[]
+  resolvedPatterns: ErrorPattern[]
+}
+```
+
+#### Implementation
+- `lib/error-tracking.ts` — Core error tracking library (307 LoC)
+  - `captureError(error, options)` — Capture error event with automatic classification and severity
+  - `classifyError(error)` — Categorize error by keyword patterns (database, auth, validation, api, external, runtime)
+  - `calculateSeverity(message, statusCode, category)` — Determine severity (critical/high/medium/low) based on error signal
+  - `aggregateErrorMetrics(errors)` — Build metrics from error collection: counts, patterns, rates
+  - `formatErrorAlert(metrics)` — Format metrics for Founder visibility with severity and recommendations
+  - `getErrorSummary(metrics)` — Quick summary line for dashboards
+  - `ErrorTracker` class — In-memory event store with filtering and pattern detection
+    - `captureError(event)` — Record event and update patterns
+    - `getMetrics()` — Aggregate metrics from current event window
+    - `getErrorsByCategory()/Severity()/Service()` — Filter errors
+    - `clearOldErrors(minutes)` — Prune old events
+    - `reset()` — Clear all state
+- `app/api/error-tracking/route.ts` — HTTP endpoint for error capture and retrieval (100 LoC)
+  - `GET /api/error-tracking` — Retrieve current metrics and alert
+  - `POST /api/error-tracking` — Capture new error event
+  - `DELETE /api/error-tracking` — Reset tracker (for testing)
+  - Status codes: 200 (healthy), 206 (degraded), 201 (captured), 503 (error)
+  - Response headers: X-Total-Errors, X-Critical-Errors, X-Unique-Patterns, X-Error-Rate
+- `tests/error-tracking.test.ts` — 43 tests covering all operations
+
+#### Verification Method
+- **Unit tests:** 43 tests covering:
+  - Error classification: database, auth, validation, external, api, runtime detection
+  - Severity calculation: critical (500/503/pool), high (auth/database/4xx/timeout), medium (validation), low
+  - Error capture: fingerprinting for deduplication, context preservation, metadata extraction
+  - Metrics aggregation: counts by category/severity/service, pattern tracking, error rate calculation
+  - Pattern detection: top patterns by occurrence, fingerprint uniqueness
+  - Alert formatting: critical/warning/info severity based on metrics
+  - Tracker lifecycle: capture, filter, retrieve patterns, clear old events, reset
+  - Edge cases: long messages (fingerprint capping), missing properties, concurrent capture (async)
+- **All tests pass:** 43/43 ✅
+- **Build verification:** npm run build clean, TypeScript strict mode clean
+- **Full test suite:** 347 tests passing across 23 test files
+
+#### Dependencies
+- No external services (all tracking in-memory)
+- No database writes (ephemeral tracking for session)
+- Can be extended with Supabase persistence (future phase)
+
+#### Risks
+- **Memory leaks:** Unbounded event storage. Mitigation: Max 10k events in-memory; old events auto-purged; implement daily archival
+- **Fingerprint collisions:** Different errors mapped to same pattern. Mitigation: Deterministic hashing with message + endpoint + category
+- **False positives:** Validation errors flagged as high-severity. Mitigation: Validation errors marked as 'medium' not 'high'
+- **Alert fatigue:** Too many alerts = ignored. Mitigation: Only escalate on NEW patterns or sustained high error rate
+
+#### Rollback Method
+- Remove `/api/error-tracking` endpoint
+- Delete `lib/error-tracking.ts`
+- Delete `tests/error-tracking.test.ts`
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Detection time:** Capture errors within milliseconds of occurrence (in-process)
+2. **Pattern recognition:** Deduplicate similar errors; identify top 5 error types within 1 minute
+3. **Severity accuracy:** Distinguish critical (500 errors) from informational (validation) correctly 95%+ of time
+4. **Founder visibility:** Alert generated within 1 minute of critical error; Founder can act without external tool access
+5. **Scalability:** Sustain 100+ errors/minute without memory leak or performance degradation
+6. **Observability:** All error properties (message, stack, context, user) captured and queryable
+
+#### Next Steps
+1. ✅ **Implement core engine:** 307 LoC with 43 tests — DONE
+2. ✅ **Create API endpoint:** GET/POST/DELETE routes with proper status codes — DONE
+3. **Wire to remediation:** Connect to autonomous remediation (DNA-GOV-011) for intelligent fix decisions
+4. **Persistence:** Store error events in Supabase for cross-session and historical analysis
+5. **Dashboard:** Errors surface in Founder Alert Hub (DNA-GOV-005) with recommended actions
+6. **Auto-fixes:** Link error patterns to remediation policies (e.g., database errors → restart DB, auth errors → invalidate cache)
+7. **Trend analysis:** Track error rates over time to detect slow degradation vs. acute failures
+
+---
+
 ### DNA-GOV-001: Blocking Condition Detector
 
 **Status:** Active  
