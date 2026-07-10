@@ -183,7 +183,7 @@ export default function AssessmentsPage() {
                         {assessment.risk_level.toUpperCase()}
                       </div>
                       <Link
-                        href={`/risk-assessment?id=${assessment.ai_system_id}`}
+                        href={`/assessments/${assessment.id}`}
                         className="mt-2 text-xs text-blue-400 hover:text-blue-300"
                       >
                         View Details →
