@@ -19,8 +19,6 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Node 22+: @supabase/realtime-js requires the native WebSocket
-          # global at import time. Matches Vercel's runtime.
           node-version: '22'
           cache: 'npm'
 
@@ -36,9 +34,6 @@ jobs:
 
       - name: Test
         run: npm test
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-stub
 
       - name: Build
         run: npm run build
@@ -49,3 +44,30 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-stub
           SUPABASE_SERVICE_ROLE_KEY: build-time-stub
+
+      - name: Smoke test (pages, buttons' endpoints, API truthfulness)
+        run: npm run test:smoke
+
+  e2e:
+    name: E2E smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E smoke suite
+        run: npm run test:e2e

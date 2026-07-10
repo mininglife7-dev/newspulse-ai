@@ -23,7 +23,7 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 
 ## 📸 Screenshots
 
-> _Add screenshots here once you've deployed — drop them in `/public/screenshots/` and reference below._
+> Captured automatically by the E2E smoke suite (`npm run test:e2e`) against mocked APIs.
 
 | Search | History |
 |---|---|
@@ -39,7 +39,7 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 - 📋 **History table** — keyword, date, count, expand-to-view, re-run, clear all
 - 🎨 **Dark, polished UI** — Tailwind + lucide-react + Inter font
 - ⚡ **API-first** — `POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`
-- 🚀 **Vercel-ready** — auto-deploy on push to `main` via GitHub Actions
+- 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
 - 🧬 **Evolution engine (CEIS)** — a self-improvement subsystem that studies public AI knowledge weekly, extracts principles, and proposes evidence-based missions behind quality gates — see [`docs/CEIS.md`](./docs/CEIS.md)
 
 ---
@@ -108,19 +108,9 @@ vercel env add SUPABASE_SERVICE_ROLE_KEY
 vercel --prod
 ```
 
-### Option B — GitHub auto-deploy
+### Option B — GitHub auto-deploy (active)
 
-Push to `main`. The included [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) builds and deploys to Vercel automatically. Set three GitHub secrets first:
-
-- `VERCEL_TOKEN` — from https://vercel.com/account/tokens
-- `VERCEL_ORG_ID` — from `.vercel/project.json` after `vercel link`
-- `VERCEL_PROJECT_ID` — from `.vercel/project.json` after `vercel link`
-
-```bash
-gh secret set VERCEL_TOKEN
-gh secret set VERCEL_ORG_ID
-gh secret set VERCEL_PROJECT_ID
-```
+Connect the repository to the Vercel project (Vercel Dashboard → Project → Settings → Git). Vercel then builds and deploys automatically: every push to `main` goes to production, and every pull request gets a preview deployment with its own URL commented on the PR.
 
 ---
 
@@ -171,8 +161,7 @@ newspulse-ai/
 ├── types/
 │   └── index.ts                     # shared API types
 ├── .github/workflows/
-│   ├── ci.yml                       # lint, type-check, build
-│   └── deploy.yml                   # Vercel production deploy on push to main
+│   └── ci.yml                       # lint, type-check, build
 ├── .env.example
 ├── middleware.ts                    # rate limit on /api/search
 ├── next.config.js
@@ -192,10 +181,18 @@ npm run build         # production build
 npm run start         # production server
 npm run lint          # next lint
 npm run type-check    # tsc --noEmit
+npm test              # unit/integration tests (vitest)
+npm run test:e2e      # Playwright smoke suite against mocked APIs (no secrets needed)
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
-npm test              # vitest unit tests (CEIS engine)
 ```
+
+### Optional hardening
+
+Set `ADMIN_TOKEN` in the deployment environment to protect the destructive
+endpoints (`DELETE /api/history`, `DELETE /api/history/:id`). When set, the
+UI prompts for the token before clearing history. When unset, behavior is
+unchanged (open deletes — fine for a private demo, not for a public URL).
 
 ---
 

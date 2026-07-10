@@ -10,6 +10,8 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { Search as SearchIcon, ArrowRight, Sparkles } from 'lucide-react';
 import NewsCard from '@/components/NewsCard';
+import EmptyState from '@/components/EmptyState';
+import { SUMMARY_MODEL } from '@/lib/constants';
 import type { NewsArticle } from '@/lib/supabase';
 
 const SUGGESTIONS = [
@@ -27,6 +29,10 @@ export default function HomePage() {
   const [results, setResults] = useState<NewsArticle[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  // The query the visible results actually belong to. The header must never
+  // label results with the live input value — the user can retype without
+  // searching, and the screen would contradict its own data.
+  const [lastQuery, setLastQuery] = useState('');
   const autoRanRef = useRef(false);
 
   const runSearch = useCallback(async (q: string) => {
@@ -38,6 +44,7 @@ export default function HomePage() {
     setError(null);
     setResults([]);
     setSearched(true);
+    setLastQuery(q);
 
     try {
       const res = await fetch('/api/search', {
@@ -50,9 +57,6 @@ export default function HomePage() {
         throw new Error(json.error || `Search failed (${res.status})`);
       }
       setResults(json.results as NewsArticle[]);
-      if ((json.results as NewsArticle[]).length === 0) {
-        setError('No results found. Try a different keyword.');
-      }
     } catch (err: any) {
       console.error(err);
       setError(err?.message || 'Something went wrong.');
@@ -144,7 +148,10 @@ export default function HomePage() {
               <button
                 key={s}
                 type="button"
-                onClick={() => setKeyword(s)}
+                onClick={() => {
+                  setKeyword(s);
+                  runSearch(s);
+                }}
                 className="rounded-full border border-border bg-card px-3 py-1 text-white/70 transition hover:border-accent-500/60 hover:text-accent-300"
               >
                 {s}
@@ -174,16 +181,27 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* No results — a truthful empty state, not an error */}
+      {!loading && searched && !error && results.length === 0 && (
+        <section className="mx-auto w-full max-w-2xl">
+          <EmptyState
+            icon={<SearchIcon className="h-6 w-6" />}
+            title={`No results for "${lastQuery}"`}
+            description="Try a different keyword or a broader topic."
+          />
+        </section>
+      )}
+
       {/* Results */}
       {!loading && results.length > 0 && (
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white/90">
               {results.length} result{results.length === 1 ? '' : 's'} for{' '}
-              <span className="text-accent-300">"{keyword}"</span>
+              <span className="text-accent-300">"{lastQuery}"</span>
             </h2>
             <span className="text-xs text-white/40">
-              Summaries by gpt-4o-mini
+              Summaries by {SUMMARY_MODEL}
             </span>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

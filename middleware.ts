@@ -7,17 +7,25 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 const buckets = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 60_000; // 1 minute
-const MAX_REQUESTS = 30;  // per IP per window
 
-function rateLimit(ip: string) {
+// Per-IP request budgets per window, by route class.
+// /api/search is expensive (Firecrawl + OpenAI); the rest of the API
+// (including the destructive history DELETE endpoints) gets its own
+// budget so browsing history never competes with searching.
+const LIMITS = {
+  search: 30,
+  api: 60,
+} as const;
+
+function rateLimit(key: string, max: number) {
   const now = Date.now();
-  const bucket = buckets.get(ip);
+  const bucket = buckets.get(key);
   if (!bucket || bucket.resetAt < now) {
-    buckets.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return { allowed: true, remaining: MAX_REQUESTS - 1, resetIn: WINDOW_MS };
+    buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
+    return { allowed: true, remaining: max - 1, resetIn: WINDOW_MS };
   }
   bucket.count += 1;
-  if (bucket.count > MAX_REQUESTS) {
+  if (bucket.count > max) {
     return {
       allowed: false,
       remaining: 0,
@@ -26,7 +34,7 @@ function rateLimit(ip: string) {
   }
   return {
     allowed: true,
-    remaining: MAX_REQUESTS - bucket.count,
+    remaining: max - bucket.count,
     resetIn: bucket.resetAt - now,
   };
 }
@@ -34,21 +42,32 @@ function rateLimit(ip: string) {
 export function middleware(req: NextRequest) {
   const url = req.nextUrl;
 
-  // Only apply to API routes that perform expensive work
-  const isExpensive =
+  // Health checks are for uptime probes — never rate-limit them.
+  if (
+    !url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/api/health')
+  ) {
+    return NextResponse.next();
+  }
+
+  // /api/ceis/run kicks off a full evolution cycle (many upstream calls) —
+  // as expensive as search, so it shares that budget.
+  const scope =
     url.pathname.startsWith('/api/search') ||
-    url.pathname.startsWith('/api/ceis/run');
-  if (!isExpensive) return NextResponse.next();
+    url.pathname.startsWith('/api/ceis/run')
+      ? 'search'
+      : 'api';
+  const max = LIMITS[scope];
 
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     req.headers.get('x-real-ip') ||
     'anonymous';
 
-  const { allowed, remaining, resetIn } = rateLimit(ip);
+  const { allowed, remaining, resetIn } = rateLimit(`${scope}:${ip}`, max);
 
   const headers = new Headers();
-  headers.set('X-RateLimit-Limit', String(MAX_REQUESTS));
+  headers.set('X-RateLimit-Limit', String(max));
   headers.set('X-RateLimit-Remaining', String(remaining));
   headers.set('X-RateLimit-Reset', String(Math.ceil(resetIn / 1000)));
 
@@ -70,5 +89,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/search/:path*', '/api/ceis/run/:path*'],
+  matcher: ['/api/:path*'],
 };

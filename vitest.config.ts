@@ -1,14 +1,17 @@
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
+import path from 'node:path';
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('.', import.meta.url)),
+      '@': path.resolve(__dirname, '.'),
     },
   },
   test: {
-    include: ['tests/**/*.test.ts'],
     environment: 'node',
+    include: ['tests/**/*.test.ts'],
+    // Env-dependent code paths are exercised explicitly per test;
+    // start every test file with a clean slate.
+    unstubEnvs: true,
   },
 });
