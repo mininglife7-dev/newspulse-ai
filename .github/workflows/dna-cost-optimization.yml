@@ -1,0 +1,166 @@
+name: 'DNA-GOV-014: Cost Optimization Monitoring'
+
+on:
+  schedule:
+    # Run daily at 09:00 UTC (before DNA-008 security scan at 10:00 UTC)
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze-costs:
+    name: Monitor Costs and Detect Anomalies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze deployment costs
+        id: vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::notice::VERCEL_TOKEN not configured - cost analysis skipped"
+            exit 0
+          fi
+
+          echo "📊 Analyzing Vercel costs..."
+
+          # Get current billing info (note: Vercel API has limited billing data)
+          # For now, we'll estimate based on deployment count and usage patterns
+          DEPLOYMENTS=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?limit=100" | \
+            jq '.deployments | length' 2>/dev/null || echo "unknown")
+
+          echo "Recent deployments: $DEPLOYMENTS"
+          echo "vercel_deployments=$DEPLOYMENTS" >> $GITHUB_OUTPUT
+
+      - name: Analyze database costs
+        id: supabase
+        env:
+          SUPABASE_API_TOKEN: ${{ secrets.SUPABASE_API_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          if [ -z "$SUPABASE_API_TOKEN" ] || [ -z "$SUPABASE_PROJECT_ID" ]; then
+            echo "::notice::Supabase credentials not configured - cost analysis skipped"
+            exit 0
+          fi
+
+          echo "📊 Analyzing Supabase costs..."
+
+          # Get project usage stats
+          RESPONSE=$(curl -s -H "Authorization: Bearer $SUPABASE_API_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/usage" 2>/dev/null)
+
+          # Extract key metrics
+          DB_SIZE=$(echo "$RESPONSE" | jq -r '.usage[0].db_size // "unknown"' 2>/dev/null || echo "unknown")
+          REALTIME_MB=$(echo "$RESPONSE" | jq -r '.usage[0].realtime_message_count // 0' 2>/dev/null || echo "0")
+
+          echo "Database size: ${DB_SIZE} bytes"
+          echo "Realtime usage: ${REALTIME_MB} messages"
+
+          echo "supabase_db_size=$DB_SIZE" >> $GITHUB_OUTPUT
+          echo "supabase_realtime=$REALTIME_MB" >> $GITHUB_OUTPUT
+
+      - name: Check for cost anomalies
+        id: anomaly
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL not configured - anomaly check skipped"
+            exit 0
+          fi
+
+          echo "🔍 Checking for cost anomalies..."
+
+          # Call the cost analysis API
+          RESPONSE=$(curl -s "$DEPLOY_URL/api/cost-analysis")
+
+          # Check for anomalies
+          ANOMALY_DETECTED=$(echo "$RESPONSE" | jq -r '.anomalyDetected // false' 2>/dev/null)
+          TREND=$(echo "$RESPONSE" | jq -r '.trend // "stable"' 2>/dev/null)
+
+          if [ "$ANOMALY_DETECTED" = "true" ]; then
+            echo "⚠️ Cost anomaly detected!"
+            echo "anomaly_detected=true" >> $GITHUB_OUTPUT
+            echo "$RESPONSE" | jq '.' > /tmp/cost-analysis.json
+          elif [ "$TREND" != "stable" ]; then
+            echo "📈 Cost trend: $TREND"
+            echo "anomaly_detected=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Costs are within normal range"
+            echo "anomaly_detected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create cost alert if needed
+        if: steps.anomaly.outputs.anomaly_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let analysisData = {};
+            try {
+              analysisData = JSON.parse(fs.readFileSync('/tmp/cost-analysis.json', 'utf8'));
+            } catch (e) {
+              analysisData = { message: 'Unable to read analysis data' };
+            }
+
+            const monthlyEstimate = analysisData.monthlyEstimate || 'unknown';
+            const previousMonth = analysisData.previousMonthCost || 'unknown';
+            const recommendations = analysisData.recommendations || [];
+
+            const body = `## 💰 Cost Anomaly Alert
+
+**Alert Level:** Warning/Critical
+**Month-to-Date Estimate:** $${monthlyEstimate}
+**Previous Month Actual:** $${previousMonth}
+
+### Analysis
+${analysisData.analysis || 'Cost analysis available in deployment logs'}
+
+### Recommendations
+${recommendations.length > 0
+  ? recommendations.map(r => `- ${r}`).join('\n')
+  : 'Check detailed logs for optimization opportunities'}
+
+### Investigation
+- Review [Vercel Dashboard](https://vercel.com/dashboard)
+- Check [Supabase Billing](https://supabase.com/dashboard)
+- Monitor usage patterns in logs
+`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '💰 Cost Anomaly Detected',
+              body: body,
+              labels: ['cost', 'monitoring', 'warning'],
+              assignees: ['mininglife7-dev']
+            });
+
+      - name: Report cost status
+        run: |
+          echo "📋 Cost Optimization Summary"
+          echo "============================"
+          echo "Vercel Deployments: ${{ steps.vercel.outputs.vercel_deployments }}"
+          echo "Supabase DB Size: ${{ steps.supabase.outputs.supabase_db_size }}"
+          echo "Realtime Usage: ${{ steps.supabase.outputs.supabase_realtime }}"
+          echo "Anomaly Detected: ${{ steps.anomaly.outputs.anomaly_detected }}"
+
+          if [ -f /tmp/cost-analysis.json ]; then
+            echo ""
+            echo "Detailed Analysis:"
+            cat /tmp/cost-analysis.json | jq '.' || cat /tmp/cost-analysis.json
+          fi

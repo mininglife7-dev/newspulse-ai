@@ -24,6 +24,7 @@ export const dynamic = 'force-dynamic';
  * - DNA-GOV-008: Security vulnerabilities (CVEs, npm advisories)
  * - DNA-GOV-009: Performance regressions (build time, bundle size, latency)
  * - DNA-GOV-012: Deployment recovery (incident detection, auto-rollback)
+ * - DNA-GOV-014: Cost optimization (spending anomalies, trend analysis)
  *
  * Used by: Founder's monitoring dashboard, automated alerting
  */
