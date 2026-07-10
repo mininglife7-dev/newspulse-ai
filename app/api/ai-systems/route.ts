@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import type { Request } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,7 +57,21 @@ async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteCli
 }
 
 /** GET /api/ai-systems — list the caller's workspace AI-system inventory. */
-export async function GET() {
+export async function GET(req: Request) {
+  // Rate limit: 30 requests per minute per IP
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const rateLimitResult = rateLimit({ key: ip, endpoint: 'ai-systems' });
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: getRateLimitHeaders(rateLimitResult),
+      }
+    );
+  }
+
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
@@ -75,21 +91,38 @@ export async function GET() {
     console.error('[api/ai-systems] list failed:', error);
     return NextResponse.json(
       { ok: false, error: 'Could not load AI systems' },
-      { status: 500 }
+      { status: 500, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }
-  return NextResponse.json({ ok: true, systems: data ?? [] });
+  return NextResponse.json(
+    { ok: true, systems: data ?? [] },
+    { headers: getRateLimitHeaders(rateLimitResult) }
+  );
 }
 
 /** POST /api/ai-systems — add a system to the workspace inventory. */
 export async function POST(req: Request) {
+  // Rate limit: 30 requests per minute per IP
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const rateLimitResult = rateLimit({ key: ip, endpoint: 'ai-systems' });
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: getRateLimitHeaders(rateLimitResult),
+      }
+    );
+  }
+
   let body: CreateAiSystemBody;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json(
       { ok: false, error: 'Invalid JSON body' },
-      { status: 400 }
+      { status: 400, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }
 
@@ -148,8 +181,11 @@ export async function POST(req: Request) {
     console.error('[api/ai-systems] insert failed:', error);
     return NextResponse.json(
       { ok: false, error: 'Could not save the AI system' },
-      { status: 500 }
+      { status: 500, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }
-  return NextResponse.json({ ok: true, system: data });
+  return NextResponse.json(
+    { ok: true, system: data },
+    { headers: getRateLimitHeaders(rateLimitResult) }
+  );
 }

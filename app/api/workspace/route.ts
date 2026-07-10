@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import type { Request } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,13 +34,27 @@ function slugify(name: string): string {
  * write is checked by Row Level Security.
  */
 export async function POST(req: Request) {
+  // Rate limit: 10 requests per minute per IP
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const rateLimitResult = rateLimit({ key: ip, endpoint: 'workspace' });
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'Rate limit exceeded. Too many workspace creation attempts.' },
+      {
+        status: 429,
+        headers: getRateLimitHeaders(rateLimitResult),
+      }
+    );
+  }
+
   let body: WorkspaceSetupBody;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json(
       { ok: false, error: 'Invalid JSON body' },
-      { status: 400 }
+      { status: 400, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }
 
@@ -138,9 +154,12 @@ export async function POST(req: Request) {
     console.warn('[api/workspace] profile upsert failed:', profileError);
   }
 
-  return NextResponse.json({
-    ok: true,
-    workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name },
-    companyId: company.id,
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name },
+      companyId: company.id,
+    },
+    { headers: getRateLimitHeaders(rateLimitResult) }
+  );
 }

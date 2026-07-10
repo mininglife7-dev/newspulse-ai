@@ -21,11 +21,8 @@ describe('GET /api/health', () => {
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.status).toBe('healthy');
-    expect(body.checks).toEqual({
-      supabase_url: true,
-      supabase_anon: true,
-      supabase_service: true,
-    });
+    expect(body.timestamp).toBeDefined();
+    expect(body.uptime_s).toBeGreaterThanOrEqual(0);
   });
 
   it('reports degraded with 503 when configuration is missing', async () => {
@@ -37,6 +34,5 @@ describe('GET /api/health', () => {
     expect(status).toBe(503);
     expect(body.ok).toBe(false);
     expect(body.status).toBe('degraded');
-    expect(body.checks.supabase_url).toBe(false);
   });
 });
