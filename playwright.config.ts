@@ -4,8 +4,9 @@ const MOCK_PORT = 4545;
 const APP_PORT = 3100;
 
 /**
- * E2E smoke suite. External services (Firecrawl, OpenAI, Supabase) are
- * replaced by tests/e2e/mock-services.mjs, so no secrets are needed.
+ * E2E smoke suite. Supabase is replaced by tests/e2e/mock-services.mjs (which
+ * 404s every request → "no session"), so no secrets are needed and the
+ * signed-out flows can be exercised deterministically.
  *
  * PW_CHROMIUM_PATH: optional path to a pre-installed Chromium (used in
  * sandboxes where `playwright install` is unavailable). CI installs the
@@ -36,10 +37,6 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
-        FIRECRAWL_API_KEY: 'fc-e2e-test',
-        FIRECRAWL_BASE_URL: `http://127.0.0.1:${MOCK_PORT}/firecrawl`,
-        OPENAI_API_KEY: 'sk-e2e-test',
-        OPENAI_BASE_URL: `http://127.0.0.1:${MOCK_PORT}/openai/v1`,
         NEXT_PUBLIC_SUPABASE_URL: `http://127.0.0.1:${MOCK_PORT}/supabase`,
         NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_publishable_e2e',
         SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_e2e',
