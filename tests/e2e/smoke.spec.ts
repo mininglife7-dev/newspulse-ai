@@ -24,18 +24,24 @@ test('home page renders search UI', async ({ page }) => {
 
 test('search happy path returns labelled AI summaries', async ({ page }) => {
   await page.goto('/');
-  await page.getByPlaceholder(/Try "AI regulation"/).fill('artificial intelligence');
+  await page
+    .getByPlaceholder(/Try "AI regulation"/)
+    .fill('artificial intelligence');
   await page.getByRole('button', { name: /Search/ }).click();
 
   await expect(
     page.getByRole('heading', { name: /3 results for/ })
   ).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'Researchers Announce Major AI Breakthrough' })
+    page.getByRole('link', {
+      name: 'Researchers Announce Major AI Breakthrough',
+    })
   ).toBeVisible();
   // Transparency: every summary is explicitly labelled as AI-generated
   await expect(page.getByText('AI-generated summary')).toHaveCount(3);
   await expect(page.getByText(/Mock AI summary of/).first()).toBeVisible();
+  // Honesty: real (non-demo) results must never be labelled "demo/sample data".
+  await expect(page.getByText(/demo mode/i)).toHaveCount(0);
 
   // Let the card fade-in animation finish so screenshots are clean.
   await page.waitForTimeout(1200);
@@ -64,9 +70,7 @@ test('history lists the saved search and can expand results', async ({
   ).toBeVisible();
 });
 
-test('clear history empties the table after confirmation', async ({
-  page,
-}) => {
+test('clear history empties the table after confirmation', async ({ page }) => {
   await page.goto('/history');
   page.on('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: /Clear History/ }).click();

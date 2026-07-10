@@ -48,6 +48,29 @@ describe('Governance State Builder', () => {
     expect(state.launchReadiness.percentage).toBeLessThanOrEqual(100);
   });
 
+  it('engineeringReadiness.percentage averages only the engineering categories', () => {
+    const state = buildDashboardState();
+
+    const engineering = state.categories.filter(
+      (c) => !c.name.includes('Legal') && !c.name.includes('Commercial')
+    );
+    const expected =
+      engineering.reduce((sum, c) => sum + c.currentScore, 0) /
+      Math.max(1, engineering.length);
+
+    // Numerator and denominator must cover the same set (regression guard for
+    // the subset-sum ÷ full-count averaging bug).
+    expect(state.engineeringReadiness.percentage).toBeCloseTo(expected, 5);
+    expect(state.engineeringReadiness.percentage).toBeGreaterThanOrEqual(0);
+    expect(state.engineeringReadiness.percentage).toBeLessThanOrEqual(100);
+    // The engineering subset excludes Legal/Commercial, so its average must be
+    // at least the naive full-set average that the old bug produced.
+    const buggy =
+      engineering.reduce((sum, c) => sum + c.currentScore, 0) /
+      Math.max(1, state.categories.length);
+    expect(state.engineeringReadiness.percentage).toBeGreaterThanOrEqual(buggy);
+  });
+
   it('enforces critical gate rule: red/unknown gates force NO-GO', () => {
     const state = buildDashboardState();
 

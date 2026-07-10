@@ -33,6 +33,11 @@ export default function HomePage() {
   // label results with the live input value — the user can retype without
   // searching, and the screen would contradict its own data.
   const [lastQuery, setLastQuery] = useState('');
+  // Whether the visible results are demo/sample data. Driven by the API's
+  // `_demo` flag — never assumed. A production deployment with real keys must
+  // never tell the user their results are fake.
+  const [isDemo, setIsDemo] = useState(false);
+  const [demoNote, setDemoNote] = useState<string | null>(null);
   const autoRanRef = useRef(false);
 
   const runSearch = useCallback(async (q: string) => {
@@ -45,6 +50,8 @@ export default function HomePage() {
     setResults([]);
     setSearched(true);
     setLastQuery(q);
+    setIsDemo(false);
+    setDemoNote(null);
 
     try {
       const res = await fetch('/api/search', {
@@ -57,6 +64,8 @@ export default function HomePage() {
         throw new Error(json.error || `Search failed (${res.status})`);
       }
       setResults(json.results as NewsArticle[]);
+      setIsDemo(Boolean(json._demo));
+      setDemoNote(typeof json._note === 'string' ? json._note : null);
     } catch (err: any) {
       console.error(err);
       setError(err?.message || 'Something went wrong.');
@@ -93,8 +102,7 @@ export default function HomePage() {
           AI-Powered News Intelligence
         </span>
         <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-          Search. Scrape.{' '}
-          <span className="gradient-text">Summarize.</span>
+          Search. Scrape. <span className="gradient-text">Summarize.</span>
         </h1>
         <p className="max-w-xl text-base text-white/60">
           NewsPulse AI scrapes the latest articles from across the web and
@@ -159,9 +167,15 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            <div className="rounded-lg border border-blue-500/30 bg-blue-950/20 px-3 py-2 text-center text-xs text-blue-300">
-              Running in demo mode — results are sample data. Configure API keys for real news search.
-            </div>
+          </div>
+        )}
+
+        {/* Demo-data notice — shown only when the API reports the visible
+            results are mock data (DEMO_MODE), never on a real deployment. */}
+        {!loading && searched && isDemo && (
+          <div className="mt-4 rounded-lg border border-blue-500/30 bg-blue-950/20 px-4 py-3 text-center text-xs text-blue-300">
+            {demoNote ??
+              'Demo mode — these results are sample data. Configure API keys for real news search.'}
           </div>
         )}
 

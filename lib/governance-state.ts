@@ -35,6 +35,14 @@ export function buildDashboardState(): DashboardState {
     categories
   );
 
+  // Engineering readiness = average currentScore across the engineering
+  // categories only (Legal/Commercial are tracked separately). The numerator
+  // and denominator must cover the SAME set — dividing the engineering-subset
+  // sum by the full category count understates the average.
+  const engineeringCategories = categories.filter(
+    (c) => !c.name.includes('Legal') && !c.name.includes('Commercial')
+  );
+
   return {
     lastUpdated: new Date().toISOString(),
     dataSource: 'Canonical Backend',
@@ -54,25 +62,25 @@ export function buildDashboardState(): DashboardState {
 
     infraHealth: calculateInfraHealth(blockers),
     customerReadiness: {
-      percentage: categories.find((c) => c.name.includes('Customer'))
-        ?.currentScore || 0,
+      percentage:
+        categories.find((c) => c.name.includes('Customer'))?.currentScore || 0,
       blockers: blockers
         .filter((b) => b.status === 'open' && b.impact.includes('customer'))
         .map((b) => b.id),
     },
 
     pilotReadiness: {
-      percentage: categories.find((c) => c.name.includes('Pilot'))
-        ?.currentScore || 0,
+      percentage:
+        categories.find((c) => c.name.includes('Pilot'))?.currentScore || 0,
       blockers: blockers
         .filter((b) => b.status === 'open' && b.impact.includes('pilot'))
         .map((b) => b.id),
     },
 
     engineeringReadiness: {
-      percentage: categories
-        .filter((c) => !c.name.includes('Legal') && !c.name.includes('Commercial'))
-        .reduce((sum, c) => sum + c.currentScore, 0) / Math.max(1, categories.length),
+      percentage:
+        engineeringCategories.reduce((sum, c) => sum + c.currentScore, 0) /
+        Math.max(1, engineeringCategories.length),
       blockers: blockers.filter((b) => b.status === 'open').map((b) => b.id),
     },
 
@@ -100,9 +108,9 @@ function buildLaunchBlockers(): LaunchBlocker[] {
       id: 'M-01',
       title: 'Production build is broken on main',
       status: 'resolved',
-      problem:
-        '`npm run build` exits 1; the app cannot be deployed at all.',
-      impact: 'Absolute blocker — nothing downstream (deploy, demo, pilot) is possible.',
+      problem: '`npm run build` exits 1; the app cannot be deployed at all.',
+      impact:
+        'Absolute blocker — nothing downstream (deploy, demo, pilot) is possible.',
       solution:
         'Lazy `Proxy`-based browser client; throws only on first *use* without env, never on import.',
       evidence: ['E1', 'E2'],
@@ -170,8 +178,7 @@ function buildLaunchBlockers(): LaunchBlocker[] {
       id: 'M-06',
       title: 'No monitoring, no alerting',
       status: 'open',
-      problem:
-        'If production dies, nobody learns it from the system.',
+      problem: 'If production dies, nobody learns it from the system.',
       impact: 'Medium — no observability post-deploy.',
       solution:
         'point free uptime monitor (UptimeRobot/BetterStack/Vercel checks) at `/api/health`.',
@@ -206,8 +213,7 @@ function buildLaunchBlockers(): LaunchBlocker[] {
       id: 'M-08',
       title: 'No UI/E2E test coverage',
       status: 'resolved',
-      problem:
-        'Zero test files on main → impossible to verify UI behavior.',
+      problem: 'Zero test files on main → impossible to verify UI behavior.',
       impact: 'Cannot certify the app works end-to-end.',
       solution:
         '6-test Playwright smoke suite driving the real app in a real browser.',
@@ -233,8 +239,7 @@ function buildLaunchBlockers(): LaunchBlocker[] {
       id: 'M-10',
       title: 'Production deployment verified and live',
       status: 'resolved',
-      problem:
-        'No production deployment has ever completed.',
+      problem: 'No production deployment has ever completed.',
       impact:
         'CRITICAL — this is the gate to GO. Everything else is moot without a running production app.',
       solution:
@@ -378,7 +383,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 95,
       priority: 'P0',
       owner: 'C',
-      evidence: 'CI failed on main push (no lockfile). Lockfile + test step added',
+      evidence:
+        'CI failed on main push (no lockfile). Lockfile + test step added',
     },
     {
       name: 'Deployment',
@@ -397,7 +403,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 85,
       priority: 'P1',
       owner: 'F',
-      evidence: 'vercel.json valid, 60s function budget; never exercised in production',
+      evidence:
+        'vercel.json valid, 60s function budget; never exercised in production',
     },
     {
       name: 'Security — dependencies',
@@ -406,7 +413,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 95,
       priority: 'P0',
       owner: 'C',
-      evidence: 'next@14.2.15: 1 critical → 14.2.35; residual 1 high/1 moderate',
+      evidence:
+        'next@14.2.15: 1 critical → 14.2.35; residual 1 high/1 moderate',
     },
     {
       name: 'Security — data (RLS)',
@@ -442,7 +450,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 85,
       priority: 'P1',
       owner: 'C',
-      evidence: 'Unit + E2E suites cover libs, API validation, auth guard, primary flow',
+      evidence:
+        'Unit + E2E suites cover libs, API validation, auth guard, primary flow',
     },
     {
       name: 'Performance',
@@ -460,7 +469,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 85,
       priority: 'P2',
       owner: 'C',
-      evidence: 'Graceful fallbacks verified by tests (OpenAI failure → fallback)',
+      evidence:
+        'Graceful fallbacks verified by tests (OpenAI failure → fallback)',
     },
     {
       name: 'Logging',
@@ -478,7 +488,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 80,
       priority: 'P1',
       owner: 'F+C',
-      evidence: '/api/health exists (now probe-safe); no uptime monitor configured',
+      evidence:
+        '/api/health exists (now probe-safe); no uptime monitor configured',
     },
     {
       name: 'Backup / recovery',
@@ -505,7 +516,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 80,
       priority: 'P1',
       owner: 'F',
-      evidence: 'No legal documents exist; app stores user search queries → GDPR exposure',
+      evidence:
+        'No legal documents exist; app stores user search queries → GDPR exposure',
     },
     {
       name: 'EU AI Act coverage',
@@ -542,7 +554,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 70,
       priority: 'P2',
       owner: 'C',
-      evidence: 'Every summary now carries "AI-generated summary" label; source + date shown',
+      evidence:
+        'Every summary now carries "AI-generated summary" label; source + date shown',
     },
     {
       name: 'UX / dashboard quality',
@@ -551,7 +564,8 @@ function buildCategoryScores(): CategoryScore[] {
       targetScore: 80,
       priority: 'P2',
       owner: 'C',
-      evidence: 'Verified working in real browser via E2E; screenshots captured',
+      evidence:
+        'Verified working in real browser via E2E; screenshots captured',
     },
     {
       name: 'Mobile readiness',
@@ -615,7 +629,9 @@ function calculateMissionStats(missions: Mission[]) {
   };
 }
 
-function evaluateCriticalGates(blockers: LaunchBlocker[]): DashboardState['criticalGates'] {
+function evaluateCriticalGates(
+  blockers: LaunchBlocker[]
+): DashboardState['criticalGates'] {
   const m10 = blockers.find((b) => b.id === 'M-10');
 
   return {
@@ -625,9 +641,8 @@ function evaluateCriticalGates(blockers: LaunchBlocker[]): DashboardState['criti
     ciStatus: (blockers.find((b) => b.id === 'M-02')?.status === 'resolved'
       ? 'pass'
       : 'fail') as 'pass' | 'fail' | 'unknown',
-    deploymentStatus: (m10?.status === 'resolved'
-      ? 'deployed'
-      : 'failed') as 'deployed' | 'failed' | 'unknown',
+    deploymentStatus: (m10?.status === 'resolved' ? 'deployed' : 'failed') as
+      'deployed' | 'failed' | 'unknown',
     securityAudit: (blockers.find((b) => b.id === 'M-03')?.status === 'resolved'
       ? 'pass'
       : 'warning') as 'pass' | 'fail' | 'warning' | 'unknown',
@@ -663,7 +678,9 @@ function calculateLaunchReadiness(
   // If deployment is verified, check for blocking-stage unresolved blockers
   if (criticalGates.deploymentStatus === 'deployed') {
     const blockingBLockers = blockers.filter(
-      (b) => b.blocksStage === 'blocking' && (b.status === 'open' || b.status === 'blocked')
+      (b) =>
+        b.blocksStage === 'blocking' &&
+        (b.status === 'open' || b.status === 'blocked')
     );
 
     if (blockingBLockers.length === 0) {
@@ -702,7 +719,10 @@ function calculateInfraHealth(blockers: LaunchBlocker[]) {
   return 'healthy';
 }
 
-function calculateSecurityStatus(blockers: LaunchBlocker[], categories: CategoryScore[]) {
+function calculateSecurityStatus(
+  blockers: LaunchBlocker[],
+  categories: CategoryScore[]
+) {
   const securityBlockers = blockers.filter((b) => b.id.match(/M-(03|05)/));
   const securityCategories = categories.filter((c) =>
     c.name.includes('Security')
@@ -712,19 +732,27 @@ function calculateSecurityStatus(blockers: LaunchBlocker[], categories: Category
     securityCategories.reduce((sum, c) => sum + c.currentScore, 0) /
     securityCategories.length;
 
-  const hasOpenSecurityBlocker = securityBlockers.some((b) => b.status === 'open');
+  const hasOpenSecurityBlocker = securityBlockers.some(
+    (b) => b.status === 'open'
+  );
 
   if (hasOpenSecurityBlocker) return 'degraded';
   if (avgSecurityScore < 70) return 'degraded';
   return 'healthy';
 }
 
-function calculateDeploymentStatus(blockers: LaunchBlocker[], categories: CategoryScore[]) {
+function calculateDeploymentStatus(
+  blockers: LaunchBlocker[],
+  categories: CategoryScore[]
+) {
   const m10 = blockers.find((b) => b.id === 'M-10');
-  const deploymentCategory = categories.find((c) => c.name.includes('Deployment'));
+  const deploymentCategory = categories.find((c) =>
+    c.name.includes('Deployment')
+  );
 
   if (m10?.status === 'resolved') return 'healthy';
-  if (deploymentCategory && deploymentCategory.currentScore >= 80) return 'degraded';
+  if (deploymentCategory && deploymentCategory.currentScore >= 80)
+    return 'degraded';
   return 'critical';
 }
 
