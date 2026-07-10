@@ -205,7 +205,7 @@ describe('Risk Assessment Classification', () => {
 
   describe('Complex scenarios', () => {
     it('should correctly evaluate multi-factor high-risk scenario', () => {
-      const answers = new Map([
+      const answers = new Map<string, any>([
         ['q5-recruitment', true],
         ['q10-personal-data', true],
         ['q11-sensitive-data', true],
