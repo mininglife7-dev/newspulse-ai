@@ -63,10 +63,6 @@ export default function ObligationsPage() {
   const [editingDueDateId, setEditingDueDateId] = useState<string | null>(null);
   const [editingDueDate, setEditingDueDate] = useState<string>('');
 
-  useEffect(() => {
-    loadObligations();
-  }, []);
-
   const loadObligations = async () => {
     setLoading(true);
     setError(null);
@@ -85,6 +81,10 @@ export default function ObligationsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadObligations();
+  }, []);
 
   const handleStatusChange = async (obligationId: string, newStatus: string) => {
     setUpdatingId(obligationId);

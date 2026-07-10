@@ -56,10 +56,6 @@ export default function TeamPage() {
     role: 'member' as const,
   });
 
-  useEffect(() => {
-    loadMembers();
-  }, []);
-
   const loadMembers = async () => {
     setLoading(true);
     setError(null);
@@ -82,6 +78,10 @@ export default function TeamPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadMembers();
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

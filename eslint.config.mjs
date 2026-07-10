@@ -7,10 +7,10 @@ export default defineConfig([
     rules: {
       'react/no-unescaped-entities': 'off',
       '@next/next/no-img-element': 'off',
-      // New in react-hooks v6 (eslint-config-next 16): these flag existing,
-      // working data-loading patterns. Kept off to preserve pre-migration
-      // lint semantics; revisit as a dedicated cleanup.
-      'react-hooks/immutability': 'off',
+      // react-hooks v6 rule that rejects the fetch-on-mount pattern used by
+      // every data page (an effect calling an async loader that setStates).
+      // Satisfying it means restructuring around a query library — an
+      // architecture decision tracked in the Founder Brief, not a lint chore.
       'react-hooks/set-state-in-effect': 'off',
     },
   },
