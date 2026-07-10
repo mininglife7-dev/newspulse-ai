@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Inter } from 'next/font/google';
-import { Zap, Search, History as HistoryIcon } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import './globals.css';
 
@@ -13,26 +13,26 @@ const inter = Inter({
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  'https://newspulse-ai.vercel.app';
+  'https://euro-ai.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'NewsPulse AI — AI-Powered News Intelligence',
+  title: 'EURO AI — AI Governance Made Simple',
   description:
-    'Search. Scrape. Summarize. Real-time AI summaries of news from across the web, with saved search history.',
+    'Transform AI governance from compliance checklist into strategic advantage. Meet EU AI Act obligations with confidence.',
   keywords: [
-    'news',
-    'AI',
-    'scraper',
-    'summarizer',
-    'Firecrawl',
-    'OpenAI',
-    'Supabase',
+    'AI governance',
+    'EU AI Act',
+    'compliance',
+    'risk management',
+    'AI systems',
+    'regulatory framework',
   ],
-  authors: [{ name: 'NewsPulse AI' }],
+  authors: [{ name: 'EURO AI' }],
   openGraph: {
-    title: 'NewsPulse AI',
-    description: 'AI-Powered News Intelligence — Search. Scrape. Summarize.',
+    title: 'EURO AI — AI Governance Made Simple',
+    description:
+      'Transform AI governance from compliance checklist into strategic advantage.',
     type: 'website',
   },
 };
@@ -46,43 +46,40 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body
         className={cn(
-          'min-h-screen bg-background text-white antialiased font-sans'
+          'min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white antialiased font-sans'
         )}
       >
-        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
+        <header className="sticky top-0 z-40 border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-indigo-600 glow">
-                <Zap className="h-4 w-4 text-white" strokeWidth={2.5} />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600">
+                <Shield className="h-5 w-5 text-white" strokeWidth={2} />
               </div>
               <span className="text-lg font-bold tracking-tight">
-                <span className="gradient-text">NewsPulse</span>
-                <span className="text-white/90"> AI</span>
+                <span className="text-white">EURO</span>
+                <span className="text-cyan-400"> AI</span>
               </span>
             </Link>
-            <nav className="flex items-center gap-1 text-sm">
+            <nav className="flex items-center gap-6 text-sm">
               <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
+                href="/auth/signin"
+                className="text-white/70 transition hover:text-white"
               >
-                <Search className="h-4 w-4" />
-                Search
+                Sign In
               </Link>
               <Link
-                href="/history"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
+                href="/auth/signup"
+                className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-4 py-2 font-medium text-white transition hover:shadow-lg hover:shadow-blue-500/40"
               >
-                <HistoryIcon className="h-4 w-4" />
-                History
+                Start Free
               </Link>
             </nav>
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
-        <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
+        <footer className="mt-20 border-t border-slate-800/50 py-8 text-center text-sm text-slate-400">
           <p>
-            Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}
-            <span className="text-accent-400">NewsPulse AI</span>
+            EURO AI · Making AI governance simple, beautiful, and trustworthy
           </p>
         </footer>
       </body>

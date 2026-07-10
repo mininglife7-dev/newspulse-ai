@@ -1,10 +1,10 @@
-# 📰 NewsPulse AI
+# EURO AI
 
-> **AI-Powered News Intelligence — Search. Scrape. Summarize.**
+> **AI Governance Made Simple**
 
-Search any topic and get the latest articles from across the web, each summarized into 2–3 crisp sentences by `gpt-4o-mini`. Every search is saved to Supabase so you can replay past queries, view results, or wipe the slate.
+Transform AI governance from a compliance checklist into a strategic advantage. Meet EU AI Act obligations with confidence.
 
-Built for the **Outskill AI Generalist Accelerator Hackathon**.
+EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory compliance, collecting evidence, and tracking remediation — all in one elegant interface.
 
 ---
 
