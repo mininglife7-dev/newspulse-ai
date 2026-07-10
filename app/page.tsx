@@ -8,8 +8,14 @@ import {
   type FormEvent,
 } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search as SearchIcon, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  Search as SearchIcon,
+  ArrowRight,
+  Sparkles,
+  SearchX,
+} from 'lucide-react';
 import NewsCard from '@/components/NewsCard';
+import EmptyState from '@/components/EmptyState';
 import type { NewsArticle } from '@/lib/supabase';
 
 const SUGGESTIONS = [
@@ -53,10 +59,9 @@ export default function HomePage() {
       if (!res.ok || !json.ok) {
         throw new Error(json.error || `Search failed (${res.status})`);
       }
+      // Zero results is a normal outcome, not an error — it's surfaced as a
+      // neutral empty state below rather than a red error banner.
       setResults(json.results as NewsArticle[]);
-      if ((json.results as NewsArticle[]).length === 0) {
-        setError('No results found. Try a different keyword.');
-      }
     } catch (err: any) {
       console.error(err);
       setError(err?.message || 'Something went wrong.');
@@ -212,6 +217,15 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* No-results empty state (a completed search that found nothing) */}
+      {!loading && searched && !error && results.length === 0 && (
+        <EmptyState
+          icon={<SearchX className="h-6 w-6" />}
+          title={`No results for “${submittedKeyword}”`}
+          description="Try a different or more specific keyword."
+        />
       )}
     </div>
   );
