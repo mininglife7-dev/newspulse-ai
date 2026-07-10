@@ -24,7 +24,9 @@ test('home page renders search UI', async ({ page }) => {
 
 test('search happy path returns labelled AI summaries', async ({ page }) => {
   await page.goto('/');
-  await page.getByPlaceholder(/Try "AI regulation"/).fill('artificial intelligence');
+  const input = page.getByPlaceholder(/Try "AI regulation"/);
+  await input.clear();
+  await input.type('artificial intelligence', { delay: 50 });
   await page.getByRole('button', { name: /Search/ }).click();
 
   await expect(
