@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isDurable } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,12 @@ export async function GET() {
       ok: allHealthy,
       status: allHealthy ? 'healthy' : 'degraded',
       checks,
+      // Honest spend-protection posture: durable only when a shared store
+      // (Upstash) backs rate limiting; otherwise per-instance in-memory.
+      rate_limiting: {
+        durable: isDurable(),
+        backend: isDurable() ? 'upstash-redis' : 'in-memory',
+      },
       timestamp,
     },
     { status: allHealthy ? 200 : 503 }
