@@ -14,6 +14,19 @@ export async function GET(req: NextRequest) {
     Math.min(Number.parseInt(limitParam ?? '50', 10) || 50, 200)
   );
 
+  const demoMode = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+
+  // Demo mode: return empty history (searches aren't persisted in demo)
+  if (demoMode) {
+    return NextResponse.json({
+      ok: true,
+      count: 0,
+      history: [],
+      _demo: true,
+      _note: 'History storage disabled in DEMO_MODE. Configure Supabase credentials to persist searches.',
+    });
+  }
+
   try {
     const history = await getSearchHistory(limit);
     return NextResponse.json({
@@ -24,7 +37,7 @@ export async function GET(req: NextRequest) {
   } catch (err: any) {
     console.error('[/api/history] error:', err);
     return NextResponse.json(
-      { ok: false, error: err?.message || 'Failed to load search history.' },
+      { ok: false, error: err?.message || 'Failed to load search history. Configure Supabase credentials or set DEMO_MODE=true.' },
       { status: 500 }
     );
   }

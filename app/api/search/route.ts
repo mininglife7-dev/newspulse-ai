@@ -51,9 +51,50 @@ export async function POST(req: NextRequest) {
   }
 
   const apiKey = process.env.FIRECRAWL_API_KEY;
+  const demoMode = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+
+  // Demo mode: return mock results for demonstration without external APIs
+  if (demoMode) {
+    const mockResults: NewsArticle[] = [
+      {
+        title: `News about "${keyword}" — Sample Result 1`,
+        url: `https://example.com/article-1`,
+        source: 'example.com',
+        date: new Date(Date.now() - 86400000).toISOString(),
+        description: `This is a demo article about ${keyword}. Real search requires FIRECRAWL_API_KEY.`,
+        ai_summary: `In this demo article, we explore ${keyword} and its implications for the future. This is a sample summary generated for demonstration purposes only.`,
+      },
+      {
+        title: `News about "${keyword}" — Sample Result 2`,
+        url: `https://news.example.com/article-2`,
+        source: 'news.example.com',
+        date: new Date(Date.now() - 172800000).toISOString(),
+        description: `Another demo article covering ${keyword} from a different perspective.`,
+        ai_summary: `Continuing our exploration of ${keyword}, this article provides additional context and analysis. Running in DEMO_MODE with mock data.`,
+      },
+      {
+        title: `News about "${keyword}" — Sample Result 3`,
+        url: `https://tech-news.example.com/article-3`,
+        source: 'tech-news.example.com',
+        date: new Date(Date.now() - 259200000).toISOString(),
+        description: `A comprehensive look at ${keyword} and recent developments.`,
+        ai_summary: `This article summarizes the key developments in ${keyword}. To use real news data, configure FIRECRAWL_API_KEY, OPENAI_API_KEY, and Supabase credentials.`,
+      },
+    ];
+
+    return NextResponse.json({
+      ok: true,
+      keyword,
+      count: mockResults.length,
+      results: mockResults,
+      _demo: true,
+      _note: 'Demo mode active. Results are mock data. To use real search, configure FIRECRAWL_API_KEY.',
+    });
+  }
+
   if (!apiKey) {
     return NextResponse.json(
-      { ok: false, error: 'Server misconfigured: FIRECRAWL_API_KEY missing.' },
+      { ok: false, error: 'Server misconfigured: FIRECRAWL_API_KEY missing. Set DEMO_MODE=true to use sample data, or add your Firecrawl API key to .env' },
       { status: 500 }
     );
   }
