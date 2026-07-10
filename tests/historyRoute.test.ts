@@ -5,13 +5,16 @@ vi.mock('@/lib/supabase', () => ({
   clearAllHistory: vi.fn(),
   getSupabaseAdmin: vi.fn(),
 }));
+vi.mock('@/lib/auditLog', () => ({ recordAuditEvent: vi.fn() }));
 
 import { GET, DELETE } from '@/app/api/history/route';
 import { DELETE as DELETE_BY_ID } from '@/app/api/history/[id]/route';
 import { getSearchHistory, clearAllHistory } from '@/lib/supabase';
+import { recordAuditEvent } from '@/lib/auditLog';
 
 const mockGetHistory = vi.mocked(getSearchHistory);
 const mockClearAll = vi.mocked(clearAllHistory);
+const mockAudit = vi.mocked(recordAuditEvent);
 
 const ORIGINAL_ADMIN = process.env.ADMIN_TOKEN;
 
@@ -78,6 +81,10 @@ describe('DELETE /api/history (admin-gated)', () => {
     expect(res.status).toBe(200);
     expect(json).toMatchObject({ ok: true, deleted: 3 });
     expect(mockClearAll).toHaveBeenCalledOnce();
+    expect(mockAudit).toHaveBeenCalledWith({
+      action: 'history.clear_all',
+      detail: { deleted: 3 },
+    });
   });
 });
 

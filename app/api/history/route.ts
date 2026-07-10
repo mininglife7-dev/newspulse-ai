@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSearchHistory, clearAllHistory } from '@/lib/supabase';
 import { checkAdmin } from '@/lib/auth';
+import { recordAuditEvent } from '@/lib/auditLog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,10 @@ export async function DELETE(req: NextRequest) {
         { status: 500 }
       );
     }
+    await recordAuditEvent({
+      action: 'history.clear_all',
+      detail: { deleted: result.deleted ?? 0 },
+    });
     return NextResponse.json({
       ok: true,
       deleted: result.deleted ?? 0,

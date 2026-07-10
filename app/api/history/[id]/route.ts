@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkAdmin } from '@/lib/auth';
+import { recordAuditEvent } from '@/lib/auditLog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,6 +81,10 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
         { status: 500 }
       );
     }
+    await recordAuditEvent({
+      action: 'history.delete_one',
+      detail: { id },
+    });
     return NextResponse.json({ ok: true, deleted: id });
   } catch (err: any) {
     console.error('[/api/history/:id] delete exception:', err);

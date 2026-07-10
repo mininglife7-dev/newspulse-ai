@@ -63,3 +63,23 @@ create or replace view public.news_searches_recent as
     limit 100;
 
 grant select on public.news_searches_recent to anon, authenticated;
+
+-- ---------------------------------------------------------------
+-- audit_log
+-- Append-only trail of sensitive/destructive actions (e.g. clearing or
+-- deleting saved searches). Written server-side via the service-role key,
+-- which bypasses RLS. RLS is enabled with NO anon policies, so the anon key
+-- cannot read or write the audit trail.
+-- ---------------------------------------------------------------
+create table if not exists public.audit_log (
+    id          uuid        primary key default gen_random_uuid(),
+    action      text        not null,
+    detail      jsonb       not null default '{}'::jsonb,
+    created_at  timestamptz not null default now()
+);
+
+create index if not exists audit_log_created_at_idx
+    on public.audit_log (created_at desc);
+
+alter table public.audit_log enable row level security;
+-- Intentionally no policies: server (service role) only.
