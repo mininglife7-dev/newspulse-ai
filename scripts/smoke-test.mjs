@@ -154,18 +154,18 @@ async function run() {
   });
 
   // ----- Protected Routes -----
-  await check('page', 'GET /dashboard renders (protected route)', async () => {
+  await check('page', 'GET /dashboard redirects (protected route)', async () => {
     const res = await get('/dashboard');
-    assert(res.status === 200, `expected 200, got ${res.status}`);
-    const html = await res.text();
-    assert(html.includes('Welcome'), 'dashboard content missing');
+    assert(res.status === 307, `expected 307 redirect, got ${res.status}`);
+    const location = res.headers.get('location');
+    assert(location?.includes('/auth/signin'), `expected redirect to /auth/signin, got ${location}`);
   });
 
-  await check('page', 'GET /workspace/setup renders (protected route)', async () => {
+  await check('page', 'GET /workspace/setup redirects (protected route)', async () => {
     const res = await get('/workspace/setup');
-    assert(res.status === 200, `expected 200, got ${res.status}`);
-    const html = await res.text();
-    assert(html.includes('Company'), 'workspace setup content missing');
+    assert(res.status === 307, `expected 307 redirect, got ${res.status}`);
+    const location = res.headers.get('location');
+    assert(location?.includes('/auth/signin'), `expected redirect to /auth/signin, got ${location}`);
   });
 
   // ----- Health -----
