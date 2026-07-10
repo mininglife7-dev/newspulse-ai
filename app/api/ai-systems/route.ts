@@ -58,7 +58,7 @@ async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteCli
 export async function GET(request: NextRequest) {
   const systemId = request.nextUrl.searchParams.get('id');
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(

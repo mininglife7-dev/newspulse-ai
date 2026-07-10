@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 
-export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {

@@ -15,7 +15,7 @@ interface UpdateAssessmentRequest {
   answers?: Record<string, any>;
 }
 
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -208,6 +208,76 @@ export async function POST(request: NextRequest) {
     response = data;
   }
 
+  // Auto-generate obligations based on risk level and recommendations
+  if (response && response.id) {
+    try {
+      const priorityMap: Record<string, string> = {
+        unacceptable: 'critical',
+        high: 'high',
+        medium: 'medium',
+        low: 'low',
+      };
+      const priority = priorityMap[result.riskLevel] || 'medium';
+
+      // Generate obligation texts from recommendations and categories
+      const obligationTexts: string[] = [];
+      if (result.recommendations && result.recommendations.length > 0) {
+        obligationTexts.push(...result.recommendations);
+      }
+
+      for (const obligationText of obligationTexts) {
+        // Check if obligation already exists for this company
+        const { data: existing } = await supabase
+          .from('obligations')
+          .select('id')
+          .eq('company_id', system.company_id)
+          .eq('workspace_id', ctx.workspaceId)
+          .ilike('title', obligationText.substring(0, 100))
+          .limit(1)
+          .maybeSingle();
+
+        let obligationId: string;
+
+        if (existing) {
+          obligationId = existing.id;
+        } else {
+          // Create new obligation
+          const { data: created, error: createError } = await supabase
+            .from('obligations')
+            .insert({
+              company_id: system.company_id,
+              workspace_id: ctx.workspaceId,
+              title: obligationText.substring(0, 200),
+              description: obligationText,
+              source: 'EU_AI_ACT',
+              status: 'identified',
+              priority,
+            })
+            .select('id')
+            .single();
+
+          if (createError || !created) {
+            console.warn('[api/assessments] failed to create obligation:', createError);
+            continue;
+          }
+          obligationId = created.id;
+        }
+
+        // Link obligation to assessment
+        const { error: linkError } = await supabase.from('assessment_obligations').insert({
+          assessment_id: response.id,
+          obligation_id: obligationId,
+        });
+
+        if (linkError) {
+          console.warn('[api/assessments] failed to link obligation:', linkError);
+        }
+      }
+    } catch (err) {
+      console.warn('[api/assessments] obligation auto-generation failed:', err);
+    }
+  }
+
   return NextResponse.json(
     {
       ok: true,
@@ -240,7 +310,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
