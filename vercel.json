@@ -20,6 +20,9 @@
     },
     "app/api/error-rate/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/cost-monitoring/route.ts": {
+      "maxDuration": 120
     }
   },
   "env": {
@@ -47,6 +50,10 @@
     {
       "path": "/api/error-rate",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cost-monitoring",
+      "schedule": "0 3 * * *"
     }
   ]
 }
