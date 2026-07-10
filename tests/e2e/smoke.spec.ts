@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// The flow builds on itself (search saves history), so run in order.
-test.describe.configure({ mode: 'serial' });
-
 test('health endpoint reports healthy with all integrations configured', async ({
   request,
 }) => {
@@ -22,4 +19,47 @@ test('home page renders landing page with governance messaging', async ({
   // Check for CTA buttons
   await expect(page.getByRole('link', { name: /Start Free Trial/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /Learn More/ })).toBeVisible();
+});
+
+test('unauthenticated visit to /dashboard redirects to sign-in', async ({
+  page,
+}) => {
+  await page.goto('/dashboard');
+  await expect(page).toHaveURL(/\/auth\/signin\?redirect=%2Fdashboard/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Welcome back'
+  );
+});
+
+test('unauthenticated visit to /workspace/setup redirects to sign-in', async ({
+  page,
+}) => {
+  await page.goto('/workspace/setup');
+  await expect(page).toHaveURL(/\/auth\/signin/);
+});
+
+test('unauthenticated POST /api/workspace returns 401 JSON, not a redirect', async ({
+  request,
+}) => {
+  const res = await request.post('/api/workspace', {
+    data: {
+      companyName: 'Acme GmbH',
+      country: 'Germany',
+      industry: 'Manufacturing',
+    },
+  });
+  expect(res.status()).toBe(401);
+  const body = await res.json();
+  expect(body.ok).toBe(false);
+});
+
+test('auth pages render for signed-out visitors', async ({ page }) => {
+  await page.goto('/auth/signup');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Create your account'
+  );
+  await page.goto('/auth/signin');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Welcome back'
+  );
 });

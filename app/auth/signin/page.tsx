@@ -36,7 +36,16 @@ export default function SignInPage() {
 
     try {
       await signIn(formData.email, formData.password);
-      router.push("/dashboard");
+      // Honor ?redirect=/path set by the middleware, but only same-origin
+      // paths — never absolute URLs (open-redirect guard).
+      const redirect = new URLSearchParams(window.location.search).get(
+        "redirect"
+      );
+      const target =
+        redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+          ? redirect
+          : "/dashboard";
+      router.push(target);
     } catch (err: any) {
       setError(
         err?.message || "Invalid email or password. Please try again."

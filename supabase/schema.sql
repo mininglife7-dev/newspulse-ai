@@ -78,8 +78,9 @@ create table if not exists public.companies (
     legal_name        text,
     country           text,
     industry          text,
-    employees         integer,
+    employees_range   text,        -- e.g. '1-10', '11-50', '51-200'
     website           text,
+    governance_priorities text,
     status            text        not null default 'active',
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
@@ -235,6 +236,51 @@ create policy "Workspace members can read their workspace"
 create policy "Members can read workspace companies"
     on public.companies for select
     using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = companies.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Allow users to create and update their own profile
+create policy "Users can insert their own profile"
+    on public.profiles for insert
+    with check (auth.uid() = id);
+
+create policy "Users can update their own profile"
+    on public.profiles for update
+    using (auth.uid() = id)
+    with check (auth.uid() = id);
+
+-- Owners can always read their own workspaces (needed for the INSERT ...
+-- RETURNING during onboarding, before the membership row exists)
+create policy "Owners can read their own workspaces"
+    on public.workspaces for select
+    using (auth.uid() = owner_id);
+
+-- Users can read their own membership rows
+create policy "Users can read their own memberships"
+    on public.workspace_members for select
+    using (user_id = auth.uid());
+
+-- A workspace owner can add themselves as a member (onboarding step 2)
+create policy "Owners can add themselves as members"
+    on public.workspace_members for insert
+    with check (
+        user_id = auth.uid()
+        and exists (
+            select 1 from public.workspaces w
+            where w.id = workspace_id
+            and w.owner_id = auth.uid()
+        )
+    );
+
+-- Active members can create companies in their workspace
+create policy "Members can insert workspace companies"
+    on public.companies for insert
+    with check (
         exists (
             select 1 from public.workspace_members
             where workspace_id = companies.workspace_id

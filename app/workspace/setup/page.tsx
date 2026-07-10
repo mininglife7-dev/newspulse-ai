@@ -42,7 +42,19 @@ export default function WorkspaceSetupPage() {
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (res.status === 401) {
+        window.location.href = "/auth/signin?redirect=/workspace/setup";
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to save. Please try again.");
+      }
       setSuccess(true);
       setTimeout(() => {
         window.location.href = "/dashboard";

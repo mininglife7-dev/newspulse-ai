@@ -1,8 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 // =============================================================================
 // Public (browser-safe) client — uses the anon / publishable key.
-// This is the canonical export per the project spec.
+// Sessions are stored in cookies (@supabase/ssr) so the middleware and
+// route handlers can see them; this is what makes sign-in survive
+// navigation and server-side route protection work.
 // Lazily instantiated on first property access: creating it at module
 // top-level crashes `next build` when env vars are absent, because this
 // module is imported for its types by pages collected at build time.
@@ -17,9 +20,7 @@ function getBrowserClient(): SupabaseClient {
       'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY'
     );
   }
-  _browser = createClient(url, key, {
-    auth: { persistSession: false },
-  });
+  _browser = createBrowserClient(url, key);
   return _browser;
 }
 
