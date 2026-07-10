@@ -7,6 +7,26 @@ are never requested from the Founder.
 
 ---
 
+## DR-0012 — Make onboarding step 2 (AI Systems Inventory) real
+
+- **Decision:** Implement the inventory end-to-end: `GET/POST /api/ai-systems`
+  running as the signed-in user, the missing `ai_systems` RLS policies
+  (select/insert/update for active members), an `/inventory` page (list + create),
+  dashboard step-2 unlock with live system count, and route protection.
+- **Reason:** Highest-value next increment after the pivot merge: the first thing
+  a German customer does after company setup is inventory their AI systems — it is
+  the foundation for EU AI Act risk classification, and the dashboard step existed
+  only as a grayed-out card.
+- **Alternatives considered:** Risk assessment (step 3) first — rejected: it
+  consumes inventory entries, so inventory must exist first.
+- **Evidence:** 72/72 unit tests (11 new inventory API tests), 6/6 e2e, lint,
+  tsc, production build — all green locally.
+- **Confidence:** High (code paths); live Supabase deployment of the new policies
+  remains the Founder's one manual step (schema.sql is idempotent).
+- **Expected impact:** Two of three onboarding steps are now real features.
+- **Risk assessment:** Low — additive; API returns honest 409s before setup.
+- **Timestamp:** 2026-07-10
+
 ## DR-0011 — Complete the customer journey loop; truthful UI over cosmetic completion
 
 - **Decision:** Add the missing journey pieces (email-confirmation handler at

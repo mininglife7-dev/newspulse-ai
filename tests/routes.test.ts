@@ -6,7 +6,7 @@ describe('classifyRoute', () => {
     expect(classifyRoute('/')).toBe('public');
   });
 
-  it.each(['/dashboard', '/dashboard/settings', '/workspace', '/workspace/setup', '/assessment', '/api/workspace'])(
+  it.each(['/dashboard', '/dashboard/settings', '/workspace', '/workspace/setup', '/assessment', '/inventory', '/api/workspace', '/api/ai-systems'])(
     'protects %s',
     (path) => {
       expect(classifyRoute(path)).toBe('protected');
