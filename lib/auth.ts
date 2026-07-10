@@ -14,8 +14,7 @@ import crypto from 'node:crypto';
  */
 
 export type AdminResult =
-  | { ok: true }
-  | { ok: false; status: 401 | 503; code: string; error: string };
+  { ok: true } | { ok: false; status: 401 | 503; code: string; error: string };
 
 /** Pull an admin token out of the request headers, if present. */
 export function extractAdminToken(headers: Headers): string | null {

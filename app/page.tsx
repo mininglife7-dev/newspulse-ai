@@ -93,8 +93,7 @@ export default function HomePage() {
           AI-Powered News Intelligence
         </span>
         <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-          Search. Scrape.{' '}
-          <span className="gradient-text">Summarize.</span>
+          Search. Scrape. <span className="gradient-text">Summarize.</span>
         </h1>
         <p className="max-w-xl text-base text-white/60">
           NewsPulse AI scrapes the latest articles from across the web and

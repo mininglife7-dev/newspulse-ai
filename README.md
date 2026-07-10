@@ -23,11 +23,8 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 
 ## 📸 Screenshots
 
-> _Add screenshots here once you've deployed — drop them in `/public/screenshots/` and reference below._
-
-| Search | History |
-|---|---|
-| ![Search UI](./public/screenshots/search.png) | ![History table](./public/screenshots/history.png) |
+> _Screenshots will be added here. To contribute them, drop image files in
+> `public/screenshots/` and reference them in this section._
 
 ---
 
@@ -39,6 +36,8 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 - 📋 **History table** — keyword, date, count, expand-to-view, re-run, clear all
 - 🎨 **Dark, polished UI** — Tailwind + lucide-react + Inter font
 - ⚡ **API-first** — `POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`
+- 🔒 **Admin-gated deletes** — destructive history actions require an `ADMIN_TOKEN` (fail-closed)
+- 🧪 **Tested** — Vitest unit suite over the core logic, run in CI
 - 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
 
 ---
@@ -67,6 +66,9 @@ OPENAI_API_KEY=sk-proj-...
 NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+# Authorizes destructive history actions. Leave blank to DISABLE them
+# (fail-closed). Generate one with: openssl rand -hex 32
+ADMIN_TOKEN=
 ```
 
 Verify with the included script (it never prints full secrets):
@@ -113,11 +115,11 @@ Connect the repository to the Vercel project (Vercel Dashboard → Project → S
 
 ## 🔑 Where to get API keys
 
-| Service | Link | What you need |
-|---|---|---|
-| Firecrawl | https://firecrawl.dev | API key (Dashboard → API Keys) |
-| OpenAI | https://platform.openai.com/api-keys | API key |
-| Supabase | https://supabase.com | Project URL + publishable + secret keys (Settings → API) |
+| Service   | Link                                 | What you need                                            |
+| --------- | ------------------------------------ | -------------------------------------------------------- |
+| Firecrawl | https://firecrawl.dev                | API key (Dashboard → API Keys)                           |
+| OpenAI    | https://platform.openai.com/api-keys | API key                                                  |
+| Supabase  | https://supabase.com                 | Project URL + publishable + secret keys (Settings → API) |
 
 ---
 
@@ -147,25 +149,30 @@ newspulse-ai/
 │   ├── EmptyState.tsx
 │   └── NewsCard.tsx
 ├── lib/
+│   ├── auth.ts                      # admin-token check for destructive actions
 │   ├── firecrawl.ts                 # Firecrawl /v1/search wrapper
 │   ├── openai.ts                    # gpt-4o-mini summarizer
 │   ├── supabase.ts                  # supabase client + helpers
-│   └── utils.ts                     # cn() + date formatters
+│   ├── utils.ts                     # cn() + date formatters
+│   └── validation.ts               # request-body validation helpers
 ├── scripts/
 │   └── check-env.mjs                # verify env vars without leaking values
 ├── supabase/
 │   └── schema.sql                   # news_searches table + RLS
+├── tests/                           # Vitest unit suite (utils, firecrawl,
+│                                    #   openai, validation, auth)
 ├── types/
 │   └── index.ts                     # shared API types
 ├── .github/workflows/
-│   └── ci.yml                       # lint, type-check, build
+│   └── ci.yml                       # lint, type-check, test, build
 ├── .env.example
 ├── middleware.ts                    # rate limit on /api/search
 ├── next.config.js
 ├── package.json
 ├── tailwind.config.js
 ├── tsconfig.json
-└── vercel.json
+├── vercel.json
+└── vitest.config.ts
 ```
 
 ---
@@ -178,9 +185,26 @@ npm run build         # production build
 npm run start         # production server
 npm run lint          # next lint
 npm run type-check    # tsc --noEmit
+npm test              # run the Vitest unit suite once
+npm run test:watch    # run Vitest in watch mode
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
 ```
+
+---
+
+## 🔒 Security
+
+- **Destructive actions are admin-gated.** `DELETE /api/history` (clear all)
+  and `DELETE /api/history/:id` require an admin token, supplied as
+  `Authorization: Bearer <token>` or an `x-admin-token` header, matched against
+  the `ADMIN_TOKEN` env var with a constant-time comparison.
+- **Fail-closed.** If `ADMIN_TOKEN` is not set, those endpoints return `503`
+  and refuse to run — an un-configured deployment cannot be wiped by a stranger.
+- **Input validation.** `POST /api/search` rejects non-string, empty, or
+  overly long keywords with a `400` before spending any Firecrawl/OpenAI budget.
+- **Rate limiting.** `middleware.ts` throttles `/api/search` per IP (in-memory;
+  swap for a durable store like Upstash for multi-instance production).
 
 ---
 
@@ -208,7 +232,7 @@ POST /api/search
 ## 🏆 Hackathon Notes
 
 - **Project:** NewsPulse AI
-- **Tagline:** *AI-Powered News Intelligence — Search. Scrape. Summarize.*
+- **Tagline:** _AI-Powered News Intelligence — Search. Scrape. Summarize._
 - **Differentiator:** Real-time AI summaries + persistent search history
 - **Built for:** Outskill AI Generalist Accelerator Hackathon
 

@@ -62,9 +62,9 @@ describe('checkAdmin', () => {
 
   it('allows a matching token via x-admin-token', () => {
     process.env.ADMIN_TOKEN = 'the-real-token';
-    expect(checkAdmin(new Headers({ 'x-admin-token': 'the-real-token' })).ok).toBe(
-      true
-    );
+    expect(
+      checkAdmin(new Headers({ 'x-admin-token': 'the-real-token' })).ok
+    ).toBe(true);
   });
 
   it('allows a matching token via Bearer', () => {
