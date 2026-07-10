@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -130,6 +131,25 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { ok: false, error: 'Failed to create remediation plan' },
       { status: 500 }
+    );
+  }
+
+  // Log audit event
+  const plan = data?.[0];
+  if (plan) {
+    const user = (await supabase.auth.getUser()).data.user;
+    await logAuditEvent(
+      supabase,
+      ctx.workspaceId,
+      user?.id || '',
+      'plan_created',
+      'remediation_plan',
+      plan.id,
+      body.title,
+      {
+        owner: body.owner || null,
+        target_date: body.target_date || null,
+      }
     );
   }
 

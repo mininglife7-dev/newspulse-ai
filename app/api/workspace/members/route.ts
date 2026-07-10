@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { createNotification } from '@/lib/notifications';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -177,6 +178,23 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { ok: false, error: 'Failed to invite member' },
         { status: 500 }
+      );
+    }
+
+    // Log audit event
+    const member = data?.[0];
+    if (member) {
+      await logAuditEvent(
+        supabase,
+        ctx.workspaceId,
+        ctx.user.id,
+        'member_invited',
+        'workspace_member',
+        member.id,
+        body.email,
+        {
+          role: body.role,
+        }
       );
     }
 

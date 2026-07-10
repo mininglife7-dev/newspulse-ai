@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -93,7 +94,7 @@ export async function PATCH(
     // Verify member exists in workspace
     const { data: member, error: checkError } = await supabase
       .from('workspace_members')
-      .select('id')
+      .select('id, email, role')
       .eq('id', params.id)
       .eq('workspace_id', ctx.workspaceId)
       .limit(1)
@@ -105,6 +106,9 @@ export async function PATCH(
         { status: 404 }
       );
     }
+
+    const previousRole = (member as any).role;
+    const memberEmail = (member as any).email;
 
     // Update member
     const updateData: any = {};
@@ -124,6 +128,23 @@ export async function PATCH(
       return NextResponse.json(
         { ok: false, error: 'Failed to update member' },
         { status: 500 }
+      );
+    }
+
+    // Log audit event for role change
+    if (body.role && body.role !== previousRole) {
+      await logAuditEvent(
+        supabase,
+        ctx.workspaceId,
+        ctx.user.id,
+        'member_role_changed',
+        'workspace_member',
+        params.id,
+        memberEmail,
+        {
+          previous_role: previousRole,
+          new_role: body.role,
+        }
       );
     }
 
@@ -166,7 +187,7 @@ export async function DELETE(
     // Verify member exists in workspace
     const { data: member, error: checkError } = await supabase
       .from('workspace_members')
-      .select('id, user_id')
+      .select('id, user_id, email, role')
       .eq('id', params.id)
       .eq('workspace_id', ctx.workspaceId)
       .limit(1)
@@ -178,6 +199,8 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    const memberEmail = (member as any).email;
 
     // Prevent removing the last owner
     if ((member as any).role === 'owner') {
@@ -209,6 +232,21 @@ export async function DELETE(
         { status: 500 }
       );
     }
+
+    // Log audit event for member removal
+    await logAuditEvent(
+      supabase,
+      ctx.workspaceId,
+      ctx.user.id,
+      'member_removed',
+      'workspace_member',
+      params.id,
+      memberEmail,
+      {
+        previous_status: 'active',
+        new_status: 'removed',
+      }
+    );
 
     return NextResponse.json({
       ok: true,

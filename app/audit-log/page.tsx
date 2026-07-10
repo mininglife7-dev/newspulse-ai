@@ -17,6 +17,7 @@ interface AuditEntry {
 const ACTION_COLORS: Record<string, { bg: string; text: string }> = {
   assessment_created: { bg: 'bg-blue-900/20', text: 'text-blue-300' },
   assessment_finalized: { bg: 'bg-blue-900/20', text: 'text-blue-300' },
+  assessment_status_changed: { bg: 'bg-blue-900/20', text: 'text-blue-300' },
   evidence_submitted: { bg: 'bg-purple-900/20', text: 'text-purple-300' },
   evidence_reviewed: { bg: 'bg-amber-900/20', text: 'text-amber-300' },
   evidence_approved: { bg: 'bg-green-900/20', text: 'text-green-300' },
@@ -27,6 +28,9 @@ const ACTION_COLORS: Record<string, { bg: string; text: string }> = {
   plan_completed: { bg: 'bg-green-900/20', text: 'text-green-300' },
   obligation_identified: { bg: 'bg-slate-900/20', text: 'text-slate-300' },
   obligation_completed: { bg: 'bg-green-900/20', text: 'text-green-300' },
+  member_invited: { bg: 'bg-indigo-900/20', text: 'text-indigo-300' },
+  member_role_changed: { bg: 'bg-indigo-900/20', text: 'text-indigo-300' },
+  member_removed: { bg: 'bg-rose-900/20', text: 'text-rose-300' },
 };
 
 export default function AuditLogPage() {
@@ -121,11 +125,16 @@ export default function AuditLogPage() {
           >
             <option value="">All actions</option>
             <option value="assessment_created">Assessment Created</option>
+            <option value="assessment_status_changed">Assessment Status Changed</option>
             <option value="evidence_submitted">Evidence Submitted</option>
             <option value="evidence_approved">Evidence Approved</option>
             <option value="evidence_rejected">Evidence Rejected</option>
             <option value="plan_created">Plan Created</option>
             <option value="plan_status_changed">Plan Status Changed</option>
+            <option value="plan_completed">Plan Completed</option>
+            <option value="member_invited">Member Invited</option>
+            <option value="member_role_changed">Member Role Changed</option>
+            <option value="member_removed">Member Removed</option>
           </select>
         </div>
         <div>

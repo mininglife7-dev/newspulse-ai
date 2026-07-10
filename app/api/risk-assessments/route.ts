@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { assessRisk, type RiskAssessmentInput } from '@/lib/risk-assessment';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -159,6 +160,26 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { ok: false, error: 'Failed to save assessment' },
       { status: 500 }
+    );
+  }
+
+  // Log audit event
+  const createdAssessment = data?.[0];
+  if (createdAssessment) {
+    const user = (await supabase.auth.getUser()).data.user;
+    await logAuditEvent(
+      supabase,
+      ctx.workspaceId,
+      user?.id || '',
+      'assessment_created',
+      'risk_assessment',
+      (createdAssessment as any).id,
+      `Risk Assessment - ${(createdAssessment as any).risk_level}`,
+      {
+        ai_system_id: body.aiSystemId,
+        risk_level: (createdAssessment as any).risk_level,
+        risk_score: (createdAssessment as any).risk_score,
+      }
     );
   }
 

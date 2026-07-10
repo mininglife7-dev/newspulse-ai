@@ -3,6 +3,7 @@ import { createRouteClient } from '@/lib/supabase-server';
 export type AuditActionType =
   | 'assessment_created'
   | 'assessment_finalized'
+  | 'assessment_status_changed'
   | 'evidence_submitted'
   | 'evidence_reviewed'
   | 'evidence_approved'
@@ -12,9 +13,12 @@ export type AuditActionType =
   | 'plan_status_changed'
   | 'plan_completed'
   | 'obligation_identified'
-  | 'obligation_completed';
+  | 'obligation_completed'
+  | 'member_invited'
+  | 'member_role_changed'
+  | 'member_removed';
 
-export type AuditEntityType = 'risk_assessment' | 'evidence' | 'remediation_plan' | 'obligation';
+export type AuditEntityType = 'risk_assessment' | 'evidence' | 'remediation_plan' | 'obligation' | 'workspace_member';
 
 export interface AuditLogEntry {
   id: string;
@@ -67,6 +71,7 @@ export function getActionDescription(actionType: AuditActionType, entityName: st
   const descriptions: Record<AuditActionType, string> = {
     assessment_created: `Created risk assessment: ${entityName}`,
     assessment_finalized: `Finalized risk assessment: ${entityName}`,
+    assessment_status_changed: `Changed assessment status: ${entityName}`,
     evidence_submitted: `Submitted evidence: ${entityName}`,
     evidence_reviewed: `Started reviewing evidence: ${entityName}`,
     evidence_approved: `Approved evidence: ${entityName}`,
@@ -77,6 +82,9 @@ export function getActionDescription(actionType: AuditActionType, entityName: st
     plan_completed: `Completed remediation plan: ${entityName}`,
     obligation_identified: `Identified obligation: ${entityName}`,
     obligation_completed: `Completed obligation: ${entityName}`,
+    member_invited: `Invited team member: ${entityName}`,
+    member_role_changed: `Changed member role: ${entityName}`,
+    member_removed: `Removed team member: ${entityName}`,
   };
 
   return descriptions[actionType] || `${actionType}: ${entityName}`;

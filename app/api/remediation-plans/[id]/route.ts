@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { createNotificationsForTeam } from '@/lib/notifications';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -146,10 +147,26 @@ export async function PATCH(
     );
   }
 
-  // Create notifications for status changes
+  // Create notifications and log audit events for status changes
   const plan = data?.[0];
   if (plan && body.status && body.status !== (existing as any).status) {
     const planTitle = plan.title || 'Remediation Plan';
+    const user = (await supabase.auth.getUser()).data.user;
+
+    // Log audit event
+    await logAuditEvent(
+      supabase,
+      ctx.workspaceId,
+      user?.id || '',
+      'plan_status_changed',
+      'remediation_plan',
+      plan.id,
+      planTitle,
+      {
+        previous_status: (existing as any).status,
+        new_status: body.status,
+      }
+    );
 
     if (body.status === 'completed') {
       await createNotificationsForTeam(

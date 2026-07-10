@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { createNotificationsForTeam } from '@/lib/notifications';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -106,6 +107,23 @@ export async function PATCH(
     }
 
     const assessment = data?.[0];
+
+    // Log audit event
+    if (assessment) {
+      await logAuditEvent(
+        supabase,
+        ctx.workspaceId,
+        ctx.user.id,
+        'assessment_status_changed',
+        'risk_assessment',
+        assessment.id,
+        `Assessment Status: ${body.status}`,
+        {
+          previous_status: previousStatus,
+          new_status: body.status,
+        }
+      );
+    }
 
     // Create notifications for status transitions
     if (assessment && body.status === 'finalized' && previousStatus !== 'finalized') {
