@@ -323,5 +323,127 @@ create policy "Members can update workspace ai_systems"
         )
     );
 
--- Similar RLS policies for risk_assessments, obligations, evidence, remediation_plans
--- Follow same pattern: check if user is an active member of the workspace
+-- Risk assessments: active workspace members can read and create
+create policy "Members can read workspace risk_assessments"
+    on public.risk_assessments for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = risk_assessments.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace risk_assessments"
+    on public.risk_assessments for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = risk_assessments.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Obligations: active workspace members can read and create
+create policy "Members can read workspace obligations"
+    on public.obligations for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = obligations.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace obligations"
+    on public.obligations for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = obligations.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Evidence: active workspace members can read, create, and manage
+create policy "Members can read workspace evidence"
+    on public.evidence for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = evidence.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace evidence"
+    on public.evidence for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = evidence.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can delete workspace evidence"
+    on public.evidence for delete
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = evidence.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Remediation plans: active workspace members can read, create, and manage
+create policy "Members can read workspace remediation_plans"
+    on public.remediation_plans for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = remediation_plans.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace remediation_plans"
+    on public.remediation_plans for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = remediation_plans.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can update workspace remediation_plans"
+    on public.remediation_plans for update
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = remediation_plans.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can delete workspace remediation_plans"
+    on public.remediation_plans for delete
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = remediation_plans.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );

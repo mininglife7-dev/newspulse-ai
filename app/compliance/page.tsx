@@ -2,13 +2,24 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Plus, AlertTriangle, Trash2, Edit2, MoreVertical } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Plus, AlertTriangle, Trash2, Edit2, MoreVertical, FileUp, Download, X } from 'lucide-react';
 
 interface Obligation {
   id: string;
   text: string;
   source_assessment_id: string;
   source_system_name: string;
+}
+
+interface Evidence {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string | null;
+  file_type: string | null;
+  file_size: number | null;
+  status: 'submitted' | 'under_review' | 'approved' | 'rejected';
+  created_at: string;
 }
 
 interface RemediationPlan {
@@ -47,9 +58,11 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; icon: typeof Che
 export default function CompliancePage() {
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [plans, setPlans] = useState<RemediationPlan[]>([]);
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
+  const [showAddEvidence, setShowAddEvidence] = useState<string | null>(null);
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [newPlanData, setNewPlanData] = useState({
     title: '',
@@ -58,47 +71,59 @@ export default function CompliancePage() {
     target_date: '',
     obligation_text: '',
   });
+  const [evidenceData, setEvidenceData] = useState({
+    title: '',
+    description: '',
+    file_url: '',
+  });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [addingEvidence, setAddingEvidence] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [obsRes, plansRes] = await Promise.all([
+      const [obsRes, plansRes, evRes] = await Promise.all([
         fetch('/api/obligations'),
         fetch('/api/remediation-plans'),
+        fetch('/api/evidence'),
       ]);
 
-      if (obsRes.status === 401 || plansRes.status === 401) {
+      if (obsRes.status === 401 || plansRes.status === 401 || evRes.status === 401) {
         window.location.href = '/auth/signin?redirect=/compliance';
         return;
       }
 
-      if (obsRes.status === 409 || plansRes.status === 409) {
+      if (obsRes.status === 409 || plansRes.status === 409 || evRes.status === 409) {
         setLoadError('Complete workspace setup first');
         setObligations([]);
         setPlans([]);
+        setEvidence([]);
         return;
       }
 
-      const [obsData, plansData] = await Promise.all([
+      const [obsData, plansData, evData] = await Promise.all([
         obsRes.json().catch(() => ({ ok: false, error: 'Server error' })),
         plansRes.json().catch(() => ({ ok: false, error: 'Server error' })),
+        evRes.json().catch(() => ({ ok: false, error: 'Server error' })),
       ]);
 
-      if (!obsData.ok || !plansData.ok) {
+      if (!obsData.ok || !plansData.ok || !evData.ok) {
         throw new Error('Failed to load data');
       }
 
       setObligations(obsData.obligations || []);
       setPlans(plansData.plans || []);
+      setEvidence(evData.evidence || []);
     } catch (err: any) {
       setLoadError(err?.message || 'Could not load compliance data');
       setObligations([]);
       setPlans([]);
+      setEvidence([]);
     } finally {
       setLoading(false);
     }
@@ -227,6 +252,59 @@ export default function CompliancePage() {
       await loadData();
     } catch (err: any) {
       alert(err?.message || 'Failed to update plan status');
+    }
+  };
+
+  const handleAddEvidence = async (e: React.FormEvent, planId: string) => {
+    e.preventDefault();
+    if (!evidenceData.title.trim()) {
+      setEvidenceError('Title is required');
+      return;
+    }
+
+    setAddingEvidence(true);
+    setEvidenceError(null);
+    try {
+      const res = await fetch('/api/evidence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: evidenceData.title,
+          description: evidenceData.description || undefined,
+          file_url: evidenceData.file_url || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Failed to add evidence' }));
+        throw new Error(data.error || `Error: ${res.status}`);
+      }
+
+      setEvidenceData({ title: '', description: '', file_url: '' });
+      setShowAddEvidence(null);
+      await loadData();
+    } catch (err: any) {
+      setEvidenceError(err?.message || 'Failed to add evidence');
+    } finally {
+      setAddingEvidence(false);
+    }
+  };
+
+  const handleDeleteEvidence = async (evidenceId: string) => {
+    if (!confirm('Are you sure you want to delete this evidence?')) return;
+
+    try {
+      const res = await fetch(`/api/evidence/${evidenceId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to delete evidence: ${res.status}`);
+      }
+
+      await loadData();
+    } catch (err: any) {
+      alert(err?.message || 'Failed to delete evidence');
     }
   };
 
@@ -423,6 +501,68 @@ export default function CompliancePage() {
                             </button>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Evidence section */}
+                      <div className="mt-3 border-t border-slate-700/50 pt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-semibold text-slate-400">Evidence ({evidence.filter(e => e.id.includes(plan.id) || plan.id.includes(e.id)).length})</p>
+                          <button
+                            onClick={() => setShowAddEvidence(showAddEvidence === plan.id ? null : plan.id)}
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded text-slate-400 hover:text-blue-300 hover:bg-slate-700/50 transition"
+                          >
+                            <FileUp className="h-3 w-3" />
+                            Add
+                          </button>
+                        </div>
+
+                        {/* Add evidence form */}
+                        {showAddEvidence === plan.id && (
+                          <div className="mb-2 p-3 rounded-lg border border-slate-700 bg-slate-800/50 space-y-2">
+                            {evidenceError && (
+                              <div className="flex items-start gap-2 text-xs text-red-300">
+                                <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                <p>{evidenceError}</p>
+                              </div>
+                            )}
+                            <input
+                              type="text"
+                              placeholder="Evidence title"
+                              value={evidenceData.title}
+                              onChange={(e) => setEvidenceData({ ...evidenceData, title: e.target.value })}
+                              className="w-full text-xs rounded px-2 py-1 bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Description (optional)"
+                              value={evidenceData.description}
+                              onChange={(e) => setEvidenceData({ ...evidenceData, description: e.target.value })}
+                              className="w-full text-xs rounded px-2 py-1 bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none"
+                            />
+                            <input
+                              type="text"
+                              placeholder="File URL or link (optional)"
+                              value={evidenceData.file_url}
+                              onChange={(e) => setEvidenceData({ ...evidenceData, file_url: e.target.value })}
+                              className="w-full text-xs rounded px-2 py-1 bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setShowAddEvidence(null)}
+                                className="flex-1 text-xs px-2 py-1 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 transition"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={(e) => handleAddEvidence(e, plan.id)}
+                                disabled={addingEvidence}
+                                className="flex-1 text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition"
+                              >
+                                {addingEvidence ? 'Adding...' : 'Add Evidence'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
