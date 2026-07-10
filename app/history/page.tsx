@@ -28,9 +28,9 @@ export default function HistoryPage() {
     setError(null);
     try {
       const res = await fetch('/api/history?limit=100', { cache: 'no-store' });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Failed (${res.status})`);
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || `Failed (${res.status})`);
       }
       setHistory((json.history ?? []) as SearchHistoryRow[]);
     } catch (err: any) {
@@ -56,9 +56,9 @@ export default function HistoryPage() {
 
   const handleDeleteOne = useCallback(async (id: string) => {
     const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
-    const json = await res.json();
-    if (!res.ok || !json.ok) {
-      throw new Error(json.error || `Delete failed (${res.status})`);
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.ok) {
+      throw new Error(json?.error || `Delete failed (${res.status})`);
     }
     setHistory((prev) => prev.filter((entry) => entry.id !== id));
     setExpanded((prev) => {
@@ -80,9 +80,9 @@ export default function HistoryPage() {
     setClearing(true);
     try {
       const res = await fetch('/api/history', { method: 'DELETE' });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Delete failed (${res.status})`);
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || `Delete failed (${res.status})`);
       }
       setHistory([]);
       setExpanded(new Set());

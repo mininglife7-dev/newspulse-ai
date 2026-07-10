@@ -12,7 +12,13 @@ test.describe('navigation & layout', () => {
       .getByRole('link', { name: 'History' })
       .click();
     await expect(page).toHaveURL(/\/history$/);
-    await expect(page.getByText('Search History')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Search History' })
+    ).toBeVisible();
+    // Client-side navigation announces the new page title to screen readers.
+    await expect(page.locator('#__next-route-announcer__')).toHaveText(
+      'Search History — NewsPulse AI'
+    );
 
     await page
       .getByRole('navigation', { name: 'Main' })

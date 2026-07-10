@@ -12,6 +12,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const FIRECRAWL_LIMIT = 10;
+const MAX_KEYWORD_LENGTH = 200;
 
 interface SearchBody {
   keyword?: string;
@@ -43,10 +44,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (body.keyword !== undefined && typeof body.keyword !== 'string') {
+    return NextResponse.json(
+      { ok: false, error: '"keyword" must be a string.' },
+      { status: 400 }
+    );
+  }
+
   const keyword = (body.keyword ?? '').trim();
   if (!keyword) {
     return NextResponse.json(
       { ok: false, error: 'Missing "keyword" in request body.' },
+      { status: 400 }
+    );
+  }
+  if (keyword.length > MAX_KEYWORD_LENGTH) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `"keyword" is too long (max ${MAX_KEYWORD_LENGTH} characters).`,
+      },
       { status: 400 }
     );
   }

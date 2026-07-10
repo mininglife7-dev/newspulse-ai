@@ -56,9 +56,9 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keyword: q }),
       });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Search failed (${res.status})`);
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || `Search failed (${res.status})`);
       }
       setResults(json.results as NewsArticle[]);
       setSaveFailed(
@@ -78,7 +78,7 @@ export default function HomePage() {
     const q = searchParams.get('q');
     if (q && q.trim()) {
       autoRanRef.current = true;
-      setKeyword(q);
+      setKeyword(q.trim());
       runSearch(q.trim());
     }
   }, [searchParams, runSearch]);
@@ -123,6 +123,7 @@ export default function HomePage() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             aria-label="Search keyword"
+            maxLength={200}
             placeholder='Try "AI regulation", "SpaceX", "climate summit"…'
             className="flex-1 bg-transparent px-2 py-3 text-base text-white placeholder-white/30 outline-none"
             disabled={loading}

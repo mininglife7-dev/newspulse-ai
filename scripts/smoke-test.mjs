@@ -39,8 +39,7 @@ serverEnv.NODE_ENV = 'production';
 const results = [];
 function record(category, name, status, detail = '') {
   results.push({ category, name, status, detail });
-  const icon =
-    status === 'PASS' ? '✓' : status === 'FAIL' ? '✗' : '·';
+  const icon = status === 'PASS' ? '✓' : status === 'FAIL' ? '✗' : '·';
   console.log(
     `  ${icon} [${status}] ${category} — ${name}${detail ? `  (${detail})` : ''}`
   );
@@ -142,21 +141,26 @@ async function run() {
     assert(html.includes('href="/"'), 'nav link home missing');
   });
 
-  await check('page', 'GET /history/<id> fails honestly without DB', async () => {
-    // No Supabase credentials → the page must surface the error boundary,
-    // never fabricated saved-search content or a fake "not found".
-    // (Next streams server-component errors with HTTP 200 + an error digest.)
-    const res = await get('/history/00000000-0000-4000-8000-000000000000');
-    const html = await res.text();
-    assert(
-      !html.includes('Saved search'),
-      'page rendered saved-search content it could not have loaded'
-    );
-    assert(
-      res.status >= 500 || html.includes('digest'),
-      `expected 5xx or streamed error digest, got ${res.status} with neither`
-    );
-  });
+  await check(
+    'page',
+    'GET /history/<id> fails honestly without DB',
+    async () => {
+      // No Supabase credentials → the page must surface the error boundary,
+      // never fabricated saved-search content or a fake "not found".
+      // (Next streams server-component errors with HTTP 200 + an error digest.)
+      const res = await get('/history/00000000-0000-4000-8000-000000000000');
+      const html = await res.text();
+      // 'Re-run this search' only renders with a real entry.
+      assert(
+        !html.includes('Re-run this search'),
+        'page rendered saved-search content it could not have loaded'
+      );
+      assert(
+        res.status >= 500 || html.includes('digest'),
+        `expected 5xx or streamed error digest, got ${res.status} with neither`
+      );
+    }
+  );
 
   await check('page', 'GET /nonexistent returns 404 page', async () => {
     const res = await get('/this-page-does-not-exist');
@@ -199,48 +203,131 @@ async function run() {
     assert(json.ok === false, 'ok must be false on 405');
   });
 
-  await check('api', 'POST /api/search rejects invalid JSON with 400', async () => {
-    const res = await get('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: 'not-json',
-    });
-    assert(res.status === 400, `expected 400, got ${res.status}`);
-  });
+  await check(
+    'api',
+    'POST /api/search rejects invalid JSON with 400',
+    async () => {
+      const res = await get('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'not-json',
+      });
+      assert(res.status === 400, `expected 400, got ${res.status}`);
+    }
+  );
 
-  await check('api', 'POST /api/search rejects missing keyword with 400', async () => {
-    const res = await get('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-    assert(res.status === 400, `expected 400, got ${res.status}`);
-    const json = await res.json();
-    assert(json.ok === false && json.error, 'error payload missing');
-  });
+  await check(
+    'api',
+    'POST /api/search rejects missing keyword with 400',
+    async () => {
+      const res = await get('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      assert(res.status === 400, `expected 400, got ${res.status}`);
+      const json = await res.json();
+      assert(json.ok === false && json.error, 'error payload missing');
+    }
+  );
 
-  await check('api', 'POST /api/search fails honestly when unconfigured', async () => {
-    const res = await get('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword: 'smoke test' }),
-    });
-    assert(res.status === 500, `expected 500 without API key, got ${res.status}`);
-    const json = await res.json();
-    assert(json.ok === false && json.error, 'must return an error, not results');
-  });
+  await check(
+    'api',
+    'POST /api/search rejects non-string keyword with 400',
+    async () => {
+      const res = await get('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: 12345 }),
+      });
+      assert(res.status === 400, `expected 400, got ${res.status}`);
+      const json = await res.json();
+      assert(json.ok === false && json.error, 'error payload missing');
+    }
+  );
 
-  await check('api', '/api/search responses carry rate-limit headers', async () => {
-    const res = await get('/api/search');
-    assert(
-      res.headers.get('x-ratelimit-limit') !== null,
-      'X-RateLimit-Limit header missing'
-    );
-    assert(
-      res.headers.get('x-ratelimit-remaining') !== null,
-      'X-RateLimit-Remaining header missing'
-    );
-  });
+  await check(
+    'api',
+    'POST /api/search rejects oversized keyword with 400',
+    async () => {
+      const res = await get('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: 'x'.repeat(500) }),
+      });
+      assert(res.status === 400, `expected 400, got ${res.status}`);
+      const json = await res.json();
+      assert(/too long/i.test(json.error || ''), 'error should mention length');
+    }
+  );
+
+  await check(
+    'api',
+    'POST /api/search fails honestly when unconfigured',
+    async () => {
+      const res = await get('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: 'smoke test' }),
+      });
+      assert(
+        res.status === 500,
+        `expected 500 without API key, got ${res.status}`
+      );
+      const json = await res.json();
+      assert(
+        json.ok === false && json.error,
+        'must return an error, not results'
+      );
+    }
+  );
+
+  await check(
+    'api',
+    '/api/search responses carry rate-limit headers',
+    async () => {
+      const res = await get('/api/search');
+      assert(
+        res.headers.get('x-ratelimit-limit') !== null,
+        'X-RateLimit-Limit header missing'
+      );
+      assert(
+        res.headers.get('x-ratelimit-remaining') !== null,
+        'X-RateLimit-Remaining header missing'
+      );
+    }
+  );
+
+  await check(
+    'api',
+    '/api/search rate limit returns 429 after 30 req/min',
+    async () => {
+      // Earlier checks consumed part of this window; hammer until the limiter
+      // trips. It must trip within the configured 30-requests-per-minute cap.
+      let tripped = null;
+      for (let i = 0; i < 35; i++) {
+        const res = await get('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}), // cheap 400s — still count against the limit
+        });
+        if (res.status === 429) {
+          tripped = res;
+          break;
+        }
+      }
+      assert(tripped, 'rate limiter never returned 429 within 35 requests');
+      const json = await tripped.json();
+      assert(
+        json.ok === false && /rate limit/i.test(json.error || ''),
+        '429 body should explain the rate limit'
+      );
+      assert(
+        tripped.headers.get('x-ratelimit-remaining') === '0',
+        'X-RateLimit-Remaining should be 0 when limited'
+      );
+    }
+  );
 
   // ----- History API -----
   await check('api', 'GET /api/history fails honestly without DB', async () => {
@@ -255,19 +342,35 @@ async function run() {
     assert(json.error, 'error message missing');
   });
 
-  await check('api', 'GET /api/history/<id> fails honestly without DB', async () => {
-    const res = await get('/api/history/00000000-0000-4000-8000-000000000000');
-    const json = await res.json();
-    assert(res.status === 500, `expected 500 without creds, got ${res.status}`);
-    assert(json.ok === false && json.error, 'error payload missing');
-  });
+  await check(
+    'api',
+    'GET /api/history/<id> fails honestly without DB',
+    async () => {
+      const res = await get(
+        '/api/history/00000000-0000-4000-8000-000000000000'
+      );
+      const json = await res.json();
+      assert(
+        res.status === 500,
+        `expected 500 without creds, got ${res.status}`
+      );
+      assert(json.ok === false && json.error, 'error payload missing');
+    }
+  );
 
-  await check('api', 'DELETE /api/history fails honestly without DB', async () => {
-    const res = await get('/api/history', { method: 'DELETE' });
-    const json = await res.json();
-    assert(res.status === 500, `expected 500 without creds, got ${res.status}`);
-    assert(json.ok === false && json.error, 'error payload missing');
-  });
+  await check(
+    'api',
+    'DELETE /api/history fails honestly without DB',
+    async () => {
+      const res = await get('/api/history', { method: 'DELETE' });
+      const json = await res.json();
+      assert(
+        res.status === 500,
+        `expected 500 without creds, got ${res.status}`
+      );
+      assert(json.ok === false && json.error, 'error payload missing');
+    }
+  );
 
   // ----- SEO / meta routes -----
   await check('meta', 'GET /robots.txt responds', async () => {

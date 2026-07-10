@@ -1,5 +1,7 @@
+import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { ChevronLeft, RotateCw } from 'lucide-react';
 import NewsCard from '@/components/NewsCard';
 import LocalDateTime from '@/components/LocalDateTime';
@@ -17,21 +19,39 @@ interface PageProps {
  * Returns the saved search, or null when it genuinely doesn't exist.
  * Database failures throw so the error boundary renders — a DB outage
  * must not be presented to the user as "Page not found".
+ *
+ * Wrapped in React cache() so generateMetadata and the page share one
+ * database query per request.
  */
-async function getSearchById(id: string): Promise<SearchHistoryRow | null> {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from('news_searches')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  if (error) {
-    // 22P02 = malformed UUID — such an id can't exist, so it's a real 404.
-    if (error.code === '22P02') return null;
-    console.error('[history/[id]] supabase error:', error);
-    throw new Error(`Failed to load saved search: ${error.message}`);
+const getSearchById = cache(
+  async (id: string): Promise<SearchHistoryRow | null> => {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('news_searches')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) {
+      // 22P02 = malformed UUID — such an id can't exist, so it's a real 404.
+      if (error.code === '22P02') return null;
+      console.error('[history/[id]] supabase error:', error);
+      throw new Error(`Failed to load saved search: ${error.message}`);
+    }
+    return (data as SearchHistoryRow) ?? null;
   }
-  return (data as SearchHistoryRow) ?? null;
+);
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  // On failure or absence, fall back to the generic title — the tab must
+  // not claim a saved search exists when none could be verified.
+  const entry = await getSearchById(params.id).catch(() => null);
+  if (!entry) return { title: 'NewsPulse AI' };
+  return {
+    title: `"${entry.keyword}" — Saved search — NewsPulse AI`,
+    description: `Saved NewsPulse AI search for "${entry.keyword}".`,
+  };
 }
 
 export default async function HistoryDetailPage({ params }: PageProps) {
