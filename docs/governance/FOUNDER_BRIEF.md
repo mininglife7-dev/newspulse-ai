@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (Evolution Phase 1 complete: 7 DNA systems deployed, awaiting 3 Founder launch decisions)
-**State:** Verifying (DNA-GOV-001 through 007 live; GitHub Actions monitoring deployed; awaiting Supabase + GitHub billing Founder actions)
+**Last updated:** 2026-07-10 (Evolution Phase 2 in progress: DNS-GOV-009/010 + Supabase guide deployed to main)
+**State:** Executing (DNA-GOV-001/002/008 live with monitoring; DNS-GOV-009/010 merged to main; awaiting Vercel deployment confirmation)
 
 ---
 
@@ -117,17 +117,39 @@ with a timer.
   - Endpoint: GET /api/security-scan
   - **INTEGRATED with DNA-GOV-005:** Security alerts now appear in unified /api/alerts dashboard
 
+**Phase 2 Active (Just Deployed to Main):**
+- ✅ DNA-GOV-009: Performance Baseline Tracking (21/21 tests) — Merged commit 35a250b
+  - Autonomous regression detection across 4 metrics (latency, bundle size, build time, DB queries)
+  - Severity classification: critical >2x baseline, high >1.5x, medium >threshold, low
+  - Automatic history trimming (1000 sample limit per metric)
+  - Metric-specific recommended actions for each degradation type
+  - **Enables:** Early warning system before customer-facing performance impact
+
+- ✅ DNA-GOV-010: Git Governance (33/33 tests) — Merged commit 28bd910
+  - CommitMessageValidator: conventional commits enforcement (8 valid types, lowercase, max 72 chars)
+  - BranchNameValidator: category/name pattern (feature/, fix/, docs/, etc.)
+  - MergeValidator: prevent force-push, require linear history on main
+  - PRValidator: title length, description presence, commit conventions
+  - GitGovernanceOrchestrator: comprehensive PR workflow validation
+  - **Enables:** Autonomous governance without manual policy review
+
+- ✅ Supabase Production Setup Guide (565 lines) — Merged commit a179f97
+  - 6-phase deployment: Schema → Auth → Env Vars → Testing → Verification → Production
+  - Step-by-step procedures, troubleshooting, security checklist, post-launch maintenance
+  - Success criteria: 10 checkpoints for launch readiness
+  - **Enables:** Founder can deploy production database independently
+
 **Critical Infrastructure Decision (Resolved):**
 - **Vercel Hobby Cron Limitation:** Hobby accounts limited to 1 cron/day; DNA required 4 frequent monitors
 - **Resolution:** Migrated to GitHub Actions (free tier, unlimited frequency, superior reliability)
 - **Impact:** Full monitoring restored with $0 cost increase; improved deployment consistency
 
-**Test Suite Status:** 165/165 passing (all green)
+**Test Suite Status:** 247/247 passing (all green) — up from 193 with DNS-GOV-009/010 additions
 
 **Next DNA Candidates (Priority Order):**
-1. DNA-GOV-008: Dependency Security Scanning (npm advisories, CVE alerts)
-2. DNA-GOV-009: Performance Baseline Tracking (regression detection)
-3. DNA-GOV-010: Git Governance (enforce standards, prevent force-pushes)
+1. DNS-GOV-011: Cost Anomaly Detection (Vercel/Supabase spend monitoring)
+2. DNS-GOV-012: Schema Migration Validator (zero-downtime DB updates)
+3. DNS-GOV-013: Feature Flag Controller (A/B testing, gradual rollouts)
 
 ---
 
@@ -135,22 +157,60 @@ with a timer.
 
 **See [`docs/governance/FOUNDER-DECISION-BRIEF.md`](./FOUNDER-DECISION-BRIEF.md) for detailed rationale on each decision.**
 
-### Decision 1: Deploy Supabase Schema (2 min)
+### Priority 1: Deploy Supabase Schema (Follow Guide) 
+- **Status:** 📖 Comprehensive guide now available at `docs/infra/SUPABASE-PRODUCTION-SETUP.md`
 - **Why:** Auth signup will silently fail without schema + RLS policies
-- **Action:** Run `supabase/schema.sql` in Supabase SQL editor (copy-paste, idempotent)
+- **Action:** Follow 6-phase guide (copy-paste schema, enable Email auth, set env vars, test, verify)
+- **Effort:** 15-30 minutes (mostly copy-paste + waiting)
 - **Risk if delayed:** Every customer signup attempt fails with 403
+- **What was added:** Supabase deployment guide with testing procedures (commits a179f97)
 
-### Decision 2: Enable Email Authentication (2 min)
-- **Why:** Signup form accepts emails but won't send verification without this setting
-- **Action:** Supabase → Project Settings → Auth → Enable "Email"
-- **Risk if delayed:** First customer reports: "Never received verification email"
+### Priority 2: GitHub Actions Spending Limit (5 min)
+- **Status:** ⏸️ CI pipeline stopped at 04:15 UTC (spending limit likely exhausted)
+- **Why:** Actions went dark ~4+ hours ago; all PRs merge unverified
+- **Action:** GitHub → Settings → Billing → Actions → Increase spending limit to $50+/month
+- **Risk if delayed:** All PRs merge without verification; broken code reaches production
+- **Verification:** DNA-001 should auto-detect status within 30 min of fix
 
-### Decision 3: Check GitHub Actions Billing (5 min)
-- **Why:** Actions went dark at 04:15 UTC today (4+ hours undetected); indicates spending cap/limit hit
-- **Action:** GitHub → Settings → Billing → Actions → Check usage and limits
-- **Risk if delayed:** All PRs merge unverified; broken code reaches production
-- **Workaround:** If cap hit, increase limit or contact GitHub billing
+### Priority 3: Next.js Security Upgrade (Timing Decision)
+- **Status:** 📋 Comprehensive upgrade playbook available at `docs/governance/NEXT-UPGRADE-PLAYBOOK.md`
+- **Why:** 10 npm vulnerabilities (1 CRITICAL DoS, 5 HIGH, 4 MODERATE) blocking secure launch
+- **Options:**
+  - Option A: Upgrade now (90 min effort, eliminates all vulnerabilities before customer launch)
+  - Option B: Defer post-launch (acceptable if no customer data exposed yet)
+- **Current:** Next.js 14.2.35 EOL → Upgrade to 15.5.15+ or 16.x
+- **Risk if delayed:** Production has known DoS vulnerability; external auditors will flag `npm audit`
+- **What was added:** Complete playbook with step-by-step commands, testing checklist, rollback procedure
 
-**Expected outcome:** All 3 decisions + 10 min execution = customers can sign up and use workspace setup end-to-end
+### Priority 4: Vercel Plan Decision (Optional, Enables Real-Time Monitoring)
+- **Status:** 📊 Currently on Hobby tier (limited to 1 cron/day)
+- **Why:** Full monitoring DNA (health checks every 5 min) blocked by tier limitation
+- **Options:**
+  - Option A: Upgrade to Pro ($20/month) → All 5 monitoring DNA enabled with real-time alerts
+  - Option B: Stay on Hobby → Accept 1 daily security scan only (sufficient for pre-launch)
+- **Risk if delayed:** Zero real-time visibility into production issues until manual check
 
-**Governor will verify** (via DNA-001/002/006) that each decision is effective
+**Expected outcome:** Supabase + GitHub Actions fixes (10 min) + optional Next.js upgrade (90 min) = production-ready platform
+
+---
+
+## Latest Deployments (This Session)
+
+**Merged to main at 09:10 UTC:**
+1. **Commit 35a250b** — DNS-GOV-009: Performance Baseline Tracking (21 new tests)
+2. **Commit 28bd910** — DNS-GOV-010: Git Governance (33 new tests)
+3. **Commit a179f97** — Supabase Production Setup Guide (comprehensive 6-phase procedure)
+
+**Verification:** 
+- ✅ All 247/247 tests passing (local)
+- ✅ Production build successful
+- ✅ Vercel auto-deploying from main (in progress)
+
+**What's now available for Founder:**
+- Complete Supabase deployment guide with testing procedures
+- Git governance system preventing merge mistakes
+- Performance regression detection system
+- Comprehensive Next.js upgrade playbook
+- GitHub Actions diagnostic guide
+
+**Next Step:** Approve one or more of the 4 critical decisions above; Governor will execute and verify
