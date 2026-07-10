@@ -87,11 +87,57 @@ export function extractPublishedDate(
   result: FirecrawlSearchResult
 ): string | null {
   const meta = result.metadata ?? {};
-  const raw =
-    meta.publishedTime ||
-    meta['article:published_time'] ||
-    null;
+  const raw = meta.publishedTime || meta['article:published_time'] || null;
   if (!raw) return null;
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
+ * A Firecrawl result normalized into the shape the app works with. `content`
+ * is the best available text to summarize; the rest map onto NewsArticle.
+ */
+export interface NormalizedArticle {
+  title: string;
+  url: string;
+  source: string;
+  date: string | null;
+  description: string | null;
+  content: string;
+}
+
+/**
+ * Normalize raw Firecrawl results into NormalizedArticle[]:
+ * - drops entries without a usable URL,
+ * - resolves a title from result/metadata/og fields, falling back to the domain,
+ * - resolves a description from result/metadata/og fields,
+ * - picks the best content (scraped markdown → content → description) to summarize.
+ *
+ * Pure and side-effect-free so the pipeline's shaping logic is unit-tested
+ * rather than buried in the route handler.
+ */
+export function normalizeFirecrawlResults(
+  results: FirecrawlSearchResult[]
+): NormalizedArticle[] {
+  return (results ?? [])
+    .filter((r) => r && r.url)
+    .map((r) => {
+      const title =
+        r.title || r.metadata?.title || r.metadata?.ogTitle || extractDomain(r.url);
+
+      const description =
+        r.description ||
+        r.metadata?.description ||
+        r.metadata?.ogDescription ||
+        null;
+
+      return {
+        title,
+        url: r.url,
+        source: extractDomain(r.url),
+        date: extractPublishedDate(r),
+        description,
+        content: r.markdown || r.content || description || '',
+      };
+    });
 }

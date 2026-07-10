@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  firecrawlSearch,
-  extractDomain,
-  extractPublishedDate,
-} from '@/lib/firecrawl';
+import { firecrawlSearch, normalizeFirecrawlResults } from '@/lib/firecrawl';
 import { summarizeBatch } from '@/lib/openai';
 import { saveSearch, type NewsArticle } from '@/lib/supabase';
 import { parseSearchKeyword, readBodyField } from '@/lib/validation';
@@ -75,32 +71,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Normalize Firecrawl results — keep only items with a usable URL.
-  const normalized = rawResults
-    .filter((r) => r && r.url)
-    .map((r) => {
-      const title =
-        r.title ||
-        r.metadata?.title ||
-        r.metadata?.ogTitle ||
-        extractDomain(r.url);
-
-      const description =
-        r.description ||
-        r.metadata?.description ||
-        r.metadata?.ogDescription ||
-        null;
-
-      return {
-        title,
-        url: r.url,
-        source: extractDomain(r.url), // (4) source domain
-        date: extractPublishedDate(r),
-        description,
-        // Use scraped markdown when available; fall back to description.
-        content: r.markdown || r.content || description || '',
-      };
-    });
+  // Normalize Firecrawl results — keep only items with a usable URL, resolve
+  // titles/descriptions/content. (Pure logic lives in lib/firecrawl.)
+  const normalized = normalizeFirecrawlResults(rawResults);
 
   if (normalized.length === 0) {
     return NextResponse.json({
