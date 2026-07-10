@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -83,6 +84,27 @@ export async function POST(req: Request) {
     );
   }
 
+  // The workspace row is now committed. These separate PostgREST calls are not
+  // wrapped in one transaction, so if a later step fails we must undo it —
+  // otherwise a failed setup leaves an orphan workspace and the customer's
+  // retry (which mints a fresh slug) piles up duplicates. Delete with the
+  // service-role client because there is no RLS delete policy for owners;
+  // workspace_members and companies cascade-delete with the workspace.
+  const rollbackWorkspace = async () => {
+    try {
+      await getSupabaseAdmin()
+        .from('workspaces')
+        .delete()
+        .eq('id', workspace.id);
+    } catch (cleanupErr) {
+      console.error(
+        '[api/workspace] rollback failed; orphan workspace may remain:',
+        workspace.id,
+        cleanupErr
+      );
+    }
+  };
+
   // 2. Owner membership (activates RLS access to the workspace)
   const { error: memberError } = await supabase
     .from('workspace_members')
@@ -97,6 +119,7 @@ export async function POST(req: Request) {
 
   if (memberError) {
     console.error('[api/workspace] member insert failed:', memberError);
+    await rollbackWorkspace();
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace membership' },
       { status: 500 }
@@ -121,6 +144,7 @@ export async function POST(req: Request) {
 
   if (companyError || !company) {
     console.error('[api/workspace] company insert failed:', companyError);
+    await rollbackWorkspace();
     return NextResponse.json(
       { ok: false, error: 'Could not create company profile' },
       { status: 500 }
