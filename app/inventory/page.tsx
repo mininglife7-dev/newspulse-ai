@@ -356,13 +356,22 @@ export default function InventoryPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {isAssessmentComplete && (
-                          <Link
-                            href={`/assessment-progress?ai_system_id=${s.id}`}
-                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-600/40 bg-emerald-950/30 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:border-emerald-500 hover:bg-emerald-950/50"
-                          >
-                            <TrendingDown className="h-3 w-3" />
-                            View Progress
-                          </Link>
+                          <>
+                            <Link
+                              href={`/assessment-progress?ai_system_id=${s.id}`}
+                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-600/40 bg-emerald-950/30 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:border-emerald-500 hover:bg-emerald-950/50"
+                            >
+                              <TrendingDown className="h-3 w-3" />
+                              Progress
+                            </Link>
+                            <Link
+                              href={`/assessment-history?ai_system_id=${s.id}`}
+                              className="inline-flex items-center gap-1 rounded-lg border border-cyan-600/40 bg-cyan-950/30 px-3 py-1.5 text-xs font-medium text-cyan-300 transition hover:border-cyan-500 hover:bg-cyan-950/50"
+                            >
+                              <TrendingDown className="h-3 w-3" />
+                              Timeline
+                            </Link>
+                          </>
                         )}
                         <Link
                           href={`/assessment?ai_system_id=${s.id}`}

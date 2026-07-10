@@ -155,14 +155,30 @@ export async function GET(req: Request) {
       });
     }
 
-    // Otherwise, fetch history timeline
+    // Otherwise, fetch full timeline with current + historical assessments
+    const { data: systemData } = await supabase
+      .from('ai_systems')
+      .select('name')
+      .eq('id', aiSystemId)
+      .maybeSingle();
+
+    // Fetch current assessment
+    const { data: currentAssessment } = await supabase
+      .from('risk_assessments')
+      .select('risk_score, risk_level, created_at')
+      .eq('ai_system_id', aiSystemId)
+      .eq('status', 'finalized')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Fetch all historical assessments
     const { data: history, error: histError } = await supabase
       .from('assessment_history')
-      .select('version_number, risk_score, risk_level, archived_at, notes')
+      .select('version_number, risk_score, risk_level, archived_at')
       .eq('ai_system_id', aiSystemId)
       .eq('workspace_id', ctx.workspaceId)
-      .order('version_number', { ascending: false })
-      .limit(limit);
+      .order('version_number', { ascending: true });
 
     if (histError) {
       console.error('[api/assessment-history] fetch failed:', histError);
@@ -172,10 +188,39 @@ export async function GET(req: Request) {
       );
     }
 
+    // Combine historical records with current assessment
+    const allAssessments = (history || [])
+      .map((h: any) => ({
+        version: h.version_number,
+        risk_score: h.risk_score,
+        risk_level: h.risk_level,
+        created_at: h.archived_at,
+      }));
+
+    // Add current assessment if exists
+    if (currentAssessment) {
+      const maxVersion = allAssessments.length > 0
+        ? Math.max(...allAssessments.map((a: any) => a.version))
+        : 0;
+
+      allAssessments.push({
+        version: maxVersion + 1,
+        risk_score: currentAssessment.risk_score,
+        risk_level: currentAssessment.risk_level,
+        created_at: currentAssessment.created_at,
+      });
+    }
+
     return NextResponse.json({
       ok: true,
-      history: history || [],
-      count: (history || []).length,
+      timeline: {
+        system_name: systemData?.name || 'Unknown System',
+        ai_system_id: aiSystemId,
+        assessments: allAssessments,
+        total_versions: allAssessments.length,
+        current_score: currentAssessment?.risk_score || null,
+        current_level: currentAssessment?.risk_level || 'unknown',
+      },
     });
   } catch (err: any) {
     console.error('[api/assessment-history] GET failed:', err);

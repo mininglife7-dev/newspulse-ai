@@ -380,12 +380,20 @@ export default function AssessmentProgressPage() {
               </div>
             </>
           )}
-          <Link
-            href="/obligations"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            View Obligations <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href={`/assessment-history?ai_system_id=${searchParams.get('ai_system_id')}`}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-white"
+            >
+              View Timeline <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/obligations"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            >
+              View Obligations <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>
