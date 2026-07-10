@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SYSTEM_TYPES, SYSTEM_STATUSES } from './ai-systems';
+import { SYSTEM_TYPES, SYSTEM_STATUSES, type SystemType, type SystemStatus } from './ai-systems';
 
 // Workspace validation
 export const WorkspaceCreateSchema = z.object({
@@ -46,7 +46,7 @@ export const AiSystemCreateSchema = z.object({
     .max(500, 'description must be at most 500 characters')
     .trim()
     .optional(),
-  systemType: z.enum(SYSTEM_TYPES as [string, ...string[]])
+  systemType: z.enum(['large_language_model', 'generative_ai', 'classification_system', 'recommendation_system', 'computer_vision', 'biometric_system', 'decision_support', 'other'] as const)
     .optional(),
   vendor: z.string()
     .max(100, 'vendor must be at most 100 characters')
@@ -56,7 +56,7 @@ export const AiSystemCreateSchema = z.object({
     .max(300, 'purpose must be at most 300 characters')
     .trim()
     .optional(),
-  status: z.enum(SYSTEM_STATUSES as [string, ...string[]])
+  status: z.enum(['active', 'pilot', 'deprecated'] as const)
     .optional()
     .default('active'),
 });

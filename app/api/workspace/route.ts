@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import type { Request } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { WorkspaceCreateSchema } from '@/lib/validation';
