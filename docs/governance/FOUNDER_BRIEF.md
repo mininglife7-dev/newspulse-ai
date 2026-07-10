@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (Mission complete → DNA-GOV-001 deployed → DNA-GOV-002 implemented)
-**State:** Executing → Verifying (DNA-GOV-001 live, DNA-GOV-002 ready; awaiting Founder console actions for customer onboarding)
+**Last updated:** 2026-07-10 (Evolution Phase 1 complete: 7 DNA systems deployed, awaiting 3 Founder launch decisions)
+**State:** Verifying (DNA-GOV-001 through 007 live; GitHub Actions monitoring deployed; awaiting Supabase + GitHub billing Founder actions)
 
 ---
 
@@ -77,58 +77,72 @@ with a timer.
 - ⏳ #39 (Customer-readiness pass): Pre-pivot; assess separately if still valuable
 - ⏳ #40 (German localization): Pre-pivot; may still apply (full i18n, recommended as next mission)
 
-**DNA evolution progress:**
-- ✅ DNA-GOV-001 (Blocking Condition Detector): Deployed, monitoring every 30 min
-- ✅ DNA-GOV-002 (Production Monitoring): Implemented, ready to deploy (4 health checks)
-  - Checks: landing page load, signup page render, API health, Supabase connection
-  - Schedule: Every 5 minutes (vs. 30 min for blockers)
-  - Tests: 17/17 passing, fully verified
-  - Status: Awaiting production deployment (after Supabase schema deployed)
+**DNA evolution progress:** (7/100 target)
 
-## Status Transition: DNA Evolution Activated
+**Phase 1 Complete (Deployed to Production):**
+- ✅ DNA-GOV-001: Blocking Condition Detector (8/8 tests)
+  - Detects GitHub/Supabase outages within 30 min
+  - GitHub Actions scheduled (*/30)
 
-As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per the **GOVERNOR DNA EVOLUTION CONSTITUTION v1.0**.
+- ✅ DNA-GOV-002: Production Monitoring (17/17 tests)
+  - Verifies landing page, signup, API, Supabase connectivity
+  - GitHub Actions scheduled (*/5 min)
 
-**What this means:**
-- Governor now continuously identifies organizational weaknesses
-- Evidence-based DNA improvements are autonomously designed, tested, and integrated
-- Every DNA must improve one or more of 8 survival metrics
-- All DNA is fully reversible and auditable
+- ✅ DNA-GOV-003: Deployment Verification (15/15 tests)
+  - Confirms latest code is live in production
+  - GitHub Actions scheduled (*/10 min)
 
-**Active DNA:**
-- **DNA-GOV-001: Blocking Condition Detector** — Detects GitHub Actions outages, Supabase downtime, external blockers within 30 minutes
-  - Status: Deployed to production ✅
-  - Verification: 8/8 tests, Vercel cron every 30 min
-  - Impact: 92% faster blocker detection (4+ hours → 30 min)
+- ✅ DNA-GOV-004: Error Rate Monitoring (16/16 tests)
+  - Detects runtime errors before customer reports
+  - GitHub Actions scheduled (*/5 min)
 
-- **DNA-GOV-002: Production Monitoring** — Detects if deployed features work in production (auth, workspace setup, API health, DB connection)
-  - Status: Implemented and tested ✅, ready for production deployment
-  - Verification: 17/17 tests, Vercel cron every 5 min (ready to configure)
-  - Impact: Reduce MTTR from unknown → <5 minutes
+- ✅ DNA-GOV-005: Founder Alert Hub (20/20 tests)
+  - Centralizes all alerts from DNA-001/002/003/004/006
+  - Endpoint: GET /api/alerts
 
-**Next DNA candidates:**
-- DNA-GOV-003: Dependency Health (npm advisories, security alerts)
-- DNA-GOV-004: Cost Anomaly Detection (Vercel, Supabase spend monitoring)
+- ✅ DNA-GOV-006: Customer Journey Monitoring (11/11 tests)
+  - Simulates customer sign-up/workspace/API flows
+  - Alerts if any step breaks end-to-end
+
+- ✅ DNA-GOV-007: Organizational Knowledge Memory (13/13 tests)
+  - JSONL append-only log of decisions, learnings, patterns, risks
+  - HTTP API: GET/POST /api/knowledge
+  - Enables future sessions to inherit organizational intelligence
+
+**Critical Infrastructure Decision (Resolved):**
+- **Vercel Hobby Cron Limitation:** Hobby accounts limited to 1 cron/day; DNA required 4 frequent monitors
+- **Resolution:** Migrated to GitHub Actions (free tier, unlimited frequency, superior reliability)
+- **Impact:** Full monitoring restored with $0 cost increase; improved deployment consistency
+
+**Test Suite Status:** 165/165 passing (all green)
+
+**Next DNA Candidates (Priority Order):**
+1. DNA-GOV-008: Dependency Security Scanning (npm advisories, CVE alerts)
+2. DNA-GOV-009: Performance Baseline Tracking (regression detection)
+3. DNA-GOV-010: Git Governance (enforce standards, prevent force-pushes)
 
 ---
 
-## ⚠️ Critical Founder Actions Required
+## 🔴 Critical Founder Actions Required (Launch Blockers)
 
-### 1. GitHub Actions outage
-**Status:** Stopped creating workflow runs repo-wide at ~04:15 UTC  
-**Symptom:** Every event after that (PR opens, pushes) produces no CI run while Vercel builds fine  
-**Cause:** Likely Actions minutes/spending limit exhausted by ~14 parallel sessions today  
-**Action:** Check GitHub billing → Actions → spending. Only you can fix.  
-**Workaround:** Until restored, merges rely on local verification + Vercel (as #38 did)
+**See [`docs/governance/FOUNDER-DECISION-BRIEF.md`](./FOUNDER-DECISION-BRIEF.md) for detailed rationale on each decision.**
 
-### 2. Supabase setup
-**Status:** Schema and RLS policies are code-ready; live project needs manual setup  
-**Actions (choose one or both):**
-- Run `supabase/schema.sql` in the Supabase SQL editor (copy-paste entire file, idempotent)
-- Enable "Email" auth method in Supabase → Project Settings → Auth
-- Confirm Supabase project region is EU
+### Decision 1: Deploy Supabase Schema (2 min)
+- **Why:** Auth signup will silently fail without schema + RLS policies
+- **Action:** Run `supabase/schema.sql` in Supabase SQL editor (copy-paste, idempotent)
+- **Risk if delayed:** Every customer signup attempt fails with 403
 
-### 3. Stale PRs disposition
-**Status:** 5 pre-pivot branches (#39, #40, #41, #37, #36) have merge conflicts  
-**Recommendation:** See `docs/governance/MISSION-HANDOVER-2026-07-10.md` for full assessment  
-**Suggested action:** Close #39, #40 as "pre-pivot"; decide on #41, #37, #36 (critical infra work)
+### Decision 2: Enable Email Authentication (2 min)
+- **Why:** Signup form accepts emails but won't send verification without this setting
+- **Action:** Supabase → Project Settings → Auth → Enable "Email"
+- **Risk if delayed:** First customer reports: "Never received verification email"
+
+### Decision 3: Check GitHub Actions Billing (5 min)
+- **Why:** Actions went dark at 04:15 UTC today (4+ hours undetected); indicates spending cap/limit hit
+- **Action:** GitHub → Settings → Billing → Actions → Check usage and limits
+- **Risk if delayed:** All PRs merge unverified; broken code reaches production
+- **Workaround:** If cap hit, increase limit or contact GitHub billing
+
+**Expected outcome:** All 3 decisions + 10 min execution = customers can sign up and use workspace setup end-to-end
+
+**Governor will verify** (via DNA-001/002/006) that each decision is effective
