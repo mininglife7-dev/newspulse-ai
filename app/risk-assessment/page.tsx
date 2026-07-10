@@ -18,6 +18,7 @@ import {
   DATA_CATEGORY_OPTIONS,
   AUTONOMY_LEVEL_OPTIONS,
   type RiskLevel,
+  type RiskAssessmentResult,
 } from '@/lib/risk-assessment';
 
 interface AiSystem {
@@ -59,7 +60,7 @@ export default function RiskAssessmentPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [assessment, setAssessment] = useState<any>(null);
+  const [assessment, setAssessment] = useState<RiskAssessmentResult | null>(null);
 
   const [formData, setFormData] = useState({
     systemType: '',
