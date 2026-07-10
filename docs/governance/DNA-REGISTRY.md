@@ -339,6 +339,116 @@ interface KnowledgeMemory {
 
 ---
 
+### DNA-GOV-008: Dependency Security Scanning
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Information Security Officer + DevOps  
+
+#### Purpose
+Continuously scan dependencies for security vulnerabilities and alert Founder to new CVEs before customers discover them. Prevent supply chain attacks by detecting compromised or vulnerable packages before deployment.
+
+#### Problem Discovered
+Current codebase has 10 active vulnerabilities (1 critical, 5 high, 4 moderate). Without automated scanning, Founder has no systematic way to know when new CVEs affect dependencies. Manual `npm audit` runs are reactive (discovered by developer), not proactive (discovered by monitoring). Customers could be exposed to vulnerabilities for days/weeks before detection.
+
+#### Evidence
+- **Weakness:** 10 active vulnerabilities undetected until manual audit; no scheduled scanning
+- **Impact:** Potential security breach if customer data accessed through vulnerable code paths; compliance risk; customer trust risk
+- **Root cause:** No automated, scheduled security monitoring; Founder intervention required for every audit run
+- **Risk:** Customers affected by known CVEs that could have been patched automatically
+
+#### Inputs
+- Node.js project with npm dependencies
+- GitHub Actions workflow trigger (daily schedule)
+- Optional: Previous scan cache for new/resolved detection
+
+#### Outputs
+```typescript
+interface SecurityScanResult {
+  timestamp: string
+  total: number
+  critical: number
+  high: number
+  moderate: number
+  low: number
+  info: number
+  vulnerabilities: Vulnerability[]
+  newVulnerabilities: Vulnerability[]
+  resolvedVulnerabilities: string[]
+  scanStatus: 'clean' | 'vulnerabilities-found' | 'critical-found'
+}
+
+interface Vulnerability {
+  package: string
+  severity: 'critical' | 'high' | 'moderate' | 'low' | 'info'
+  fixAvailable: boolean | { name: string; version: string }
+  description: string
+  affectedVersions: string
+  patchedVersions: string
+}
+```
+
+#### Implementation
+- `lib/dependency-security-scanner.ts` — Core security scanning library (220 LoC)
+  - `scanDependencies()` — Run npm audit and parse results
+  - `formatSecurityAlert()` — Translate scan results to actionable alerts
+  - `getSecuritySummary()` — Quick status summary for Founder
+  - Vulnerability deduplication and caching
+  - New vs. resolved vulnerability detection
+- `app/api/security-scan/route.ts` — HTTP endpoint for manual/scheduled scans (60 LoC)
+  - `GET /api/security-scan` — Execute scan and return JSON results
+- `tests/dependency-security-scanner.test.ts` — 15 tests covering all operations
+- `.github/workflows/dna-security-scan.yml` — Daily scheduled workflow
+  - Schedule: 09:00 UTC every day (configurable)
+  - Manual trigger: Available via GitHub Actions UI
+  - Failure handling: Critical vulns fail the check, high-severity warn only
+
+#### Verification Method
+- **Unit tests:** 15 tests covering:
+  - Audit output parsing (npm JSON format)
+  - Vulnerability deduplication
+  - Cache read/write
+  - New/resolved detection
+  - Alert formatting for all severity levels
+  - Summary generation
+- **All tests pass:** 15/15 ✅
+- **Build verification:** npm run build clean
+- **Integration:** Workflow scheduled in GitHub Actions free tier
+
+#### Dependencies
+- `npm audit --json` (npm built-in, no external service)
+- Filesystem for caching (optional, for new/resolved detection)
+- GitHub Actions (free tier)
+
+#### Risks
+- **False positives:** npm audit may flag dev-only or non-blocking vulns. Mitigation: Founder reviews alerts before panicking
+- **Cache staleness:** If cache file gets out of sync. Mitigation: Auto-regenerate on mismatch
+- **Scanning time:** npm audit can be slow with many deps. Mitigation: Run off-hours (09:00 UTC), async endpoint
+- **Action fatigue:** Too many alerts = alert fatigue. Mitigation: Only alert on NEW vulns, deduplicate
+
+#### Rollback Method
+- Delete `app/api/security-scan/route.ts`
+- Delete `lib/dependency-security-scanner.ts`
+- Delete `.github/workflows/dna-security-scan.yml`
+- Delete `docs/governance/.security-scan-cache.json`
+- Delete tests
+- No schema changes, no data mutations; fully reversible
+
+#### Success Metrics
+1. **Detection speed:** New CVEs detected within 24 hours of npm advisory release
+2. **Founder visibility:** Founder sees vulnerabilities before customer support reports them
+3. **Patch velocity:** Critical vulns patched within 3 days; high-severity within 2 weeks
+4. **Customer safety:** Zero customer-impacting vulnerabilities in production
+5. **Operational efficiency:** Scanning and alerting fully automated (0 manual work per day)
+
+#### Next Steps
+1. **Integration with alert hub:** DNS-008 results feed into DNA-GOV-005 (Founder Alert Hub)
+2. **Patch automation:** Auto-open PRs for patchable vulns (npm audit fix)
+3. **Policy enforcement:** CI fails on critical/high vulns; blocks merge until resolved
+4. **Compliance reporting:** Generate monthly security report for customer compliance requirements
+
+---
+
 ## Notes
 
 - All DNA must pass 8-test survival rule before integration

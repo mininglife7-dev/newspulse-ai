@@ -77,7 +77,7 @@ with a timer.
 - ⏳ #39 (Customer-readiness pass): Pre-pivot; assess separately if still valuable
 - ⏳ #40 (German localization): Pre-pivot; may still apply (full i18n, recommended as next mission)
 
-**DNA evolution progress:** (7/100 target)
+**DNA evolution progress:** (8/100 target)
 
 **Phase 1 Complete (Deployed to Production):**
 - ✅ DNA-GOV-001: Blocking Condition Detector (8/8 tests)
@@ -108,6 +108,13 @@ with a timer.
   - JSONL append-only log of decisions, learnings, patterns, risks
   - HTTP API: GET/POST /api/knowledge
   - Enables future sessions to inherit organizational intelligence
+
+- ✅ DNA-GOV-008: Dependency Security Scanning (15/15 tests)
+  - Daily scans for npm vulnerabilities (critical/high/moderate/low)
+  - Currently: 10 active vulnerabilities (1 critical, 5 high, 4 moderate)
+  - GitHub Actions scheduled workflow (daily 09:00 UTC)
+  - New/resolved vulnerability detection with caching
+  - Endpoint: GET /api/security-scan
 
 **Critical Infrastructure Decision (Resolved):**
 - **Vercel Hobby Cron Limitation:** Hobby accounts limited to 1 cron/day; DNA required 4 frequent monitors
