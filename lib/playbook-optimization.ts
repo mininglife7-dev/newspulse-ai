@@ -401,35 +401,54 @@ export function applyPlaybookImprovement(
     applied: false,
   };
 
+  // Track if any actual change was made
+  let changeApplied = false;
+
   // Apply the change
   if (type === 'add-step') {
     const newStep = change as unknown as PlaybookStep;
     playbook.steps.push(newStep);
+    changeApplied = true;
   } else if (type === 'remove-step' && stepId) {
+    const beforeLength = playbook.steps.length;
     playbook.steps = playbook.steps.filter((s) => s.id !== stepId);
+    changeApplied = playbook.steps.length < beforeLength;
   } else if (type === 'reorder-steps') {
     const order = change.newOrder as Array<{ id: string; order: number }>;
+    let ordersChanged = false;
     for (const item of order) {
       const step = playbook.steps.find((s) => s.id === item.id);
-      if (step) {
+      if (step && step.order !== item.order) {
         step.order = item.order;
+        ordersChanged = true;
       }
     }
+    changeApplied = ordersChanged;
   } else if (type === 'update-duration' && stepId) {
     const step = playbook.steps.find((s) => s.id === stepId);
     if (step) {
+      const oldDuration = step.expectedDuration;
       step.expectedDuration = change.newDuration as number;
+      changeApplied = step.expectedDuration !== oldDuration;
     }
   } else if (type === 'add-automation' && stepId) {
     const step = playbook.steps.find((s) => s.id === stepId);
     if (step) {
+      const oldAutomation = step.automation;
       step.automation = change.automation as string;
+      changeApplied = step.automation !== oldAutomation;
     }
   } else if (type === 'update-criteria' && stepId) {
     const step = playbook.steps.find((s) => s.id === stepId);
     if (step) {
       step.successCriteria = change.criteria as string[];
+      changeApplied = true;
     }
+  }
+
+  // Only mark as applied and update version if change actually happened
+  if (!changeApplied) {
+    return undefined;
   }
 
   improvement.applied = true;

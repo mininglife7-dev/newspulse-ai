@@ -16,6 +16,7 @@ const PROTECTED_PREFIXES = [
   '/api/assessments',
   '/api/obligations',
   '/api/reports',
+  '/api/playbook-optimization',
 ];
 
 /** Auth screens: send already-authenticated users to the dashboard. */
