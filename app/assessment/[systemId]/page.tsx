@@ -278,6 +278,24 @@ export default function AssessmentPage() {
         </div>
       )}
 
+      {/* Assessment Progress (if not finalized) */}
+      {assessment?.status !== 'finalized' && questions.length > 0 && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-white">Assessment Progress</h3>
+            <span className="text-xs text-slate-400">
+              {Object.keys(answers).length} / {questions.length} questions answered
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
+              style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+
       {/* Result Display (if finalized) */}
       {result && (
         <div
