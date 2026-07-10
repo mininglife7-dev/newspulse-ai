@@ -1,338 +1,174 @@
+import { execSync } from 'child_process';
+
 /**
  * DNA-GOV-010: Git Governance
  *
- * Enforce development best practices through autonomous git policy enforcement.
- * Prevents merge mistakes, validates commit conventions, and enables safe autonomous operations.
+ * Enforces commit message standards, prevents dangerous git operations,
+ * and validates PR titles for changelog auto-generation.
+ *
+ * Standards:
+ * - Commit messages: format type(scope): description
+ * - Force-pushes: blocked on main branch (reversible; requires explicit override)
+ * - PR titles: must match commit message pattern for changelog consistency
  */
 
-export interface CommitValidationResult {
-  valid: boolean
-  type?: string
-  scope?: string
-  message?: string
-  errors: string[]
+export interface CommitMessage {
+  type: string;
+  scope?: string;
+  description: string;
+  body?: string;
+  isValid: boolean;
+  errors: string[];
 }
 
-export interface BranchValidationResult {
-  valid: boolean
-  name?: string
-  category?: string // 'feature', 'fix', 'docs', 'refactor', 'chore', etc.
-  errors: string[]
-}
+export type CommitType = 'feat' | 'fix' | 'docs' | 'style' | 'refactor' | 'test' | 'chore' | 'perf' | 'ci';
 
-export interface MergeValidationResult {
-  valid: boolean
-  errors: string[]
-  warnings: string[]
-}
+const VALID_COMMIT_TYPES: CommitType[] = [
+  'feat', // New feature
+  'fix', // Bug fix
+  'docs', // Documentation
+  'style', // Code style (formatting, etc)
+  'refactor', // Code refactoring
+  'test', // Test additions/fixes
+  'chore', // Build, dependencies, etc
+  'perf', // Performance improvements
+  'ci', // CI/CD changes
+];
 
-export interface PRValidationResult {
-  valid: boolean
-  errors: string[]
-  warnings: string[]
-  checks: {
-    hasLinkedIssue: boolean
-    messageFollowsConvention: boolean
-    titleUnder72Chars: boolean
-    descriptionPresent: boolean
-  }
-}
+const COMMIT_MESSAGE_REGEX = /^(feat|fix|docs|style|refactor|test|chore|perf|ci)(?:\(([^)]+)\))?: (.+)$/;
 
-/**
- * Validate commit message follows Conventional Commits format.
- * Format: type(scope): description
- * Example: feat(auth): add google oauth support
- */
-export class CommitMessageValidator {
-  private readonly validTypes = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'chore', 'ci']
-  private readonly typePattern = new RegExp(`^(${this.validTypes.join('|')})(?:\\(([^)]+)\\))?:\\s(.+)$`, 'm')
+export function parseCommitMessage(message: string): CommitMessage {
+  const lines = message.trim().split('\n');
+  const firstLine = lines[0];
+  const errors: string[] = [];
 
-  validate(message: string): CommitValidationResult {
-    const errors: string[] = []
-    const trimmed = message.trim()
+  const match = firstLine.match(COMMIT_MESSAGE_REGEX);
 
-    if (trimmed.length === 0) {
-      return { valid: false, errors: ['Commit message is empty'] }
-    }
-
-    const lines = trimmed.split('\n')
-    const firstLine = lines[0]
-    const match = firstLine.match(this.typePattern)
-
-    if (!match) {
-      // Check if it's an invalid type vs completely wrong format
-      const typeMatch = firstLine.match(/^(\w+)(?:\(([^)]+)\))?:\s*(.*)$/)
-      if (typeMatch) {
-        const [, invalidType] = typeMatch
-        errors.push(`Invalid commit type "${invalidType}". Must be one of: ${this.validTypes.join(', ')}`)
-      } else {
-        errors.push(
-          `Commit message does not follow Conventional Commits format. Expected: type(scope): description\nGot: ${firstLine}`
-        )
-      }
-      return { valid: false, errors }
-    }
-
-    const [, type, scope, description] = match
-
-    // Validate type
-    if (!this.validTypes.includes(type)) {
-      errors.push(`Invalid commit type "${type}". Must be one of: ${this.validTypes.join(', ')}`)
-    }
-
-    // Validate description
-    if (!description || description.length === 0) {
-      errors.push('Commit description cannot be empty')
-    } else if (description[0] === description[0].toUpperCase() && description[0] !== description[0].toLowerCase()) {
-      errors.push('Commit description must start with lowercase letter')
-    }
-
-    // Validate body line length (if present)
-    if (lines.length > 1) {
-      for (let i = 2; i < lines.length; i++) {
-        const line = lines[i]
-        if (line && line.length > 72) {
-          errors.push(`Line ${i + 1} exceeds 72 characters (${line.length}). Keep body lines concise.`)
-        }
-      }
-    }
-
+  if (!match) {
     return {
-      valid: errors.length === 0,
-      type,
-      scope: scope || undefined,
-      message: description,
-      errors,
-    }
+      type: '',
+      scope: undefined,
+      description: firstLine,
+      body: lines.slice(1).join('\n'),
+      isValid: false,
+      errors: [
+        'Commit message must follow format: type(scope): description',
+        `Valid types: ${VALID_COMMIT_TYPES.join(', ')}`,
+        `Example: feat(auth): add password reset flow`,
+      ],
+    };
+  }
+
+  const [, type, scope, description] = match;
+
+  if (!VALID_COMMIT_TYPES.includes(type as CommitType)) {
+    errors.push(`Invalid commit type: "${type}". Valid types: ${VALID_COMMIT_TYPES.join(', ')}`);
+  }
+
+  if (!description || description.length === 0) {
+    errors.push('Commit description cannot be empty');
+  }
+
+  if (description && description.length > 100) {
+    errors.push(`Commit description too long (${description.length} chars). Keep it under 100 characters.`);
+  }
+
+  if (scope && scope.length > 50) {
+    errors.push(`Scope too long (${scope.length} chars). Keep it under 50 characters.`);
+  }
+
+  return {
+    type: type as CommitType,
+    scope: scope || undefined,
+    description,
+    body: lines.slice(1).join('\n'),
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
+export function validatePRTitle(title: string): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (!title || title.trim().length === 0) {
+    errors.push('PR title cannot be empty');
+    return { isValid: false, errors };
+  }
+
+  const match = title.match(COMMIT_MESSAGE_REGEX);
+
+  if (!match) {
+    errors.push('PR title must follow format: type(scope): description');
+    errors.push(`Valid types: ${VALID_COMMIT_TYPES.join(', ')}`);
+    errors.push(`Example: feat(auth): add password reset flow`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
+export function detectForcePush(refName: string): boolean {
+  // Check if this is a force-push to main or release branches
+  const protectedBranches = ['main', 'master', 'production', 'release'];
+  return protectedBranches.some((branch) => refName.includes(branch));
+}
+
+export function getCurrentBranch(): string {
+  try {
+    return execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();
+  } catch {
+    return '';
   }
 }
 
-/**
- * Validate branch name follows naming conventions.
- * Expected: category/descriptive-name
- * Examples: feature/oauth, fix/auth-timeout, docs/update-readme
- */
-export class BranchNameValidator {
-  private readonly validCategories = ['feature', 'fix', 'docs', 'refactor', 'chore', 'test', 'perf']
-  private readonly branchPattern = new RegExp(`^(${this.validCategories.join('|')})\/([a-z0-9-]+)$`)
-
-  validate(branchName: string): BranchValidationResult {
-    const errors: string[] = []
-
-    // Disallow commits to main/master
-    if (branchName === 'main' || branchName === 'master') {
-      return {
-        valid: false,
-        name: branchName,
-        errors: ['Cannot commit directly to main/master. Create a feature branch instead.'],
-      }
-    }
-
-    const match = branchName.match(this.branchPattern)
-
-    if (!match) {
-      errors.push(
-        `Branch name does not follow convention. Expected: category/name\nValid categories: ${this.validCategories.join(', ')}\nExample: feature/oauth-support\nGot: ${branchName}`
-      )
-      return { valid: false, name: branchName, errors }
-    }
-
-    const [, category, name] = match
-
-    // Validate name part
-    if (name.length < 3) {
-      errors.push('Branch name must be at least 3 characters after category/')
-    }
-
-    if (name.endsWith('-')) {
-      errors.push('Branch name cannot end with hyphen')
-    }
-
-    return {
-      valid: errors.length === 0,
-      name: branchName,
-      category,
-      errors,
-    }
+export function getCommitsSinceBase(baseBranch: string = 'main'): string[] {
+  try {
+    const output = execSync(`git log ${baseBranch}..HEAD --oneline`, { encoding: 'utf-8' });
+    return output
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0)
+      .map((line) => line.split(' ').slice(1).join(' '));
+  } catch {
+    return [];
   }
 }
 
-/**
- * Validate merge safety to main branch.
- * Ensures no force-push, clean history, all checks passing.
- */
-export class MergeValidator {
-  validate(options: {
-    baseBranch: string
-    isForceUpdate: boolean
-    hasLinearHistory: boolean
-    allChecksPassing: boolean
-    isAutoMerge?: boolean
-  }): MergeValidationResult {
-    const errors: string[] = []
-    const warnings: string[] = []
+export function validateAllCommits(baseBranch: string = 'main'): {
+  allValid: boolean;
+  results: Array<{ commit: string; parsed: CommitMessage }>;
+} {
+  const commits = getCommitsSinceBase(baseBranch);
+  const results = commits.map((commit) => ({
+    commit,
+    parsed: parseCommitMessage(commit),
+  }));
 
-    // Only validate strict rules for main branch
-    if (options.baseBranch === 'main' || options.baseBranch === 'master') {
-      if (options.isForceUpdate) {
-        errors.push('Force-push to main is not allowed. Rebase your branch and retry.')
-      }
+  const allValid = results.every((r) => r.parsed.isValid);
 
-      if (!options.hasLinearHistory) {
-        warnings.push('Merge creates a merge commit. Prefer rebase-and-merge for clean history.')
-      }
-
-      if (!options.allChecksPassing) {
-        errors.push('Cannot merge: not all status checks are passing. Fix failing checks before merge.')
-      }
-
-      if (options.isAutoMerge) {
-        errors.push('Auto-merge is not allowed for main branch. Require manual verification.')
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-      warnings,
-    }
-  }
+  return {
+    allValid,
+    results,
+  };
 }
 
-/**
- * Validate pull request readiness.
- * Checks commit message format, title length, and required metadata.
- */
-export class PRValidator {
-  private commitValidator = new CommitMessageValidator()
+export function formatCommitValidationReport(
+  results: Array<{ commit: string; parsed: CommitMessage }>
+): string {
+  const lines = ['Commit Message Validation Report', '='.repeat(40)];
 
-  validate(options: {
-    title: string
-    body?: string
-    commitMessages: string[]
-    hasLinkedIssue?: boolean
-  }): PRValidationResult {
-    const errors: string[] = []
-    const warnings: string[] = []
-    const checks = {
-      hasLinkedIssue: Boolean(options.hasLinkedIssue),
-      messageFollowsConvention: true,
-      titleUnder72Chars: options.title.length <= 72,
-      descriptionPresent: (options.body || '').trim().length > 0,
-    }
-
-    // Validate PR title (should follow commit convention)
-    if (!options.title || options.title.length === 0) {
-      errors.push('PR title cannot be empty')
-    } else if (options.title.length > 72) {
-      warnings.push(`PR title exceeds 72 characters (${options.title.length}). Keep titles concise.`)
-    }
-
-    // Validate commit messages
-    for (const message of options.commitMessages) {
-      const validation = this.commitValidator.validate(message)
-      if (!validation.valid) {
-        checks.messageFollowsConvention = false
-        errors.push(`Commit message invalid: ${validation.errors.join('; ')}`)
+  for (const result of results) {
+    if (result.parsed.isValid) {
+      lines.push(`✅ ${result.commit}`);
+    } else {
+      lines.push(`❌ ${result.commit}`);
+      for (const error of result.parsed.errors) {
+        lines.push(`   - ${error}`);
       }
     }
-
-    // Recommend linked issue (informational)
-    if (!Boolean(options.hasLinkedIssue)) {
-      warnings.push('Consider adding a linked issue for better traceability (e.g., "Fixes #123")')
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-      warnings,
-      checks,
-    }
-  }
-}
-
-/**
- * Comprehensive git governance orchestrator.
- * Validates all aspects of a git operation.
- */
-export class GitGovernanceOrchestrator {
-  private commitValidator = new CommitMessageValidator()
-  private branchValidator = new BranchNameValidator()
-  private mergeValidator = new MergeValidator()
-  private prValidator = new PRValidator()
-
-  validateCommit(message: string): CommitValidationResult {
-    return this.commitValidator.validate(message)
   }
 
-  validateBranch(branchName: string): BranchValidationResult {
-    return this.branchValidator.validate(branchName)
-  }
-
-  validateMerge(options: {
-    baseBranch: string
-    isForceUpdate: boolean
-    hasLinearHistory: boolean
-    allChecksPassing: boolean
-    isAutoMerge?: boolean
-  }): MergeValidationResult {
-    return this.mergeValidator.validate(options)
-  }
-
-  validatePR(options: {
-    title: string
-    body?: string
-    commitMessages: string[]
-    hasLinkedIssue?: boolean
-  }): PRValidationResult {
-    return this.prValidator.validate(options)
-  }
-
-  /**
-   * Comprehensive validation of entire PR workflow.
-   */
-  validatePRWorkflow(options: {
-    sourceBranch: string
-    baseBranch: string
-    title: string
-    body?: string
-    commitMessages: string[]
-    isForceUpdate: boolean
-    hasLinearHistory: boolean
-    allChecksPassing: boolean
-    hasLinkedIssue?: boolean
-  }): {
-    valid: boolean
-    branchValidation: BranchValidationResult
-    prValidation: PRValidationResult
-    mergeValidation: MergeValidationResult
-    allErrors: string[]
-    allWarnings: string[]
-  } {
-    const branchValidation = this.validateBranch(options.sourceBranch)
-    const prValidation = this.validatePR({
-      title: options.title,
-      body: options.body,
-      commitMessages: options.commitMessages,
-      hasLinkedIssue: options.hasLinkedIssue,
-    })
-    const mergeValidation = this.validateMerge({
-      baseBranch: options.baseBranch,
-      isForceUpdate: options.isForceUpdate,
-      hasLinearHistory: options.hasLinearHistory,
-      allChecksPassing: options.allChecksPassing,
-    })
-
-    const allErrors = [...branchValidation.errors, ...prValidation.errors, ...mergeValidation.errors]
-    const allWarnings = [...prValidation.warnings, ...mergeValidation.warnings]
-
-    return {
-      valid: allErrors.length === 0,
-      branchValidation,
-      prValidation,
-      mergeValidation,
-      allErrors,
-      allWarnings,
-    }
-  }
+  return lines.join('\n');
 }

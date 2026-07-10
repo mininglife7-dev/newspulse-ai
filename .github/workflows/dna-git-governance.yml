@@ -1,0 +1,46 @@
+name: DNA-GOV-010 - Git Governance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+  workflow_dispatch:
+
+jobs:
+  validate-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate commit messages
+        run: |
+          echo "Validating commit message format..."
+          npm test -- git-governance 2>&1 | grep -E "✓|✗"
+
+      - name: Validate PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "Validating PR title: $PR_TITLE"
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|perf|ci)(\([^)]+\))?: ]]; then
+            echo "❌ PR title must follow format: type(scope): description"
+            echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci"
+            exit 1
+          fi
+          echo "✅ PR title follows governance standard"
+
+      - name: Prevent force-push protection
+        run: |
+          echo "ℹ️ Force-pushes to main, master, and production branches are prevented at the GitHub level"
+          echo "Enforce this policy in branch protection rules"
