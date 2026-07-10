@@ -15,7 +15,22 @@ import {
   FileText,
   Trash2,
   Download,
+  User,
+  X,
 } from 'lucide-react';
+
+interface WorkspaceMember {
+  user_id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+interface Owner {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+}
 
 interface Obligation {
   id: string;
@@ -24,6 +39,9 @@ interface Obligation {
   status: 'identified' | 'in_progress' | 'completed' | 'not_applicable';
   priority: 'critical' | 'high' | 'medium' | 'low';
   due_date?: string;
+  owner_id?: string | null;
+  owner?: Owner | null;
+  assigned_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -73,6 +91,7 @@ export default function ObligationsPage() {
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [filteredObligations, setFilteredObligations] = useState<Obligation[]>([]);
   const [evidence, setEvidence] = useState<Record<string, Evidence[]>>({});
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -82,6 +101,8 @@ export default function ObligationsPage() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [assignmentModal, setAssignmentModal] = useState<{ obligationId: string } | null>(null);
 
   const loadEvidence = useCallback(async (obligationId: string) => {
     try {
@@ -96,6 +117,19 @@ export default function ObligationsPage() {
     }
   }, []);
 
+  const loadMembers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/workspace/members');
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        setWorkspaceMembers(data.members || []);
+      }
+    } catch (err) {
+      console.error('Failed to load workspace members:', err);
+    }
+  }, []);
+
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/obligations');
@@ -106,12 +140,13 @@ export default function ObligationsPage() {
       }
 
       setObligations(data.obligations || []);
+      await loadMembers();
     } catch (err: any) {
       setError(err?.message || 'Failed to load obligations');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadMembers]);
 
   useEffect(() => {
     load();
@@ -158,6 +193,33 @@ export default function ObligationsPage() {
       setError(err?.message || 'Failed to update obligation');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleAssignObligation = async (obligationId: string, ownerId: string | null) => {
+    setAssigningId(obligationId);
+    try {
+      const res = await fetch(`/api/obligations/${obligationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner_id: ownerId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error);
+
+      setObligations(
+        obligations.map((o) =>
+          o.id === obligationId
+            ? { ...o, owner_id: ownerId, owner: data.obligation?.owner || null, assigned_at: data.obligation?.assigned_at }
+            : o
+        )
+      );
+      setAssignmentModal(null);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to assign obligation');
+    } finally {
+      setAssigningId(null);
     }
   };
 
@@ -441,6 +503,19 @@ export default function ObligationsPage() {
 
                       <div className="flex flex-wrap gap-4 text-xs text-slate-500">
                         <div>{statusIcon.text}</div>
+                        {obligation.owner ? (
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {obligation.owner.first_name && obligation.owner.last_name
+                              ? `${obligation.owner.first_name} ${obligation.owner.last_name}`
+                              : obligation.owner.email}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-slate-600">
+                            <User className="h-3 w-3" />
+                            Unassigned
+                          </div>
+                        )}
                         {obligation.due_date && (
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -507,6 +582,40 @@ export default function ObligationsPage() {
                         <div className="text-slate-400">Last Updated</div>
                         <div className="text-white">{new Date(obligation.updated_at).toLocaleDateString()}</div>
                       </div>
+                    </div>
+
+                    {/* Owner Assignment */}
+                    <div className="border-t border-slate-800 pt-4">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <label className="block text-sm font-medium text-slate-300">Assigned to</label>
+                        <button
+                          onClick={() => setAssignmentModal({ obligationId: obligation.id })}
+                          disabled={assigningId === obligation.id}
+                          className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                        >
+                          {obligation.owner ? 'Change' : 'Assign'}
+                        </button>
+                      </div>
+                      {obligation.owner ? (
+                        <div className="flex items-center gap-2 rounded-lg bg-slate-950/30 px-3 py-2 text-sm text-slate-300">
+                          <User className="h-4 w-4" />
+                          <span>
+                            {obligation.owner.first_name && obligation.owner.last_name
+                              ? `${obligation.owner.first_name} ${obligation.owner.last_name}`
+                              : obligation.owner.email}
+                          </span>
+                          <span className="text-xs text-slate-500 ml-auto">
+                            {obligation.assigned_at
+                              ? `since ${new Date(obligation.assigned_at).toLocaleDateString()}`
+                              : ''}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-lg bg-slate-950/30 px-3 py-2 text-sm text-slate-500">
+                          <User className="h-4 w-4" />
+                          <span>Unassigned</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Evidence Section */}
@@ -586,6 +695,61 @@ export default function ObligationsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Assignment Modal */}
+      {assignmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-lg border border-slate-800 bg-slate-900 p-6 max-w-sm w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Assign Obligation</h3>
+              <button
+                onClick={() => setAssignmentModal(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {/* Unassign option */}
+              <button
+                onClick={() =>
+                  handleAssignObligation(assignmentModal.obligationId, null)
+                }
+                disabled={assigningId === assignmentModal.obligationId}
+                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-left text-sm text-slate-400 transition hover:border-slate-700 hover:text-slate-300 disabled:opacity-50"
+              >
+                <div className="font-medium">— Unassign</div>
+              </button>
+
+              {/* Member list */}
+              {workspaceMembers.map((member) => (
+                <button
+                  key={member.user_id}
+                  onClick={() =>
+                    handleAssignObligation(assignmentModal.obligationId, member.user_id)
+                  }
+                  disabled={assigningId === assignmentModal.obligationId}
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-left text-sm transition hover:border-slate-700 hover:bg-slate-950 disabled:opacity-50"
+                >
+                  <div className="font-medium text-white">
+                    {member.first_name && member.last_name
+                      ? `${member.first_name} ${member.last_name}`
+                      : member.email}
+                  </div>
+                  <div className="text-xs text-slate-500">{member.email}</div>
+                </button>
+              ))}
+
+              {workspaceMembers.length === 0 && (
+                <div className="text-center py-4 text-slate-500 text-sm">
+                  No team members available
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
