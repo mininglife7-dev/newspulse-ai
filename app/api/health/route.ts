@@ -23,9 +23,14 @@ export async function GET() {
       ok: allOk,
       status: allOk ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
-      uptime_s: typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
+      uptime_s:
+        typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
       checks,
     },
-    { status: allOk ? 200 : 503 }
+    {
+      status: allOk ? 200 : 503,
+      // Uptime probes must always see live state, never a cached response.
+      headers: { 'Cache-Control': 'no-store, max-age=0' },
+    }
   );
 }

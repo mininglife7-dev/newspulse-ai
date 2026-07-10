@@ -49,6 +49,13 @@ export default function RootLayout({
           'min-h-screen bg-background text-white antialiased font-sans'
         )}
       >
+        {/* Keyboard bypass-block: hidden until focused, jumps past the nav. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+        >
+          Skip to main content
+        </a>
         <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2">
@@ -78,7 +85,9 @@ export default function RootLayout({
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+        <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
+          {children}
+        </main>
         <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
           <p>
             Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}
