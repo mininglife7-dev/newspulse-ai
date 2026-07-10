@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   AlertCircle,
+  CheckCircle2,
   Cpu,
   Loader2,
   Plus,
@@ -19,6 +20,12 @@ interface AiSystem {
   purpose: string | null;
   status: string;
   created_at: string;
+}
+
+interface AssessmentStatus {
+  status?: 'draft' | 'in_review' | 'finalized';
+  risk_level?: string;
+  risk_score?: number;
 }
 
 const SYSTEM_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
@@ -40,6 +47,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function InventoryPage() {
   const [systems, setSystems] = useState<AiSystem[] | null>(null);
+  const [assessments, setAssessments] = useState<Record<string, AssessmentStatus>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
 
@@ -70,6 +78,23 @@ export default function InventoryPage() {
       }
       if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to load');
       setSystems(data.systems);
+
+      // Load assessments for each system
+      if (data.systems?.length > 0) {
+        const assessmentMap: Record<string, AssessmentStatus> = {};
+        for (const system of data.systems) {
+          try {
+            const assessRes = await fetch(`/api/risk-assessments?ai_system_id=${system.id}`);
+            const assessData = await assessRes.json();
+            if (assessRes.ok && assessData.ok && assessData.assessment) {
+              assessmentMap[system.id] = assessData.assessment;
+            }
+          } catch {
+            // Silently skip assessment load errors
+          }
+        }
+        setAssessments(assessmentMap);
+      }
     } catch (err: any) {
       setLoadError(err?.message || 'Could not load your AI systems');
       setSystems([]);
@@ -276,35 +301,68 @@ export default function InventoryPage() {
             </div>
           ) : (
             <ul className="space-y-3">
-              {systems.map((s) => (
-                <li
-                  key={s.id}
-                  className="rounded-lg border border-slate-800 bg-slate-900/50 p-5"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <Cpu className="h-5 w-5 text-cyan-400" />
-                      <span className="font-semibold text-white">{s.name}</span>
-                      {s.system_type && (
-                        <span className="rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-0.5 text-xs text-slate-300">
-                          {SYSTEM_TYPE_OPTIONS.find((o) => o.value === s.system_type)?.label ?? s.system_type}
-                        </span>
-                      )}
+              {systems.map((s) => {
+                const assessment = assessments[s.id];
+                const isAssessmentComplete = assessment?.status === 'finalized';
+
+                return (
+                  <li
+                    key={s.id}
+                    className="rounded-lg border border-slate-800 bg-slate-900/50 p-5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <Cpu className="h-5 w-5 text-cyan-400" />
+                        <span className="font-semibold text-white">{s.name}</span>
+                        {s.system_type && (
+                          <span className="rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-0.5 text-xs text-slate-300">
+                            {SYSTEM_TYPE_OPTIONS.find((o) => o.value === s.system_type)?.label ??
+                              s.system_type}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_BADGE[s.status] ?? STATUS_BADGE.deprecated}`}
+                      >
+                        {s.status}
+                      </span>
                     </div>
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_BADGE[s.status] ?? STATUS_BADGE.deprecated}`}
-                    >
-                      {s.status}
-                    </span>
-                  </div>
-                  {(s.vendor || s.purpose) && (
-                    <div className="mt-2 text-sm text-slate-400">
-                      {s.vendor && <span className="mr-4">Vendor: {s.vendor}</span>}
-                      {s.purpose && <span>{s.purpose}</span>}
+                    {(s.vendor || s.purpose) && (
+                      <div className="mt-2 text-sm text-slate-400">
+                        {s.vendor && <span className="mr-4">Vendor: {s.vendor}</span>}
+                        {s.purpose && <span>{s.purpose}</span>}
+                      </div>
+                    )}
+
+                    {/* Assessment status */}
+                    <div className="mt-3 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        {isAssessmentComplete ? (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 text-green-400" />
+                            <span className="text-xs text-green-300">
+                              Risk: <span className="font-semibold">{assessment?.risk_level}</span> (
+                              {assessment?.risk_score}/100)
+                            </span>
+                          </>
+                        ) : assessment ? (
+                          <span className="text-xs text-amber-300">
+                            Assessment in progress ({assessment.status})
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-500">No assessment started</span>
+                        )}
+                      </div>
+                      <Link
+                        href={`/assessment?ai_system_id=${s.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-blue-600/40 bg-blue-950/30 px-3 py-1.5 text-xs font-medium text-blue-300 transition hover:border-blue-500 hover:bg-blue-950/50"
+                      >
+                        {isAssessmentComplete ? 'Review' : assessment ? 'Continue' : 'Start'} Assessment
+                      </Link>
                     </div>
-                  )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </>

@@ -79,7 +79,7 @@ export default function AssessmentPage() {
       } else {
         setAssessment(data.assessment);
         if (data.assessment?.assessment_data?.responses) {
-          const respMap = new Map(
+          const respMap = new Map<string, AssessmentResponse>(
             data.assessment.assessment_data.responses.map((r: AssessmentResponse) => [
               r.question_id,
               r,
