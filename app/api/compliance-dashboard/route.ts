@@ -28,7 +28,7 @@ interface ComplianceSummary {
   readinessPercentage: number;
 }
 
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
@@ -53,7 +53,7 @@ async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
 
 /** GET /api/compliance-dashboard — fetch compliance status summary */
 export async function GET(request: NextRequest) {
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(

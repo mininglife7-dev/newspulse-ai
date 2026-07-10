@@ -10,7 +10,7 @@ interface CreateEvidenceRequest {
   aiSystemId?: string;
 }
 
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   const obligationId = request.nextUrl.searchParams.get('obligationId');
   const aiSystemId = request.nextUrl.searchParams.get('aiSystemId');
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -174,7 +174,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -219,7 +219,7 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(

@@ -8,7 +8,7 @@ interface InviteMemberRequest {
   role: 'admin' | 'member' | 'viewer';
 }
 
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
@@ -34,7 +34,7 @@ async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
 
 /** GET /api/team — list workspace members */
 export async function GET(request: NextRequest) {
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -165,7 +165,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -228,7 +228,7 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(

@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -43,11 +43,7 @@ export default function EvidencePage() {
     description: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, [systemId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -72,7 +68,11 @@ export default function EvidencePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [systemId, router]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
