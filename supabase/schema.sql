@@ -29,6 +29,40 @@ create table if not exists public.profiles (
 create index if not exists profiles_email_idx on public.profiles (email);
 
 -- ---------------------------------------------------------------
+-- Profile Auto-Creation Trigger
+-- Creates a profile row automatically when a user signs up via auth.users
+-- Runs with elevated privileges (service_role context in Supabase)
+-- ---------------------------------------------------------------
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, first_name, last_name, created_at, updated_at)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data ->> 'first_name',
+    new.raw_user_meta_data ->> 'last_name',
+    now(),
+    now()
+  );
+  return new;
+exception when others then
+  -- Log error but don't fail signup (defensive pattern)
+  raise warning 'Error creating profile for user %: %', new.id, sqlerrm;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Drop existing trigger if it exists (idempotent)
+drop trigger if exists on_auth_user_created on auth.users;
+
+-- Create trigger on auth.users insert
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function public.handle_new_user();
+
+-- ---------------------------------------------------------------
 -- Workspaces (organizations)
 -- Multi-tenant isolation boundary. Each company has one workspace.
 -- ---------------------------------------------------------------
