@@ -1,6 +1,6 @@
 # DNA-GLO-001 — General Learning Organism Foundation
 
-**State:** Verifying → Executing (engineering increment complete; CI verification pending on the PR)
+**State:** Verified — engineering increment complete; CI green on PR #18 (lint · type-check · test · build all pass)
 **Author:** Governor
 **Date:** 2026-07-09
 **Branch:** `claude/glo-foundation-dna-339vzu`
@@ -91,8 +91,10 @@ Locked invariants (Phase 7 non-negotiables), all passing:
 
 ## Current Work
 
-Shipping this increment: commit → push → draft PR → CI verification. The PR runs
-lint, type-check, **test**, and build on GitHub.
+Shipped. Draft PR #18 is open and **CI is green** — the "Lint & Build" job
+(lint · type-check · **test** · build) passed and the Vercel preview deployed
+`Ready`. The PR subscription remains active; any CI regression or review comment
+will be triaged automatically.
 
 ## Next Work (recommended next DNA)
 
