@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 function jsonRequest(body: unknown): NextRequest {
@@ -50,5 +50,59 @@ describe('POST /api/search input validation', () => {
     const { GET } = await import('@/app/api/search/route');
     const res = await GET();
     expect(res.status).toBe(405);
+  });
+});
+
+describe('POST /api/search with DEMO_MODE', () => {
+  beforeEach(() => {
+    vi.stubEnv('FIRECRAWL_API_KEY', '');
+    vi.stubEnv('DEMO_MODE', 'true');
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('returns mock results when DEMO_MODE is enabled', async () => {
+    const { POST } = await import('@/app/api/search/route');
+    const res = await POST(jsonRequest({ keyword: 'artificial intelligence' }));
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(json._demo).toBe(true);
+    expect(json.results).toBeDefined();
+    expect(Array.isArray(json.results)).toBe(true);
+    expect(json.results.length).toBeGreaterThan(0);
+  });
+
+  it('includes keyword in mock results', async () => {
+    const { POST } = await import('@/app/api/search/route');
+    const res = await POST(jsonRequest({ keyword: 'bitcoin' }));
+
+    const json = await res.json();
+    expect(json.keyword).toBe('bitcoin');
+    expect(json.count).toBe(json.results.length);
+    expect(json.results[0].title).toContain('bitcoin');
+  });
+
+  it('returns valid article schema in demo mode', async () => {
+    const { POST } = await import('@/app/api/search/route');
+    const res = await POST(jsonRequest({ keyword: 'nasa' }));
+
+    const json = await res.json();
+    const article = json.results[0];
+
+    expect(article).toHaveProperty('title');
+    expect(article).toHaveProperty('url');
+    expect(article).toHaveProperty('source');
+    expect(article).toHaveProperty('date');
+    expect(article).toHaveProperty('description');
+    expect(article).toHaveProperty('ai_summary');
+
+    expect(typeof article.title).toBe('string');
+    expect(typeof article.url).toBe('string');
+    expect(typeof article.ai_summary).toBe('string');
   });
 });
