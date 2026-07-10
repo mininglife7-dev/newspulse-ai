@@ -75,6 +75,28 @@ export interface SearchHistoryRow {
 // Helpers — server-side data access
 // =============================================================================
 
+// Storage guard (risk R-13): a saved row must not grow unbounded. The
+// search route already caps upstream fetches, but this is the last line
+// of defense before JSONB hits the database.
+const MAX_SAVED_RESULTS = 25;
+const MAX_FIELD_CHARS = 4000;
+
+function truncate(value: string | null, max = MAX_FIELD_CHARS): string | null {
+  if (value === null) return null;
+  return value.length > max ? `${value.slice(0, max - 1)}…` : value;
+}
+
+/** Cap result count and text-field sizes before persisting. Exported for tests. */
+export function capResultsForStorage(results: NewsArticle[]): NewsArticle[] {
+  return results.slice(0, MAX_SAVED_RESULTS).map((r) => ({
+    ...r,
+    title: truncate(r.title, 500) ?? '',
+    source: truncate(r.source, 200) ?? '',
+    description: truncate(r.description),
+    ai_summary: truncate(r.ai_summary) ?? '',
+  }));
+}
+
 /**
  * Persist a search + its results into the `news_searches` table.
  * Returns the inserted row, or null on failure (errors logged).
@@ -84,12 +106,13 @@ export async function saveSearch(
   results: NewsArticle[]
 ): Promise<SearchHistoryRow | null> {
   try {
+    const capped = capResultsForStorage(results);
     const { data, error } = await getSupabaseAdmin()
       .from('news_searches')
       .insert({
         keyword,
-        results,
-        result_count: results.length,
+        results: capped,
+        result_count: capped.length,
       })
       .select()
       .single();
