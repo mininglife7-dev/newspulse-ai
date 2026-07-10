@@ -68,10 +68,6 @@ export default function CompliancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
   const loadDashboard = async () => {
     setLoading(true);
     setError(null);
@@ -90,6 +86,10 @@ export default function CompliancePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
 
   const handleExport = async () => {
     try {
