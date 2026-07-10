@@ -87,13 +87,22 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <Link
-            href="/compliance"
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-emerald-500/40"
-          >
-            View Compliance Status
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/compliance"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-emerald-500/40"
+            >
+              View Compliance Status
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/team"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-indigo-500/40"
+            >
+              Manage Team
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </>
       )}
 
@@ -252,11 +261,15 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle
+              className={`h-6 w-6 flex-shrink-0 ${hasWorkspace ? 'text-cyan-400' : 'text-slate-600'}`}
+            />
             <div>
               <h3 className="font-medium text-white">Add team members</h3>
               <p className="text-sm text-slate-400">
-                Invite colleagues to collaborate — coming soon
+                {hasWorkspace
+                  ? 'Invite colleagues to collaborate'
+                  : 'Unlocked after company setup'}
               </p>
             </div>
           </div>
