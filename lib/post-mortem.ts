@@ -46,6 +46,7 @@ export interface PostMortem {
   insights: PostMortemInsight[];
   relatedRegressions: string[];
   preventionPlan: PreventionPlan;
+  preventionIssuesCreated?: boolean; // DNS-024 orchestration completed
   status: 'draft' | 'in-review' | 'approved' | 'completed';
   createdBy?: string;
   approvedBy?: string;
@@ -72,6 +73,7 @@ export interface PreventionMeasure {
   owner?: string;
   dueDate?: string;
   status: 'not-started' | 'in-progress' | 'completed';
+  issueNumber?: number; // GitHub issue created via DNS-024
 }
 
 export interface PostMortemMetrics {
