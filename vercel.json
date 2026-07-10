@@ -22,11 +22,6 @@
       "maxDuration": 60
     }
   },
-  "env": {
-    "GITHUB_TOKEN": "@github-token",
-    "GITHUB_OWNER": "mininglife7-dev",
-    "GITHUB_REPO": "newspulse-ai"
-  },
   "crons": [
     {
       "path": "/api/dependency-security",
