@@ -1,0 +1,144 @@
+name: 'DNS-016: Multi-region Failover'
+
+on:
+  schedule:
+    # Run every 5 minutes to detect regional failures quickly
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-multi-region-health:
+    name: Check Multi-Region Health and Failover
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check multi-region health
+        id: health
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL not configured - multi-region check skipped"
+            exit 0
+          fi
+
+          echo "🌍 Checking multi-region health..."
+
+          # Call multi-region failover endpoint
+          RESPONSE=$(curl -s "$DEPLOY_URL/api/multi-region-failover")
+
+          echo "Multi-region status:"
+          echo "$RESPONSE" | jq '.' || echo "$RESPONSE"
+
+          # Extract status
+          OVERALL_STATUS=$(echo "$RESPONSE" | jq -r '.overallStatus // "unknown"' 2>/dev/null || echo "unknown")
+          FAILOVER_ACTION=$(echo "$RESPONSE" | jq -r '.failoverAction // "none"' 2>/dev/null || echo "none")
+          HEALTHY_REGIONS=$(echo "$RESPONSE" | jq -r '.healthyRegions | length // 0' 2>/dev/null || echo "0")
+          CRITICAL_REGIONS=$(echo "$RESPONSE" | jq -r '.criticalRegions | length // 0' 2>/dev/null || echo "0")
+
+          echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+          echo "failover_action=$FAILOVER_ACTION" >> $GITHUB_OUTPUT
+          echo "healthy_regions=$HEALTHY_REGIONS" >> $GITHUB_OUTPUT
+          echo "critical_regions=$CRITICAL_REGIONS" >> $GITHUB_OUTPUT
+
+      - name: Get detailed multi-region report
+        id: report
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::Detailed report skipped"
+            exit 0
+          fi
+
+          echo "📊 Fetching detailed multi-region report..."
+
+          # Get detailed report
+          RESPONSE=$(curl -s "$DEPLOY_URL/api/multi-region-failover?detailed=true")
+
+          echo "Detailed report:"
+          echo "$RESPONSE" | jq '.recommendations // []' 2>/dev/null || echo "Report unavailable"
+
+          # Extract affected users
+          AFFECTED_USERS=$(echo "$RESPONSE" | jq -r '.affectedUsers // 0' 2>/dev/null || echo "0")
+          echo "affected_users=$AFFECTED_USERS" >> $GITHUB_OUTPUT
+
+      - name: Create failover incident if needed
+        if: steps.health.outputs.failover_action != 'none' && steps.health.outputs.failover_action != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const overallStatus = '${{ steps.health.outputs.overall_status }}';
+            const failoverAction = '${{ steps.health.outputs.failover_action }}';
+            const healthyRegions = '${{ steps.health.outputs.healthy_regions }}';
+            const criticalRegions = '${{ steps.health.outputs.critical_regions }}';
+            const affectedUsers = '${{ steps.report.outputs.affected_users }}';
+
+            const severity = overallStatus === 'critical' ? 'Critical' : 'Warning';
+            const actionIcon = failoverAction === 'failover' ? '🔄' : failoverAction === 'scale-up' ? '📈' : '⚠️';
+
+            const body = `## ${actionIcon} Multi-Region Failover Event
+
+**Severity:** ${severity}
+**Failover Action:** ${failoverAction.toUpperCase()}
+
+### Regional Status
+- **Healthy Regions:** ${healthyRegions}
+- **Critical Regions:** ${criticalRegions}
+
+### Impact
+- **Affected Users:** ${affectedUsers.toLocaleString() || 'unknown'}
+
+### Actions Taken
+\`\`\`
+${failoverAction === 'failover' ? '- ✓ Shifted traffic away from failing regions' : ''}
+${failoverAction === 'scale-up' ? '- ✓ Scaled up healthy regions to handle traffic' : ''}
+${failoverAction === 'monitor' ? '- ⚠️ Monitoring failed region for recovery' : ''}
+${failoverAction === 'escalate' ? '- 🆘 All regions critical - requires founder intervention' : ''}
+\`\`\`
+
+### Investigation
+- Review [Multi-Region Status](/api/multi-region-failover?detailed=true)
+- Check region latency, error rates, and availability
+- Monitor traffic distribution in load balancer
+- Verify database connectivity across regions
+
+### Next Steps
+1. Monitor affected regions for recovery
+2. If failover in progress, track recovery time (target: <5 min)
+3. Post-incident: Review root cause and update DNS-016 thresholds if needed
+
+DNS-016: Multi-region Failover Engine
+`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `${actionIcon} Multi-Region Failover: ${failoverAction.toUpperCase()}`,
+              body: body,
+              labels: ['multi-region', 'failover', 'infrastructure', severity.toLowerCase()],
+              assignees: ['mininglife7-dev']
+            });
+
+      - name: Report multi-region status
+        run: |
+          echo "🌍 Multi-Region Status Summary"
+          echo "==============================="
+          echo "Overall Status: ${{ steps.health.outputs.overall_status }}"
+          echo "Healthy Regions: ${{ steps.health.outputs.healthy_regions }}"
+          echo "Critical Regions: ${{ steps.health.outputs.critical_regions }}"
+          echo "Failover Action: ${{ steps.health.outputs.failover_action }}"
+          echo "Affected Users: ${{ steps.report.outputs.affected_users }}"
