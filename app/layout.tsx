@@ -47,6 +47,9 @@ export default function RootLayout({
           'min-h-screen bg-background text-white antialiased font-sans'
         )}
       >
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
         <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2">
@@ -58,7 +61,7 @@ export default function RootLayout({
                 <span className="text-white/90"> AI</span>
               </span>
             </Link>
-            <nav className="flex items-center gap-1 text-sm">
+            <nav aria-label="Main" className="flex items-center gap-1 text-sm">
               <Link
                 href="/"
                 className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
@@ -76,7 +79,9 @@ export default function RootLayout({
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+        <main id="main" className="mx-auto max-w-6xl px-6 py-10">
+          {children}
+        </main>
         <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
           <p>
             Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}

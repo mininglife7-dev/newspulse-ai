@@ -13,11 +13,13 @@ const REQUIRED = [
   { name: 'FIRECRAWL_API_KEY',           prefix: 'fc-' },
   { name: 'OPENAI_API_KEY',              prefix: 'sk-' },
   { name: 'NEXT_PUBLIC_SUPABASE_URL',    prefix: 'https://' },
-  { name: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', prefix: 'sb_publishable_' },
   { name: 'SUPABASE_SERVICE_ROLE_KEY',   prefix: 'sb_secret_' },
 ];
 
-const OPTIONAL = ['NEXT_PUBLIC_SITE_URL'];
+// NEXT_PUBLIC_SUPABASE_ANON_KEY is optional: all DB access is server-side
+// via the service key; the anon key is only needed if client-side Supabase
+// access is ever added.
+const OPTIONAL = ['NEXT_PUBLIC_SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SITE_URL'];
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';

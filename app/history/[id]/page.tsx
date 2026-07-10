@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ChevronLeft, RotateCw } from 'lucide-react';
 import NewsCard from '@/components/NewsCard';
 import LocalDateTime from '@/components/LocalDateTime';
 import { SUMMARY_MODEL } from '@/lib/constants';
@@ -46,18 +47,7 @@ export default async function HistoryDetailPage({ params }: PageProps) {
           href="/history"
           className="inline-flex w-fit items-center gap-1 text-sm text-white/50 transition hover:text-accent-300"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <ChevronLeft className="h-4 w-4" />
           All searches
         </Link>
 
@@ -106,19 +96,7 @@ export default async function HistoryDetailPage({ params }: PageProps) {
           href={`/?q=${encodeURIComponent(entry.keyword)}`}
           className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-accent-500 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-accent-900/40 transition hover:from-accent-400 hover:to-indigo-500"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 12a9 9 0 1 0 9-9" />
-            <path d="M3 4v5h5" />
-          </svg>
+          <RotateCw className="h-4 w-4" strokeWidth={2.5} />
           Re-run this search
         </Link>
       </div>

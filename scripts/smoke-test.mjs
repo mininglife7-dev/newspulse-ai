@@ -177,16 +177,14 @@ async function run() {
       ['healthy', 'degraded'].includes(json.status),
       `unexpected status "${json.status}"`
     );
-    const keys = [
-      'firecrawl',
-      'openai',
-      'supabase_url',
-      'supabase_anon',
-      'supabase_service',
-    ];
+    const keys = ['firecrawl', 'openai', 'supabase_url', 'supabase_service'];
     for (const k of keys) {
       assert(typeof json.checks?.[k] === 'boolean', `checks.${k} missing`);
     }
+    assert(
+      typeof json.optional?.supabase_anon === 'boolean',
+      'optional.supabase_anon missing'
+    );
     // With credentials stripped it must NOT claim to be healthy.
     assert(res.status === 503, `expected 503 without creds, got ${res.status}`);
     assert(json.status === 'degraded', 'must report degraded without creds');

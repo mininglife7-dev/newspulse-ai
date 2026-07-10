@@ -44,3 +44,17 @@ jobs:
 
       - name: Smoke test (pages, buttons' endpoints, API truthfulness)
         run: npm run test:smoke
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests (desktop + mobile, no credentials needed)
+        run: npm run test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

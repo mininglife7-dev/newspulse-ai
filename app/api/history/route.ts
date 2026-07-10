@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSearchHistory, clearAllHistory } from '@/lib/supabase';
+import type { HistoryListResponse } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,11 +16,12 @@ export async function GET(req: NextRequest) {
 
   try {
     const history = await getSearchHistory(limit);
-    return NextResponse.json({
+    const body: HistoryListResponse = {
       ok: true,
       count: history.length,
       history,
-    });
+    };
+    return NextResponse.json(body);
   } catch (err: any) {
     console.error('[/api/history] error:', err);
     return NextResponse.json(

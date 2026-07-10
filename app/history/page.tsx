@@ -135,14 +135,18 @@ export default function HistoryPage() {
 
       {/* Error banner */}
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300"
+        >
           {error}
         </div>
       )}
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="space-y-2">
+        <div role="status" aria-label="Loading search history" className="space-y-2">
+          <span className="sr-only">Loading…</span>
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
@@ -239,7 +243,8 @@ function Row({
         <td className="w-10 px-4 py-3">
           <button
             onClick={onToggle}
-            aria-label={isOpen ? 'Collapse' : 'Expand'}
+            aria-label={`${isOpen ? 'Collapse' : 'Expand'} results for "${entry.keyword}"`}
+            aria-expanded={isOpen}
             className="flex h-6 w-6 items-center justify-center rounded text-white/50 transition hover:bg-card hover:text-accent-300"
           >
             {isOpen ? (
@@ -270,6 +275,7 @@ function Row({
           <div className="flex items-center justify-end gap-1.5">
             <button
               onClick={onToggle}
+              aria-expanded={isOpen}
               className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs text-white/80 transition hover:border-accent-500/60 hover:text-accent-300"
             >
               {isOpen ? 'Hide' : 'View Results'}

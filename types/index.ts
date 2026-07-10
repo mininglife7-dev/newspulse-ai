@@ -46,11 +46,15 @@ export interface HealthResponse {
   status: 'healthy' | 'degraded';
   timestamp: string;
   uptime_s: number | null;
+  /** Load-bearing credentials — any missing one makes the app degraded. */
   checks: {
     firecrawl: boolean;
     openai: boolean;
     supabase_url: boolean;
-    supabase_anon: boolean;
     supabase_service: boolean;
+  };
+  /** Informational only — unused by any code path, never degrades health. */
+  optional: {
+    supabase_anon: boolean;
   };
 }

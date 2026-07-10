@@ -25,7 +25,7 @@ export default function NewsCard({ article, index = 0 }: NewsCardProps) {
           <time
             dateTime={date}
             className="text-white/40 tabular-nums"
-            title={new Date(date).toLocaleString()}
+            title={date}
           >
             {formatRelativeDate(date)}
           </time>

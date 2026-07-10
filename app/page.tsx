@@ -123,6 +123,7 @@ export default function HomePage() {
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
+            aria-label="Search keyword"
             placeholder='Try "AI regulation", "SpaceX", "climate summit"…'
             className="flex-1 bg-transparent px-2 py-3 text-base text-white placeholder-white/30 outline-none"
             disabled={loading}
@@ -169,7 +170,10 @@ export default function HomePage() {
 
         {/* Error */}
         {error && (
-          <div className="mt-4 rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300"
+          >
             {error}
           </div>
         )}
@@ -177,7 +181,12 @@ export default function HomePage() {
 
       {/* Loading skeleton */}
       {loading && (
-        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <section
+          role="status"
+          aria-label="Loading search results"
+          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          <span className="sr-only">Searching…</span>
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -202,7 +211,10 @@ export default function HomePage() {
       {/* Persistence warning — results are real, but history save failed */}
       {!loading && saveFailed && results.length > 0 && (
         <section className="mx-auto w-full max-w-2xl">
-          <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
+          <div
+            role="status"
+            className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-300"
+          >
             These results couldn't be saved to your history, so this search
             won't appear on the History page.
           </div>

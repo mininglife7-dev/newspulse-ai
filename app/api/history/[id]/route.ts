@@ -59,16 +59,25 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const { error } = await supabase
+    // .select() returns the deleted rows, so a no-op delete (row already
+    // gone / never existed) is reported as 404 instead of a false success.
+    const { data, error } = await supabase
       .from('news_searches')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select('id');
 
     if (error) {
       console.error('[/api/history/:id] delete error:', error);
       return NextResponse.json(
         { ok: false, error: error.message },
         { status: 500 }
+      );
+    }
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: 'Search not found.' },
+        { status: 404 }
       );
     }
     return NextResponse.json({ ok: true, deleted: id });

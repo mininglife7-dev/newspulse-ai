@@ -6,6 +6,7 @@ import {
 } from '@/lib/firecrawl';
 import { summarizeBatch } from '@/lib/openai';
 import { saveSearch, type NewsArticle } from '@/lib/supabase';
+import type { SearchResponseBody } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -103,14 +104,15 @@ export async function POST(req: NextRequest) {
     });
 
   if (normalized.length === 0) {
-    return NextResponse.json({
+    const empty: SearchResponseBody = {
       ok: true,
       keyword,
       count: 0,
       saved: false,
       search_id: null,
       results: [],
-    });
+    };
+    return NextResponse.json(empty);
   }
 
   // ---------- 3) Summarize each article in parallel with OpenAI ----------
@@ -152,14 +154,15 @@ export async function POST(req: NextRequest) {
   });
 
   // ---------- 6) Return ----------
-  return NextResponse.json({
+  const response: SearchResponseBody = {
     ok: true,
     keyword,
     count: results.length,
     saved: savedRow !== null,
     search_id: savedRow?.id ?? null,
     results,
-  });
+  };
+  return NextResponse.json(response);
 }
 
 export async function GET() {

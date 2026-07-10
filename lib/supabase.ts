@@ -1,27 +1,13 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // =============================================================================
-// Public (browser-safe) client — uses the anon / publishable key.
-// Lazily created: the previous eager module-level createClient() crashed
-// every build and server boot when env vars were absent, even though no
-// code path ever used the client.
-// =============================================================================
-let _public: SupabaseClient | null = null;
-export function getSupabasePublic(): SupabaseClient {
-  if (_public) return _public;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY'
-    );
-  }
-  _public = createClient(url, key, {
-    auth: { persistSession: false },
-  });
-  return _public;
-}
-
+// All database access goes through the server-side admin client below.
+// There is deliberately no browser client: nothing in the app queries
+// Supabase from the client, and NEXT_PUBLIC_SUPABASE_ANON_KEY is therefore
+// optional (see /api/health and scripts/check-env.mjs). If client-side
+// access is ever added, create the anon client lazily — an eager
+// module-level createClient() crashes every build without env vars.
+//
 // =============================================================================
 // Server-only admin client — uses the service-role / secret key.
 // NEVER import this from a client component. Bypasses RLS.
@@ -126,21 +112,19 @@ export async function clearAllHistory(): Promise<{
   error?: string;
 }> {
   try {
-    // First count what's there for the response.
-    const { count } = await getSupabaseAdmin()
-      .from('news_searches')
-      .select('id', { count: 'exact', head: true });
-
-    const { error } = await getSupabaseAdmin()
+    // Deleting with .select() returns the removed rows, so the reported
+    // count is exact — no count-then-delete race.
+    const { data, error } = await getSupabaseAdmin()
       .from('news_searches')
       .delete()
-      .gte('created_at', '1970-01-01'); // matches every row
+      .gte('created_at', '1970-01-01') // matches every row
+      .select('id');
 
     if (error) {
       console.error('[supabase] clearAllHistory error:', error);
       return { ok: false, error: error.message };
     }
-    return { ok: true, deleted: count ?? 0 };
+    return { ok: true, deleted: data?.length ?? 0 };
   } catch (err: any) {
     console.error('[supabase] clearAllHistory exception:', err);
     return { ok: false, error: err?.message || 'Unknown error' };

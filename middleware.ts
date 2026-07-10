@@ -8,9 +8,19 @@ import { NextResponse, type NextRequest } from 'next/server';
 const buckets = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_REQUESTS = 30;  // per IP per window
+const SWEEP_THRESHOLD = 1_000; // prune expired buckets past this many IPs
 
 function rateLimit(ip: string) {
   const now = Date.now();
+
+  // Unbounded growth guard: distinct IPs each add a bucket that would
+  // otherwise live until cold start. Sweep expired ones once the map is big.
+  if (buckets.size > SWEEP_THRESHOLD) {
+    for (const [key, b] of buckets) {
+      if (b.resetAt < now) buckets.delete(key);
+    }
+  }
+
   const bucket = buckets.get(ip);
   if (!bucket || bucket.resetAt < now) {
     buckets.set(ip, { count: 1, resetAt: now + WINDOW_MS });
