@@ -1,0 +1,34 @@
+name: DNA-GOV-003 - Deployment Verification Monitor
+
+on:
+  schedule:
+    # Every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  verify-deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify deployment status
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ secrets.VERCEL_DEPLOYMENT_URL }}/api/verify-deployment" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Deployment verification failed with status $HTTP_CODE"
+            echo "$BODY"
+            exit 1
+          fi
+
+          if echo "$BODY" | jq -e '.status == "critical"' 2>/dev/null; then
+            echo "❌ Critical deployment issue detected"
+            echo "$BODY" | jq '.alert' 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "✅ Deployment verification passed"
+          echo "$BODY" | jq '.alert' 2>/dev/null || echo "$BODY"

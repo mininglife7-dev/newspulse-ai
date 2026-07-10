@@ -1,0 +1,39 @@
+name: DNA-GOV-004 - Error Rate Monitor
+
+on:
+  schedule:
+    # Every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-error-rate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Monitor error rates
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ secrets.VERCEL_DEPLOYMENT_URL }}/api/error-rate")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Error rate check failed with status $HTTP_CODE"
+            echo "$BODY"
+            exit 1
+          fi
+
+          if echo "$BODY" | jq -e '.status == "critical"' 2>/dev/null; then
+            echo "❌ Critical error rate detected"
+            echo "$BODY" | jq '.alerts[]' 2>/dev/null || true
+            exit 1
+          fi
+
+          if echo "$BODY" | jq -e '.status == "warning"' 2>/dev/null; then
+            echo "⚠️ Warning: error rate elevated"
+            echo "$BODY" | jq '.alerts[]' 2>/dev/null || true
+          else
+            echo "✅ Error rate check passed"
+          fi
+
+          echo "$BODY" | jq '.summary' 2>/dev/null || echo "$BODY"

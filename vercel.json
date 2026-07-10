@@ -24,22 +24,5 @@
     "GITHUB_OWNER": "mininglife7-dev",
     "GITHUB_REPO": "newspulse-ai"
   },
-  "crons": [
-    {
-      "path": "/api/blocking-conditions",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/production-health",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/verify-deployment",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/error-rate",
-      "schedule": "0 * * * *"
-    }
-  ]
+  "crons": []
 }
