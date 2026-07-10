@@ -19,7 +19,8 @@ export type AlertSource =
   | 'production-health' // DNA-GOV-002
   | 'deployment' // DNA-GOV-003
   | 'error-rate' // DNA-GOV-004
-  | 'security'; // DNA-GOV-008
+  | 'security' // DNA-GOV-008
+  | 'performance'; // DNA-GOV-009
 
 export interface Alert {
   id: string; // UUID for deduplication
@@ -174,6 +175,66 @@ export function cleanupResolvedAlerts(olderThanMinutes: number = 60): number {
  */
 export function resetAlertHub(): void {
   alertStore.clear();
+}
+
+/**
+ * Bridge DNA-GOV-009 performance regressions into Alert Hub
+ *
+ * Called by /api/alerts to check for performance regressions and record them as alerts
+ */
+export function recordPerformanceAlerts(performanceReport: {
+  regressionsFound: number;
+  regressions: Array<{
+    metric: string;
+    severity: 'critical' | 'warning' | 'info';
+    changePercent: number;
+    baseline: number;
+    current: number;
+  }>;
+  improvements: Array<{
+    metric: string;
+    changePercent: number;
+  }>;
+}): void {
+  if (performanceReport.regressionsFound === 0) {
+    // No regressions, no alerts needed
+    return;
+  }
+
+  // Record critical performance regressions
+  const criticalRegressions = performanceReport.regressions.filter((r) => r.severity === 'critical');
+  for (const regression of criticalRegressions) {
+    recordAlert(
+      'performance',
+      'critical',
+      `Performance regression: ${regression.metric}`,
+      `${regression.metric} degraded ${regression.changePercent}% (${regression.baseline}ms → ${regression.current}ms)`,
+      'Review recent commits to identify performance regression. Consider reverting high-impact changes.'
+    );
+  }
+
+  // Record warning-level performance regressions
+  const warningRegressions = performanceReport.regressions.filter((r) => r.severity === 'warning');
+  if (warningRegressions.length > 0) {
+    recordAlert(
+      'performance',
+      'warning',
+      `Performance warnings: ${warningRegressions.length} metrics degraded`,
+      `${warningRegressions.map((r) => `${r.metric} (${r.changePercent}%)`).join(', ')}`,
+      'Monitor performance trends. Optimize if degradation continues.'
+    );
+  }
+
+  // Record improvements (info level)
+  if (performanceReport.improvements.length > 0) {
+    recordAlert(
+      'performance',
+      'info',
+      `Performance improvements: ${performanceReport.improvements.length} metrics better`,
+      `${performanceReport.improvements.map((i) => `${i.metric} (-${i.changePercent}%)`).join(', ')}`,
+      undefined
+    );
+  }
 }
 
 /**
