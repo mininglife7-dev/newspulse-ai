@@ -19,7 +19,8 @@ export type AlertSource =
   | 'production-health' // DNA-GOV-002
   | 'deployment' // DNA-GOV-003
   | 'error-rate' // DNA-GOV-004
-  | 'security'; // DNA-GOV-008
+  | 'security' // DNA-GOV-008
+  | 'performance'; // DNA-GOV-009
 
 export interface Alert {
   id: string; // UUID for deduplication

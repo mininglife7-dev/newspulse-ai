@@ -1,0 +1,60 @@
+name: DNA-GOV-009 - Performance Baseline Tracking
+
+on:
+  schedule:
+    # Run 5 minutes after each deployment (allows time for Vercel to stabilize)
+    - cron: '5 * * * *'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  check-performance:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Check performance metrics
+        env:
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL || 'https://euro-ai.vercel.app' }}
+        run: |
+          echo "Measuring performance baseline..."
+          node -e "
+            const perf = require('./lib/performance-baseline.ts');
+            perf.detectPerformanceRegressions().then(result => {
+              console.log(JSON.stringify(result, null, 2));
+              if (result.hasRegression) {
+                console.error('❌ Performance regressions detected:');
+                result.regressions.forEach(r => console.error('  - ' + r));
+                process.exit(1);
+              } else {
+                console.log('✅ Performance metrics within baseline');
+                process.exit(0);
+              }
+            });
+          "
+
+      - name: Report regression
+        if: failure()
+        run: |
+          echo "⚠️ Performance regression detected"
+          echo "Review metrics in /api/performance-baseline endpoint"
+
+      - name: Log performance check
+        if: always()
+        run: echo "Performance baseline check completed at $(date)"
