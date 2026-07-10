@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Inter } from 'next/font/google';
-import { Zap, Search, History as HistoryIcon, Activity } from 'lucide-react';
+import { Zap, Search, History as HistoryIcon, Activity, LogIn, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCurrentUser } from '@/lib/auth';
 import './globals.css';
 
 const inter = Inter({
@@ -37,11 +38,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
   return (
     <html lang="en" className={inter.variable}>
       <body
@@ -83,6 +85,32 @@ export default function RootLayout({
                 <Activity className="h-4 w-4" />
                 Founder
               </Link>
+
+              {user ? (
+                <form action="/auth/signout" method="post" className="ml-1 flex items-center gap-2">
+                  <span
+                    className="hidden max-w-[10rem] truncate text-xs text-white/40 sm:inline"
+                    title={user.email ?? undefined}
+                  >
+                    {user.email}
+                  </span>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-white/70 transition hover:border-accent-500/60 hover:text-white"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </form>
+              ) : (
+                <Link
+                  href="/login"
+                  className="ml-1 inline-flex items-center gap-1.5 rounded-md bg-gradient-to-br from-accent-500 to-indigo-600 px-3 py-2 font-medium text-white transition hover:from-accent-400 hover:to-indigo-500"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign in
+                </Link>
+              )}
             </nav>
           </div>
         </header>

@@ -2,7 +2,7 @@
 
 > **AI-Powered News Intelligence — Search. Scrape. Summarize.**
 
-Search any topic and get the latest articles from across the web, each summarized into 2–3 crisp sentences by `gpt-4o-mini`. Every search is saved to Supabase so you can replay past queries, view results, or wipe the slate.
+Search any topic and get the latest articles from across the web, each summarized into 2–3 crisp sentences by `gpt-4o-mini`. Sign in and every search is saved privately to your account (via Supabase Auth) so you can replay past queries, view results, or wipe the slate — and no one else can see your history. Anonymous visitors can still try a search; only signed-in customers’ searches are stored.
 
 Built for the **Outskill AI Generalist Accelerator Hackathon**.
 
@@ -35,9 +35,13 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 
 - 🔎 **Live web search** — Firecrawl `/v1/search` pulls fresh news for any keyword
 - 🧠 **AI summaries** — every article is summarized in parallel by OpenAI `gpt-4o-mini`
-- 💾 **Saved history** — every query and its results land in Supabase
+- 🔐 **Accounts + private history** — Supabase Auth (email + password); each customer’s saved searches are theirs alone, enforced server-side and by RLS
+- 💾 **Saved history** — signed-in customers’ queries + results are stored per-account in Supabase
 - 📋 **History table** — keyword, date, count, expand-to-view, re-run, clear all
-- 🎨 **Dark, polished UI** — Tailwind + lucide-react + Inter font
+- 🛡️ **Spend protection** — user/IP-aware rate limiting, durable via Upstash when configured (honest in-memory fallback)
+- 🩺 **Observability** — structured request-traced logs + a dependency-aware `/api/health`
+- ✅ **Tested** — 36-test Vitest suite (validation, auth, cross-user isolation, rate limiting) wired into CI
+- 📊 **Founder dashboard** — plain-language infrastructure health at `/founder`
 - ⚡ **API-first** — `POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`
 - 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
 
@@ -75,9 +79,13 @@ Verify with the included script (it never prints full secrets):
 npm run check-env
 ```
 
-### 3. Run the Supabase schema
+### 3. Run the Supabase schema + enable auth
 
-Open the **Supabase SQL editor** and paste the contents of [`supabase/schema.sql`](./supabase/schema.sql). It creates the `news_searches` table, indexes, and RLS policies.
+- **Fresh project:** paste [`supabase/schema.sql`](./supabase/schema.sql) into the **Supabase SQL editor**. It creates the `news_searches` table (with a `user_id` owner column), indexes, and owner-only RLS policies.
+- **Existing database** (created from an earlier version): run [`supabase/migrations/0002_auth_user_isolation.sql`](./supabase/migrations/0002_auth_user_isolation.sql) instead.
+- In **Supabase → Authentication → Providers**, enable **Email**. (Email confirmation on/off is your choice; the login screen handles both.)
+
+Optionally, for durable distributed rate limiting, create a free Redis at [Upstash](https://upstash.com) and set `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`. Without them, rate limiting falls back to per-instance memory (reported at `/api/health`).
 
 ### 4. Start the dev server
 
@@ -85,7 +93,15 @@ Open the **Supabase SQL editor** and paste the contents of [`supabase/schema.sql
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Click **Sign in** to create an account, or try a search anonymously.
+
+### 5. Run the tests
+
+```bash
+npm test
+```
+
+36 tests cover input validation, authentication, cross-customer isolation, rate limiting, and the Founder dashboard data invariants. They need no network or live services.
 
 ---
 

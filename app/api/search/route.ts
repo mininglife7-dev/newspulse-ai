@@ -6,11 +6,14 @@ import {
 } from '@/lib/firecrawl';
 import { summarizeBatch } from '@/lib/openai';
 import { saveSearch, type NewsArticle } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth';
+import { log, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const FIRECRAWL_LIMIT = 10;
+const MAX_KEYWORD_LEN = 200;
 
 interface SearchBody {
   keyword?: string;
@@ -20,17 +23,22 @@ interface SearchBody {
  * POST /api/search
  *
  * Body:    { keyword: string }
- * Returns: { ok: true, keyword, count, results: NewsArticle[] }
+ * Returns: { ok: true, keyword, count, results: NewsArticle[], saved: boolean }
  *
- * Pipeline:
- *   1. Firecrawl /v1/search       (web search + scrape)
- *   2. OpenAI gpt-4o-mini         (2-3 sentence summary per article)
- *   3. Supabase `news_searches`   (persist for /history)
+ * Pipeline: Firecrawl search+scrape → OpenAI gpt-4o-mini summaries → (if the
+ * customer is signed in) persist to their own history in Supabase.
  *
- * Each result item shape:
- *   { title, url, source, date, description, ai_summary }
+ * Auth model (deliberately hybrid): anonymous visitors may run a search — this
+ * is the public demo — but their searches are NEVER persisted, so no history is
+ * shared between people. Only a signed-in customer's searches are saved, scoped
+ * to their account. Middleware applies tighter rate limits to anonymous callers
+ * to protect our paid AI/search spend.
  */
 export async function POST(req: NextRequest) {
+  const requestId = newRequestId();
+  const route = 'POST /api/search';
+  const user = await getCurrentUser();
+
   // ---------- 1) Validate input ----------
   let body: SearchBody;
   try {
@@ -49,17 +57,25 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  if (keyword.length > MAX_KEYWORD_LEN) {
+    return NextResponse.json(
+      { ok: false, error: `Keyword too long (max ${MAX_KEYWORD_LEN}).` },
+      { status: 400 }
+    );
+  }
 
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) {
+    log.error('Firecrawl key missing', { requestId, route, status: 500 });
     return NextResponse.json(
       { ok: false, error: 'Server misconfigured: FIRECRAWL_API_KEY missing.' },
       { status: 500 }
     );
   }
 
+  const startedAt = Date.now();
+
   // ---------- 2) Search the web with Firecrawl ----------
-  // POST https://api.firecrawl.dev/v1/search  body: { query: keyword, limit: 10 }
   let rawResults;
   try {
     rawResults = await firecrawlSearch({
@@ -68,7 +84,12 @@ export async function POST(req: NextRequest) {
       apiKey,
     });
   } catch (err: any) {
-    console.error('[/api/search] Firecrawl error:', err);
+    log.error('Firecrawl search failed', {
+      requestId,
+      route,
+      dependency: 'firecrawl',
+      status: 502,
+    });
     return NextResponse.json(
       { ok: false, error: err?.message || 'Firecrawl search failed.' },
       { status: 502 }
@@ -94,25 +115,30 @@ export async function POST(req: NextRequest) {
       return {
         title,
         url: r.url,
-        source: extractDomain(r.url), // (4) source domain
+        source: extractDomain(r.url),
         date: extractPublishedDate(r),
         description,
-        // Use scraped markdown when available; fall back to description.
         content: r.markdown || r.content || description || '',
       };
     });
 
   if (normalized.length === 0) {
+    log.info('search empty', {
+      requestId,
+      route,
+      userId: user?.id,
+      durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json({
       ok: true,
       keyword,
       count: 0,
       results: [],
+      saved: false,
     });
   }
 
   // ---------- 3) Summarize each article in parallel with OpenAI ----------
-  // Uses gpt-4o-mini, 2–3 sentence neutral news summary (see lib/openai.ts).
   let summaries: string[];
   try {
     summaries = await summarizeBatch(
@@ -121,17 +147,20 @@ export async function POST(req: NextRequest) {
         content: n.content,
         url: n.url,
       })),
-      4 // bounded concurrency
+      4
     );
   } catch (err: any) {
-    console.error('[/api/search] OpenAI batch error:', err);
+    log.warn('OpenAI batch failed; using fallbacks', {
+      requestId,
+      route,
+      dependency: 'openai',
+    });
     summaries = normalized.map(
       (n) => n.description || n.title || 'Summary unavailable.'
     );
   }
 
   // ---------- 4) Build the final response shape ----------
-  // Strict: { title, url, source, date, description, ai_summary }
   const results: NewsArticle[] = normalized.map((n, i) => ({
     title: n.title,
     url: n.url,
@@ -141,18 +170,37 @@ export async function POST(req: NextRequest) {
     ai_summary: summaries[i] || n.description || n.title || '',
   }));
 
-  // ---------- 5) Persist to Supabase `news_searches` (best-effort) ----------
-  // Don't block the response if Supabase is slow or down.
-  saveSearch(keyword, results).catch((err) =>
-    console.error('[/api/search] saveSearch failed:', err)
-  );
+  // ---------- 5) Persist — ONLY for signed-in customers, scoped to them ----
+  let saved = false;
+  if (user) {
+    const row = await saveSearch(user.id, keyword, results).catch((err) => {
+      log.error('saveSearch failed', {
+        requestId,
+        route,
+        userId: user.id,
+        dependency: 'supabase',
+      });
+      return null;
+    });
+    saved = Boolean(row);
+  }
 
-  // ---------- 6) Return ----------
+  log.info('search ok', {
+    requestId,
+    route,
+    userId: user?.id,
+    status: 200,
+    durationMs: Date.now() - startedAt,
+    count: results.length,
+    saved,
+  });
+
   return NextResponse.json({
     ok: true,
     keyword,
     count: results.length,
     results,
+    saved,
   });
 }
 

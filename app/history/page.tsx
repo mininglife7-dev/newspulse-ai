@@ -29,6 +29,11 @@ export default function HistoryPage() {
     setError(null);
     try {
       const res = await fetch('/api/history?limit=100', { cache: 'no-store' });
+      if (res.status === 401) {
+        // Session expired — send the customer to sign in and come back.
+        window.location.href = '/login?redirect=/history';
+        return;
+      }
       const json = await res.json();
       if (!res.ok || !json.ok) {
         throw new Error(json.error || `Failed (${res.status})`);
