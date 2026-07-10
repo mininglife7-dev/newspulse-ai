@@ -27,6 +27,13 @@ describe('classifyRoute', () => {
     }
   );
 
+  it('leaves /auth/reset-password public so the recovery session can reach it', () => {
+    // The recovery link establishes a session before the user lands here; if
+    // this were an "auth" route the middleware would bounce the (now
+    // authenticated) user to /dashboard before they could set a new password.
+    expect(classifyRoute('/auth/reset-password')).toBe('public');
+  });
+
   it('does not protect lookalike prefixes', () => {
     expect(classifyRoute('/dashboardish')).toBe('public');
     expect(classifyRoute('/workspaces-blog')).toBe('public');

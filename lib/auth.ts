@@ -64,8 +64,17 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 }
 
 export async function resetPassword(email: string) {
+  // Route the recovery link through /auth/confirm — the same handler signup
+  // uses — so the code is exchanged for a session server-side, then forwarded
+  // to the set-new-password page. Using window.location.origin keeps this
+  // correct across preview/prod deploys without relying on NEXT_PUBLIC_SITE_URL.
+  const redirectTo =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/auth/confirm?next=/auth/reset-password`
+      : undefined;
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+    ...(redirectTo ? { redirectTo } : {}),
   });
 
   if (error) throw error;
