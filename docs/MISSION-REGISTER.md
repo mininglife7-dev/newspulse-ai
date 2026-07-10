@@ -14,14 +14,21 @@ The duplicate-work risk flagged in V2 has materialized. Seven draft PRs are open
 | #49 | `governor-bootstrap-protocol` | Dependency health monitoring (cron) | Overlaps #46 (dependency security scanning) — **two monitoring implementations of the same idea** |
 | #46 | `autonomous-process-governor` | Dependency security scanning + perf baseline + git governance (DNA-GOV-008/9/10) | Overlaps #49; also its vulnerability findings are **stale** (written pre-Next-15.5.20; audit is now 2 moderate, not 1 critical + 5 high) |
 
-**Recommended consolidation order (engineering judgment, founder confirms):**
-1. **#58** (security + deploy unblock — small, unique, verified)
-2. **#54** (small, unique, customer-facing)
-3. **Pick ONE assessment implementation**: compare #55 vs #60 vs #48 against what main already has (obligations management landed on main independently!). Recommend: keep main's obligations work, merge the best assessment UI/engine of the three, close the other two as superseded — do NOT merge all three.
-4. **#49 vs #46**: pick one dependency-monitoring approach, close the other; re-verify its findings against Next 15.5.20 first.
-5. Freeze new feature branches until the above lands (WIP limit), else the collision compounds.
+**Recommended consolidation order — now VERIFIED by local test-merges against main `f8e9027` (2026-07-10 ~14:00 UTC):**
 
-Every PR above reports its own green local verification, but **none have CI runs** (Actions billing outage) and several have stale base commits — merging without rebase + re-verification will break main.
+| Step | PR | Test-merge result | Verified gate on the merge |
+|---|---|---|---|
+| 1 | **#54** | ✅ **Merges clean** (it has grown: legal links + workspace fields + full password-reset flow + 3 new E2E tests) | **529 unit / 9 E2E / build / lint / tsc — all green.** Safe to merge first |
+| 2 | **#58** | ⚠️ **3 conflicts** — `vercel.json` (semantic: main deliberately emptied `crons` per the Vercel-plan decision; #58 re-adds a 30-min cron), `tests/routes.test.ts`, `scripts/smoke-test.mjs` | Needs rebase + a cron/Hobby-plan decision before merge; content itself (open-redirect fix, atomicity) remains valuable |
+| 3 | #48 | ❌ 4 conflicts incl. **`supabase/schema.sql`** and dashboard; 7,331 lines, **58 commits behind** | Do not merge as-is |
+| 3 | #55 | ❌ 8 conflicts incl. **`lib/risk-assessment.ts`, obligations API, `schema.sql`** — it collides with main's own stack; 10,187 lines, 43 commits behind | Do not merge as-is |
+| 3 | #60 | ⚠️ 1 conflict (workspace setup page); 2,617 lines, **102 commits behind** | Do not merge as-is |
+
+**Decisive verified fact:** `main` already contains a **fourth** assessment/obligations implementation, actively evolving (`lib/risk-assessment.ts`, `app/api/obligations`, `app/compliance`, assessment-detail pages; see commit `3158d84` "reconcile assessment-engine replacement residue"). All three assessment PRs re-implement what main already has.
+
+**Revised recommendation:** treat **main's stack as canonical**. Merge #54 now (verified green). Rebase #58 and resolve the cron decision, then merge. For #48/#55/#60: **harvest unique deltas only** — #48's WCAG/accessibility pass and customer-readiness audit, #60's evidence/audit-log endpoints if main lacks them — as small fresh PRs against current main, then close all three as superseded. #49 vs #46: pick one dependency monitor (both must re-verify findings against Next 15.5.20; #46's vulnerability list is stale). Freeze new feature branches until this consolidation lands.
+
+Every open PR reports its own green local verification, but **none have CI runs** (Actions billing outage) and every base commit is stale — merging without rebase + re-verification will break main.
 
 ---
 
