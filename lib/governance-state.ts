@@ -183,14 +183,21 @@ function buildLaunchBlockers(): LaunchBlocker[] {
     {
       id: 'M-07',
       title: 'Zero legal surface',
-      status: 'open',
+      status: 'in_progress',
       problem:
         'No privacy policy, terms, or imprint. App stores user search queries (GDPR).',
       impact:
         'Legal blocker for EU-facing launch; acceptable for private demo.',
       solution:
         'privacy policy + terms pages (`/privacy`, `/terms`); data-retention statement.',
-      evidence: [],
+      evidence: [
+        'Routes created: /privacy and /terms (live in build)',
+        'Placeholder legal text scaffolded with GDPR/data retention sections',
+        'Pages linked in footer (footer links updated)',
+        'Build succeeds with 0 errors',
+        'All 77 tests passing',
+        'Awaiting founder/legal review to update policy text with actual commitments',
+      ],
       riskLevel: 'low',
       rollbackPath: 'remove pages',
       blocksStage: 'demo',
@@ -285,7 +292,7 @@ function buildMissions(): Mission[] {
     {
       id: 'V2-5',
       title: 'M-07 Privacy/Terms/AI-transparency pages',
-      status: 'open',
+      status: 'in_progress',
       impactScore: 7,
       effortEstimate: '1–2 d',
       owner: 'Founder+Legal',

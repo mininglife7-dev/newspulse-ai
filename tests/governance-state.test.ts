@@ -114,13 +114,13 @@ describe('Governance State Builder', () => {
     }
   });
 
-  it('has open blockers M-04, M-06, M-07, M-09', () => {
+  it('has open/in-progress blockers M-04, M-06, M-07, M-09', () => {
     const state = buildDashboardState();
 
     const open = ['M-04', 'M-06', 'M-07', 'M-09'];
     for (const id of open) {
       const blocker = state.blockers.find((b) => b.id === id);
-      expect(blocker?.status).toMatch(/^(open|blocked)$/);
+      expect(blocker?.status).toMatch(/^(open|blocked|in_progress)$/);
     }
   });
 
