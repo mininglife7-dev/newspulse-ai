@@ -142,21 +142,26 @@ export default function HomePage() {
 
         {/* Suggestions */}
         {!searched && (
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-white/50">
-            <span>Suggestions:</span>
-            {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => {
-                  setKeyword(s);
-                  runSearch(s);
-                }}
-                className="rounded-full border border-border bg-card px-3 py-1 text-white/70 transition hover:border-accent-500/60 hover:text-accent-300"
-              >
-                {s}
-              </button>
-            ))}
+          <div className="mt-6 flex flex-col items-center justify-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/50">
+              <span>Try one of these:</span>
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => {
+                    setKeyword(s);
+                    runSearch(s);
+                  }}
+                  className="rounded-full border border-border bg-card px-3 py-1 text-white/70 transition hover:border-accent-500/60 hover:text-accent-300"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="rounded-lg border border-blue-500/30 bg-blue-950/20 px-3 py-2 text-center text-xs text-blue-300">
+              Running in demo mode — results are sample data. Configure API keys for real news search.
+            </div>
           </div>
         )}
 
