@@ -247,11 +247,16 @@ describe('Incident Detection (DNA-GOV-013)', () => {
           verificationReport: report,
         });
 
-        if (incidents.length > 0) {
-          const incident = incidents[0];
-          expect(incident.affectedServices.length).toBeGreaterThanOrEqual(
-            report.failedChecks
-          );
+        // Only the ROLLBACK/ESCALATE path produces the verification-failure
+        // incident; a HOLD decision yields a degraded incident whose service
+        // list tracks degraded (not failed) checks, so match on description.
+        const deploymentIncident = incidents.find((i) =>
+          i.description.startsWith('Deployment verification failed')
+        );
+        if (deploymentIncident) {
+          expect(
+            deploymentIncident.affectedServices.length
+          ).toBeGreaterThanOrEqual(report.failedChecks);
         }
       }
     });
