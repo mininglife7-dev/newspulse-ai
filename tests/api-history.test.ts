@@ -62,7 +62,7 @@ describe('DELETE endpoints with ADMIN_TOKEN configured', () => {
   it('rejects single-row delete without a token', async () => {
     const { DELETE } = await import('@/app/api/history/[id]/route');
     const res = await DELETE(del('http://localhost:3000/api/history/abc'), {
-      params: { id: 'abc' },
+      params: Promise.resolve({ id: 'abc' }),
     });
     expect(res.status).toBe(401);
   });
@@ -71,16 +71,14 @@ describe('DELETE endpoints with ADMIN_TOKEN configured', () => {
     const { DELETE } = await import('@/app/api/history/[id]/route');
     const res = await DELETE(
       del('http://localhost:3000/api/history/abc', 'secret-token'),
-      { params: { id: 'abc' } }
+      { params: Promise.resolve({ id: 'abc' }) }
     );
     expect(res.status).toBe(200);
   });
 
   it('GET stays public — reading history needs no token', async () => {
     const { GET } = await import('@/app/api/history/route');
-    const res = await GET(
-      new NextRequest('http://localhost:3000/api/history')
-    );
+    const res = await GET(new NextRequest('http://localhost:3000/api/history'));
     expect(res.status).toBe(200);
   });
 });

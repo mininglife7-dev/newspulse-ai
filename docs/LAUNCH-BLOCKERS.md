@@ -10,7 +10,7 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 - **Problem:** `npm run build` exits 1; the app cannot be deployed at all.
 - **Evidence:** E1 — "Failed to collect page data for /api/history/[id]"; root cause is `lib/supabase.ts` creating the browser client at module top-level with missing env.
 - **Impact:** Absolute blocker — nothing downstream (deploy, demo, pilot) is possible.
-- **Solution implemented:** Lazy `Proxy`-based browser client; throws only on first *use* without env, never on import. PR #1 (same approach) was merged to `main` on 2026-07-09; this branch is rebased on top and keeps the variant with an explicit missing-env error message, locked in by tests.
+- **Solution implemented:** Lazy `Proxy`-based browser client; throws only on first _use_ without env, never on import. PR #1 (same approach) was merged to `main` on 2026-07-09; this branch is rebased on top and keeps the variant with an explicit missing-env error message, locked in by tests.
 - **Verification:** `npm run build` exit 0 with zero env vars (E2); `tests/supabase.test.ts` locks the behavior in.
 - **Regression tests:** `tests/supabase.test.ts` — import-without-env, throw-on-first-use, admin memoization.
 - **Rollback:** revert the single edit to `lib/supabase.ts`.
@@ -34,14 +34,14 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 - **Rollback:** pin back to 14.2.15 (not recommended).
 - **Risk:** minimal (same minor version).
 
-## M-04 — Residual advisories require Next 15.5.16+ ⏳ OPEN (code, ~0.5–1 day)
+## M-04 — Residual advisories require Next 15.5.16+ ✅ HIGH CLEARED (this branch); 1 residual moderate is upstream-only
 
-- **Problem:** 1 high (SSRF via WebSocket upgrades) + 1 moderate (RSC cache poisoning) remain; fixes only exist in Next ≥15.5.16 / 16, a breaking upgrade (React 19, async request APIs).
-- **Impact:** Moderate — advisories partially require configurations this app doesn't use, but auditors will flag any `npm audit` noise.
-- **Steps:** upgrade next→15.5.x LTS backport or 16.x, react→19, run codemods (`npx @next/codemod`), fix async `params` in `/api/history/[id]` and `/history/[id]`, re-run suite.
-- **Verification:** `npm audit --omit=dev` clean; build + tests green; manual smoke.
-- **Rollback:** branch revert.
-- **Dependencies:** M-01, M-02 merged first. **Risk:** medium (breaking changes).
+- **Problem:** 1 high (SSRF/DoS group) + 1 moderate remained on next\@14.2.35; fixes land in Next ≥15.5.16.
+- **Solution implemented:** upgraded to **next\@15.5.20 + eslint-config-next\@15.5.20** — the Next `backport` security line — **staying on React 18.3.1** (15.5.x still supports `react@^18.2.0`, so no React 19 / breaking runtime migration was needed). The only code change required by Next 15 was making dynamic route `params` async in `/api/history/[id]/route.ts` and `/history/[id]/page.tsx` (and the matching unit test).
+- **Verification (all green on 15.5.20):** `npm audit --omit=dev` → **high eliminated**; lint, `tsc --noEmit`, 77 unit tests, `next build`, 16/16 smoke, and the 6-test Playwright E2E suite (real browser, full search→history→clear journey) all pass.
+- **Residual:** 1 **moderate** remains — a PostCSS CSS-stringify XSS advisory inside Next's _own vendored_ `node_modules/next/node_modules/postcss`. It is a build-time CSS tool (not runtime-reachable by this app) and cannot be overridden without a Next release that bumps its bundled copy; even next\@16 vendors postcss. Tracked, not app-exploitable.
+- **Rollback:** revert this commit (pins back to 14.2.35).
+- **Risk:** low — single major on the security-backport line, React unchanged, verified end-to-end in a real browser.
 
 ## M-05 — Destructive endpoints are unauthenticated 🔶 IMPLEMENTED opt-in (this branch) — founder enables with one env var
 
@@ -67,7 +67,7 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 
 - **Problem:** No privacy policy, terms, or imprint. The app stores user search queries (personal data under GDPR) in Supabase (EU hosting status unverified). For an EU-facing launch this is a legal blocker; for a private demo it is not.
 - **Evidence:** file listing — no legal docs exist.
-- **Solution:** privacy policy + terms pages (`/privacy`, `/terms`) and a data-retention statement ("history stored until deleted"). Draft with counsel — **not** auto-generated as binding text (Rule 9: legal commitments are founder-only). *Progress:* the AI-transparency portion is done — every summary in the UI now carries an "AI-generated summary" label.
+- **Solution:** privacy policy + terms pages (`/privacy`, `/terms`) and a data-retention statement ("history stored until deleted"). Draft with counsel — **not** auto-generated as binding text (Rule 9: legal commitments are founder-only). _Progress:_ the AI-transparency portion is done — every summary in the UI now carries an "AI-generated summary" label.
 - **Verification:** pages live, linked in footer.
 - **Risk:** none technical.
 
@@ -85,7 +85,7 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 
 ## M-10 — Production deployment never verified ⏳ OPEN (founder, ~30 min) — **the** critical-path item
 
-- **Problem:** No production deployment has ever completed. The Actions deploy workflow fails (secrets empty, E4). **Update 2026-07-09:** the Vercel *Git integration* is active and successfully deployed a preview of this branch (E13) — so the path to production is simply: make `main` build, then verify runtime config. The Actions deploy workflow is now redundant; either delete it or configure its secrets.
+- **Problem:** No production deployment has ever completed. The Actions deploy workflow fails (secrets empty, E4). **Update 2026-07-09:** the Vercel _Git integration_ is active and successfully deployed a preview of this branch (E13) — so the path to production is simply: make `main` build, then verify runtime config. The Actions deploy workflow is now redundant; either delete it or configure its secrets.
 - **Evidence:** E3, E4, E12, E13.
 - **Steps:** merge this PR → Vercel auto-deploys main → open `<production-url>/api/health` and confirm `"status": "healthy"` (it reports which env vars are missing without leaking values) → set any missing env vars in Vercel dashboard → re-run `supabase/schema.sql` (updated on this branch) → run one real search → screenshot for README → delete or fix `.github/workflows/deploy.yml`.
 - **Verification:** green Deploy run + healthy endpoint + persisted search visible in /history.
@@ -96,9 +96,9 @@ Full evidence citations are in `docs/GO-NO-GO-REPORT.md` (E1–E12).
 
 ## Non-blockers (explicitly deferred, Rule 5)
 
-| Item | Why deferred |
-|---|---|
-| German localization | No verified German pilot/customer exists; i18n before demand is cosmetic |
-| Investor/partner decks, pricing, ROI docs | No product identity confirmed ("EURO AI" vs NewsPulse); founder input required first |
-| EU AI Act full classification dossier | Minimal-risk use case; the AI-transparency label (M-07) is the only near-term obligation with real effect |
-| Structured logging / observability stack | Right-sized only after real traffic exists |
+| Item                                      | Why deferred                                                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| German localization                       | No verified German pilot/customer exists; i18n before demand is cosmetic                                  |
+| Investor/partner decks, pricing, ROI docs | No product identity confirmed ("EURO AI" vs NewsPulse); founder input required first                      |
+| EU AI Act full classification dossier     | Minimal-risk use case; the AI-transparency label (M-07) is the only near-term obligation with real effect |
+| Structured logging / observability stack  | Right-sized only after real traffic exists                                                                |
