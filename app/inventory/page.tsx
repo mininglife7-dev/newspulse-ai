@@ -182,7 +182,8 @@ export default function InventoryPage() {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="e.g. Customer-support chatbot"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                    required
                   />
                 </div>
                 <div>
@@ -193,7 +194,7 @@ export default function InventoryPage() {
                     id="systemType"
                     value={form.systemType}
                     onChange={(e) => setForm({ ...form, systemType: e.target.value })}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
                   >
                     <option value="">Select…</option>
                     {SYSTEM_TYPE_OPTIONS.map((o) => (
@@ -212,7 +213,7 @@ export default function InventoryPage() {
                     value={form.vendor}
                     onChange={(e) => setForm({ ...form, vendor: e.target.value })}
                     placeholder="e.g. OpenAI, internal"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -223,7 +224,7 @@ export default function InventoryPage() {
                     id="status"
                     value={form.status}
                     onChange={(e) => setForm({ ...form, status: e.target.value })}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
                   >
                     <option value="active">Active</option>
                     <option value="pilot">Pilot</option>
@@ -241,7 +242,7 @@ export default function InventoryPage() {
                   onChange={(e) => setForm({ ...form, purpose: e.target.value })}
                   placeholder="What is this system used for?"
                   rows={2}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
                 />
               </div>
               <div className="flex gap-3">

@@ -31,11 +31,12 @@ export default function LandingPage() {
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-8 py-3 font-semibold text-white transition hover:shadow-lg hover:shadow-blue-500/40"
           >
             Start Free Trial
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <Link
             href="#features"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 px-8 py-3 font-semibold text-white transition hover:border-slate-600 hover:bg-slate-900"
+            aria-label="Learn more about AI governance features"
           >
             Learn More
           </Link>
@@ -45,23 +46,23 @@ export default function LandingPage() {
       {/* Trust Badges */}
       <section className="grid gap-6 sm:grid-cols-3">
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-          <CheckCircle className="mb-3 h-6 w-6 text-cyan-400" />
+          <CheckCircle className="mb-3 h-6 w-6 text-cyan-400" aria-hidden="true" />
           <h3 className="font-semibold text-white">Built for Europe</h3>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-slate-300">
             EU AI Act compliant from day one
           </p>
         </div>
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-          <Shield className="mb-3 h-6 w-6 text-cyan-400" />
+          <Shield className="mb-3 h-6 w-6 text-cyan-400" aria-hidden="true" />
           <h3 className="font-semibold text-white">Enterprise Grade</h3>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-slate-300">
             Security and privacy by design
           </p>
         </div>
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-          <Zap className="mb-3 h-6 w-6 text-cyan-400" />
+          <Zap className="mb-3 h-6 w-6 text-cyan-400" aria-hidden="true" />
           <h3 className="font-semibold text-white">Rapid Setup</h3>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-slate-300">
             From registration to insights in hours
           </p>
         </div>
@@ -73,40 +74,40 @@ export default function LandingPage() {
           <h2 className="text-4xl font-bold text-white">
             Everything You Need
           </h2>
-          <p className="text-lg text-slate-400">
+          <p className="text-lg text-slate-300">
             Complete AI governance in one elegant platform
           </p>
         </div>
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
-            <Users className="h-6 w-6 text-cyan-400" />
+            <Users className="h-6 w-6 text-cyan-400" aria-hidden="true" />
             <h3 className="text-lg font-semibold text-white">AI Inventory</h3>
-            <p className="text-slate-400">
+            <p className="text-slate-300">
               Catalog all AI systems, vendors, and purposes in your organization
             </p>
           </div>
           <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
-            <BarChart3 className="h-6 w-6 text-cyan-400" />
+            <BarChart3 className="h-6 w-6 text-cyan-400" aria-hidden="true" />
             <h3 className="text-lg font-semibold text-white">Risk Analysis</h3>
-            <p className="text-slate-400">
+            <p className="text-slate-300">
               Classify risks and understand your regulatory obligations
             </p>
           </div>
           <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
-            <Shield className="h-6 w-6 text-cyan-400" />
+            <Shield className="h-6 w-6 text-cyan-400" aria-hidden="true" />
             <h3 className="text-lg font-semibold text-white">
               Evidence Collection
             </h3>
-            <p className="text-slate-400">
+            <p className="text-slate-300">
               Gather and organize compliance evidence in one place
             </p>
           </div>
           <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
-            <CheckCircle className="h-6 w-6 text-cyan-400" />
+            <CheckCircle className="h-6 w-6 text-cyan-400" aria-hidden="true" />
             <h3 className="text-lg font-semibold text-white">
               Remediation Tracking
             </h3>
-            <p className="text-slate-400">
+            <p className="text-slate-300">
               Plan and track actions to close compliance gaps
             </p>
           </div>
@@ -119,14 +120,14 @@ export default function LandingPage() {
           Ready to transform AI governance?
         </h2>
         <p className="mb-8 text-lg text-slate-300">
-          Join companies across Europe who trust EURO AI
+          Join companies across Europe who trust EURO AI for EU AI Act compliance
         </p>
         <Link
           href="/auth/signup"
           className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-8 py-3 font-semibold text-white transition hover:shadow-lg hover:shadow-blue-500/40"
         >
           Get Started Free
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
     </div>

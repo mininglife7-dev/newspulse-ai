@@ -115,13 +115,13 @@ export default function WorkspaceSetupPage() {
             </h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label
                 htmlFor="companyName"
                 className="block text-sm font-medium text-slate-300 mb-1.5"
               >
-                Company Name *
+                Company Name <span aria-label="required" className="text-red-400">*</span>
               </label>
               <input
                 id="companyName"
@@ -132,6 +132,7 @@ export default function WorkspaceSetupPage() {
                 className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 placeholder="Acme Inc."
                 disabled={loading}
+                required
               />
             </div>
             <div>
@@ -139,7 +140,7 @@ export default function WorkspaceSetupPage() {
                 htmlFor="legalName"
                 className="block text-sm font-medium text-slate-300 mb-1.5"
               >
-                Legal Name (optional)
+                Legal Name <span className="text-slate-500">(optional)</span>
               </label>
               <input
                 id="legalName"
@@ -154,13 +155,13 @@ export default function WorkspaceSetupPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label
                 htmlFor="country"
                 className="block text-sm font-medium text-slate-300 mb-1.5"
               >
-                Country *
+                Country <span aria-label="required" className="text-red-400">*</span>
               </label>
               <select
                 id="country"
@@ -169,6 +170,7 @@ export default function WorkspaceSetupPage() {
                 onChange={handleChange}
                 className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 disabled={loading}
+                required
               >
                 <option value="">Select a country</option>
                 <option value="DE">Germany</option>
@@ -182,7 +184,7 @@ export default function WorkspaceSetupPage() {
                 htmlFor="industry"
                 className="block text-sm font-medium text-slate-300 mb-1.5"
               >
-                Industry *
+                Industry <span aria-label="required" className="text-red-400">*</span>
               </label>
               <select
                 id="industry"
@@ -191,6 +193,7 @@ export default function WorkspaceSetupPage() {
                 onChange={handleChange}
                 className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 disabled={loading}
+                required
               >
                 <option value="">Select an industry</option>
                 <option value="financial">Financial Services</option>
@@ -221,17 +224,17 @@ export default function WorkspaceSetupPage() {
           </div>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <Link
             href="/dashboard"
-            className="flex-1 rounded-lg border border-slate-700 px-6 py-3 font-semibold text-white transition hover:border-slate-600"
+            className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-white transition hover:border-slate-600 text-center"
           >
             Skip for now
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 py-3 font-semibold text-white disabled:opacity-50"
+            className="rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-6 py-3 font-semibold text-white disabled:opacity-50 flex-1 sm:flex-1"
           >
             {loading ? "Saving..." : "Continue"}
           </button>

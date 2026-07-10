@@ -192,8 +192,9 @@ export default function SignUpPage() {
                   className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   placeholder="••••••••"
                   disabled={loading}
+                  aria-describedby="password-requirements"
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p id="password-requirements" className="mt-1 text-xs text-slate-400">
                   At least 8 characters
                 </p>
               </div>
@@ -226,13 +227,13 @@ export default function SignUpPage() {
                   className="mt-1 rounded border-slate-700 text-blue-500"
                   disabled={loading}
                 />
-                <span className="text-sm text-slate-400">
+                <span className="text-sm text-slate-300">
                   I agree to the{" "}
-                  <Link href="#" className="text-blue-400 hover:text-blue-300">
+                  <Link href="/terms" className="text-blue-400 hover:text-blue-300 font-medium">
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link href="#" className="text-blue-400 hover:text-blue-300">
+                  <Link href="/privacy" className="text-blue-400 hover:text-blue-300 font-medium">
                     Privacy Policy
                   </Link>
                 </span>
@@ -249,7 +250,7 @@ export default function SignUpPage() {
           )}
         </form>
 
-        <p className="text-center text-slate-400">
+        <p className="text-center text-slate-300">
           Already have an account?{" "}
           <Link
             href="/auth/signin"
