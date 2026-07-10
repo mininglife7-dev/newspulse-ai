@@ -141,11 +141,14 @@ export async function POST(req: NextRequest) {
     ai_summary: summaries[i] || n.description || n.title || '',
   }));
 
-  // ---------- 5) Persist to Supabase `news_searches` (best-effort) ----------
-  // Don't block the response if Supabase is slow or down.
-  saveSearch(keyword, results).catch((err) =>
-    console.error('[/api/search] saveSearch failed:', err)
-  );
+  // ---------- 5) Persist to Supabase `news_searches` ----------
+  // Await the write so it finishes before we respond. On serverless (Vercel)
+  // the runtime can freeze the moment the response is returned, dropping any
+  // still-pending promise — a fire-and-forget insert would intermittently
+  // fail to save, breaking the "saved history" feature. saveSearch swallows
+  // its own errors (returns null), so awaiting never breaks the response even
+  // if Supabase is slow or down.
+  await saveSearch(keyword, results);
 
   // ---------- 6) Return ----------
   return NextResponse.json({
