@@ -58,6 +58,7 @@ export default function AssessmentPage() {
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [updatingObligation, setUpdatingObligation] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RiskAssessmentResult | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -118,6 +119,33 @@ export default function AssessmentPage() {
 
     loadData();
   }, [systemId]);
+
+  const handleUpdateObligationStatus = async (
+    obligationId: string,
+    newStatus: string
+  ) => {
+    setUpdatingObligation(obligationId);
+    try {
+      const res = await fetch(`/api/obligations/${obligationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to update');
+
+      // Update local state
+      setObligations((prev) =>
+        prev.map((ob) =>
+          ob.id === obligationId ? { ...ob, status: newStatus } : ob
+        )
+      );
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update obligation status');
+    } finally {
+      setUpdatingObligation(null);
+    }
+  };
 
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers((prev) => ({
@@ -376,6 +404,48 @@ export default function AssessmentPage() {
                           <p className="text-xs text-slate-400 mt-2">
                             Due: {new Date(ob.due_date).toLocaleDateString()}
                           </p>
+                        )}
+                      </div>
+                      <div className="flex-shrink-0">
+                        {ob.status !== 'completed' && ob.status !== 'not_applicable' && (
+                          <div className="flex flex-col gap-1.5">
+                            {ob.status === 'identified' && (
+                              <button
+                                onClick={() =>
+                                  handleUpdateObligationStatus(ob.id, 'in_progress')
+                                }
+                                disabled={updatingObligation === ob.id}
+                                className="px-2.5 py-1 text-xs font-medium rounded border border-blue-700/50 bg-blue-950/40 text-blue-300 hover:bg-blue-950/60 disabled:opacity-60 transition"
+                                title="Mark as in progress"
+                              >
+                                {updatingObligation === ob.id ? 'Updating…' : 'Start'}
+                              </button>
+                            )}
+                            {ob.status === 'in_progress' && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    handleUpdateObligationStatus(ob.id, 'completed')
+                                  }
+                                  disabled={updatingObligation === ob.id}
+                                  className="px-2.5 py-1 text-xs font-medium rounded border border-green-700/50 bg-green-950/40 text-green-300 hover:bg-green-950/60 disabled:opacity-60 transition"
+                                  title="Mark as completed"
+                                >
+                                  {updatingObligation === ob.id ? 'Updating…' : 'Complete'}
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleUpdateObligationStatus(ob.id, 'identified')
+                                  }
+                                  disabled={updatingObligation === ob.id}
+                                  className="px-2.5 py-1 text-xs font-medium rounded border border-slate-700/50 bg-slate-950/40 text-slate-400 hover:bg-slate-950/60 disabled:opacity-60 transition"
+                                  title="Revert to identified"
+                                >
+                                  Revert
+                                </button>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
