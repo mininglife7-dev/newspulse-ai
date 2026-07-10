@@ -20,14 +20,18 @@ The dev server runs on [http://localhost:3000](http://localhost:3000) with hot r
 
 ## Required environment variables
 
-| Variable                          | Required | Where to get it             |
-| --------------------------------- | -------- | --------------------------- |
-| `FIRECRAWL_API_KEY`               | yes      | https://firecrawl.dev       |
-| `OPENAI_API_KEY`                  | yes      | https://platform.openai.com |
-| `NEXT_PUBLIC_SUPABASE_URL`        | yes      | Supabase → Settings → API   |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | yes      | Supabase → Settings → API   |
-| `SUPABASE_SERVICE_ROLE_KEY`       | yes      | Supabase → Settings → API   |
-| `NEXT_PUBLIC_SITE_URL`            | no       | Used for sitemap/robots     |
+| Variable                        | Required | Where to get it             |
+| ------------------------------- | -------- | --------------------------- |
+| `FIRECRAWL_API_KEY`             | yes      | https://firecrawl.dev       |
+| `OPENAI_API_KEY`                | yes      | https://platform.openai.com |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | Supabase → Settings → API   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | Supabase → Settings → API   |
+| `SUPABASE_SERVICE_ROLE_KEY`     | yes      | Supabase → Settings → API   |
+| `ADMIN_TOKEN`                   | no\*     | Any strong random string    |
+| `NEXT_PUBLIC_SITE_URL`          | no       | Used for sitemap/robots     |
+
+\* If `ADMIN_TOKEN` is unset, destructive history actions are disabled
+(fail-closed). Set it to enable "Clear History" and per-item delete.
 
 ---
 
@@ -38,6 +42,22 @@ The dev server runs on [http://localhost:3000](http://localhost:3000) with hot r
 - **Tailwind utilities** preferred over custom CSS. Theme tokens live in `tailwind.config.js`.
 - **API routes** return `{ ok: boolean, ... }` shape. Errors set `ok: false` and a status code ≥ 400.
 - **App Router** — colocate route-specific files (`page.tsx`, `loading.tsx`, `error.tsx`) inside the route folder.
+
+---
+
+## Testing
+
+Unit tests run on [Vitest](https://vitest.dev/):
+
+```bash
+npm test           # run the suite once (also runs in CI)
+npm run test:watch # watch mode while developing
+```
+
+Tests live in `tests/`. Pure logic (`lib/*`) and API-route handlers run in the
+Node environment; component tests opt into jsdom with a
+`// @vitest-environment jsdom` pragma at the top of the file. Please add or
+update tests when you change behaviour.
 
 ---
 
@@ -60,6 +80,7 @@ Before opening a PR:
 
 - [ ] `npm run lint` passes
 - [ ] `npx tsc --noEmit` passes
+- [ ] `npm test` passes
 - [ ] `npm run build` succeeds
 - [ ] No real secrets in commits or `.env.example`
 - [ ] New API routes have request/response examples in the PR description
