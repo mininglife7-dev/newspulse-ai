@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10T13:15:00Z (Phase 1 end-to-end complete: assessment → obligation planning; DNA-GOV design ready)
-**State:** Executing (Full Phase 1 user journey on branch: setup → inventory → assessment → remediation plan; DNA deployment blocked by Vercel secret)
+**Last updated:** 2026-07-10T13:30:00Z (Phase 1 follow-up complete: progress tracking → evidence upload → PDF export; 377 tests passing)
+**State:** Executing (Full Phase 1+ user journey: assess → plan → track progress → upload evidence → export report; Vercel deployment blocked by missing github-token secret)
 
 ---
 
@@ -229,12 +229,36 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
 - ✅ Dashboard integration: Step 4 shows obligation progress on main dashboard
 - ✅ Tests: 23/23 passing for API, full integration verified
 
+**Phase 1 Follow-up II: Progress & Evidence Tracking (COMPLETE — 4 commits)**
+- ✅ `/assessment-progress` — Compare current vs previous assessment versions
+  - Displays risk score trends, improvement metrics, visual arrows showing direction
+  - Improvement classification: significant (≥30 pt), moderate (10-29), minor (<10), regression
+  - Timeline: Days between assessments, total assessment count
+  - Next steps workflow: Context-specific guidance based on improvement vs regression
+- ✅ `/api/evidence` + evidence upload — Attach compliance proof to obligations
+  - POST: Upload evidence files (PDF, images, Office docs, max 10 MB)
+  - GET: List evidence by obligation, ordered by date DESC
+  - DELETE: Remove evidence (uploader-only, with storage cleanup)
+  - Storage: Supabase Storage at `obligations/{obligation_id}/{filename}`
+  - RLS: Workspace-scoped access control
+- ✅ Evidence UI in `/obligations` — Expandable evidence section per obligation
+  - Click-to-upload widget with file type validation
+  - Evidence list: File name, size, uploader, upload date
+  - Inline delete with confirmation (only for uploaders)
+- ✅ `/api/reports/compliance-pdf` — Generate compliance report PDF
+  - Multi-page PDF with executive summary, stats, risk assessment table, obligations by priority
+  - Color-coded risk levels and priority badges
+  - Handles large workspaces with pagination (tested up to 50+ systems)
+  - Download via "Export Report" button in obligations header
+  - Filename: `compliance-report-{workspace}-{date}.pdf`
+  - Cache-control: no-cache (fresh PDF per request)
+- ✅ Tests: 46 evidence tests + 45 report tests (91 new, 377 total passing)
+
 **Next Phase 1 features (unblocked):**
 - Compliance recommendations engine: "For high-risk systems, implement X/Y/Z"
-- Bulk assessment export (PDF report aggregating all system assessments)
-- Assessment history and versioning (track improvements over time)
-- Obligation evidence upload (attach documentation proving compliance)
+- Assessment history timeline view (Gantt chart of assessment progress)
 - Obligation ownership/assignment (delegate to team members)
+- Bulk obligation status import (CSV upload to mark multiple as complete)
 
 ---
 
