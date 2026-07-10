@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Inter } from 'next/font/google';
 import { Zap, Search, History as HistoryIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SITE_URL } from '@/lib/constants';
 import './globals.css';
 
 const inter = Inter({
@@ -12,9 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  ),
+  metadataBase: new URL(SITE_URL),
   title: 'NewsPulse AI — AI-Powered News Intelligence',
   description:
     'Search. Scrape. Summarize. Real-time AI summaries of news from across the web, with saved search history.',

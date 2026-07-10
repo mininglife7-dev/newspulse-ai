@@ -372,6 +372,32 @@ async function run() {
     }
   );
 
+  await check(
+    'page',
+    'security headers are served on every response',
+    async () => {
+      const res = await get('/');
+      assert(
+        res.headers.get('x-content-type-options') === 'nosniff',
+        'X-Content-Type-Options missing'
+      );
+      assert(
+        res.headers.get('x-frame-options') === 'DENY',
+        'X-Frame-Options missing'
+      );
+      assert(
+        res.headers.get('referrer-policy') ===
+          'strict-origin-when-cross-origin',
+        'Referrer-Policy missing'
+      );
+      const api = await get('/api/health');
+      assert(
+        api.headers.get('x-content-type-options') === 'nosniff',
+        'security headers missing on API routes'
+      );
+    }
+  );
+
   // ----- SEO / meta routes -----
   await check('meta', 'GET /robots.txt responds', async () => {
     const res = await get('/robots.txt');

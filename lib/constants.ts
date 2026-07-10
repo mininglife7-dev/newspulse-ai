@@ -6,3 +6,12 @@
 
 /** OpenAI model used for article summaries (lib/openai.ts + UI labels). */
 export const SUMMARY_MODEL = 'gpt-4o-mini';
+
+/**
+ * Canonical site URL for metadata, robots.txt, and sitemap.xml.
+ * Previously each file resolved its own fallback (layout: localhost,
+ * robots/sitemap: vercel.app) — three answers to one question.
+ */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
+  'https://newspulse-ai.vercel.app';

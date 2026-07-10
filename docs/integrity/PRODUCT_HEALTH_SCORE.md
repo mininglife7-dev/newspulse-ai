@@ -35,3 +35,8 @@ None at or below the 95 bar. Watch-list:
    production traffic.
 3. Supabase RLS allows anonymous read/insert (single-user demo posture) —
    tighten before multi-tenant use.
+4. Content-Security-Policy header deferred: Next.js inline scripts need
+   nonce plumbing (middleware-generated nonce + `headers()` templating) to
+   avoid `unsafe-inline`. The other security headers
+   (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+   `Permissions-Policy`) are served and smoke-tested (D-21).
