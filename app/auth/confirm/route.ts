@@ -19,7 +19,10 @@ function safeNext(value: string | null): string {
  * Supports both link styles so it works regardless of how the Supabase
  * email templates are configured:
  *   - ?code=...            → PKCE code exchange
- *   - ?token_hash=&type=   → OTP verification
+ *   - ?token_hash=&type=   → OTP verification (includes recovery tokens)
+ *
+ * Recovery tokens (type='recovery') redirect to /auth/reset-password
+ * so user can set new password. All others redirect to next or /dashboard.
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -39,7 +42,12 @@ export async function GET(req: Request) {
         type,
         token_hash: tokenHash,
       });
-      if (!error) return NextResponse.redirect(new URL(next, url));
+      if (!error) {
+        // Recovery tokens (password reset) redirect to reset-password page
+        // All other tokens redirect to next or dashboard
+        const redirectUrl = type === 'recovery' ? '/auth/reset-password' : next;
+        return NextResponse.redirect(new URL(redirectUrl, url));
+      }
     }
   } catch (err) {
     console.error('[auth/confirm] verification failed:', err);
