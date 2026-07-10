@@ -31,11 +31,15 @@ with a timer.
   added to the schema (onboarding writes would have been rejected without them).
 - **Schema fixes** — `companies.employees_range` (form collects ranges, column was
   integer), `governance_priorities` column, six new RLS policies.
+- **Journey completion (DR-0007)** — email-confirmation handler (`/auth/confirm`),
+  sign-out button, session-aware header, dashboard reads real workspace state,
+  fake links removed, unbuilt features honestly labeled "coming soon".
 
 ## Verification status (all Verified, locally)
 
-- Unit: 54/54 (route classification, workspace API incl. German umlaut slugs,
-  health endpoint, governance state, supabase clients, utils)
+- Unit: 61/61 (route classification, workspace API incl. German umlaut slugs,
+  confirm-route incl. open-redirect guard, health endpoint, governance state,
+  supabase clients, utils)
 - E2E (real browser): 6/6 — unauthenticated `/dashboard` redirects to sign-in,
   APIs return 401 JSON, landing + auth pages render
 - Lint 0 errors · `tsc --noEmit` clean · production build green
@@ -46,15 +50,14 @@ with a timer.
   in the Supabase SQL editor, and auth email settings confirmed, before a real
   customer signs up. Code cannot verify this — dashboard access required.
 - Next 14.x EOL advisories remain (fix = Next 16 migration, still queued).
-- Sign-out UI does not exist yet; sessions expire but users can't log out.
+- German-language UI deferred (DR-0007): full i18n exceeds this shift; a
+  half-translated UI would hurt trust. Recommended as the next dedicated mission.
 
 ## Next planned work (this mission, in order)
 
 1. Merge the integration branch to main after CI is green; close superseded #22;
    re-triage #18/#17/#15/#5 against the new base.
-2. German customer experience: complete the journey gaps (sign-out, dashboard
-   showing real workspace data instead of static onboarding steps).
-3. Handover report.
+2. Handover report.
 
 ## Founder attention (when you return)
 

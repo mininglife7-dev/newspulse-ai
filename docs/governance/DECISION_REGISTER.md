@@ -7,6 +7,29 @@ are never requested from the Founder.
 
 ---
 
+## DR-0007 — Complete the customer journey loop; truthful UI over cosmetic completion
+
+- **Decision:** Add the missing journey pieces (email-confirmation handler at
+  /auth/confirm, sign-out, session-aware header) and make the dashboard render the
+  user's real workspace state; label unbuilt features "coming soon" and remove
+  fake href="#" documentation/support links.
+- **Reason:** Mission quality bar: no fake buttons, no misleading indicators.
+  A verifying customer previously had no working email-confirmation landing, no
+  way to sign out, a header that showed "Sign In" while signed in, and a dashboard
+  implying features exist that don't.
+- **Alternatives considered:** German-language i18n was evaluated as the next
+  increment and deliberately deferred — doing it properly (full locale
+  infrastructure + reviewed translations) exceeds what remains of the shift, and a
+  half-translated UI reduces customer trust rather than increasing it.
+- **Evidence:** 61/61 unit tests (6 new confirm-route tests incl. open-redirect
+  guard), 6/6 e2e, lint/tsc/build clean.
+- **Confidence:** High
+- **Expected impact:** The first customer can complete sign-up → email verify →
+  sign-in → workspace setup → dashboard and always sees truthful state.
+- **Risk assessment:** Low — additive routes/components; dashboard falls back to
+  the fresh-account view on any data error.
+- **Timestamp:** 2026-07-10
+
 ## DR-0006 — Replace simulated auth with real cookie-based Supabase auth
 
 - **Decision:** Adopt @supabase/ssr cookie sessions end-to-end: browser client,
