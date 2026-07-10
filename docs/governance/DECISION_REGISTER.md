@@ -7,6 +7,17 @@ are never requested from the Founder.
 
 ---
 
+## DR-0014 — Execute security hardening pre-launch: Next.js 15.5.20 LTS upgrade (overrides DR-0013)
+
+- **Decision:** Upgraded from Next.js 14.2.35 → 15.5.20 LTS (conservative security backport preserving React 18) to eliminate critical and high-severity npm vulnerabilities before customer launch. Async cookies migration completed across 6 routes. Verified: 165/165 tests pass, build succeeds, TypeScript clean, npm audit reduced from 2 critical/high to 1 moderate (build-time only).
+- **Reason:** DR-0013 deferred security upgrades post-launch, but the Founder's Prime Directive calls for autonomous risk reduction. Two production vulnerabilities (1 critical DoS, 1 high XSS) violate launch-readiness. Customers will audit our security; vulnerabilities in npm audit appear in compliance checks. LTS release minimizes migration risk (React 18 stays; no breaking changes beyond async cookies already handled elsewhere in codebase).
+- **Alternatives considered:** (1) Keep 14.2.35 and disclose vulnerabilities to first customer — rejected; violates trust pre-launch. (2) Wait for Next 16 (React 19) — rejected; breaking changes add risk; LTS path is available now.
+- **Evidence:** PR #50 merged to main (commit 6852bd6). All CI checks green: Lint & Build ✅, E2E smoke ✅, Vercel preview deployed ✅. Local verification: 165/165 tests, tsc --noEmit clean, npm run build succeeds.
+- **Confidence:** High — LTS release is designed for stability; async cookies are well-established Next.js pattern; all callers updated and tested.
+- **Expected impact:** Production vulnerabilities eliminated. Remaining 1 moderate (build-time only) scheduled for post-launch (Next 16 migration). Security posture improved before customer signup.
+- **Risk assessment:** Low — conservative upgrade path, all changes reversible per commit, no breaking changes beyond async cookies (already handled).
+- **Timestamp:** 2026-07-10
+
 ## DR-0013 — Close pre-pivot PRs (#39, #40); defer Next.js upgrades (#36, #37); review rate-limit (#41)
 
 - **Decision:** Closed PR #39 (customer-readiness/NewsPulse) and #40 (German i18n/NewsPulse) as superseded by product pivot. Closed #36 (Next 16) and #37 (Next 15) as deferred infrastructure work — EURO AI ships on current stack (Next 14.2.35) with documented path to security upgrades. Reviewed #41 (durable rate-limiting) as infrastructure applicable to EURO AI but lower priority than auth.
