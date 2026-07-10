@@ -28,6 +28,14 @@ export interface LaunchBlocker {
   evidence: string[];
   riskLevel: 'low' | 'medium' | 'high';
   rollbackPath: string;
+  /**
+   * Launch stage this blocker must be resolved for.
+   * 'blocking': Must resolve before any launch (blocks private demo)
+   * 'demo': Must resolve before public demo (acceptable for private demo only)
+   * 'mvp': Must resolve before production MVPreaches — (acceptable for MVP)
+   * 'post_launch': Can be resolved after initial launch (nice-to-have)
+   */
+  blocksStage: 'blocking' | 'demo' | 'mvp' | 'post_launch';
 }
 
 export interface Mission {

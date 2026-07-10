@@ -104,10 +104,19 @@ export default function RootLayout({
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
         <ServiceWorkerRegister />
         <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
-          <p>
+          <p className="mb-3">
             Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}
             <span className="text-accent-400">NewsPulse AI</span>
           </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/privacy" className="hover:text-white/60 transition">
+              Privacy Policy
+            </Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-white/60 transition">
+              Terms of Service
+            </Link>
+          </div>
         </footer>
       </body>
     </html>
