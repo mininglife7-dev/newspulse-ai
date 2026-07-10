@@ -191,29 +191,21 @@ export default async function DashboardPage() {
         )}
 
         {/* Step 3: Risk Assessment */}
-        {systemCount > 0 ? (
+        {hasWorkspace && systemCount > 0 ? (
           <Link
-            href="/assessment"
+            href="/inventory"
             className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
           >
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${assessedCount >= systemCount ? 'bg-green-600' : 'bg-blue-500 text-sm font-bold'}`}
-                  >
-                    {assessedCount >= systemCount ? (
-                      <CheckCircle className="h-5 w-5" />
-                    ) : (
-                      '3'
-                    )}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
+                    3
                   </div>
                   <h3 className="font-semibold text-white">Risk Assessment</h3>
                 </div>
                 <p className="text-sm text-slate-400">
-                  {assessedCount === 0
-                    ? 'Classify each system against EU AI Act risk tiers'
-                    : `${assessedCount} of ${systemCount} system${systemCount === 1 ? '' : 's'} assessed`}
+                  Classify risks for your AI systems
                 </p>
               </div>
               <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
@@ -230,8 +222,7 @@ export default async function DashboardPage() {
                   <h3 className="font-semibold text-white">Risk Assessment</h3>
                 </div>
                 <p className="text-sm text-slate-400">
-                  Classify risks and obligations — unlocked once systems are
-                  in your inventory
+                  Classify risks — unlocked after adding AI systems
                 </p>
               </div>
             </div>
@@ -290,16 +281,14 @@ export default async function DashboardPage() {
           </div>
           <div className="flex gap-4">
             <CheckCircle
-              className={`h-6 w-6 flex-shrink-0 ${assessedCount > 0 ? 'text-green-400' : systemCount > 0 ? 'text-cyan-400' : 'text-slate-600'}`}
+              className={`h-6 w-6 flex-shrink-0 ${systemCount > 0 ? 'text-cyan-400' : 'text-slate-600'}`}
             />
             <div>
-              <h3 className="font-medium text-white">Start assessment</h3>
+              <h3 className="font-medium text-white">Start risk assessment</h3>
               <p className="text-sm text-slate-400">
-                {assessedCount > 0
-                  ? `${assessedCount} assessed`
-                  : systemCount > 0
-                    ? 'Evaluate compliance gaps'
-                    : 'Unlocked once systems are inventoried'}
+                {systemCount > 0
+                  ? 'Classify risks for compliance'
+                  : 'Unlocked after adding AI systems'}
               </p>
             </div>
           </div>
