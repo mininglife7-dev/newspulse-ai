@@ -34,8 +34,7 @@ export default async function DashboardPage() {
         .limit(1)
         .maybeSingle();
 
-      const ws = (membership as any)?.workspaces;
-      workspace = Array.isArray(ws) ? (ws[0] ?? null) : (ws ?? null);
+      workspace = (membership as any)?.workspaces ?? null;
 
       if (membership?.workspace_id) {
         const { count } = await supabase

@@ -33,20 +33,26 @@ export default function SignUpPage() {
     setError(null);
     setLoading(true);
 
-    // Validation
-    if (!formData.email || !formData.password || !formData.confirmPassword) {
+    // Validation (trim whitespace to catch "    " submissions)
+    const email = formData.email.trim();
+    const password = formData.password.trim();
+    const confirmPassword = formData.confirmPassword.trim();
+    const firstName = formData.firstName.trim();
+    const lastName = formData.lastName.trim();
+
+    if (!email || !password || !confirmPassword || !firstName || !lastName) {
       setError("Please fill in all fields");
       setLoading(false);
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
-    if (formData.password.length < 8) {
+    if (password.length < 8) {
       setError("Password must be at least 8 characters");
       setLoading(false);
       return;
@@ -59,12 +65,7 @@ export default function SignUpPage() {
     }
 
     try {
-      await signUp(
-        formData.email,
-        formData.password,
-        formData.firstName,
-        formData.lastName
-      );
+      await signUp(email, password, firstName, lastName);
       setSuccess(true);
       setTimeout(() => {
         router.push(

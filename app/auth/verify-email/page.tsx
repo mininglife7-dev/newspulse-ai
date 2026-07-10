@@ -28,7 +28,7 @@ export default function VerifyEmailPage() {
       const response = await fetch("/api/auth/resend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: email.trim() }),
       });
 
       if (response.status === 429) {

@@ -42,19 +42,22 @@ export default function ResetPasswordPage() {
     setError(null);
     setLoading(true);
 
-    if (!formData.password || !formData.confirmPassword) {
+    const password = formData.password.trim();
+    const confirmPassword = formData.confirmPassword.trim();
+
+    if (!password || !confirmPassword) {
       setError("Please fill in all fields");
       setLoading(false);
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
-    if (formData.password.length < 8) {
+    if (password.length < 8) {
       setError("Password must be at least 8 characters");
       setLoading(false);
       return;
@@ -64,7 +67,7 @@ export default function ResetPasswordPage() {
       const response = await fetch("/api/auth/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: formData.password }),
+        body: JSON.stringify({ password }),
       });
 
       if (!response.ok) {

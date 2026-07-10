@@ -32,6 +32,10 @@ export default function DashboardPage() {
           headers: { 'Content-Type': 'application/json' },
         });
 
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status} ${res.statusText}`);
+        }
+
         const json = (await res.json()) as DashboardState | DashboardError;
 
         if ('ok' in json && !json.ok) {
