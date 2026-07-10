@@ -661,8 +661,9 @@ function calculateLaunchReadiness(
 
     if (blockingBLockers.length === 0) {
       // No blocking-stage blockers remain; can proceed with demo
+      // Percentage = 75% (ready to launch, conditions required)
       return {
-        percentage: Math.round(avgCategoryScore),
+        percentage: 75,
         state: 'conditional_go' as GoNoGoState,
         reasoning:
           'Production deployed. No blocking-stage blockers remain. Ready for demo launch.',
