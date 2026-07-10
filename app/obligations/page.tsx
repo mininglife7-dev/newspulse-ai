@@ -56,6 +56,8 @@ export default function ObligationsPage() {
   const [filterPriority, setFilterPriority] = useState<string>('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [importingTemplates, setImportingTemplates] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   useEffect(() => {
     loadObligations();
@@ -124,6 +126,54 @@ export default function ObligationsPage() {
       alert(err?.message || 'Failed to import templates');
     } finally {
       setImportingTemplates(null);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredObligations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredObligations.map((o) => o.id)));
+    }
+  };
+
+  const toggleSelect = (obligationId: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(obligationId)) {
+      newSelected.delete(obligationId);
+    } else {
+      newSelected.add(obligationId);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedIds.size === 0) return;
+    setBulkUpdating(true);
+    try {
+      const promises = Array.from(selectedIds).map((id) =>
+        fetch(`/api/obligations/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        })
+      );
+
+      const results = await Promise.all(promises);
+      if (results.every((r) => r.ok)) {
+        setObligations((prev) =>
+          prev.map((o) =>
+            selectedIds.has(o.id) ? { ...o, status: newStatus as any } : o
+          )
+        );
+        setSelectedIds(new Set());
+      } else {
+        throw new Error('Some updates failed');
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update obligations');
+    } finally {
+      setBulkUpdating(false);
     }
   };
 
@@ -214,6 +264,23 @@ export default function ObligationsPage() {
         <div className="flex gap-2">
           <Filter className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-3">
+            {/* Select All */}
+            {filteredObligations.length > 0 && (
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-700">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size === filteredObligations.length && filteredObligations.length > 0}
+                  onChange={toggleSelectAll}
+                  className="h-4 w-4 rounded cursor-pointer"
+                  aria-label="Select all obligations"
+                />
+                <label className="text-xs text-slate-400 cursor-pointer">
+                  {selectedIds.size === filteredObligations.length && filteredObligations.length > 0
+                    ? `Deselect all (${filteredObligations.length})`
+                    : `Select all (${filteredObligations.length})`}
+                </label>
+              </div>
+            )}
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
@@ -261,6 +328,40 @@ export default function ObligationsPage() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="rounded-lg border border-cyan-800/60 bg-cyan-950/30 p-4 sticky top-0 z-10">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-cyan-300">
+              {selectedIds.size} obligation{selectedIds.size !== 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleBulkStatusChange('in_progress')}
+                disabled={bulkUpdating}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-cyan-900/50 text-cyan-300 border border-cyan-800/60 hover:bg-cyan-900/70 disabled:opacity-50"
+              >
+                {bulkUpdating ? 'Updating...' : 'Mark In Progress'}
+              </button>
+              <button
+                onClick={() => handleBulkStatusChange('completed')}
+                disabled={bulkUpdating}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-green-900/50 text-green-300 border border-green-800/60 hover:bg-green-900/70 disabled:opacity-50"
+              >
+                {bulkUpdating ? 'Updating...' : 'Mark Complete'}
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                disabled={bulkUpdating}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-slate-800/50 text-slate-300 border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Obligations List */}
       {filteredObligations.length === 0 ? (
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-8 text-center text-slate-400">
@@ -276,6 +377,15 @@ export default function ObligationsPage() {
                 className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 hover:border-slate-700 transition"
               >
                 <div className="flex items-start gap-4">
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(obligation.id)}
+                    onChange={() => toggleSelect(obligation.id)}
+                    className="mt-1 h-4 w-4 rounded cursor-pointer"
+                    aria-label={`Select ${obligation.title}`}
+                  />
+
                   {/* Priority Badge & Status */}
                   <div className="flex gap-2 flex-shrink-0 pt-1">
                     <div
