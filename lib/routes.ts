@@ -9,11 +9,11 @@ export type RouteKind = 'public' | 'auth' | 'protected';
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/workspace',
-  '/assessment',
+  '/assessments',
   '/inventory',
   '/api/workspace',
   '/api/ai-systems',
-  '/api/risk-assessments',
+  '/api/assessments',
 ];
 
 /** Auth screens: send already-authenticated users to the dashboard. */
