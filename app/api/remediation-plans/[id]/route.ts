@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { createNotificationsForTeam } from '@/lib/notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -111,7 +112,7 @@ export async function PATCH(
   // Verify plan belongs to workspace
   const { data: existing, error: checkError } = await supabase
     .from('remediation_plans')
-    .select('id')
+    .select('id, title, status')
     .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle();
@@ -143,6 +144,28 @@ export async function PATCH(
       { ok: false, error: 'Failed to update remediation plan' },
       { status: 500 }
     );
+  }
+
+  // Create notifications for status changes
+  const plan = data?.[0];
+  if (plan && body.status && body.status !== (existing as any).status) {
+    const planTitle = plan.title || 'Remediation Plan';
+
+    if (body.status === 'completed') {
+      await createNotificationsForTeam(
+        supabase,
+        ctx.workspaceId,
+        null,
+        'plan_completed',
+        planTitle,
+        {
+          message: 'Remediation plan has been completed',
+          entityType: 'remediation_plan',
+          entityId: plan.id,
+          actionUrl: '/compliance',
+        }
+      );
+    }
   }
 
   return NextResponse.json({

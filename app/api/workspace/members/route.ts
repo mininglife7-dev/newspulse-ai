@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { createNotification } from '@/lib/notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -177,6 +178,33 @@ export async function POST(req: Request) {
         { ok: false, error: 'Failed to invite member' },
         { status: 500 }
       );
+    }
+
+    // Notify other admins/owners that new member was invited
+    const { data: admins } = await supabase
+      .from('workspace_members')
+      .select('user_id')
+      .eq('workspace_id', ctx.workspaceId)
+      .eq('status', 'active')
+      .in('role', ['admin', 'owner']);
+
+    if (admins && admins.length > 0) {
+      for (const admin of admins) {
+        if (admin.user_id !== ctx.user.id) {
+          await createNotification(
+            supabase,
+            ctx.workspaceId,
+            admin.user_id,
+            'member_added',
+            body.email,
+            {
+              message: `New team member invited with ${body.role} role`,
+              entityType: 'workspace_member',
+              actionUrl: '/team',
+            }
+          );
+        }
+      }
     }
 
     return NextResponse.json(
