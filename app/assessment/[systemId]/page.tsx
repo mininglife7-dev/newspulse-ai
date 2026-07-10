@@ -35,6 +35,17 @@ interface Assessment {
   status: string;
 }
 
+interface Obligation {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  status: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  due_date: string | null;
+  created_at: string;
+}
+
 export default function AssessmentPage() {
   const params = useParams();
   const router = useRouter();
@@ -44,6 +55,7 @@ export default function AssessmentPage() {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [obligations, setObligations] = useState<Obligation[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +94,19 @@ export default function AssessmentPage() {
           setAnswers(aData.assessment.assessment_data?.answers || {});
           if (aData.assessment.assessment_data?.classification) {
             setResult(aData.assessment.assessment_data.classification);
+          }
+
+          // Load auto-generated obligations for this assessment
+          try {
+            const obRes = await fetch(`/api/obligations?assessmentId=${aData.assessment.id}`);
+            if (obRes.ok) {
+              const obData = await obRes.json();
+              if (obData.ok && obData.obligations) {
+                setObligations(obData.obligations);
+              }
+            }
+          } catch {
+            // Silently skip obligation loading errors
           }
         }
       } catch (err: any) {
@@ -298,6 +323,66 @@ export default function AssessmentPage() {
                 </ul>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Auto-Generated Obligations */}
+      {obligations.length > 0 && (
+        <div className="rounded-lg border border-blue-800/60 bg-blue-950/30 p-6">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Generated Compliance Obligations</h2>
+              <p className="text-sm text-slate-400 mt-1">
+                Based on this assessment, the following compliance obligations were automatically identified
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {obligations.map((ob) => {
+                const priorityColors: Record<string, { bg: string; text: string; border: string }> = {
+                  critical: { bg: 'bg-red-900/40', text: 'text-red-300', border: 'border-red-800/60' },
+                  high: { bg: 'bg-orange-900/40', text: 'text-orange-300', border: 'border-orange-800/60' },
+                  medium: { bg: 'bg-amber-900/40', text: 'text-amber-300', border: 'border-amber-800/60' },
+                  low: { bg: 'bg-green-900/40', text: 'text-green-300', border: 'border-green-800/60' },
+                };
+                const colors = priorityColors[ob.priority] || priorityColors.medium;
+
+                const statusColors: Record<string, string> = {
+                  identified: 'bg-slate-700/50 text-slate-300',
+                  in_progress: 'bg-blue-700/50 text-blue-300',
+                  completed: 'bg-green-700/50 text-green-300',
+                  not_applicable: 'bg-slate-600/50 text-slate-400',
+                };
+
+                return (
+                  <div
+                    key={ob.id}
+                    className={`rounded-lg border p-4 ${colors.bg} ${colors.border}`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`${colors.text} text-xs font-semibold uppercase`}>
+                            {ob.priority} Priority
+                          </span>
+                          <span className={`text-xs font-medium px-2 py-1 rounded ${statusColors[ob.status] || statusColors.identified}`}>
+                            {ob.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <h3 className={`${colors.text} font-medium mb-1`}>{ob.title}</h3>
+                        <p className="text-sm text-slate-300">{ob.description}</p>
+                        {ob.due_date && (
+                          <p className="text-xs text-slate-400 mt-2">
+                            Due: {new Date(ob.due_date).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
