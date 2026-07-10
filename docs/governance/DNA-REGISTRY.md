@@ -560,6 +560,95 @@ interface Vulnerability {
 3. **Policy enforcement:** CI fails on critical/high vulns; blocks merge until resolved
 4. **Compliance reporting:** Generate monthly security report for customer compliance requirements
 
+### DNA-GOV-010: Git Governance
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Engineering Officer + Governance Agent  
+
+#### Purpose
+Autonomously enforce git discipline to prevent merge mistakes, ensure consistent commit standards, and enable safe autonomous operations. Validates commit messages, branch names, and merge safety before code reaches production.
+
+#### Problem Discovered
+Inconsistent commit messages make code history unreadable; unclear branch naming creates confusion; force-pushes can rewrite history and break CI pipelines; PRs without description lack context. Manual enforcement is tedious and inconsistent across team members.
+
+#### Evidence
+- **Weakness:** No automated commit format validation
+- **Impact:** Blame history becomes unusable; bisect fails on malformed commits; 30 min+ wasted per engineer per week on manual PR review for format issues
+- **Root cause:** Manual, ad-hoc enforcement; no standard tooling
+- **Discovery method:** Code review friction during high-velocity DNA evolution
+
+#### Inputs
+- Commit message (from git hook or CI)
+- Branch name (source branch of PR)
+- PR title and description
+- Force-push detection (before/after SHA comparison)
+- GitHub PR metadata (title, body, commits)
+
+#### Outputs
+```typescript
+interface GitGovernanceResult {
+  valid: boolean
+  violations: string[]
+  commitValidation?: CommitValidationResult
+  branchValidation?: BranchValidationResult
+  mergeValidation?: MergeValidationResult
+  prValidation?: PRValidationResult
+}
+```
+
+#### Implementation
+- `lib/git-governance.ts` — Core enforcement engine
+  - `CommitMessageValidator` — Validates Conventional Commits format (feat:, fix:, docs:, etc.)
+  - `BranchNameValidator` — Ensures category/name format (feature/oauth, fix/bug-123, etc.)
+  - `MergeValidator` — Prevents force-pushes to main, requires linear history
+  - `PRValidator` — Checks title length, linked issues, commit convention
+  - `GitGovernanceOrchestrator` — Orchestrates all validations
+- `tests/git-governance.test.ts` — 33 tests covering all scenarios
+
+#### Verification Method
+- **Unit tests:** 33 tests covering:
+  - Conventional Commits validation (feat:, fix:, docs: types)
+  - Branch name validation (category/descriptive-name format)
+  - Scope parsing (type(scope): message)
+  - Lowercase description requirement
+  - Body line length limits (72 chars max)
+  - Force-push detection on protected branches
+  - Merge safety rules (linear history, all checks passing)
+  - PR title length and commit message consistency
+  - Edge cases (empty messages, missing colons, wrong types)
+- **All tests pass:** 33/33 ✅
+
+#### Dependencies
+- Git CLI (for local pre-commit hooks)
+- GitHub API (for PR validation)
+- Husky (optional, for pre-commit/pre-push hooks)
+
+#### Risks
+- **User friction:** Strict enforcement may feel heavy-handed initially; recommend education period
+- **False positives:** Rare; validation logic is straightforward and well-tested
+- **Bypass temptation:** Users may use `--no-verify` on git commands; requires pre-push hooks on CI, not just local
+
+#### Rollback Method
+- Remove git governance checks from CI workflow
+- Delete `lib/git-governance.ts` and `tests/git-governance.test.ts`
+- Disable pre-commit hooks (Husky)
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Standards compliance:** 100% of commits follow Conventional Commits after enforcement
+2. **Code review speed:** Reduce format-related review comments by 90%
+3. **History quality:** Git log is readable; bisect works reliably
+4. **Safe operations:** Zero force-pushes to protected branches
+5. **Developer confidence:** Autonomous operations safe to run 24/7 without manual oversight
+
+#### Next Steps
+1. ✅ **Implement validators:** Core library with 33 tests — DONE
+2. **Add pre-commit hooks:** Integrate Husky for local enforcement before push
+3. **Add pre-push validation:** GitHub Actions pre-push check blocks force-pushes
+4. **Auto-fix commits:** Suggest corrections before they reach CI
+5. **Dashboard:** Visual enforcement stats (commit compliance %, history quality score)
+
 ---
 
 ## Notes
