@@ -72,10 +72,11 @@ async function resolveContext(
   };
 }
 
-/** GET /api/risk-assessments?ai_system_id=X — get or list assessments */
+/** GET /api/risk-assessments?ai_system_id=X or ?assessment_id=Y — get or list assessments */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const aiSystemId = searchParams.get('ai_system_id');
+  const assessmentId = searchParams.get('assessment_id');
 
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase, aiSystemId ?? undefined);
@@ -86,7 +87,32 @@ export async function GET(req: Request) {
     );
   }
 
-  if (aiSystemId) {
+  if (assessmentId) {
+    // Get a specific assessment by ID (for remediation page, etc.)
+    const { data, error } = await supabase
+      .from('risk_assessments')
+      .select('id, ai_system_id, risk_level, risk_score, status, assessment_data, created_at, updated_at')
+      .eq('id', assessmentId)
+      .eq('workspace_id', ctx.workspaceId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[api/risk-assessments] get by id failed:', error);
+      return NextResponse.json(
+        { ok: false, error: 'Could not load assessment' },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { ok: false, error: 'Assessment not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, assessment: data });
+  } else if (aiSystemId) {
     // Get assessment for a specific AI system
     const { data, error } = await supabase
       .from('risk_assessments')

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -36,6 +36,7 @@ const RISK_COLORS: Record<RiskLevel, { bg: string; text: string; border: string 
 };
 
 export default function AssessmentPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const aiSystemId = searchParams.get('ai_system_id');
 
@@ -128,6 +129,11 @@ export default function AssessmentPage() {
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error);
       setAssessment(data.assessment);
+
+      // Navigate to remediation plan if finalized
+      if (isComplete) {
+        router.push(`/remediation?assessment_id=${assessment.id}`);
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to save');
     } finally {
