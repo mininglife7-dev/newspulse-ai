@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 /**
- * NewsPulse AI — end-to-end smoke test.
+ * EURO AI — end-to-end smoke test.
  *
  * Boots the production build (`next start`) with NO external credentials and
  * probes every route. Two kinds of invariants are checked:
  *
- *   1. Liveness — every page renders, every API route responds, nav links
- *      and interactive endpoints exist. No dead routes.
+ *   1. Liveness — every public page renders, every API route responds, nav links exist.
  *   2. Truthfulness — when a dependency is unavailable, the app must say so
  *      (503 / 5xx / error payload), never fabricate a healthy answer.
  *      The `ok` flag in every JSON response must agree with the HTTP status.
@@ -26,8 +25,6 @@ const START_TIMEOUT_MS = 60_000;
 // the app must fail *honestly* without them.
 const serverEnv = { ...process.env };
 for (const key of [
-  'FIRECRAWL_API_KEY',
-  'OPENAI_API_KEY',
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -125,37 +122,28 @@ async function run() {
   await waitForServer();
   console.log('Server is up. Running checks:\n');
 
-  // ----- Pages -----
-  await check('page', 'GET / renders search dashboard', async () => {
+  // ----- Public Pages -----
+  await check('page', 'GET / renders landing page', async () => {
     const res = await get('/');
     assert(res.status === 200, `expected 200, got ${res.status}`);
     const html = await res.text();
-    assert(html.includes('NewsPulse'), 'brand missing from page');
-    assert(html.includes('href="/history"'), 'nav link to /history missing');
-    assert(html.includes('Search'), 'search UI missing');
+    assert(html.includes('EURO AI'), 'EURO AI brand missing from page');
+    assert(html.includes('Sign In'), 'sign in nav link missing');
+    assert(html.includes('Start Free'), 'signup CTA missing');
   });
 
-  await check('page', 'GET /history renders history dashboard', async () => {
-    const res = await get('/history');
+  await check('page', 'GET /auth/signin renders signin page', async () => {
+    const res = await get('/auth/signin');
     assert(res.status === 200, `expected 200, got ${res.status}`);
     const html = await res.text();
-    assert(html.includes('href="/"'), 'nav link home missing');
+    assert(html.includes('Sign In'), 'signin heading missing');
   });
 
-  await check('page', 'GET /history/<id> fails honestly without DB', async () => {
-    // No Supabase credentials → the page must surface the error boundary,
-    // never fabricated saved-search content or a fake "not found".
-    // (Next streams server-component errors with HTTP 200 + an error digest.)
-    const res = await get('/history/00000000-0000-4000-8000-000000000000');
+  await check('page', 'GET /auth/signup renders signup page', async () => {
+    const res = await get('/auth/signup');
+    assert(res.status === 200, `expected 200, got ${res.status}`);
     const html = await res.text();
-    assert(
-      !html.includes('Saved search'),
-      'page rendered saved-search content it could not have loaded'
-    );
-    assert(
-      res.status >= 500 || html.includes('digest'),
-      `expected 5xx or streamed error digest, got ${res.status} with neither`
-    );
+    assert(html.includes('Create your account'), 'signup heading missing');
   });
 
   await check('page', 'GET /nonexistent returns 404 page', async () => {
@@ -165,8 +153,23 @@ async function run() {
     assert(html.includes('404'), '404 page content missing');
   });
 
+  // ----- Protected Routes -----
+  await check('page', 'GET /dashboard renders (protected route)', async () => {
+    const res = await get('/dashboard');
+    assert(res.status === 200, `expected 200, got ${res.status}`);
+    const html = await res.text();
+    assert(html.includes('Welcome'), 'dashboard content missing');
+  });
+
+  await check('page', 'GET /workspace/setup renders (protected route)', async () => {
+    const res = await get('/workspace/setup');
+    assert(res.status === 200, `expected 200, got ${res.status}`);
+    const html = await res.text();
+    assert(html.includes('Company'), 'workspace setup content missing');
+  });
+
   // ----- Health -----
-  await check('api', '/api/health reports degraded truthfully', async () => {
+  await check('api', '/api/health reports degraded without Supabase', async () => {
     const res = await get('/api/health');
     const json = await res.json();
     assert(
@@ -177,98 +180,22 @@ async function run() {
       ['healthy', 'degraded'].includes(json.status),
       `unexpected status "${json.status}"`
     );
-    const keys = [
-      'firecrawl',
-      'openai',
-      'supabase_url',
-      'supabase_anon',
-      'supabase_service',
-    ];
-    for (const k of keys) {
-      assert(typeof json.checks?.[k] === 'boolean', `checks.${k} missing`);
-    }
+    assert(
+      typeof json.checks?.supabase_url === 'boolean',
+      'checks.supabase_url missing'
+    );
+    assert(
+      typeof json.checks?.supabase_anon === 'boolean',
+      'checks.supabase_anon missing'
+    );
+    assert(
+      typeof json.checks?.supabase_service === 'boolean',
+      'checks.supabase_service missing'
+    );
     // With credentials stripped it must NOT claim to be healthy.
     assert(res.status === 503, `expected 503 without creds, got ${res.status}`);
     assert(json.status === 'degraded', 'must report degraded without creds');
     return `status=${json.status}`;
-  });
-
-  // ----- Search API -----
-  await check('api', 'GET /api/search returns 405', async () => {
-    const res = await get('/api/search');
-    assert(res.status === 405, `expected 405, got ${res.status}`);
-    const json = await res.json();
-    assert(json.ok === false, 'ok must be false on 405');
-  });
-
-  await check('api', 'POST /api/search rejects invalid JSON with 400', async () => {
-    const res = await get('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: 'not-json',
-    });
-    assert(res.status === 400, `expected 400, got ${res.status}`);
-  });
-
-  await check('api', 'POST /api/search rejects missing keyword with 400', async () => {
-    const res = await get('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-    assert(res.status === 400, `expected 400, got ${res.status}`);
-    const json = await res.json();
-    assert(json.ok === false && json.error, 'error payload missing');
-  });
-
-  await check('api', 'POST /api/search fails honestly when unconfigured', async () => {
-    const res = await get('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword: 'smoke test' }),
-    });
-    assert(res.status === 500, `expected 500 without API key, got ${res.status}`);
-    const json = await res.json();
-    assert(json.ok === false && json.error, 'must return an error, not results');
-  });
-
-  await check('api', '/api/search responses carry rate-limit headers', async () => {
-    const res = await get('/api/search');
-    assert(
-      res.headers.get('x-ratelimit-limit') !== null,
-      'X-RateLimit-Limit header missing'
-    );
-    assert(
-      res.headers.get('x-ratelimit-remaining') !== null,
-      'X-RateLimit-Remaining header missing'
-    );
-  });
-
-  // ----- History API -----
-  await check('api', 'GET /api/history fails honestly without DB', async () => {
-    const res = await get('/api/history');
-    const json = await res.json();
-    assert(
-      json.ok === (res.status === 200),
-      `ok flag (${json.ok}) contradicts HTTP status (${res.status})`
-    );
-    // Without credentials this must be an error — never a fake empty list.
-    assert(res.status === 500, `expected 500 without creds, got ${res.status}`);
-    assert(json.error, 'error message missing');
-  });
-
-  await check('api', 'GET /api/history/<id> fails honestly without DB', async () => {
-    const res = await get('/api/history/00000000-0000-4000-8000-000000000000');
-    const json = await res.json();
-    assert(res.status === 500, `expected 500 without creds, got ${res.status}`);
-    assert(json.ok === false && json.error, 'error payload missing');
-  });
-
-  await check('api', 'DELETE /api/history fails honestly without DB', async () => {
-    const res = await get('/api/history', { method: 'DELETE' });
-    const json = await res.json();
-    assert(res.status === 500, `expected 500 without creds, got ${res.status}`);
-    assert(json.ok === false && json.error, 'error payload missing');
   });
 
   // ----- SEO / meta routes -----

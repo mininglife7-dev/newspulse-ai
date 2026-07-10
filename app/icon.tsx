@@ -16,7 +16,7 @@ export default function Icon() {
           alignItems: 'center',
           justifyContent: 'center',
           background:
-            'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #4f46e5 100%)',
+            'linear-gradient(135deg, #3b82f6 0%, #0891b2 100%)',
           borderRadius: 8,
           color: 'white',
           fontSize: 22,
@@ -24,7 +24,7 @@ export default function Icon() {
           fontFamily: 'system-ui, sans-serif',
         }}
       >
-        ⚡
+        E
       </div>
     ),
     { ...size }

@@ -10,8 +10,6 @@
  */
 
 const REQUIRED = [
-  { name: 'FIRECRAWL_API_KEY',           prefix: 'fc-' },
-  { name: 'OPENAI_API_KEY',              prefix: 'sk-' },
   { name: 'NEXT_PUBLIC_SUPABASE_URL',    prefix: 'https://' },
   { name: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', prefix: 'sb_publishable_' },
   { name: 'SUPABASE_SERVICE_ROLE_KEY',   prefix: 'sb_secret_' },
@@ -33,7 +31,7 @@ function mask(value) {
 
 let failures = 0;
 
-console.log('\n🔎 NewsPulse AI — environment check\n');
+console.log('\n🔎 EURO AI — environment check\n');
 
 // Required vars
 for (const { name, prefix } of REQUIRED) {

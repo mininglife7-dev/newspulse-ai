@@ -12,7 +12,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[NewsPulse error boundary]', error);
+    console.error('[EURO AI error boundary]', error);
   }, [error]);
 
   return (

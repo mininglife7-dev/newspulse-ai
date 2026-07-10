@@ -1,41 +1,11 @@
 /**
- * Shared types for NewsPulse AI.
+ * Shared types for EURO AI.
  * Re-exports the canonical types defined alongside their data layer.
  */
 
-export type { NewsArticle, SearchHistoryRow } from '@/lib/supabase';
-export type {
-  FirecrawlSearchResult,
-  FirecrawlSearchResponse,
-} from '@/lib/firecrawl';
+export type { AuthUser } from '@/lib/auth';
 
 // ----- API contract types -----
-
-export interface SearchRequestBody {
-  keyword: string;
-  limit?: number;
-}
-
-export interface SearchResponseBody {
-  ok: boolean;
-  keyword?: string;
-  count?: number;
-  results?: import('@/lib/supabase').NewsArticle[];
-  error?: string;
-}
-
-export interface HistoryListResponse {
-  ok: boolean;
-  count?: number;
-  history?: import('@/lib/supabase').SearchHistoryRow[];
-  error?: string;
-}
-
-export interface HistoryEntryResponse {
-  ok: boolean;
-  entry?: import('@/lib/supabase').SearchHistoryRow;
-  error?: string;
-}
 
 export interface HealthResponse {
   ok: boolean;
@@ -43,8 +13,6 @@ export interface HealthResponse {
   timestamp: string;
   uptime_s: number | null;
   checks: {
-    firecrawl: boolean;
-    openai: boolean;
     supabase_url: boolean;
     supabase_anon: boolean;
     supabase_service: boolean;
