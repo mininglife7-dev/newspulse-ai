@@ -1,0 +1,132 @@
+name: 'DNA-GOV-009: Performance Baseline Tracking'
+
+on:
+  schedule:
+    # Run every day at 10:00 UTC (after typical overnight CI/deployment runs)
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions tab for on-demand verification
+
+jobs:
+  performance-baseline:
+    name: Check Performance Metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          NEXT_PUBLIC_ENV: production
+
+      - name: Run performance baseline check
+        id: baseline
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "${{ secrets.VERCEL_DEPLOYMENT_URL || 'https://newspulse-ai.vercel.app' }}/api/performance-baseline" \
+            -H "User-Agent: GitHub-Actions/dna-gov-009" \
+            -H "X-Build-ID: ${{ github.run_id }}" \
+            -H "X-Git-Commit: ${{ github.sha }}")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "response_body=$BODY" >> $GITHUB_OUTPUT
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          echo "Performance Baseline Check (Build ${{ github.run_id }})"
+          echo "========================================================"
+          echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+
+      - name: Analyze performance metrics
+        if: always()
+        run: |
+          BODY="${{ steps.baseline.outputs.response_body }}"
+          HTTP_CODE="${{ steps.baseline.outputs.http_code }}"
+
+          if [ "$HTTP_CODE" = "503" ]; then
+            echo "⚠️  Performance baseline endpoint unavailable (production not deployed yet)"
+            echo "This is expected during initial setup. Enable once production is live."
+            exit 0
+          fi
+
+          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "206" ]; then
+            echo "❌ Performance baseline check failed with HTTP $HTTP_CODE"
+            echo "$BODY"
+            exit 1
+          fi
+
+          # Extract regression count
+          REGRESSIONS=$(echo "$BODY" | jq '.regressionsFound // 0' 2>/dev/null || echo "0")
+          CRITICAL=$(echo "$BODY" | jq '[.regressions[]? | select(.severity=="critical")] | length' 2>/dev/null || echo "0")
+          WARNINGS=$(echo "$BODY" | jq '[.regressions[]? | select(.severity=="warning")] | length' 2>/dev/null || echo "0")
+          IMPROVEMENTS=$(echo "$BODY" | jq '.improvements | length' 2>/dev/null || echo "0")
+
+          echo ""
+          echo "Performance Report Summary"
+          echo "=========================="
+          echo "Regressions: $REGRESSIONS (${CRITICAL} critical, ${WARNINGS} warnings)"
+          echo "Improvements: $IMPROVEMENTS"
+
+          # Get human-readable summary
+          SUMMARY=$(echo "$BODY" | jq -r '.summary // "Unknown"' 2>/dev/null)
+          echo ""
+          echo "$SUMMARY"
+
+          # Fail if critical regressions detected
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo ""
+            echo "❌ CRITICAL performance regressions detected!"
+            echo "$BODY" | jq '.regressions[] | select(.severity=="critical")' 2>/dev/null
+            exit 1
+          fi
+
+          # Warn if high-severity regressions detected
+          if [ "$WARNINGS" -gt 0 ]; then
+            echo ""
+            echo "⚠️  Warning-level performance regressions detected"
+            echo "$BODY" | jq '.regressions[] | select(.severity=="warning")' 2>/dev/null
+            # Don't fail on warnings, just alert
+          fi
+
+          if [ "$IMPROVEMENTS" -gt 0 ]; then
+            echo ""
+            echo "✅ Performance improvements detected:"
+            echo "$BODY" | jq '.improvements[] | "\(.metric): \(.changePercent)% faster"' 2>/dev/null
+          fi
+
+      - name: Report to Governor monitoring
+        if: always()
+        run: |
+          # This is where integration with DNA-005 (Alert Hub) would happen
+          # For now, just log the results for Governor visibility
+          BODY="${{ steps.baseline.outputs.response_body }}"
+
+          echo "Governor DNA-009 Performance Report"
+          echo "===================================="
+          echo "Run: ${{ github.run_id }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo ""
+          echo "Full Report:"
+          echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+
+      - name: Archive performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-baseline-report-${{ github.run_id }}
+          path: .
+          retention-days: 30
+        continue-on-error: true

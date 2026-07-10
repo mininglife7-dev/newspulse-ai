@@ -5,6 +5,7 @@ import {
   formatPerformanceAlert,
   recordBaseline,
 } from '@/lib/performance-baseline'
+import { recordPerformanceAlerts } from '@/lib/alert-hub'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -72,6 +73,15 @@ export async function GET(req: Request) {
     )
 
     const formatted = formatPerformanceAlert(report)
+
+    // Record alerts in Alert Hub (DNA-005) for Founder visibility
+    if (report.regressionsFound > 0) {
+      recordPerformanceAlerts({
+        regressionsFound: report.regressionsFound,
+        regressions: report.regressions,
+        improvements: report.improvements,
+      })
+    }
 
     // Log for Founder visibility
     if (report.regressionsFound > 0) {
