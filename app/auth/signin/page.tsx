@@ -81,9 +81,9 @@ export default function SignInPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-lg border border-red-800 bg-red-950/30 p-4 flex gap-3">
+            <div className="rounded-lg border border-red-800 bg-red-950/30 p-4 flex gap-3" role="alert" aria-live="polite">
               <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-300">{error}</p>
+              <p className="text-sm text-red-300" id="signin-error">{error}</p>
             </div>
           )}
 
@@ -103,6 +103,8 @@ export default function SignInPage() {
               className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               placeholder="you@company.com"
               disabled={loading}
+              required
+              aria-describedby={error ? "signin-error" : undefined}
             />
           </div>
 
@@ -122,6 +124,9 @@ export default function SignInPage() {
               className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               placeholder="••••••••"
               disabled={loading}
+              required
+              minLength={8}
+              aria-describedby={error ? "signin-error" : undefined}
             />
           </div>
 
