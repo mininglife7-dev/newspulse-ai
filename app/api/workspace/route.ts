@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
-import { WorkspaceCreateSchema } from '@/lib/validation';
+import { WorkspaceCreateSchema, formatZodValidationError } from '@/lib/validation';
 import { cacheHeaders } from '@/lib/cache-control';
-import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,13 +53,8 @@ export async function POST(req: Request) {
   try {
     validated = WorkspaceCreateSchema.parse(body);
   } catch (error) {
-    let message = 'Validation failed';
-    if (error instanceof z.ZodError && error.issues.length > 0) {
-      const issue = error.issues[0];
-      message = issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message;
-    }
     return NextResponse.json(
-      { ok: false, error: message },
+      { ok: false, error: formatZodValidationError(error) },
       { status: 400, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }

@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { SYSTEM_TYPES, SYSTEM_STATUSES, type SystemType, type SystemStatus } from './ai-systems';
 
+export function formatZodValidationError(error: unknown): string {
+  if (error instanceof z.ZodError && error.issues.length > 0) {
+    const issue = error.issues[0];
+    return issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message;
+  }
+  return 'Validation failed';
+}
+
 // Workspace validation
 export const WorkspaceCreateSchema = z.object({
   companyName: z.string()
