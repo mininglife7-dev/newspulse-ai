@@ -12,6 +12,7 @@ import {
   Clock,
   AlertTriangle,
   X,
+  Download,
 } from 'lucide-react';
 
 interface Obligation {
@@ -54,6 +55,7 @@ export default function ObligationsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<string>('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [importingTemplates, setImportingTemplates] = useState<string | null>(null);
 
   useEffect(() => {
     loadObligations();
@@ -99,6 +101,29 @@ export default function ObligationsPage() {
       alert(err?.message || 'Failed to update obligation');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleImportTemplates = async (riskLevel: string) => {
+    setImportingTemplates(riskLevel);
+    try {
+      const res = await fetch('/api/obligations/import-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ riskLevel }),
+      });
+      if (!res.ok) throw new Error('Failed to import templates');
+      const data = await res.json();
+      if (data.ok) {
+        alert(`${data.created} obligations imported${data.skipped > 0 ? ` (${data.skipped} already existed)` : ''}`);
+        loadObligations();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to import templates');
+    } finally {
+      setImportingTemplates(null);
     }
   };
 
@@ -152,6 +177,36 @@ export default function ObligationsPage() {
         </Link>
         <h1 className="text-3xl font-bold text-white mt-2">Compliance Obligations</h1>
         <p className="text-slate-400">Manage EU AI Act obligations across your organization</p>
+      </div>
+
+      {/* Obligation Templates */}
+      <div className="rounded-lg border border-purple-800/60 bg-purple-950/20 p-4">
+        <div className="flex items-start gap-3 mb-4">
+          <Download className="h-5 w-5 text-purple-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-white mb-2">Quick Import: Obligation Templates</h3>
+            <p className="text-sm text-slate-400 mb-3">
+              Import pre-defined EU AI Act obligations based on your system risk levels
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { level: 'unacceptable', label: 'Unacceptable Risk', color: 'bg-red-900/40 text-red-300 border-red-800/60 hover:bg-red-900/60' },
+                { level: 'high', label: 'High Risk', color: 'bg-orange-900/40 text-orange-300 border-orange-800/60 hover:bg-orange-900/60' },
+                { level: 'medium', label: 'Medium Risk', color: 'bg-amber-900/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/60' },
+                { level: 'low', label: 'Low Risk', color: 'bg-blue-900/40 text-blue-300 border-blue-800/60 hover:bg-blue-900/60' },
+              ].map((template) => (
+                <button
+                  key={template.level}
+                  onClick={() => handleImportTemplates(template.level)}
+                  disabled={importingTemplates === template.level}
+                  className={`px-3 py-1.5 text-xs font-medium rounded border transition ${template.color} disabled:opacity-50`}
+                >
+                  {importingTemplates === template.level ? 'Importing...' : `Import ${template.label}`}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
