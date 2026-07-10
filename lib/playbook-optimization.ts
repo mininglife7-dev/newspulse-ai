@@ -316,13 +316,18 @@ export function analyzePlaybookEffectiveness(playbookId: string, recentIncidents
   const effectivenessScore = Math.round((successRate * 0.6 + timeEfficiency * 0.4) / 10) * 10;
 
   // Suggest improvements based on failure patterns
-  const suggestedImprovements = [];
+  const suggestedImprovements: Array<{
+    improvement: string;
+    rationale: string;
+    expectedImpact: 'high' | 'medium' | 'low';
+    priority: number;
+  }> = [];
 
   if (successRate < 80 && commonFailures.length > 0) {
     suggestedImprovements.push({
       improvement: `Add troubleshooting step for: ${commonFailures[0]}`,
       rationale: `This issue appeared in ${failurePatterns[commonFailures[0]]} recent failures`,
-      expectedImpact: 'high',
+      expectedImpact: 'high' as const,
       priority: 1,
     });
   }
@@ -331,7 +336,7 @@ export function analyzePlaybookEffectiveness(playbookId: string, recentIncidents
     suggestedImprovements.push({
       improvement: 'Add automation to time-consuming manual steps',
       rationale: `Resolution time increased from ${playbook.averageResolutionTime}min to ${Math.round(avgResolutionTime)}min`,
-      expectedImpact: 'high',
+      expectedImpact: 'high' as const,
       priority: 2,
     });
   }
@@ -340,7 +345,7 @@ export function analyzePlaybookEffectiveness(playbookId: string, recentIncidents
     suggestedImprovements.push({
       improvement: 'Add decision tree for common failure modes',
       rationale: 'Help responders identify and address issues faster',
-      expectedImpact: 'medium',
+      expectedImpact: 'medium' as const,
       priority: 3,
     });
   }
@@ -398,7 +403,7 @@ export function applyPlaybookImprovement(
 
   // Apply the change
   if (type === 'add-step') {
-    const newStep = change as PlaybookStep;
+    const newStep = change as unknown as PlaybookStep;
     playbook.steps.push(newStep);
   } else if (type === 'remove-step' && stepId) {
     playbook.steps = playbook.steps.filter((s) => s.id !== stepId);
