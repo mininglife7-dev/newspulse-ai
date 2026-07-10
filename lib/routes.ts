@@ -9,6 +9,7 @@ export type RouteKind = 'public' | 'auth' | 'protected';
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/workspace',
+  '/assessment',
   '/assessments',
   '/inventory',
   '/api/workspace',
