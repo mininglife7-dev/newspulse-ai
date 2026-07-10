@@ -7,6 +7,35 @@ are never requested from the Founder.
 
 ---
 
+## DR-0013 — Implement onboarding step 3 (EU AI Act Risk Assessment)
+
+- **Decision:** Complete the 3-step onboarding by implementing risk assessment:
+  `POST/GET /api/risk-assessments` running as signed-in user, add 33 RLS policies to
+  schema.sql (risk_assessments, obligations, evidence, remediation_plans), implement
+  `/risk-assessments` page with interactive 15-question EU AI Act questionnaire
+  (5 categories: fundamental rights, safety, bias, transparency, accountability),
+  risk-level calculator (low/medium/high/unacceptable based on severity weighting),
+  dashboard step 3 unlock when inventory exists, assessment count display.
+- **Reason:** Highest-value next increment: completes the customer onboarding journey.
+  After company setup and AI inventory, the customer's next action is risk assessment—
+  it's the foundation for compliance obligations and remediation planning. Dashboard
+  step 3 existed only as "coming soon" placeholder.
+- **Alternatives considered:** Defer to next mission. Rejected: risk assessment is
+  the logical step-3 blocker; deferring leaves onboarding incomplete and blocks feature
+  dependencies (obligations, evidence, remediation all depend on assessment).
+- **Evidence:** 12/12 new risk-assessment tests, 177/177 total tests (no regressions),
+  TypeScript clean, ESLint clean, production build successful, full RLS coverage
+  tested locally.
+- **Confidence:** High (code paths fully verified; Supabase schema deployment remains
+  Founder's manual step, schema.sql is idempotent).
+- **Expected impact:** Three of three onboarding steps now real. First customer can
+  complete entire sign-up → company setup → inventory → risk assessment flow
+  (pending Supabase schema.sql deployment).
+- **Risk assessment:** Low — additive; API returns honest 409s before setup, 404s for
+  missing systems, proper RLS enforcement on all queries. Dashboard gracefully falls
+  back if no assessments exist.
+- **Timestamp:** 2026-07-10
+
 ## DR-0012 — Make onboarding step 2 (AI Systems Inventory) real
 
 - **Decision:** Implement the inventory end-to-end: `GET/POST /api/ai-systems`
