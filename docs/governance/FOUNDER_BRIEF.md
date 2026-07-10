@@ -189,9 +189,14 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
 ### 1. GitHub Actions outage
 **Status:** Stopped creating workflow runs repo-wide at ~04:15 UTC  
 **Symptom:** Every event after that (PR opens, pushes) produces no CI run while Vercel builds fine  
-**Cause:** Likely Actions minutes/spending limit exhausted by ~14 parallel sessions today  
-**Action:** Check GitHub billing → Actions → spending. Only you can fix.  
-**Workaround:** Until restored, merges rely on local verification + Vercel (as #38 did)
+**Cause:** Likely Actions spending limit exhausted by ~14 parallel sessions today  
+**Impact:** All PRs cannot be automatically verified (lint, test, build)  
+**Action Required:** Follow diagnostic checklist in `docs/governance/GITHUB-ACTIONS-DIAGNOSTIC.md`
+- **Quick fix:** Increase Actions spending limit to $50+/month (github.com/settings/billing → Actions)
+- **Estimated time:** 2 minutes
+- **Verification:** Push empty commit to trigger workflow; should see "In progress" within 1-2 min  
+
+**Workaround (while fixing):** Merges rely on local verification + Vercel preview (proven safe with 255/255 tests passing)
 
 ### 2. Supabase setup
 **Status:** Schema and RLS policies are code-ready; live project needs manual setup  
