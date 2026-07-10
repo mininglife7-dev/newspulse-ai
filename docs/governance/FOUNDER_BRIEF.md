@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10T13:30:00Z (Phase 1 follow-up complete: progress tracking → evidence upload → PDF export; 377 tests passing)
-**State:** Executing (Full Phase 1+ user journey: assess → plan → track progress → upload evidence → export report; Vercel deployment blocked by missing github-token secret)
+**Last updated:** 2026-07-10T18:45:00Z (All Phase 1+ features complete: assess → plan → track progress → upload evidence → export report → recommendations → bulk update → team assignment)
+**State:** Executing (Full Phase 1+ user journey complete; all 511 tests passing; Vercel deployment blocked by missing github-token secret; PR #83 draft pending review)
 
 ---
 
@@ -254,11 +254,39 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
   - Cache-control: no-cache (fresh PDF per request)
 - ✅ Tests: 46 evidence tests + 45 report tests (91 new, 377 total passing)
 
-**Next Phase 1 features (unblocked):**
-- Compliance recommendations engine: "For high-risk systems, implement X/Y/Z"
-- Assessment history timeline view (Gantt chart of assessment progress)
-- Obligation ownership/assignment (delegate to team members)
-- Bulk obligation status import (CSV upload to mark multiple as complete)
+**Phase 1 Follow-up III: Advanced Features (COMPLETE — 5 commits)**
+- ✅ Compliance recommendations engine: AI Act-guided implementation actions
+  - 15 recommendation templates covering prohibited practices, high-risk systems, transparency, governance
+  - Trigger-based evaluation: risk score thresholds + assessment answer patterns
+  - Category grouping: Prohibited Practices, High-Risk Systems, Transparency, Governance, Data Handling
+  - Priority classification: critical/high/medium/low with effort estimates (hours/days/weeks)
+  - Legal rationale attached to each recommendation (Article citations)
+  - `/api/recommendations` endpoint, `/remediation` page integration
+  - Tests: 18/18 passing
+- ✅ Assessment history timeline view
+  - Chronological timeline of all assessments per AI system
+  - Horizontal risk score trend chart (0-100 visual gradient)
+  - Version numbers, risk levels, scores, dates, trend arrows
+  - Summary statistics: starting risk, current risk, total change
+  - `/assessment-history` page with full timeline visualization
+  - Tests: Integrated with existing assessment suite
+- ✅ Obligation ownership/assignment (workspace team delegation)
+  - Team member assignment to individual obligations
+  - `/api/workspace/members` endpoint returns active workspace members
+  - Assignment UI: modal with member list, unassign option
+  - Display assigned member email/name inline with obligation status
+  - Last assignment timestamp tracking
+  - Tests: 31/31 passing for ownership lifecycle
+- ✅ Bulk obligation status import (CSV upload workflow)
+  - `/api/obligations/bulk-import` endpoint: CSV format validation, batch processing
+  - CSV parser: obligation_id (required), status (optional), priority (optional)
+  - Row-level error reporting with obligation IDs and descriptions
+  - Non-blocking failures: processes all rows even if some fail
+  - Bulk import UI: modal with template download, file upload, results display
+  - Success/failure counts and detailed error list per row
+  - Tests: 39/39 passing for bulk import
+
+**Test Status Update: 511/511 passing across full suite ✅**
 
 ---
 
