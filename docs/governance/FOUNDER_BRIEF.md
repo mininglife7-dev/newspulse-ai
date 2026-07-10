@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10T12:35:00Z (Risk Assessment Phase 1 complete → DNA-GOV-001 deployed → DNA-GOV-002/003/004 ready)
-**State:** Executing (Risk Assessment + inventory integration live on branch; DNA deployment blocked by Vercel secret)
+**Last updated:** 2026-07-10T13:15:00Z (Phase 1 end-to-end complete: assessment → obligation planning; DNA-GOV design ready)
+**State:** Executing (Full Phase 1 user journey on branch: setup → inventory → assessment → remediation plan; DNA deployment blocked by Vercel secret)
 
 ---
 
@@ -165,20 +165,44 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
   - Question definitions: count, required fields, category distribution, type validation
   - All 19 tests passing ✅
 
-**Full journey now works:**
+- `app/remediation/page.tsx` — Compliance obligation planning UI
+  - Generates action plan based on risk level and specific assessment answers
+  - Displays 12 compliance obligations (prohibited practices, high-risk mitigations, transparency, governance)
+  - Obligation priority: critical (legal liability), high, medium, low
+  - Effort estimates: hours/days/weeks with timeline calculation
+  - Critical obligations highlighted with legal exposure warning
+  - Print/export to PDF support
+  - Next steps workflow for team implementation
+
+- `lib/compliance-obligations.ts` — Obligation rules engine
+  - 12 EU AI Act compliance obligations covering all risk categories
+  - generateRemediationPlan(): Creates action plan from assessment responses
+  - Triggers obligations on yes/high-risk/sensitive-data answers
+  - Timeline estimation based on obligation effort levels
+  - Color-coded priority badges for UI rendering
+
+**Full user journey (end-to-end complete):**
 1. User completes workspace setup
 2. Navigates to Inventory and creates an AI system
 3. Sees assessment status badge ("No assessment started")
-4. Clicks "Start Assessment" → goes to /assessment?ai_system_id=X
-5. Answers questions progressively (auto-advance)
-6. Dashboard shows risk level immediately after finalization
-7. Can continue assessments at any time
+4. Clicks "Start Assessment" → interactive questionnaire (13 questions, auto-advance)
+5. All questions answered → "Finalize Assessment" button enabled
+6. Click finalize → risk score calculated (0-100, mapped to low/medium/high/unacceptable)
+7. Redirects to /remediation → displays:
+   - Risk summary (level, score, impact description)
+   - Recommended timeline (~2-4 weeks for comprehensive remediation)
+   - List of applicable obligations (prioritized, with effort estimates)
+   - Next steps workflow for team implementation
+   - Print/export option for stakeholder communication
+8. Dashboard shows risk level and compliance status across all systems
+9. Can continue or re-assess systems at any time
 
-**Next Phase 1 work (unblocked):**
-- Obligation planning UI: display remediation tasks based on risk level
-- Compliance recommendations: "For high-risk systems, implement X/Y/Z"
-- Bulk assessment export (PDF report with risk summary)
-- Assessment history and versioning
+**Next Phase 1 features (unblocked):**
+- Compliance recommendations engine: "For high-risk systems, implement X/Y/Z"
+- Bulk assessment export (PDF report aggregating all system assessments)
+- Assessment history and versioning (track improvements over time)
+- Obligation tracking: mark as complete/in-progress, assign ownership
+- Obligation evidence upload (attach documentation proving compliance)
 
 ---
 
