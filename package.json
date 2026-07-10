@@ -2,7 +2,7 @@
   "name": "newspulse-ai",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-Powered News Intelligence — Search. Scrape. Summarize.",
+  "description": "EURO AI — AI Governance Platform for EU AI Act compliance",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
