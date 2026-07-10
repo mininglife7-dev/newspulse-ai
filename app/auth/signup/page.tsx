@@ -227,11 +227,21 @@ export default function SignUpPage() {
                 />
                 <span className="text-sm text-slate-400">
                   I agree to the{" "}
-                  <Link href="#" className="text-blue-400 hover:text-blue-300">
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300"
+                  >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link href="#" className="text-blue-400 hover:text-blue-300">
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300"
+                  >
                     Privacy Policy
                   </Link>
                 </span>

@@ -58,6 +58,17 @@ test('auth pages render for signed-out visitors', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Create your account'
   );
+  // The consent checkbox must link to the real legal pages, not dead anchors —
+  // users are agreeing to terms they must be able to read. Scope to the form
+  // (main) so the footer's own legal links don't create an ambiguous match.
+  const main = page.getByRole('main');
+  await expect(
+    main.getByRole('link', { name: 'Terms of Service' })
+  ).toHaveAttribute('href', '/terms');
+  await expect(
+    main.getByRole('link', { name: 'Privacy Policy' })
+  ).toHaveAttribute('href', '/privacy');
+
   await page.goto('/auth/signin');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Welcome back'

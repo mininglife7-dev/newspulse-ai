@@ -200,6 +200,50 @@ export default function WorkspaceSetupPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="employees"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
+                Company size (optional)
+              </label>
+              <select
+                id="employees"
+                name="employees"
+                value={formData.employees}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                disabled={loading}
+              >
+                <option value="">Select company size</option>
+                <option value="1-10">1–10 employees</option>
+                <option value="11-50">11–50 employees</option>
+                <option value="51-200">51–200 employees</option>
+                <option value="201-500">201–500 employees</option>
+                <option value="500+">500+ employees</option>
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="website"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
+                Website (optional)
+              </label>
+              <input
+                id="website"
+                type="url"
+                name="website"
+                value={formData.website}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                placeholder="https://acme.example"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
           <div>
             <label
               htmlFor="description"
