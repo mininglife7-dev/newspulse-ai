@@ -23,6 +23,7 @@ const SUGGESTIONS = [
 export default function HomePage() {
   const searchParams = useSearchParams();
   const [keyword, setKeyword] = useState('');
+  const [submittedKeyword, setSubmittedKeyword] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<NewsArticle[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,9 @@ export default function HomePage() {
     setError(null);
     setResults([]);
     setSearched(true);
+    // Remember the term actually searched so the results header can't drift
+    // to whatever the user types next without submitting.
+    setSubmittedKeyword(q);
 
     try {
       const res = await fetch('/api/search', {
@@ -105,10 +109,15 @@ export default function HomePage() {
           onSubmit={handleSearch}
           className="group relative flex items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/5 transition focus-within:border-accent-500/60 focus-within:ring-accent-500/30"
         >
-          <span className="pl-3 text-white/40">
+          <span className="pl-3 text-white/40" aria-hidden="true">
             <SearchIcon className="h-5 w-5" />
           </span>
+          <label htmlFor="news-search" className="sr-only">
+            Search news by keyword
+          </label>
           <input
+            id="news-search"
+            name="keyword"
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -155,7 +164,11 @@ export default function HomePage() {
 
         {/* Error */}
         {error && (
-          <div className="mt-4 rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mt-4 rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300"
+          >
             {error}
           </div>
         )}
@@ -163,10 +176,16 @@ export default function HomePage() {
 
       {/* Loading skeleton */}
       {loading && (
-        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <section
+          role="status"
+          aria-live="polite"
+          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          <span className="sr-only">Searching for news…</span>
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
+              aria-hidden="true"
               className="h-52 animate-pulse rounded-xl border border-border/60 bg-card"
               style={{ animationDelay: `${i * 80}ms` }}
             />
@@ -176,11 +195,13 @@ export default function HomePage() {
 
       {/* Results */}
       {!loading && results.length > 0 && (
-        <section>
+        <section aria-live="polite">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white/90">
               {results.length} result{results.length === 1 ? '' : 's'} for{' '}
-              <span className="text-accent-300">"{keyword}"</span>
+              <span className="text-accent-300">
+                &ldquo;{submittedKeyword}&rdquo;
+              </span>
             </h2>
             <span className="text-xs text-white/40">
               Summaries by gpt-4o-mini

@@ -173,17 +173,23 @@ export default function HistoryPage() {
 
       {/* Error banner */}
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300"
+        >
           {error}
         </div>
       )}
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="space-y-2">
+        <div role="status" aria-live="polite" className="space-y-2">
+          <span className="sr-only">Loading search history…</span>
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
+              aria-hidden="true"
               className="h-14 animate-pulse rounded-lg border border-border/60 bg-card"
               style={{ animationDelay: `${i * 60}ms` }}
             />
