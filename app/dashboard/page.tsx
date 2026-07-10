@@ -18,6 +18,13 @@ interface AssessmentSummary {
   unacceptable: number;
 }
 
+interface ObligationSummary {
+  total: number;
+  completed: number;
+  inProgress: number;
+  critical: number;
+}
+
 /**
  * Onboarding dashboard. Server component: reads the signed-in user's real
  * workspace state so progress reflects the database, not wishful defaults.
@@ -33,6 +40,12 @@ export default async function DashboardPage() {
     medium: 0,
     high: 0,
     unacceptable: 0,
+  };
+  let obligationSummary: ObligationSummary = {
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    critical: 0,
   };
 
   try {
@@ -74,6 +87,21 @@ export default async function DashboardPage() {
           assessmentSummary.medium = assessments.filter((a) => a.risk_level === 'medium').length;
           assessmentSummary.high = assessments.filter((a) => a.risk_level === 'high').length;
           assessmentSummary.unacceptable = assessments.filter((a) => a.risk_level === 'unacceptable').length;
+        }
+
+        // Load obligation statistics (only if assessments exist)
+        if (assessmentSummary.completed > 0) {
+          const { data: obligations } = await supabase
+            .from('obligations')
+            .select('id, status, priority')
+            .eq('workspace_id', membership.workspace_id);
+
+          if (obligations) {
+            obligationSummary.total = obligations.length;
+            obligationSummary.completed = obligations.filter((o) => o.status === 'completed').length;
+            obligationSummary.inProgress = obligations.filter((o) => o.status === 'in_progress').length;
+            obligationSummary.critical = obligations.filter((o) => o.priority === 'critical').length;
+          }
         }
       }
     }
@@ -265,6 +293,46 @@ export default async function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Compliance Obligations (shown after assessments exist) */}
+      {hasWorkspace && assessmentSummary.completed > 0 && obligationSummary.total > 0 && (
+        <Link
+          href="/obligations"
+          className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
+                  4
+                </div>
+                <h3 className="font-semibold text-white">Compliance Obligations</h3>
+              </div>
+              <p className="text-sm text-slate-400 mb-3">
+                {obligationSummary.total} obligation{obligationSummary.total === 1 ? '' : 's'} from risk assessments
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {obligationSummary.completed > 0 && (
+                  <span className="px-2 py-1 rounded bg-green-950/50 text-green-300">
+                    ✓ {obligationSummary.completed} completed
+                  </span>
+                )}
+                {obligationSummary.inProgress > 0 && (
+                  <span className="px-2 py-1 rounded bg-blue-950/50 text-blue-300">
+                    ⏱ {obligationSummary.inProgress} in progress
+                  </span>
+                )}
+                {obligationSummary.critical > 0 && (
+                  <span className="px-2 py-1 rounded bg-red-950/50 text-red-300">
+                    ⚠️ {obligationSummary.critical} critical
+                  </span>
+                )}
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400 flex-shrink-0 mt-1" />
+          </div>
+        </Link>
+      )}
 
       {/* Next steps */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-8">
