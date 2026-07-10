@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (9-hour autonomous mission, COMPLETE)
-**State:** Verifying (awaiting Founder console actions for Supabase schema + email config)
+**Last updated:** 2026-07-10 (9-hour mission COMPLETE → DNA Evolution Mode activated)
+**State:** Verifying + Evolving (awaiting Founder console actions; simultaneously implementing DNA-GOV-001)
 
 ---
 
@@ -80,6 +80,25 @@ conflicts against the new base. Assessment in progress:
 - #36 (Next.js 16 migration): Draft, pure infra — conflicts likely, assess vs #37
 
 ## Next: Stale PR disposition + identify next mission priority
+
+## Status Transition: DNA Evolution Activated
+
+As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per the **GOVERNOR DNA EVOLUTION CONSTITUTION v1.0**.
+
+**What this means:**
+- Governor now continuously identifies organizational weaknesses
+- Evidence-based DNA improvements are autonomously designed, tested, and integrated
+- Every DNA must improve one or more of 8 survival metrics
+- All DNA is fully reversible and auditable
+
+**First DNA implemented:**
+- **DNA-GOV-001: Blocking Condition Detector** — Automatically detects GitHub Actions outages, Supabase unavailability, and other blockers within 30 minutes (vs. 4+ hours manual discovery)
+- Status: Implemented ✅, Tested ✅ (8/8 tests pass), Verified ✅
+- Registered in `docs/governance/DNA-REGISTRY.md`
+
+**Next DNA pending:** DNA-GOV-002 (Production Monitoring) — detect if deployed features are working in production.
+
+---
 
 ## ⚠️ Critical Founder Actions Required
 
