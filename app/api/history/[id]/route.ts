@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { checkAdmin } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,7 +49,15 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteContext) {
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
+  const admin = checkAdmin(req.headers);
+  if (!admin.ok) {
+    return NextResponse.json(
+      { ok: false, error: admin.error, code: admin.code },
+      { status: admin.status }
+    );
+  }
+
   const id = params.id;
   if (!id) {
     return NextResponse.json(

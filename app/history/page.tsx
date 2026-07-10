@@ -17,6 +17,9 @@ import EmptyState from '@/components/EmptyState';
 import { cn, formatAbsoluteDate } from '@/lib/utils';
 import type { SearchHistoryRow } from '@/lib/supabase';
 
+/** localStorage key for the admin token used to authorize destructive actions. */
+const ADMIN_TOKEN_KEY = 'newspulse_admin_token';
+
 export default function HistoryPage() {
   const [history, setHistory] = useState<SearchHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +59,31 @@ export default function HistoryPage() {
   }, []);
 
   const handleClearAll = useCallback(async () => {
+    if (history.length === 0) return;
+
+    // Clearing history is a destructive, admin-only action. Read a stored admin
+    // token, or prompt for one. It is sent as an x-admin-token header; the
+    // server rejects the request if it does not match ADMIN_TOKEN.
+    let token = '';
+    try {
+      token = window.localStorage.getItem(ADMIN_TOKEN_KEY) ?? '';
+    } catch {
+      /* localStorage unavailable — fall through to prompt */
+    }
+    if (!token) {
+      const entered = window.prompt(
+        'Clearing all history is an admin action. Enter the admin token:'
+      );
+      if (entered == null) return; // user cancelled
+      token = entered.trim();
+      if (!token) return;
+      try {
+        window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+      } catch {
+        /* ignore persistence failure */
+      }
+    }
+
     if (
       !confirm(
         `Delete all ${history.length} saved searches? This can't be undone.`
@@ -63,18 +91,41 @@ export default function HistoryPage() {
     ) {
       return;
     }
+
     setClearing(true);
+    setError(null);
     try {
-      const res = await fetch('/api/history', { method: 'DELETE' });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Delete failed (${res.status})`);
+      const res = await fetch('/api/history', {
+        method: 'DELETE',
+        headers: { 'x-admin-token': token },
+      });
+      const json = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        // Bad token — drop it so the next attempt re-prompts.
+        try {
+          window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+        } catch {
+          /* ignore */
+        }
+        throw new Error(
+          'Admin token was rejected. Clear History again to re-enter it.'
+        );
       }
+      if (res.status === 503) {
+        throw new Error(
+          json?.error || 'Admin actions are disabled on this deployment.'
+        );
+      }
+      if (!res.ok || !json.ok) {
+        throw new Error(json?.error || `Delete failed (${res.status})`);
+      }
+
       setHistory([]);
       setExpanded(new Set());
     } catch (err: any) {
       console.error(err);
-      alert(err?.message || 'Failed to clear history.');
+      setError(err?.message || 'Failed to clear history.');
     } finally {
       setClearing(false);
     }
@@ -107,6 +158,7 @@ export default function HistoryPage() {
           <button
             onClick={handleClearAll}
             disabled={clearing || loading || history.length === 0}
+            title="Admin action — requires the admin token"
             className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-950/30 px-3 py-2 text-sm text-red-300 transition hover:border-red-400 hover:bg-red-950/60 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {clearing ? (

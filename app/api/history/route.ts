@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSearchHistory, clearAllHistory } from '@/lib/supabase';
+import { checkAdmin } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,8 +30,16 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** DELETE /api/history — wipe every saved search ("Clear History") */
-export async function DELETE() {
+/** DELETE /api/history — wipe every saved search ("Clear History"). Admin-only. */
+export async function DELETE(req: NextRequest) {
+  const admin = checkAdmin(req.headers);
+  if (!admin.ok) {
+    return NextResponse.json(
+      { ok: false, error: admin.error, code: admin.code },
+      { status: admin.status }
+    );
+  }
+
   try {
     const result = await clearAllHistory();
     if (!result.ok) {
