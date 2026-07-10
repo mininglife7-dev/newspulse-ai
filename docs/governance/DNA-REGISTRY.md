@@ -169,6 +169,95 @@ interface ProductionHealthReport {
 4. **Performance profiling:** Track latency trends to detect slow degradation
 5. **Metrics dashboard:** Aggregate health check results for Founder visibility (future phase)
 
+### DNA-GOV-007: Session Knowledge Memory
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Learning Officer + Chief Architect  
+
+#### Purpose
+Persistent organizational memory across Governor sessions. Prevents redundant discovery and enables exponential learning through institutional knowledge.
+
+#### Problem Discovered
+Governor knowledge is ephemeral (lost between sessions). Each session rediscovers pain points independently. No institutional memory of what was discovered, tried, failed, or succeeded. Prevents exponential improvement across multi-session engagement.
+
+#### Evidence
+- **Weakness:** Zero cross-session memory
+- **Impact:** Repeated analysis in each session, no learning curve, no institutional knowledge
+- **Root cause:** No persistent knowledge store
+- **Discovery method:** Observed during DNA-GOV-008 and DNS-GOV-007 implementation that same issues (Vercel hobby tier limit) were re-analyzed independently
+
+#### Inputs
+- Discoveries (problems, weaknesses, architectural insights)
+- Decisions (what to do, what not to do, trade-offs)
+- Metrics (session performance, DNA effectiveness)
+- Session context (what was learned, what remains unknown)
+
+#### Outputs
+```typescript
+interface KnowledgeEntry {
+  id: string
+  domain: 'architecture' | 'security' | 'performance' | 'reliability' | 'operational' | 'business'
+  type: 'discovery' | 'decision' | 'action' | 'outcome' | 'metric'
+  key: string // Searchable identifier
+  value: unknown // Domain-specific data
+  description: string
+  discoveredAt: string
+  sessionId: string
+  impact: 'critical' | 'high' | 'medium' | 'low'
+  status: 'active' | 'superseded' | 'deprecated'
+  relatedKeys?: string[] // Cross-references
+}
+```
+
+#### Implementation
+- `lib/session-knowledge-memory.ts` — In-memory knowledge store (170 LoC)
+  - `InMemoryKnowledgeStore` — Implements KnowledgeMemoryStore interface
+  - Store/retrieve by key, domain, type, keyword
+  - Lifecycle: deprecate, supersede, mark-active
+  - Export/import for Supabase integration
+  - Helper functions: `recordDiscovery()`, `recordDecision()`
+- `tests/session-knowledge-memory.test.ts` — 18 comprehensive tests
+
+#### Verification Method
+- **Unit tests:** 18 tests covering:
+  - Store and retrieve entries by key
+  - Query by domain, type, keyword
+  - Entry lifecycle (deprecate, supersede, mark-active)
+  - Session metrics tracking
+  - Export/import for persistence
+  - Singleton pattern with persistence
+  - Helper function behavior
+- **All tests pass:** 18/18 ✅
+- **Full suite:** 201/201 (baseline 183 + 18 new)
+
+#### Dependencies
+- None (MVP: in-memory only)
+- Future: Supabase `governor_knowledge` table for cross-session persistence
+- Future: API endpoint for querying knowledge from other services
+
+#### Risks
+- **Memory usage:** In-memory store grows unbounded if not cleared. Mitigated by Supabase migration for production.
+- **Single-session scope:** Current MVP only persists within one session. Founder action required to enable cross-session storage.
+- **No validation:** Knowledge entries are not validated against predefined schemas. Mitigated by type hints and documentation.
+
+#### Rollback Method
+- Delete `lib/session-knowledge-memory.ts` and test file
+- No data stored (MVP); no database changes; fully reversible
+
+#### Success Metrics
+1. **Cross-session learning:** Future sessions can query discoveries made in prior sessions
+2. **Redundancy elimination:** Same problem analyzed once, reused across sessions
+3. **Knowledge accessibility:** Any DNA can ask "has anyone discovered X before?"
+4. **Institutional memory:** 3+ months of Governor operations create searchable knowledge base
+
+#### Next Steps
+1. **Wire to Supabase:** Create `governor_knowledge` table (schema in migration)
+2. **Integrate with DNA:** Each DNA records discoveries automatically
+3. **Implement query service:** API endpoint to search knowledge store
+4. **Enable cross-session access:** Populate new sessions with prior discoveries
+5. **Track knowledge drift:** Deprecated/superseded entries show evolution of understanding
+
 ### DNA-GOV-008: Dependency Security Scanning
 
 **Status:** Active  
