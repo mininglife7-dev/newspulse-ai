@@ -100,4 +100,17 @@ export const de: Messages = {
     noResultsSaved: 'Für diese Suche wurden keine Ergebnisse gespeichert.',
     rerun: 'Diese Suche erneut ausführen',
   },
+  notFound: {
+    title: 'Seite nicht gefunden',
+    body: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
+    startSearch: 'Neue Suche starten',
+    viewHistory: 'Verlauf anzeigen',
+  },
+  error: {
+    title: 'Etwas ist schiefgelaufen',
+    body: 'Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten.',
+    errorId: 'Fehler-ID:',
+    tryAgain: 'Erneut versuchen',
+    backHome: 'Zurück zur Startseite',
+  },
 };

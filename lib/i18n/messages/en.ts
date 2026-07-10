@@ -94,6 +94,19 @@ export const en = {
     noResultsSaved: 'No results were saved for this search.',
     rerun: 'Re-run this search',
   },
+  notFound: {
+    title: 'Page not found',
+    body: "The page you're looking for doesn't exist or has been moved.",
+    startSearch: 'Start a new search',
+    viewHistory: 'View history',
+  },
+  error: {
+    title: 'Something went wrong',
+    body: 'An unexpected error occurred while loading this page.',
+    errorId: 'Error ID:',
+    tryAgain: 'Try again',
+    backHome: 'Back home',
+  },
 } as const;
 
 /**

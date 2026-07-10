@@ -1,15 +1,20 @@
 import Link from 'next/link';
+import { translate } from '@/lib/i18n';
+import { getServerLocale } from '@/lib/i18n/server';
 
 export default function NotFound() {
+  const locale = getServerLocale();
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
       <div className="text-7xl font-black tracking-tight">
         <span className="gradient-text">404</span>
       </div>
       <div>
-        <h1 className="text-2xl font-bold text-white">Page not found</h1>
+        <h1 className="text-2xl font-bold text-white">
+          {translate(locale, 'notFound.title')}
+        </h1>
         <p className="mt-2 max-w-md text-sm text-white/60">
-          The page you're looking for doesn't exist or has been moved.
+          {translate(locale, 'notFound.body')}
         </p>
       </div>
       <div className="flex gap-3">
@@ -17,13 +22,13 @@ export default function NotFound() {
           href="/"
           className="rounded-lg bg-gradient-to-br from-accent-500 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-accent-900/40 transition hover:from-accent-400 hover:to-indigo-500"
         >
-          Start a new search
+          {translate(locale, 'notFound.startSearch')}
         </Link>
         <Link
           href="/history"
           className="rounded-lg border border-border bg-card px-5 py-2 text-sm text-white/80 transition hover:border-accent-500/60 hover:text-white"
         >
-          View history
+          {translate(locale, 'notFound.viewHistory')}
         </Link>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { en, type Messages } from './messages/en';
 import { de } from './messages/de';
-import { DEFAULT_LOCALE, isLocale, type Locale } from './config';
+import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, isLocale, type Locale } from './config';
 
 export { LOCALES, LOCALE_LABELS, LOCALE_STORAGE_KEY, DEFAULT_LOCALE, isLocale } from './config';
 export type { Locale } from './config';
@@ -85,5 +85,22 @@ export function detectLocale(preferred?: string | null): Locale {
   if (isLocale(preferred)) return preferred;
   const primary = preferred.toLowerCase().split(/[-_,;]/)[0]?.trim();
   if (primary && isLocale(primary)) return primary;
+  return DEFAULT_LOCALE;
+}
+
+/**
+ * Resolve the locale on the client WITHOUT depending on React context.
+ *
+ * The error boundary must render correctly even if the failure is anywhere
+ * above it (including the i18n provider), so it can't call useI18n. This reads
+ * the persisted cookie, then the browser language, guarded for SSR.
+ */
+export function resolveClientLocale(): Locale {
+  if (typeof document === 'undefined') return DEFAULT_LOCALE;
+  const cookieMatch = document.cookie.match(
+    new RegExp(`(?:^|; )${LOCALE_STORAGE_KEY}=([^;]+)`)
+  );
+  if (cookieMatch && isLocale(cookieMatch[1])) return cookieMatch[1];
+  if (typeof navigator !== 'undefined') return detectLocale(navigator.language);
   return DEFAULT_LOCALE;
 }

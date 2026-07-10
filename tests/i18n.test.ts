@@ -5,6 +5,7 @@ import {
   translate,
   translatePlural,
   detectLocale,
+  resolveClientLocale,
   LOCALES,
 } from '@/lib/i18n';
 
@@ -96,5 +97,14 @@ describe('detectLocale', () => {
 
   it('only supports the advertised locales', () => {
     expect(LOCALES).toEqual(['en', 'de']);
+  });
+});
+
+describe('resolveClientLocale', () => {
+  it('falls back to the default locale outside the browser (no document)', () => {
+    // The vitest node environment has no document, exercising the SSR-safe
+    // guard the error boundary relies on.
+    expect(typeof document).toBe('undefined');
+    expect(resolveClientLocale()).toBe('en');
   });
 });
