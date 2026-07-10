@@ -11,6 +11,7 @@ import {
   Cpu,
   FileCheck,
   TrendingUp,
+  Download,
 } from 'lucide-react';
 
 interface ComplianceSummary {
@@ -80,6 +81,24 @@ export default function CompliancePage() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const res = await fetch('/api/reports/dashboard');
+      if (!res.ok) throw new Error('Failed to generate report');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err?.message || 'Failed to export report');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-slate-400">
@@ -127,10 +146,22 @@ export default function CompliancePage() {
           <ArrowLeft className="h-4 w-4" />
           Back to dashboard
         </Link>
-        <h1 className="text-3xl font-bold text-white">Compliance Dashboard</h1>
-        <p className="text-slate-400">
-          Your organization's AI governance compliance status and readiness
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Compliance Dashboard</h1>
+            <p className="text-slate-400">
+              Your organization's AI governance compliance status and readiness
+            </p>
+          </div>
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-950/50 hover:border-amber-600/50"
+            title="Export compliance report as PDF"
+          >
+            <Download className="h-4 w-4" />
+            Export Report
+          </button>
+        </div>
       </div>
 
       {/* Health Status Card */}
