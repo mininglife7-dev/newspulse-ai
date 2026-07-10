@@ -10,18 +10,22 @@
 
 ## Progress Log (verified)
 
-Completed on branch `claude/deployment-reality-audit-hog4gc` and verified by unit tests, an HTTP smoke test against a running production build, plus green lint/type-check/build:
+Completed on branch `claude/deployment-reality-audit-hog4gc` and verified by 82 unit/integration tests, HTTP smoke tests, and real-browser (Chromium) end-to-end checks, plus green lint/type-check/build:
 
-| Item                                      | What shipped                                                                                                                            | Evidence                                                                    |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| **0.1 / 1.2** Destructive endpoints gated | `DELETE /api/history` and `DELETE /api/history/:id` now require an admin token (`lib/auth.ts`), fail-closed when `ADMIN_TOKEN` is unset | HTTP: unset token → `503`; unit tests for 401-missing / 401-invalid / allow |
-| **1.1 (partial)** Admin auth primitive    | Constant-time token check via `Authorization: Bearer` or `x-admin-token`; History UI prompts for and stores the token, no dead button   | 10 unit tests in `tests/auth.test.ts`                                       |
-| **API input hardening**                   | `POST /api/search` rejects non-string / empty / >200-char keywords with `400` instead of crashing with a `500`                          | HTTP: object & null bodies → `400`; `tests/validation.test.ts`              |
-| **Test infrastructure**                   | Vitest added; 44 unit tests over `utils`, `firecrawl`, `openai`, `validation`, `auth`; wired into CI                                    | `npm test` green; CI `Test` step                                            |
-| **A11y + UX**                             | Stale results-header bug fixed; `role="alert"`/`role="status"` live regions; labelled search input                                      | lint/build green; code review                                               |
-| **Docs**                                  | README security section, testing docs, `ADMIN_TOKEN` documented; removed broken screenshot links                                        | this repo                                                                   |
+| Item                                      | What shipped                                                                                                                        | Evidence                                                              |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **0.1 / 1.2** Destructive endpoints gated | `DELETE /api/history` and `DELETE /api/history/:id` require an admin token (`lib/auth.ts`), fail-closed when `ADMIN_TOKEN` is unset | HTTP: unset → `503`; auth + history-route tests (401/503/allow)       |
+| **1.1 (partial)** Admin auth primitive    | Constant-time token check via `Authorization: Bearer` or `x-admin-token`; History UI acquires/stores the token, no dead button      | `tests/auth.test.ts`, `tests/historyRoute.test.ts`                    |
+| **Feature — per-row delete**              | History table now has a per-row Delete backed by the (previously unused) `:id` endpoint; shared token flow                          | Browser E2E: correct id deleted, other rows preserved, no page errors |
+| **API input hardening**                   | `POST /api/search` rejects non-string / empty / >200-char keywords with `400` instead of crashing with a `500`                      | HTTP + `tests/validation.test.ts` + `tests/searchRoute.test.ts`       |
+| **Test infrastructure**                   | Vitest + jsdom; **82 tests** over lib, all API routes, and components; wired into CI                                                | `npm test` green; CI `Test` step                                      |
+| **Perf / architecture**                   | Rate limiter extracted to a memory-bounded, tested module; Firecrawl→article normalization extracted from the route and tested      | `tests/rateLimit.test.ts`, `tests/firecrawl.test.ts`                  |
+| **Security headers**                      | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` on every route; `X-Powered-By` off                      | Observed over HTTP                                                    |
+| **A11y**                                  | Labelled search input; `role="alert"`/`role="status"` live regions; skip-to-content link; `prefers-reduced-motion`                  | Browser render check; lint/build green                                |
+| **UX**                                    | Fixed stale results-header; zero-results now a neutral empty state (not a red error); health endpoint `Cache-Control: no-store`     | `tests/healthRoute.test.ts`; browser render                           |
+| **Docs**                                  | README security/testing sections; `SECURITY.md`; `CONTRIBUTING.md` testing + `ADMIN_TOKEN`; removed broken screenshot links         | this repo                                                             |
 
-Still outstanding (unchanged priority): EU region confirmation/migration (needs your look-up), backups (needs spend), audit-log table (P1, pending), durable rate limiter (P1, needs store), founder dashboard (P2). Reads on `/api/history` remain public by design for the demo.
+Still outstanding (unchanged priority): EU region confirmation/migration (needs your look-up), backups (needs spend), audit-log table (P1, pending), durable rate-limit store (P1, needs Upstash/KV + spend), Content-Security-Policy (P2), founder dashboard (P2), full end-user authentication (P0 for real users — needs your provider/product decision). Reads on `/api/history` remain public by design for the demo.
 
 ---
 
