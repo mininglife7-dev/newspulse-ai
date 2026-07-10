@@ -27,6 +27,13 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          // Force HTTPS for two years incl. subdomains. Safe on Vercel (HTTPS-only);
+          // `preload` is intentionally omitted to avoid an irreversible HSTS-preload
+          // commitment the founder hasn't opted into.
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains',
+          },
         ],
       },
     ];
