@@ -351,6 +351,98 @@ interface DependencySecurityReport {
 4. **Dependabot integration:** Consider bridging with GitHub's Dependabot for richer context
 5. **Severity-based actions:** Future: auto-disable or auto-update critical vulnerabilities
 
+### DNA-GOV-010: Git Governance
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Engineering Officer + Chief Architect  
+
+#### Purpose
+Autonomously enforce development best practices through git policy enforcement. Prevents merge mistakes, validates commit conventions, and enables safe autonomous operations.
+
+#### Problem Discovered
+Manual review of commits and branches is error-prone and doesn't scale. Without automated governance:
+- Commit messages vary in format (unclear history)
+- Branches created with inconsistent naming (hard to categorize)
+- Force-pushes and broken merges bypass safety checks
+- Manual code review becomes a bottleneck for autonomous operations
+
+#### Evidence
+- **Weakness:** No automated enforcement of development conventions
+- **Impact:** Merge mistakes can introduce issues, scaling bottleneck, unclear history
+- **Root cause:** No governance system to validate git operations
+- **Discovery method:** Identified during autonomous execution planning (DNA evolution)
+
+#### Inputs
+- Branch name (string)
+- Commit message (string)
+- Merge parameters (base branch, force-update, linear history, status checks)
+- PR metadata (title, body, linked issue, commits)
+
+#### Outputs
+```typescript
+interface GitGovernanceValidation {
+  valid: boolean
+  errors: string[]
+  warnings?: string[]
+  metadata?: {
+    type?: string
+    scope?: string
+    category?: string
+  }
+}
+```
+
+#### Implementation
+- `lib/git-governance.ts` — Git governance orchestrator (320 LoC)
+  - `CommitMessageValidator` — Validates conventional commits format
+  - `BranchNameValidator` — Enforces category/name branch naming
+  - `MergeValidator` — Validates merge safety (no force-push, linear history, checks passing)
+  - `PRValidator` — Validates PR readiness (message format, title length, linked issues)
+  - `GitGovernanceOrchestrator` — Coordinates all validations
+- `tests/git-governance.test.ts` — 33 comprehensive tests
+
+#### Verification Method
+- **Unit tests:** 33 tests covering:
+  - Valid/invalid commit messages (conventional commits format)
+  - Valid/invalid branch names (category/name pattern)
+  - Merge safety checks (force-push, linear history, status checks)
+  - PR readiness validation (title, body, commits, linked issues)
+  - Complete PR workflow validation
+  - Multiple violation detection
+- **All tests pass:** 33/33 ✅
+- **Full suite:** 255/255 passing (222 baseline + 33 new)
+- **Build verification:** npm run build clean, type-check clean, lint clean
+
+#### Dependencies
+- None (pure validation library)
+- Future: GitHub API integration for automated enforcement
+- Future: Git hooks (husky + lint-staged) for local enforcement
+
+#### Risks
+- **False positives:** Strict validation may reject valid edge cases. Mitigated by whitelist for special commits (e.g., "chore: merge branch X")
+- **Adoption friction:** Teams must follow conventions. Mitigated by clear documentation and helpful error messages
+- **Performance:** Validation is O(n) where n = number of commits. Negligible impact.
+
+#### Rollback Method
+- Delete `lib/git-governance.ts` and test file
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Error prevention:** All merge mistakes caught before they reach main
+2. **Consistency:** 100% of commits follow conventional format in main branch
+3. **Clarity:** Git history tells story clearly (what changed, why, by whom)
+4. **Scaling:** Manual code review reduced as automated validation gains trust
+5. **Autonomous operations:** Enable safe autonomous merging without Founder review
+
+#### Next Steps
+1. **Wire to GitHub Actions:** Add pre-commit and pre-merge validation
+2. **Integrate with API:** Create `/api/git-governance/validate` endpoint for CI
+3. **Auto-fix:** Future DNA could auto-format commit messages
+4. **Metrics:** Track validation trends (most common violations, patterns)
+5. **Enforcement:** Upgrade to mandatory GitHub branch protection rules
+6. **Team adoption:** Document conventions in CONTRIBUTING.md
+
 ---
 
 ## Experimental DNA
