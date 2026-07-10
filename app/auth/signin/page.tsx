@@ -9,7 +9,14 @@ import { signIn } from "@/lib/auth";
 export default function SignInPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    // Surface errors handed over by the email-confirmation handler.
+    if (typeof window === "undefined") return null;
+    const code = new URLSearchParams(window.location.search).get("error");
+    return code === "verification_failed"
+      ? "We couldn't verify that link — it may have expired. Sign in, or request a new confirmation email."
+      : null;
+  });
   const [formData, setFormData] = useState({
     email: "",
     password: "",

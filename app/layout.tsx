@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { HeaderNav } from '@/components/HeaderNav';
 import './globals.css';
 
 const inter = Inter({
@@ -76,20 +77,7 @@ export default function RootLayout({
                 <span className="text-cyan-400"> AI</span>
               </span>
             </Link>
-            <nav className="flex items-center gap-6 text-sm">
-              <Link
-                href="/auth/signin"
-                className="text-white/70 transition hover:text-white"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-4 py-2 font-medium text-white transition hover:shadow-lg hover:shadow-blue-500/40"
-              >
-                Start Free
-              </Link>
-            </nav>
+            <HeaderNav />
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>

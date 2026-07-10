@@ -20,7 +20,7 @@ describe('classifyRoute', () => {
     }
   );
 
-  it.each(['/auth/verify-email', '/api/health', '/governance', '/manifest.webmanifest'])(
+  it.each(['/auth/verify-email', '/auth/confirm', '/api/health', '/governance', '/manifest.webmanifest'])(
     'leaves %s public',
     (path) => {
       expect(classifyRoute(path)).toBe('public');

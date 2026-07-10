@@ -21,6 +21,11 @@ export async function signUp(
         first_name: firstName,
         last_name: lastName,
       },
+      // Email confirmation links land on our handler, which completes
+      // verification and signs the user in.
+      ...(typeof window !== 'undefined'
+        ? { emailRedirectTo: `${window.location.origin}/auth/confirm` }
+        : {}),
     },
   });
 
