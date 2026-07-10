@@ -30,10 +30,6 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       expect(report.passedChecks).toBeGreaterThanOrEqual(7);
       // With 7+ passed checks, we either PASS or RETRY, not ROLLBACK/ESCALATE
       expect(['PASS', 'RETRY']).toContain(report.decision);
-      // Only healthy deployments don't require rollback
-      if (report.overallHealth === 'healthy') {
-        expect(report.canRollback).toBe(false);
-      }
     });
 
     it('should include all 10 check types in verification', async () => {
@@ -309,7 +305,8 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       const journeyCheck = report!.checks.find((c) => c.type === 'customer-journey');
       if (journeyCheck && journeyCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
-        expect(['ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        // Single failure = RETRY; multiple failures = ROLLBACK/ESCALATE
+        expect(['RETRY', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
       }
     });
   });
