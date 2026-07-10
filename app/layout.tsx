@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import Link from 'next/link';
 import { Inter } from 'next/font/google';
-import { Zap, Search, History as HistoryIcon, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { I18nProvider } from '@/components/i18n/I18nProvider';
+import SiteHeader from '@/components/SiteHeader';
+import SiteFooter from '@/components/SiteFooter';
 import './globals.css';
 
 const inter = Inter({
@@ -65,59 +66,20 @@ export default function RootLayout({
           'min-h-screen bg-background text-white antialiased font-sans'
         )}
       >
-        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-indigo-600 glow">
-                <Zap className="h-4 w-4 text-white" strokeWidth={2.5} />
-              </div>
-              <span className="text-lg font-bold tracking-tight">
-                <span className="gradient-text">NewsPulse</span>
-                <span className="text-white/90"> AI</span>
-              </span>
-            </Link>
-            <nav className="flex items-center gap-1 text-sm">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </Link>
-              <Link
-                href="/history"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
-              >
-                <HistoryIcon className="h-4 w-4" />
-                History
-              </Link>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
-              >
-                <BarChart3 className="h-4 w-4" />
-                Dashboard
-              </Link>
-            </nav>
-          </div>
-        </header>
-        <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
-        <ServiceWorkerRegister />
-        <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
-          <p className="mb-3">
-            Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}
-            <span className="text-accent-400">NewsPulse AI</span>
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Link href="/privacy" className="hover:text-white/60 transition">
-              Privacy Policy
-            </Link>
-            <span>·</span>
-            <Link href="/terms" className="hover:text-white/60 transition">
-              Terms of Service
-            </Link>
-          </div>
-        </footer>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+        >
+          Skip to content
+        </a>
+        <I18nProvider>
+          <SiteHeader />
+          <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
+            {children}
+          </main>
+          <ServiceWorkerRegister />
+          <SiteFooter />
+        </I18nProvider>
       </body>
     </html>
   );

@@ -1,5 +1,8 @@
+'use client';
+
 import { ExternalLink } from 'lucide-react';
 import { formatRelativeDate } from '@/lib/utils';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import type { NewsArticle } from '@/lib/supabase';
 
 interface NewsCardProps {
@@ -8,6 +11,7 @@ interface NewsCardProps {
 }
 
 export default function NewsCard({ article, index = 0 }: NewsCardProps) {
+  const { t, locale } = useI18n();
   const { title, url, source, date, ai_summary } = article;
 
   return (
@@ -25,9 +29,9 @@ export default function NewsCard({ article, index = 0 }: NewsCardProps) {
           <time
             dateTime={date}
             className="text-white/40 tabular-nums"
-            title={new Date(date).toLocaleString()}
+            title={new Date(date).toLocaleString(locale)}
           >
-            {formatRelativeDate(date)}
+            {formatRelativeDate(date, locale)}
           </time>
         )}
       </header>
@@ -47,7 +51,7 @@ export default function NewsCard({ article, index = 0 }: NewsCardProps) {
       {/* AI Summary — explicitly labelled as machine-generated (transparency) */}
       <div className="flex flex-col gap-1">
         <span className="inline-flex w-fit items-center gap-1 rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/40 ring-1 ring-inset ring-white/10">
-          AI-generated summary
+          {t('card.aiSummary')}
         </span>
         <p className="text-sm leading-relaxed text-white/70">{ai_summary}</p>
       </div>
@@ -68,9 +72,9 @@ export default function NewsCard({ article, index = 0 }: NewsCardProps) {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-md bg-accent-600/20 px-2 py-1 font-medium text-accent-300 ring-1 ring-inset ring-accent-500/30 transition hover:bg-accent-600/40 hover:text-white"
-          aria-label="Open article in new tab"
+          aria-label={t('card.openInNewTab')}
         >
-          Read
+          {t('card.read')}
           <ExternalLink className="h-3 w-3" strokeWidth={2.5} />
         </a>
       </footer>

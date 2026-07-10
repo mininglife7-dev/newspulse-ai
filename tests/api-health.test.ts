@@ -7,6 +7,7 @@ const KEYS = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
+  'DEMO_MODE',
 ];
 
 let snapshot: Record<string, string | undefined>;
@@ -54,5 +55,18 @@ describe('GET /api/health', () => {
     expect(body.ok).toBe(true);
     expect(body.status).toBe('healthy');
     expect(Object.values(body.checks).every(Boolean)).toBe(true);
+  });
+
+  it('reports demo_mode=false by default and true when DEMO_MODE is set', async () => {
+    const off = await (await GET()).json();
+    expect(off.demo_mode).toBe(false);
+
+    process.env.DEMO_MODE = 'true';
+    const on = await (await GET()).json();
+    expect(on.demo_mode).toBe(true);
+
+    process.env.DEMO_MODE = '1';
+    const onNumeric = await (await GET()).json();
+    expect(onNumeric.demo_mode).toBe(true);
   });
 });

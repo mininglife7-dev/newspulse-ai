@@ -1,6 +1,7 @@
 'use client';
 
 import { formatAbsoluteDate } from '@/lib/utils';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 interface LocalDateTimeProps {
   iso: string | null | undefined;
@@ -17,9 +18,10 @@ interface LocalDateTimeProps {
  * server-locale placeholder swapped out at hydration.
  */
 export default function LocalDateTime({ iso, className }: LocalDateTimeProps) {
+  const { locale } = useI18n();
   return (
     <time dateTime={iso ?? undefined} className={className} suppressHydrationWarning>
-      {formatAbsoluteDate(iso)}
+      {formatAbsoluteDate(iso, locale)}
     </time>
   );
 }

@@ -11,6 +11,7 @@ import { useSearchParams } from 'next/navigation';
 import { Search as SearchIcon, ArrowRight, Sparkles } from 'lucide-react';
 import NewsCard from '@/components/NewsCard';
 import EmptyState from '@/components/EmptyState';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import { SUMMARY_MODEL } from '@/lib/constants';
 import type { NewsArticle } from '@/lib/supabase';
 
@@ -23,6 +24,7 @@ const SUGGESTIONS = [
 ];
 
 export default function HomePage() {
+  const { t, tPlural } = useI18n();
   const searchParams = useSearchParams();
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,13 +35,35 @@ export default function HomePage() {
   // label results with the live input value — the user can retype without
   // searching, and the screen would contradict its own data.
   const [lastQuery, setLastQuery] = useState('');
+  // Whether the backend is actually serving sample data. Fetched from the
+  // health endpoint so the demo banner reflects reality instead of being
+  // hard-coded on — a production instance with real keys must never claim
+  // its results are fake.
+  const [demoMode, setDemoMode] = useState(false);
   const autoRanRef = useRef(false);
 
-  const runSearch = useCallback(async (q: string) => {
-    if (!q) {
-      setError('Please enter a keyword to search.');
-      return;
-    }
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/health')
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled) setDemoMode(Boolean(json?.demo_mode));
+      })
+      .catch(() => {
+        // Health probe failed — leave the banner hidden rather than risk a
+        // false "demo mode" claim.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const runSearch = useCallback(
+    async (q: string) => {
+      if (!q) {
+        setError(t('home.validationEmpty'));
+        return;
+      }
     setLoading(true);
     setError(null);
     setResults([]);
@@ -54,16 +78,20 @@ export default function HomePage() {
       });
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Search failed (${res.status})`);
+        throw new Error(
+          json.error || t('home.searchFailed', { status: res.status })
+        );
       }
       setResults(json.results as NewsArticle[]);
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || 'Something went wrong.');
+      setError(err?.message || t('home.errorGeneric'));
     } finally {
       setLoading(false);
     }
-  }, []);
+    },
+    [t]
+  );
 
   // Auto-run if URL has ?q=...
   useEffect(() => {
@@ -89,18 +117,14 @@ export default function HomePage() {
       {/* Hero */}
       <section className="flex flex-col items-center gap-4 pt-6 text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-accent-500/30 bg-accent-900/20 px-3 py-1 text-xs font-medium text-accent-300">
-          <Sparkles className="h-3.5 w-3.5" />
-          AI-Powered News Intelligence
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          {t('home.badge')}
         </span>
         <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-          Search. Scrape.{' '}
-          <span className="gradient-text">Summarize.</span>
+          {t('home.heroSearch')} {t('home.heroScrape')}{' '}
+          <span className="gradient-text">{t('home.heroSummarize')}</span>
         </h1>
-        <p className="max-w-xl text-base text-white/60">
-          NewsPulse AI scrapes the latest articles from across the web and
-          generates concise, neutral summaries — so you can stay informed in
-          seconds.
-        </p>
+        <p className="max-w-xl text-base text-white/60">{t('home.subtitle')}</p>
       </section>
 
       {/* Search Form */}
@@ -116,7 +140,8 @@ export default function HomePage() {
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder='Try "AI regulation", "SpaceX", "climate summit"…'
+            placeholder={t('home.inputPlaceholder')}
+            aria-label={t('common.search')}
             className="flex-1 bg-transparent px-2 py-3 text-base text-white placeholder-white/30 outline-none"
             disabled={loading}
             autoFocus
@@ -129,12 +154,12 @@ export default function HomePage() {
             {loading ? (
               <>
                 <span className="spinner" />
-                Searching…
+                {t('home.searching')}
               </>
             ) : (
               <>
-                Search
-                <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                {t('home.searchButton')}
+                <ArrowRight className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
               </>
             )}
           </button>
@@ -144,7 +169,7 @@ export default function HomePage() {
         {!searched && (
           <div className="mt-6 flex flex-col items-center justify-center gap-4">
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/50">
-              <span>Try one of these:</span>
+              <span>{t('home.tryOneOfThese')}</span>
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
@@ -159,15 +184,20 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            <div className="rounded-lg border border-blue-500/30 bg-blue-950/20 px-3 py-2 text-center text-xs text-blue-300">
-              Running in demo mode — results are sample data. Configure API keys for real news search.
-            </div>
+            {demoMode && (
+              <div className="rounded-lg border border-blue-500/30 bg-blue-950/20 px-3 py-2 text-center text-xs text-blue-300">
+                {t('home.demoBanner')}
+              </div>
+            )}
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="mt-4 rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300"
+          >
             {error}
           </div>
         )}
@@ -191,22 +221,21 @@ export default function HomePage() {
         <section className="mx-auto w-full max-w-2xl">
           <EmptyState
             icon={<SearchIcon className="h-6 w-6" />}
-            title={`No results for "${lastQuery}"`}
-            description="Try a different keyword or a broader topic."
+            title={t('home.noResultsTitle', { query: lastQuery })}
+            description={t('home.noResultsDescription')}
           />
         </section>
       )}
 
       {/* Results */}
       {!loading && results.length > 0 && (
-        <section>
+        <section aria-live="polite">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white/90">
-              {results.length} result{results.length === 1 ? '' : 's'} for{' '}
-              <span className="text-accent-300">"{lastQuery}"</span>
+            <h2 className="text-lg font-semibold text-accent-300">
+              {tPlural('home.resultsFor', results.length, { query: lastQuery })}
             </h2>
             <span className="text-xs text-white/40">
-              Summaries by {SUMMARY_MODEL}
+              {t('home.summariesBy', { model: SUMMARY_MODEL })}
             </span>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

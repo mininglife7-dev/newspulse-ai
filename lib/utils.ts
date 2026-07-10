@@ -9,8 +9,15 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-/** Format an ISO date as a relative string ("3h ago") with date fallback. */
-export function formatRelativeDate(iso: string | null | undefined): string {
+/**
+ * Format an ISO date as a relative string ("3h ago") with a locale-aware
+ * absolute date fallback for anything older than a week. `locale` is optional
+ * and defaults to the runtime's locale, so existing callers are unaffected.
+ */
+export function formatRelativeDate(
+  iso: string | null | undefined,
+  locale?: string
+): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -20,19 +27,22 @@ export function formatRelativeDate(iso: string | null | undefined): string {
   if (diffH < 24) return `${diffH}h ago`;
   const diffD = Math.floor(diffH / 24);
   if (diffD < 7) return `${diffD}d ago`;
-  return d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 }
 
-/** Format an ISO date as an absolute datetime string. */
-export function formatAbsoluteDate(iso: string | null | undefined): string {
+/** Format an ISO date as a locale-aware absolute datetime string. */
+export function formatAbsoluteDate(
+  iso: string | null | undefined,
+  locale?: string
+): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

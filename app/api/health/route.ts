@@ -13,6 +13,8 @@ export async function GET() {
   };
 
   const allHealthy = Object.values(checks).every((v) => v);
+  const demoMode =
+    process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
   const timestamp = new Date().toISOString();
 
   return NextResponse.json(
@@ -20,6 +22,9 @@ export async function GET() {
       ok: allHealthy,
       status: allHealthy ? 'healthy' : 'degraded',
       checks,
+      // Surfaced so the client can honestly tell users when results are
+      // sample data (demo mode) versus real, configured search.
+      demo_mode: demoMode,
       timestamp,
     },
     { status: allHealthy ? 200 : 503 }
