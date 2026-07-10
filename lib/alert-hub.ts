@@ -278,6 +278,36 @@ export function recordDeploymentAlert(params: {
 }
 
 /**
+ * Bridge DNA-GOV-014 cost optimization alerts into Alert Hub
+ *
+ * Called by /api/cost-analysis to record cost anomalies and spending trends
+ */
+export function recordCostAlert(params: {
+  metric: string;
+  severity: 'warning' | 'critical';
+  currentValue: number;
+  previousValue: number;
+  changePercent: number;
+  recommendation: string;
+}): Alert {
+  const title = `Cost anomaly: ${params.metric}`;
+  const changeIcon = params.changePercent > 0 ? '📈' : '📉';
+
+  const details = [
+    `${changeIcon} ${params.metric}: ${Math.abs(params.changePercent).toFixed(1)}% change`,
+    `Previous: $${params.previousValue.toFixed(2)}/day → Current: $${params.currentValue.toFixed(2)}/day`,
+  ].join('\n');
+
+  return recordAlert(
+    'deployment', // Cost alerts grouped with operational metrics
+    params.severity,
+    title,
+    details,
+    params.recommendation
+  );
+}
+
+/**
  * Format alert hub report for Founder display
  */
 export function formatAlertHubReport(report: AlertHubReport): string {
