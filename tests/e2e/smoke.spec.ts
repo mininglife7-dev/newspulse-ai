@@ -100,3 +100,17 @@ test('set-new-password page renders (reachable with a recovery session)', async 
     page.getByRole('button', { name: /Update password/ })
   ).toBeVisible();
 });
+
+test('verify-email offers a working resend control when an email is known', async ({
+  page,
+}) => {
+  await page.goto('/auth/verify-email?email=e2e%40example.com');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Verify your email'
+  );
+  // The "resend verification link" must be an interactive control, not a
+  // dead <a href="#">.
+  await expect(
+    page.getByRole('button', { name: /resend verification link/ })
+  ).toBeEnabled();
+});

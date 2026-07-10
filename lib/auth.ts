@@ -33,6 +33,23 @@ export async function signUp(
   return data;
 }
 
+/**
+ * Resend the signup confirmation email. Used by the "resend verification link"
+ * action when the first email never arrived. Mirrors signUp's redirect so the
+ * new link lands on the same /auth/confirm handler.
+ */
+export async function resendVerification(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    ...(typeof window !== 'undefined'
+      ? { options: { emailRedirectTo: `${window.location.origin}/auth/confirm` } }
+      : {}),
+  });
+
+  if (error) throw error;
+}
+
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
