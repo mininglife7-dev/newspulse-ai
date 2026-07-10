@@ -24,6 +24,15 @@ interface ComplianceSummary {
     approved: number;
     rejected: number;
   };
+  obligationMetrics: {
+    total: number;
+    identified: number;
+    in_progress: number;
+    completed: number;
+    not_applicable: number;
+    high_priority: number;
+    critical_priority: number;
+  };
   complianceHealth: 'critical' | 'warning' | 'good' | 'excellent';
   readinessPercentage: number;
 }
@@ -108,6 +117,22 @@ export async function GET(request: NextRequest) {
       rejected: evidence?.filter((e) => e.status === 'rejected').length ?? 0,
     };
 
+    // Fetch obligation metrics
+    const { data: obligations } = await supabase
+      .from('obligations')
+      .select('status, priority')
+      .eq('workspace_id', ctx.workspaceId);
+
+    const obligationMetrics = {
+      total: obligations?.length ?? 0,
+      identified: obligations?.filter((o) => o.status === 'identified').length ?? 0,
+      in_progress: obligations?.filter((o) => o.status === 'in_progress').length ?? 0,
+      completed: obligations?.filter((o) => o.status === 'completed').length ?? 0,
+      not_applicable: obligations?.filter((o) => o.status === 'not_applicable').length ?? 0,
+      high_priority: obligations?.filter((o) => o.priority === 'high').length ?? 0,
+      critical_priority: obligations?.filter((o) => o.priority === 'critical').length ?? 0,
+    };
+
     // Calculate compliance health
     let complianceHealth: 'critical' | 'warning' | 'good' | 'excellent';
     if (riskDistribution.unacceptable > 0) {
@@ -133,6 +158,7 @@ export async function GET(request: NextRequest) {
       riskDistribution,
       assessmentStatus,
       evidenceMetrics,
+      obligationMetrics,
       complianceHealth,
       readinessPercentage: Math.round(readinessPercentage),
     };
