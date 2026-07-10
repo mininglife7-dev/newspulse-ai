@@ -1,183 +1,142 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import type { DashboardState, DashboardError } from '@/types/governance';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import LaunchReadinessDashboard from '@/components/dashboard/LaunchReadinessDashboard';
-import MissionTracker from '@/components/dashboard/MissionTracker';
-import BlockerRegistry from '@/components/dashboard/BlockerRegistry';
-import CategoryScorecard from '@/components/dashboard/CategoryScorecard';
-import ConsistencyCheck from '@/components/dashboard/ConsistencyCheck';
-import DataSourceLabel from '@/components/dashboard/DataSourceLabel';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
-
-interface DashboardData {
-  state?: DashboardState;
-  error?: string;
-  loading: boolean;
-  lastFetch?: Date;
-}
+import Link from "next/link";
+import { CheckCircle, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData>({
-    loading: true,
-  });
-
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const res = await fetch('/api/dashboard', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        const json = (await res.json()) as DashboardState | DashboardError;
-
-        if ('ok' in json && !json.ok) {
-          setData({
-            error: json.error,
-            loading: false,
-          });
-        } else {
-          setData({
-            state: json as DashboardState,
-            loading: false,
-            lastFetch: new Date(),
-          });
-        }
-      } catch (err: any) {
-        setData({
-          error: err?.message || 'Failed to fetch dashboard',
-          loading: false,
-        });
-      }
-    }
-
-    fetchDashboard();
-
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchDashboard, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  if (data.loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin">
-          <div className="h-12 w-12 rounded-full border-4 border-border border-t-accent-500" />
-        </div>
-      </div>
-    );
-  }
-
-  if (data.error || !data.state) {
-    return (
-      <div className="flex min-h-screen flex-col gap-6 p-6">
-        <h1 className="text-3xl font-bold">Governor Dashboard</h1>
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{data.error || 'Unknown error'}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  const state = data.state;
-
   return (
-    <div className="flex min-h-screen flex-col gap-8 p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-4xl font-bold">Governor Dashboard</h1>
-          <p className="mt-2 text-white/60">
-            Canonical source of truth for NewsPulse AI launch readiness
-          </p>
-        </div>
-        <DataSourceLabel
-          source={state.dataSource}
-          lastUpdated={state.lastUpdated}
-          lastFetch={data.lastFetch?.toISOString()}
-        />
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div>
+        <h1 className="text-4xl font-bold text-white">Welcome to EURO AI</h1>
+        <p className="mt-2 text-lg text-slate-400">
+          Let's get your organization set up for AI governance
+        </p>
       </div>
 
-      {/* Critical Alert if NO-GO */}
-      {state.launchReadiness.state === 'no_go' && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>NO-GO</strong> — {state.launchReadiness.reasoning}
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Onboarding Progress */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Step 1: Company Profile */}
+        <Link
+          href="/workspace/setup"
+          className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
+                  1
+                </div>
+                <h3 className="font-semibold text-white">Company Setup</h3>
+              </div>
+              <p className="text-sm text-slate-400">
+                Tell us about your organization and its AI use
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
+          </div>
+        </Link>
 
-      {/* Conditional GO alert */}
-      {state.launchReadiness.state === 'conditional_go' && (
-        <Alert variant="warning">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>CONDITIONAL GO</strong> — {state.launchReadiness.reasoning}
-          </AlertDescription>
-        </Alert>
-      )}
+        {/* Step 2: AI Inventory */}
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                  2
+                </div>
+                <h3 className="font-semibold text-white">AI Inventory</h3>
+              </div>
+              <p className="text-sm text-slate-400">
+                Catalog all AI systems in use
+              </p>
+            </div>
+          </div>
+        </div>
 
-      {/* Green GO */}
-      {state.launchReadiness.state === 'go' && (
-        <Alert variant="success">
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>GO</strong> — {state.launchReadiness.reasoning}
-          </AlertDescription>
-        </Alert>
-      )}
+        {/* Step 3: Risk Assessment */}
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                  3
+                </div>
+                <h3 className="font-semibold text-white">Risk Assessment</h3>
+              </div>
+              <p className="text-sm text-slate-400">
+                Classify risks and obligations
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Inconsistencies Warning */}
-      {state.inconsistencies.found && (
-        <Alert variant="warning">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Data Integrity Warning:</strong> {state.inconsistencies.issues.length} inconsistencies detected.
-            See Consistency Check tab.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Key Features Section */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-8">
+        <h2 className="text-2xl font-bold text-white mb-6">
+          What you can do next
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex gap-4">
+            <CheckCircle className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-white">Complete company profile</h3>
+              <p className="text-sm text-slate-400">
+                Set up your organization details
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <CheckCircle className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-white">Add team members</h3>
+              <p className="text-sm text-slate-400">
+                Invite colleagues to collaborate
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <CheckCircle className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-white">Begin AI inventory</h3>
+              <p className="text-sm text-slate-400">
+                Document your AI systems
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <CheckCircle className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-white">Start assessment</h3>
+              <p className="text-sm text-slate-400">
+                Evaluate compliance gaps
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Main Dashboard */}
-      <Tabs defaultValue="readiness" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 gap-2 bg-card p-1">
-          <TabsTrigger value="readiness">Launch Readiness</TabsTrigger>
-          <TabsTrigger value="missions">Missions ({state.missionProgress.open + state.missionProgress.inProgress})</TabsTrigger>
-          <TabsTrigger value="blockers">Blockers ({state.blockers.filter(b => b.status === 'open').length})</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="consistency">Consistency</TabsTrigger>
-        </TabsList>
-
-        {/* Readiness Tab */}
-        <TabsContent value="readiness" className="mt-6">
-          <LaunchReadinessDashboard state={state} />
-        </TabsContent>
-
-        {/* Missions Tab */}
-        <TabsContent value="missions" className="mt-6">
-          <MissionTracker missions={state.missions} missionProgress={state.missionProgress} />
-        </TabsContent>
-
-        {/* Blockers Tab */}
-        <TabsContent value="blockers" className="mt-6">
-          <BlockerRegistry blockers={state.blockers} />
-        </TabsContent>
-
-        {/* Categories Tab */}
-        <TabsContent value="categories" className="mt-6">
-          <CategoryScorecard categories={state.categories} />
-        </TabsContent>
-
-        {/* Consistency Tab */}
-        <TabsContent value="consistency" className="mt-6">
-          <ConsistencyCheck inconsistencies={state.inconsistencies} />
-        </TabsContent>
-      </Tabs>
+      {/* Help Section */}
+      <div className="rounded-lg border border-slate-700/50 bg-slate-900/20 p-6">
+        <div className="flex gap-4">
+          <AlertCircle className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-medium text-white">Need help?</h3>
+            <p className="text-sm text-slate-400 mt-1">
+              Our AI governance advisors are here to guide you. Check out our{" "}
+              <Link href="#" className="text-blue-400 hover:text-blue-300">
+                documentation
+              </Link>{" "}
+              or{" "}
+              <Link href="#" className="text-blue-400 hover:text-blue-300">
+                contact support
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
