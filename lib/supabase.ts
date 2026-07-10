@@ -72,24 +72,67 @@ export interface SearchHistoryRow {
 }
 
 // =============================================================================
+// Storage bounds (R-13: storage-exhaustion DoS)
+// The `results` column is unbounded JSONB. Without a cap, a single search —
+// or a flood of them — can bloat rows and fill a small database tier. These
+// limits truncate oversized fields and cap the number of stored articles so
+// one row can never grow without bound. Display is unaffected: the live API
+// response still returns the full, untruncated results; only what we persist
+// for /history replay is bounded.
+// =============================================================================
+export const STORAGE_LIMITS = {
+  maxArticles: 25, // Firecrawl already limits to ~10; defensive ceiling
+  maxTitle: 500,
+  maxDescription: 2_000,
+  maxSummary: 4_000,
+  maxUrl: 2_000,
+  maxSource: 255,
+} as const;
+
+function truncate(value: string | null, max: number): string | null {
+  if (value == null) return value;
+  return value.length > max ? value.slice(0, max) : value;
+}
+
+/**
+ * Bound a result set to safe storage limits. Pure and side-effect free so it
+ * can be unit-tested directly. Never throws; always returns a valid array.
+ */
+export function boundResultsForStorage(results: NewsArticle[]): NewsArticle[] {
+  if (!Array.isArray(results)) return [];
+  return results.slice(0, STORAGE_LIMITS.maxArticles).map((r) => ({
+    title: truncate(r.title, STORAGE_LIMITS.maxTitle) ?? '',
+    url: truncate(r.url, STORAGE_LIMITS.maxUrl) ?? '',
+    source: truncate(r.source, STORAGE_LIMITS.maxSource) ?? '',
+    date: r.date,
+    description: truncate(r.description, STORAGE_LIMITS.maxDescription),
+    ai_summary: truncate(r.ai_summary, STORAGE_LIMITS.maxSummary) ?? '',
+  }));
+}
+
+// =============================================================================
 // Helpers — server-side data access
 // =============================================================================
 
 /**
  * Persist a search + its results into the `news_searches` table.
  * Returns the inserted row, or null on failure (errors logged).
+ *
+ * The stored result set is bounded (see boundResultsForStorage) to prevent
+ * unbounded JSONB growth; `result_count` reflects what was actually stored.
  */
 export async function saveSearch(
   keyword: string,
   results: NewsArticle[]
 ): Promise<SearchHistoryRow | null> {
+  const bounded = boundResultsForStorage(results);
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('news_searches')
       .insert({
-        keyword,
-        results,
-        result_count: results.length,
+        keyword: truncate(keyword, STORAGE_LIMITS.maxTitle) ?? keyword,
+        results: bounded,
+        result_count: bounded.length,
       })
       .select()
       .single();

@@ -1,0 +1,85 @@
+name: Database Backup
+
+# Free, zero-cost mitigation for R-06 (no database backups / no restore test).
+# Runs a weekly encrypted pg_dump of the Supabase database and uploads it as a
+# private, retained GitHub Actions artifact.
+#
+# INERT UNTIL CONFIGURED — mirrors the ADMIN_TOKEN opt-in pattern. The job is a
+# no-op unless BOTH repository secrets are set:
+#   SUPABASE_DB_URL     Postgres connection string
+#                       (Supabase → Project Settings → Database → Connection string → URI)
+#   BACKUP_PASSPHRASE   any strong passphrase; needed again to decrypt/restore
+# Until then this workflow runs, detects the missing secret, and exits cleanly
+# without touching anything. Nothing is spent and nothing is exposed.
+#
+# Restore procedure: see docs/infra/BACKUP_RESTORE_RUNBOOK.md
+
+on:
+  schedule:
+    - cron: '17 3 * * 1' # Mondays 03:17 UTC (off the top-of-hour rush)
+  workflow_dispatch: {}
+
+# Never run two backups at once; a newer run supersedes an older queued one.
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Encrypted pg_dump
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Guard — require secrets, else no-op
+        id: guard
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::notice::Backup skipped — set SUPABASE_DB_URL and BACKUP_PASSPHRASE repository secrets to enable."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install PostgreSQL client (pg_dump 16)
+        if: steps.guard.outputs.enabled == 'true'
+        run: |
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Dump and encrypt
+        if: steps.guard.outputs.enabled == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          echo "stamp=$stamp" >> "$GITHUB_ENV"
+          # --no-owner/--no-privileges: portable restore into any project.
+          pg_dump "$SUPABASE_DB_URL" \
+            --no-owner --no-privileges --format=custom \
+            --file "newspulse-${stamp}.dump"
+          # Symmetric AES-256 encryption; same passphrase decrypts on restore.
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+            --passphrase "$BACKUP_PASSPHRASE" \
+            --output "newspulse-${stamp}.dump.gpg" \
+            "newspulse-${stamp}.dump"
+          rm -f "newspulse-${stamp}.dump"
+          echo "Encrypted backup: newspulse-${stamp}.dump.gpg ($(du -h "newspulse-${stamp}.dump.gpg" | cut -f1))"
+
+      - name: Upload encrypted backup artifact
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ env.stamp }}
+          path: newspulse-*.dump.gpg
+          retention-days: 90
+          if-no-files-found: error

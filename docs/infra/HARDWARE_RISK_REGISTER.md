@@ -37,7 +37,8 @@ The table above is the audit snapshot from the morning of 2026-07-09. The PR-bac
 | R-03 | **Remediated in repo.** `supabase/schema.sql` drops the anon SELECT/INSERT policies; deny-by-default RLS (#16). **Pending:** re-run the schema in the live Supabase project for it to take effect there. Not a current code risk; remains open only as a live-database action. |
 | R-04 | **Partially remediated.** Rate limiting extended to all API routes (#16); limiter is still in-memory/per-instance. Provider spend caps and a durable (Redis) limiter remain open. |
 | R-05 | **Substantially remediated.** `next` upgraded to 14.2.35 (#16); critical advisory eliminated. Residual: 1 high + 1 moderate require the breaking Next ≥15 migration. |
-| R-13 | **Repo-side fixed** (anon INSERT dropped, #16); row-size guard and retention job still open; live schema re-run pending as in R-03. |
+| R-06 | **Backup mechanism added (opt-in).** Free weekly encrypted `pg_dump` GitHub Action (`.github/workflows/backup.yml`) + restore runbook (`docs/infra/BACKUP_RESTORE_RUNBOOK.md`). Inert until the Founder sets `SUPABASE_DB_URL` + `BACKUP_PASSPHRASE` secrets. **Pending:** set the secrets and run one restore drill (RTO evidence). |
+| R-13 | **Row-size guard added.** `boundResultsForStorage` caps article count and truncates oversized fields in `saveSearch` (unit-tested); anon INSERT already dropped (#16). Retention job (delete >90-day rows) still open; live schema re-run pending as in R-03. |
 | R-18 | **Remediated.** Backlog consolidated: #4→#16, #11→#19, #12/#3/#6/#7/#8→#20; superseded PRs closed. Only #2 (PWA/branding) and #5 (CEIS) remain open, held for Founder decisions. |
 | R-19 | **Remediated.** "AI-generated summary" labels merged (#16). |
 
