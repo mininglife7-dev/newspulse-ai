@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, AlertCircle, TrendingUp, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, TrendingUp, CheckCircle2, AlertTriangle, Clock, Download, FileText } from 'lucide-react';
 import type { ComplianceReportData } from '@/lib/compliance-report';
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; icon: any }> = {
@@ -27,6 +27,7 @@ export default function ReportsPage() {
   const [report, setReport] = useState<ComplianceReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const loadReport = async () => {
@@ -65,6 +66,51 @@ export default function ReportsPage() {
     loadReport();
   }, []);
 
+  const handleExportHTML = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/compliance-report/export?format=html');
+      if (!res.ok) throw new Error('Export failed');
+      const html = await res.text();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance-report-${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportJSON = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/compliance-report/export?format=json');
+      if (!res.ok) throw new Error('Export failed');
+      const data = await res.json();
+      const json = JSON.stringify(data.report, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance-report-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-slate-400">
@@ -101,14 +147,35 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to dashboard
-        </Link>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to dashboard
+          </Link>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportHTML}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+              title="Export as HTML for printing to PDF"
+            >
+              <FileText className="h-4 w-4" />
+              Export PDF
+            </button>
+            <button
+              onClick={handleExportJSON}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              Export JSON
+            </button>
+          </div>
+        </div>
         <h1 className="text-3xl font-bold text-white">Compliance Report</h1>
         <p className="text-sm text-slate-400">
           Generated: {new Date(report.generatedAt).toLocaleString()}
