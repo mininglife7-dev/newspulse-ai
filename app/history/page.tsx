@@ -13,10 +13,12 @@ import {
 } from 'lucide-react';
 import NewsCard from '@/components/NewsCard';
 import EmptyState from '@/components/EmptyState';
+import { useI18n } from '@/components/i18n/I18nProvider';
 import { cn, formatAbsoluteDate } from '@/lib/utils';
 import type { SearchHistoryRow } from '@/lib/supabase';
 
 export default function HistoryPage() {
+  const { t } = useI18n();
   const [history, setHistory] = useState<SearchHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,16 +32,16 @@ export default function HistoryPage() {
       const res = await fetch('/api/history?limit=100', { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Failed (${res.status})`);
+        throw new Error(json.error || t('history.failed', { status: res.status }));
       }
       setHistory((json.history ?? []) as SearchHistoryRow[]);
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || 'Failed to load history.');
+      setError(err?.message || t('history.failedLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -63,9 +65,7 @@ export default function HistoryPage() {
       : {};
     let res = await fetch(url, { method: 'DELETE', headers });
     if (res.status === 401) {
-      const entered = prompt(
-        'Deleting is protected on this deployment. Enter the admin token:'
-      );
+      const entered = prompt(t('history.adminTokenPrompt'));
       if (entered) {
         sessionStorage.setItem('newspulse_admin_token', entered);
         res = await fetch(url, {
@@ -75,14 +75,16 @@ export default function HistoryPage() {
       }
     }
     return res;
-  }, []);
+  }, [t]);
 
   const handleDeleteOne = useCallback(
     async (id: string) => {
       const res = await deleteWithAuth(`/api/history/${id}`);
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Delete failed (${res.status})`);
+        throw new Error(
+          json.error || t('history.deleteFailed', { status: res.status })
+        );
       }
       setHistory((prev) => prev.filter((entry) => entry.id !== id));
       setExpanded((prev) => {
@@ -92,15 +94,11 @@ export default function HistoryPage() {
         return next;
       });
     },
-    [deleteWithAuth]
+    [deleteWithAuth, t]
   );
 
   const handleClearAll = useCallback(async () => {
-    if (
-      !confirm(
-        `Delete all ${history.length} saved searches? This can't be undone.`
-      )
-    ) {
+    if (!confirm(t('history.confirmClearAll', { count: history.length }))) {
       return;
     }
     setClearing(true);
@@ -108,17 +106,19 @@ export default function HistoryPage() {
       const res = await deleteWithAuth('/api/history');
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Delete failed (${res.status})`);
+        throw new Error(
+          json.error || t('history.deleteFailed', { status: res.status })
+        );
       }
       setHistory([]);
       setExpanded(new Set());
     } catch (err: any) {
       console.error(err);
-      alert(err?.message || 'Failed to clear history.');
+      alert(err?.message || t('history.failedClear'));
     } finally {
       setClearing(false);
     }
-  }, [history.length, deleteWithAuth]);
+  }, [history.length, deleteWithAuth, t]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -126,24 +126,23 @@ export default function HistoryPage() {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-            <HistoryIcon className="h-7 w-7 text-accent-400" />
-            <span className="gradient-text">Search History</span>
+            <HistoryIcon className="h-7 w-7 text-accent-400" aria-hidden="true" />
+            <span className="gradient-text">{t('history.title')}</span>
           </h1>
-          <p className="mt-1 text-sm text-white/50">
-            Every search you've run on NewsPulse AI, stored in Supabase.
-          </p>
+          <p className="mt-1 text-sm text-white/50">{t('history.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={load}
             disabled={loading}
-            title="Refresh search history"
+            title={t('history.refreshTitle')}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-white/80 transition hover:border-accent-500/60 hover:text-white disabled:cursor-wait disabled:opacity-70"
           >
             <RotateCw
               className={cn('h-4 w-4', loading && 'animate-spin')}
+              aria-hidden="true"
             />
-            Refresh
+            {t('history.refresh')}
           </button>
           <button
             onClick={handleClearAll}
@@ -151,18 +150,21 @@ export default function HistoryPage() {
             className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-950/30 px-3 py-2 text-sm text-red-300 transition hover:border-red-400 hover:bg-red-950/60 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {clearing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
             )}
-            Clear History
+            {t('history.clear')}
           </button>
         </div>
       </header>
 
       {/* Error banner */}
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300"
+        >
           {error}
         </div>
       )}
@@ -184,9 +186,9 @@ export default function HistoryPage() {
       {!loading && !error && history.length === 0 && (
         <EmptyState
           icon={<SearchIcon className="h-6 w-6" />}
-          title="No searches yet"
-          description="Run your first search and it will show up here."
-          ctaLabel="Start searching"
+          title={t('history.emptyTitle')}
+          description={t('history.emptyDescription')}
+          ctaLabel={t('history.emptyCta')}
           ctaHref="/"
         />
       )}
@@ -198,12 +200,14 @@ export default function HistoryPage() {
             <thead className="border-b border-border/60 bg-card/60 text-left text-xs uppercase tracking-wider text-white/50">
               <tr>
                 <th className="w-10 px-4 py-3"></th>
-                <th className="px-4 py-3 font-medium">Keyword</th>
-                <th className="px-4 py-3 font-medium">Date Searched</th>
+                <th className="px-4 py-3 font-medium">{t('history.colKeyword')}</th>
+                <th className="px-4 py-3 font-medium">{t('history.colDate')}</th>
                 <th className="px-4 py-3 font-medium text-center">
-                  Articles Found
+                  {t('history.colArticles')}
                 </th>
-                <th className="px-4 py-3 font-medium text-right">Actions</th>
+                <th className="px-4 py-3 font-medium text-right">
+                  {t('history.colActions')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -240,17 +244,19 @@ function Row({
   onToggle: () => void;
   onDelete: (id: string) => Promise<void>;
 }) {
+  const { t, locale } = useI18n();
   const [deleting, setDeleting] = useState(false);
   const articles = Array.isArray(entry.results) ? entry.results : [];
 
   const handleDelete = async () => {
-    if (!confirm(`Delete the saved search "${entry.keyword}"?`)) return;
+    if (!confirm(t('history.confirmDeleteOne', { keyword: entry.keyword })))
+      return;
     setDeleting(true);
     try {
       await onDelete(entry.id);
     } catch (err: any) {
       console.error(err);
-      alert(err?.message || 'Failed to delete search.');
+      alert(err?.message || t('history.failedDelete'));
       setDeleting(false);
     }
   };
@@ -266,13 +272,14 @@ function Row({
         <td className="w-10 px-4 py-3">
           <button
             onClick={onToggle}
-            aria-label={isOpen ? 'Collapse' : 'Expand'}
+            aria-expanded={isOpen}
+            aria-label={isOpen ? t('history.collapse') : t('history.expand')}
             className="flex h-6 w-6 items-center justify-center rounded text-white/50 transition hover:bg-card hover:text-accent-300"
           >
             {isOpen ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             )}
           </button>
         </td>
@@ -280,13 +287,13 @@ function Row({
           <Link
             href={`/history/${entry.id}`}
             className="text-white transition hover:text-accent-300"
-            title="Open this saved search"
+            title={t('history.openSavedSearch')}
           >
             {entry.keyword}
           </Link>
         </td>
         <td className="px-4 py-3 text-white/60">
-          {formatAbsoluteDate(entry.created_at)}
+          {formatAbsoluteDate(entry.created_at, locale)}
         </td>
         <td className="px-4 py-3 text-center">
           <span className="inline-flex items-center justify-center rounded-full bg-accent-900/40 px-2.5 py-0.5 text-xs font-medium text-accent-300 ring-1 ring-inset ring-accent-500/20">
@@ -297,31 +304,32 @@ function Row({
           <div className="flex items-center justify-end gap-1.5">
             <button
               onClick={onToggle}
+              aria-expanded={isOpen}
               className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs text-white/80 transition hover:border-accent-500/60 hover:text-accent-300"
             >
-              {isOpen ? 'Hide' : 'View Results'}
+              {isOpen ? t('history.hide') : t('history.viewResults')}
             </button>
             <Link
               href={`/?q=${encodeURIComponent(entry.keyword)}`}
               className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs text-white/80 transition hover:border-accent-500/60 hover:text-accent-300"
-              title="Re-run this search"
+              title={t('history.rerunTitle')}
             >
-              <RotateCw className="h-3 w-3" />
-              Re-run
+              <RotateCw className="h-3 w-3" aria-hidden="true" />
+              {t('history.rerun')}
             </Link>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              aria-label={`Delete saved search "${entry.keyword}"`}
-              title="Delete this saved search"
+              aria-label={t('history.deleteAria', { keyword: entry.keyword })}
+              title={t('history.deleteTitle')}
               className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-950/30 px-2.5 py-1 text-xs text-red-300 transition hover:border-red-400 hover:bg-red-950/60 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {deleting ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
               ) : (
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-3 w-3" aria-hidden="true" />
               )}
-              Delete
+              {t('history.delete')}
             </button>
           </div>
         </td>
@@ -342,7 +350,7 @@ function Row({
               </div>
             ) : (
               <p className="text-sm italic text-white/40">
-                No saved results for this search.
+                {t('history.noSavedResults')}
               </p>
             )}
           </td>

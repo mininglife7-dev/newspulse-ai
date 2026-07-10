@@ -52,4 +52,52 @@ export const de: Messages = {
     privacy: 'Datenschutzerklärung',
     terms: 'Nutzungsbedingungen',
   },
+  history: {
+    title: 'Suchverlauf',
+    subtitle:
+      'Jede Suche, die Sie mit NewsPulse AI durchgeführt haben, gespeichert in Supabase.',
+    refresh: 'Aktualisieren',
+    refreshTitle: 'Suchverlauf aktualisieren',
+    clear: 'Verlauf löschen',
+    emptyTitle: 'Noch keine Suchen',
+    emptyDescription:
+      'Führen Sie Ihre erste Suche durch, dann erscheint sie hier.',
+    emptyCta: 'Suche starten',
+    colKeyword: 'Suchbegriff',
+    colDate: 'Suchdatum',
+    colArticles: 'Gefundene Artikel',
+    colActions: 'Aktionen',
+    expand: 'Ausklappen',
+    collapse: 'Einklappen',
+    viewResults: 'Ergebnisse anzeigen',
+    hide: 'Ausblenden',
+    rerun: 'Erneut suchen',
+    rerunTitle: 'Diese Suche erneut ausführen',
+    openSavedSearch: 'Diese gespeicherte Suche öffnen',
+    delete: 'Löschen',
+    deleteTitle: 'Diese gespeicherte Suche löschen',
+    deleteAria: 'Gespeicherte Suche „{keyword}“ löschen',
+    noSavedResults: 'Keine gespeicherten Ergebnisse für diese Suche.',
+    confirmClearAll:
+      'Alle {count} gespeicherten Suchen löschen? Dies kann nicht rückgängig gemacht werden.',
+    confirmDeleteOne: 'Gespeicherte Suche „{keyword}“ löschen?',
+    adminTokenPrompt:
+      'Das Löschen ist in dieser Umgebung geschützt. Geben Sie den Admin-Token ein:',
+    failedLoad: 'Verlauf konnte nicht geladen werden.',
+    failedClear: 'Verlauf konnte nicht gelöscht werden.',
+    failedDelete: 'Suche konnte nicht gelöscht werden.',
+    failed: 'Fehlgeschlagen ({status})',
+    deleteFailed: 'Löschen fehlgeschlagen ({status})',
+  },
+  detail: {
+    allSearches: 'Alle Suchen',
+    savedSearch: 'Gespeicherte Suche',
+    runOn: 'Ausgeführt am',
+    articlesCaptured_one:
+      '{count} Artikel zum Suchzeitpunkt erfasst. Zusammenfassungen erstellt von {model}.',
+    articlesCaptured_other:
+      '{count} Artikel zum Suchzeitpunkt erfasst. Zusammenfassungen erstellt von {model}.',
+    noResultsSaved: 'Für diese Suche wurden keine Ergebnisse gespeichert.',
+    rerun: 'Diese Suche erneut ausführen',
+  },
 };
