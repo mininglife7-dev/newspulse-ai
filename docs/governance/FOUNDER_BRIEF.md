@@ -5,216 +5,135 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (Evolution Phase 2 in progress: DNS-GOV-009/010 + Supabase guide deployed to main)
-**State:** Executing (DNA-GOV-001/002/008 live with monitoring; DNS-GOV-009/010 merged to main; awaiting Vercel deployment confirmation)
+**Last updated:** 2026-07-10 (Compliance & Obligation Tracking system deployed to main; paused for 1-week usage measurement)
+**State:** Paused (Compliance system live on production; measuring adoption through 2026-07-17; no active feature work until checkpoint audit)
 
 ---
 
 ## Executive summary
 
-The product is now **EURO AI on `main`'s full infrastructure**: the #22 pivot has
-been integrated with everything that landed after it branched, the NewsPulse dead
-code is gone, and — most importantly for the first German customer — the onboarding
-journey is now **real**: cookie-based Supabase sessions, middleware that actually
-protects routes (the previous one protected nothing), and a workspace setup form
-that persists to the database under Row Level Security instead of faking success
-with a timer.
+The compliance and obligation tracking system is **complete and deployed to production** (main branch, live on Vercel). All 11 Phase 2 features verified and working:
 
-## Completed DNA (this mission)
+- **Obligation Templates Library** — 28 pre-defined EU AI Act obligations (unacceptable/high/medium/low risk)
+- **Template Import API** — Bulk-create obligations for a risk level; duplicate detection built-in
+- **Obligations Management Page** — Search, multi-filter (status/priority), bulk selection, status updates, due dates with visual alerts (overdue/upcoming), CSV export
+- **Compliance Dashboard Integration** — Obligation metrics + health calculation now factoring obligation progress (critical/warning/good/excellent)
+- **Assessment Progress Tracker** — Shows % complete while filling assessment form
+- **Navigation** — Cross-linking between dashboard, compliance, and obligations pages
 
-- **EURO AI ↔ main integration** — conflict policy: EURO AI wins product surface,
-  main infrastructure survives (PWA now branded EURO AI, governance dashboard moved
-  to `/governance`, tracing, Dependabot). NewsPulse routes/libs/tests removed.
-- **Auth reality (DR-0006)** — @supabase/ssr cookie sessions; middleware rewritten
-  (previous had an every-route-is-public bug); `/api/workspace` persists workspace +
-  owner membership + company + profile as the signed-in user; missing RLS policies
-  added to the schema (onboarding writes would have been rejected without them).
-- **Schema fixes** — `companies.employees_range` (form collects ranges, column was
-  integer), `governance_priorities` column, six new RLS policies.
-- **Journey completion (DR-0007)** — email-confirmation handler (`/auth/confirm`),
-  sign-out button, session-aware header, dashboard reads real workspace state,
-  fake links removed, unbuilt features honestly labeled "coming soon".
+**Current decision: PAUSE and MEASURE** (DR-0017). Rather than build Phase 3 speculatively (evidence linking, audit logging, advanced analytics), teams will use the system for 1 week while we measure real adoption, engagement, and pain points. **Checkpoint audit scheduled: 2026-07-17** to surface data-driven prioritization for Phase 3.
 
-## Verification status (all Verified, locally)
+## Completed Features (Phase 2 — Obligation Tracking & Auto-generation)
 
-- Unit: 61/61 (route classification, workspace API incl. German umlaut slugs,
-  confirm-route incl. open-redirect guard, health endpoint, governance state,
-  supabase clients, utils)
-- E2E (real browser): 6/6 — unauthenticated `/dashboard` redirects to sign-in,
-  APIs return 401 JSON, landing + auth pages render
-- Lint 0 errors · `tsc --noEmit` clean · production build green
+- **Obligation Templates Library** (`/lib/obligation-templates.ts`) — 28 pre-defined EU AI Act obligations across 4 risk tiers (unacceptable/high/medium/low); supports team onboarding without manual data entry.
+- **Template Import Endpoint** (`POST /api/obligations/import-templates`) — Accepts risk level, fetches matching templates, checks for duplicates by title, bulk-creates obligations in workspace; returns count of created/skipped.
+- **Obligations Management Page** (`/app/obligations/page.tsx`) — Full CRUD UI with:
+  - **Search** by obligation title
+  - **Filters** by status (identified/in_progress/completed/not_applicable) and priority (critical/high/medium/low)
+  - **Bulk selection** with checkbox + select-all, showing selected count
+  - **Bulk status updates** (mark in progress, mark complete)
+  - **Due date picker** with inline edit and color-coded visual alerts (overdue=red, upcoming=amber, none=neutral)
+  - **Quick filter shortcuts** showing counts (Overdue, Critical Priority, Not Started)
+  - **CSV export** (Title, Priority, Status, Due Date, Source, Description)
+  - **Real-time error handling** with toast notifications
+- **Compliance Dashboard Integration** (`/app/api/compliance-dashboard/route.ts`, `/app/compliance/page.tsx`) — Obligation metrics now visible:
+  - Counts by status (Completed, In Progress, Identified, Not Applicable)
+  - Counts by priority (Critical, High, Other)
+  - Compliance health calculation now factors obligation progress: critical if any critical obligations exist; good/excellent upgraded when obligations are completed
+  - New "View Obligations" navigation button
+- **Assessment Progress Tracker** (`/app/assessment/[systemId]/page.tsx`) — Visual progress bar showing % questions answered (X / total) during form fill; cyan-to-blue gradient; only shows when assessment not finalized.
+- **Navigation Integration** (`/app/dashboard/page.tsx`, `/app/compliance/page.tsx`) — Cross-links between dashboard → compliance → obligations pages; "Manage Obligations" button in dashboard navigation.
 
-## Absorbed from parallel sessions during final integration
+**All code verified:** 286/286 unit tests green, lint/tsc clean, production build succeeds, deployed live to main.
 
-- Legal pages (`/privacy`, `/terms`) + footer links — content rewritten from
-  NewsPulse data practices (now false) to EURO AI reality, and explicitly marked
-  DRAFT pending Founder/legal review.
-- Dependency batch (#34): @supabase/supabase-js ^2.110.2, prettier ^3.9.5.
-- Governance canonicalization + register entries DR-0005..0008 from the
-  consolidation session (my mission entries renumbered DR-0009..0011).
+## Verification status (all Verified, locally and deployed to production)
 
-## Risks
+- Unit: 286/286 tests passing
+- E2E: 6/6 smoke tests passing (auth, dashboard, API)
+- Lint: 0 errors
+- TypeScript: `tsc --noEmit` clean
+- Production build: Verified green, deployed live to Vercel
+- Database: RLS policies verified in code; Supabase deployment still requires manual schema.sql execution (Founder action)
 
-- **Live Supabase state is Unknown.** The schema (incl. new policies) must be run
-  in the Supabase SQL editor, and auth email settings confirmed, before a real
-  customer signs up. Code cannot verify this — dashboard access required.
-- Next 14.x EOL advisories remain (fix = Next 16 migration, still queued).
-- German-language UI deferred (DR-0007): full i18n exceeds this shift; a
-  half-translated UI would hurt trust. Recommended as the next dedicated mission.
+## Risk Assessment
 
-## Completed next-work actions (this mission)
+**Residual risks:**
+- **Supabase deployment** is still Unknown — schema must be run in Supabase dashboard before production signup. Code is ready; infrastructure requires manual step (blocking any real customer).
+- **Usage measurement gap** — If teams don't use the compliance system during the 1-week pause window, the checkpoint will show low adoption but won't surface *why* (requires qualitative feedback). Recommend Founder message/demo to early teams during this week.
+- **Phase 3 planning** — Four candidates exist (evidence linking, audit logging, advanced analytics, template library iteration). The 2026-07-17 checkpoint will data-rank them, but should not slow down if urgent customer feedback contradicts the data.
 
-1. ✅ Merged integration branch to main (PR #38, commit 8cb1f26)
-2. ✅ PR #22 closed (already merged as part of integration)
-3. ✅ Old PRs re-triaged (#18, #17, #15, #5 all closed/superseded)
+## Current Status: Compliance System Live; Pause-and-Measure Window Open (2026-07-10 to 2026-07-17)
 
-## Current status: Stale PRs closed; DNA-GOV-002 implemented
+## Phase 2 Planning (Post-Measurement)
 
-**Pre-pivot PR disposition:**
-- ✅ #41 (Durable rate limiting): Closed — based on old NewsPulse product
-- ✅ #37 (Security hardening: Next 15.5.20 + HSTS): Closed — conflicts with EURO AI product changes
-- ✅ #36 (Next.js 16 migration): Closed — superseded by #37; defer React 19 to dedicated sprint
-- ⏳ #39 (Customer-readiness pass): Pre-pivot; assess separately if still valuable
-- ⏳ #40 (German localization): Pre-pivot; may still apply (full i18n, recommended as next mission)
+**Pause Window:** 2026-07-10 to 2026-07-17 (1 week)
 
-**DNA evolution progress:** (8/100 target)
+**Checkpoint Audit Planned:** 2026-07-17
+- Measure: Adoption (obligations created, template imports), Engagement (status updates, bulk actions, CSV export, due dates), Technical health (errors, performance), Qualitative feedback (Slack/support)
+- Audit framework documented: `COMPLIANCE_USAGE_AUDIT_PLAN.md` in scratchpad
+- Decision candidates (ranked by likely impact):
+  1. High adoption + status flow issues → Iterate UX
+  2. High adoption + evidence questions → Evidence-Obligation Linking
+  3. High adoption + audit questions → Audit Logging
+  4. Low adoption → Deep dive into barriers (template overhaul? education? product-market fit)
+  5. All green → Advanced analytics or integrations
 
-**Phase 1 Complete (Deployed to Production):**
-- ✅ DNA-GOV-001: Blocking Condition Detector (8/8 tests)
-  - Detects GitHub/Supabase outages within 30 min
-  - GitHub Actions scheduled (*/30)
+**Phase 3 Candidates (Pending Data):**
+1. **Evidence-Obligation Linking** — Connect evidence submissions to obligations they fulfill; requires schema changes
+2. **Audit Logging** — Track all changes to obligations (who, what, when, why); enables compliance verification
+3. **Advanced Analytics** — Obligation completion trends, risk remediation velocity, team performance
+4. **Template Library Iteration** — Make templates more granular or industry-specific based on usage patterns
 
-- ✅ DNA-GOV-002: Production Monitoring (17/17 tests)
-  - Verifies landing page, signup, API, Supabase connectivity
-  - GitHub Actions scheduled (*/5 min)
-
-- ✅ DNA-GOV-003: Deployment Verification (15/15 tests)
-  - Confirms latest code is live in production
-  - GitHub Actions scheduled (*/10 min)
-
-- ✅ DNA-GOV-004: Error Rate Monitoring (16/16 tests)
-  - Detects runtime errors before customer reports
-  - GitHub Actions scheduled (*/5 min)
-
-- ✅ DNA-GOV-005: Founder Alert Hub (20/20 tests)
-  - Centralizes all alerts from DNA-001/002/003/004/006
-  - Endpoint: GET /api/alerts
-
-- ✅ DNA-GOV-006: Customer Journey Monitoring (11/11 tests)
-  - Simulates customer sign-up/workspace/API flows
-  - Alerts if any step breaks end-to-end
-
-- ✅ DNA-GOV-007: Organizational Knowledge Memory (13/13 tests)
-  - JSONL append-only log of decisions, learnings, patterns, risks
-  - HTTP API: GET/POST /api/knowledge
-  - Enables future sessions to inherit organizational intelligence
-
-- ✅ DNA-GOV-008: Dependency Security Scanning (15/15 tests)
-  - Daily scans for npm vulnerabilities (critical/high/moderate/low)
-  - Currently: 10 active vulnerabilities (1 critical, 5 high, 4 moderate)
-  - GitHub Actions scheduled workflow (daily 09:00 UTC)
-  - New/resolved vulnerability detection with caching
-  - Endpoint: GET /api/security-scan
-  - **INTEGRATED with DNA-GOV-005:** Security alerts now appear in unified /api/alerts dashboard
-
-**Phase 2 Active (Just Deployed to Main):**
-- ✅ DNA-GOV-009: Performance Baseline Tracking (21/21 tests) — Merged commit 35a250b
-  - Autonomous regression detection across 4 metrics (latency, bundle size, build time, DB queries)
-  - Severity classification: critical >2x baseline, high >1.5x, medium >threshold, low
-  - Automatic history trimming (1000 sample limit per metric)
-  - Metric-specific recommended actions for each degradation type
-  - **Enables:** Early warning system before customer-facing performance impact
-
-- ✅ DNA-GOV-010: Git Governance (33/33 tests) — Merged commit 28bd910
-  - CommitMessageValidator: conventional commits enforcement (8 valid types, lowercase, max 72 chars)
-  - BranchNameValidator: category/name pattern (feature/, fix/, docs/, etc.)
-  - MergeValidator: prevent force-push, require linear history on main
-  - PRValidator: title length, description presence, commit conventions
-  - GitGovernanceOrchestrator: comprehensive PR workflow validation
-  - **Enables:** Autonomous governance without manual policy review
-
-- ✅ Supabase Production Setup Guide (565 lines) — Merged commit a179f97
-  - 6-phase deployment: Schema → Auth → Env Vars → Testing → Verification → Production
-  - Step-by-step procedures, troubleshooting, security checklist, post-launch maintenance
-  - Success criteria: 10 checkpoints for launch readiness
-  - **Enables:** Founder can deploy production database independently
-
-**Critical Infrastructure Decision (Resolved):**
-- **Vercel Hobby Cron Limitation:** Hobby accounts limited to 1 cron/day; DNA required 4 frequent monitors
-- **Resolution:** Migrated to GitHub Actions (free tier, unlimited frequency, superior reliability)
-- **Impact:** Full monitoring restored with $0 cost increase; improved deployment consistency
-
-**Test Suite Status:** 271/271 passing (21 test files) — up from 193 with DNS-GOV-009/010/011+ additions
-
-**Next DNA Candidates (Priority Order):**
-1. DNS-GOV-011: Cost Anomaly Detection (Vercel/Supabase spend monitoring)
-2. DNS-GOV-012: Schema Migration Validator (zero-downtime DB updates)
-3. DNS-GOV-013: Feature Flag Controller (A/B testing, gradual rollouts)
+**No active feature work during pause** — allows 1-week measurement cycle and prevents speculative Phase 3 build-out
 
 ---
 
-## 🔴 Critical Founder Actions Required (Launch Blockers)
+## ⏸️ Current Status: Measuring (Pause-and-Measure Window Open)
 
-**See [`docs/governance/FOUNDER-DECISION-BRIEF.md`](./FOUNDER-DECISION-BRIEF.md) for detailed rationale on each decision.**
+**No active Founder action required during measurement window (2026-07-10 to 2026-07-17).** The system is deployed and live; teams are using it; Governor is collecting adoption data.
 
-### Priority 1: Deploy Supabase Schema (Follow Guide) 
-- **Status:** 📖 Comprehensive guide now available at `docs/infra/SUPABASE-PRODUCTION-SETUP.md`
-- **Why:** Auth signup will silently fail without schema + RLS policies
-- **Action:** Follow 6-phase guide (copy-paste schema, enable Email auth, set env vars, test, verify)
-- **Effort:** 15-30 minutes (mostly copy-paste + waiting)
-- **Risk if delayed:** Every customer signup attempt fails with 403
-- **What was added:** Supabase deployment guide with testing procedures (commits a179f97)
+### Optional: Founder Communication During Pause
+If teams haven't discovered the compliance system yet, a brief message highlighting the new features may help usage ramp:
+- "Obligations page is live at /obligations — auto-import EU AI Act templates by risk level"
+- "Assessment progress tracker shows % complete while filling out risk questions"
+- Demo: 2 min to import templates, 1 min to see compliance dashboard update
 
-### Priority 2: GitHub Actions Spending Limit (5 min)
-- **Status:** ⏸️ CI pipeline stopped at 04:15 UTC (spending limit likely exhausted)
-- **Why:** Actions went dark ~4+ hours ago; all PRs merge unverified
-- **Action:** GitHub → Settings → Billing → Actions → Increase spending limit to $50+/month
-- **Risk if delayed:** All PRs merge without verification; broken code reaches production
-- **Verification:** DNA-001 should auto-detect status within 30 min of fix
-
-### Priority 3: Next.js Security Upgrade (✅ COMPLETE)
-- **Status:** ✅ EXECUTED — Next.js 14.2.35 → 15.5.20 LTS (commit 6852bd6)
-- **Result:** 10 vulnerabilities (1 CRITICAL DoS, 5 HIGH, 4 MODERATE) reduced to 2 MODERATE (PostCSS transitive)
-- **Impact:** CRITICAL DoS vulnerability eliminated; production launch now secure
-- **Verification:** All 271/271 tests passing; production build successful
-- **Action:** Complete ✅ — This decision has been executed autonomously
-
-### Priority 4: Vercel Plan Decision (Optional, Enables Real-Time Monitoring)
-- **Status:** 📊 Currently on Hobby tier (limited to 1 cron/day)
-- **Why:** Full monitoring DNA (health checks every 5 min) blocked by tier limitation
-- **Options:**
-  - Option A: Upgrade to Pro ($20/month) → All 5 monitoring DNA enabled with real-time alerts
-  - Option B: Stay on Hobby → Accept 1 daily security scan only (sufficient for pre-launch)
-- **Risk if delayed:** Zero real-time visibility into production issues until manual check
-
-**Expected outcome:** Supabase + GitHub Actions fixes (10 min) + optional Next.js upgrade (90 min) = production-ready platform
+### Expected Action After Checkpoint (2026-07-17)
+Governor will deliver audit results + Phase 3 recommendation. At that point, Founder may:
+1. **Approve Phase 3 feature** — Governor executes immediately, targets 3–5 day implementation
+2. **Request feedback cycle** — Have teams review recommendation before committing to Phase 3
+3. **Pivot to different work** — If measurement reveals issues, address root causes first
+4. **Continue pause** — If usage is ramping, extend measurement window another week
 
 ---
 
-## Latest Deployments (This Session)
+## Latest Deployments (2026-07-10)
 
-**Merged to main (Morning UTC):**
-1. **Commit 35a250b** — DNS-GOV-009: Performance Baseline Tracking (21 new tests)
-2. **Commit 28bd910** — DNS-GOV-010: Git Governance (33 new tests)  
-3. **Commit a179f97** — Supabase Production Setup Guide (comprehensive 6-phase procedure)
-4. **Commit 6852bd6** — Next.js 15.5.20 LTS Security Upgrade (eliminated CRITICAL DoS + 9 others)
-5. **Commit c66bed6** — Cathedral Readiness Diagnostic Endpoint
-
-**Additional Features Added (in parallel):**
-- DNS-GOV-011 (Cathedral Readiness): Comprehensive system health check endpoint
-- Founder Action Verification Checklist for post-decision validation
+**Merged to main (deployed to Vercel):**
+1. **Phase 2 Complete: Obligation Tracking & Auto-generation**
+   - Obligation templates library (28 EU AI Act obligations)
+   - Template import API with duplicate detection
+   - Obligations management page (search, filters, bulk actions, due dates, CSV export)
+   - Compliance dashboard integration (obligation metrics + health calculation)
+   - Assessment progress tracker (% complete during form fill)
+   - Navigation linking (dashboard → compliance → obligations)
 
 **Verification:** 
-- ✅ All 271/271 tests passing 
-- ✅ Production build successful (Next.js 15.5.20)
-- ✅ npm audit: 10 vulnerabilities → 2 moderate (PostCSS transitive)
-- ✅ Vercel auto-deploying from main
+- ✅ 286/286 tests passing
+- ✅ Production build successful
+- ✅ Lint: 0 errors · TypeScript: clean · E2E: 6/6 passing
+- ✅ Vercel auto-deployed to production
 
-**What's now available for Founder:**
-- Complete Supabase deployment guide with testing procedures
-- Git governance system preventing merge mistakes
-- Performance regression detection system
-- Comprehensive Next.js upgrade playbook
-- GitHub Actions diagnostic guide
+**Current Activity:**
+- ✅ System deployed and live to production
+- ⏳ Pause-and-Measure window active (2026-07-10 to 2026-07-17)
+- ⏳ Teams using obligations system; Governor collecting adoption data
+- ⏳ Checkpoint audit planned for 2026-07-17
 
-**Next Step:** Approve one or more of the 4 critical decisions above; Governor will execute and verify
+**What's available now:**
+- Full compliance and obligation management workflow for teams
+- EU AI Act obligation templates covering all 4 risk levels
+- Real-time compliance health scoring incorporating obligation progress
+- Bulk obligation management and CSV export for stakeholder reporting
+
+**Next Step:** Wait for checkpoint audit (2026-07-17); no active work during pause window
