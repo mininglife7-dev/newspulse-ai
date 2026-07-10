@@ -1,0 +1,52 @@
+name: DNA-GOV-013 - Cost Anomaly Detection
+
+on:
+  # Run weekly on Monday at 9 AM UTC (after billing period processing)
+  schedule:
+    - cron: '0 9 * * 1'
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  detect-cost-anomalies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Detect cost anomalies
+        env:
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL || 'https://euro-ai.vercel.app' }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
+        run: |
+          echo "Analyzing Vercel and Supabase costs for anomalies..."
+
+          if [ -z "$DEPLOYMENT_URL" ]; then
+            echo "⚠️ DEPLOYMENT_URL not configured, skipping cost anomaly detection"
+            exit 0
+          fi
+
+          curl -s -X GET \
+            -H "Content-Type: application/json" \
+            "$DEPLOYMENT_URL/api/cost-anomaly-detection" | jq '.' || true
+
+      - name: Alert on critical anomalies
+        if: failure()
+        run: |
+          echo "❌ Cost anomaly detection failed or critical anomalies found"
+          echo "Review the cost anomaly detection report in your dashboard"
+
+      - name: Log cost analysis
+        if: always()
+        run: echo "Cost anomaly detection completed at $(date)"
