@@ -81,6 +81,7 @@ export default function ObligationsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const loadEvidence = useCallback(async (obligationId: string) => {
     try {
@@ -200,6 +201,30 @@ export default function ObligationsPage() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const res = await fetch('/api/reports/compliance-pdf');
+      if (!res.ok) throw new Error('Failed to generate report');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download =
+        res.headers.get('content-disposition')?.split('filename="')[1]?.slice(0, -1) ||
+        'compliance-report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to download report');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   const getCompletionStats = () => {
     const total = obligations.length;
     const completed = obligations.filter((o) => o.status === 'completed').length;
@@ -245,13 +270,34 @@ export default function ObligationsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to dashboard
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to dashboard
+          </Link>
+          {stats.total > 0 && (
+            <button
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-cyan-500/40 disabled:opacity-60"
+            >
+              {downloadingPdf ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating PDF…
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Export Report
+                </>
+              )}
+            </button>
+          )}
+        </div>
         <h1 className="text-3xl font-bold text-white">Compliance Obligations</h1>
         <p className="text-slate-400">
           Track and manage EU AI Act compliance obligations across your organization.
