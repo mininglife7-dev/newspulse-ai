@@ -4,6 +4,7 @@ import {
   formatAlertHubReport,
   cleanupResolvedAlerts,
 } from '@/lib/alert-hub';
+import { getSafeErrorResponse } from '@/lib/error-handler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -64,15 +65,17 @@ export async function GET(req: Request) {
         },
       }
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[alerts] Hub failed:', message);
+  } catch (error: unknown) {
+    const message = getSafeErrorResponse(
+      'Alert hub failed',
+      error,
+      'api/alerts'
+    );
 
     return NextResponse.json(
       {
         ok: false,
-        error: 'Alert hub failed',
-        message,
+        error: message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

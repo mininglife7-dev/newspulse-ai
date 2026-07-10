@@ -3,6 +3,7 @@ import {
   detectAllBlockingConditions,
   formatBlockingConditionAlert,
 } from '@/lib/blocking-condition-detector';
+import { getSafeErrorResponse } from '@/lib/error-handler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -82,15 +83,17 @@ export async function GET(req: Request) {
         },
       }
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[blocking-conditions] Detection failed:', message);
+  } catch (error: unknown) {
+    const message = getSafeErrorResponse(
+      'Detection failed',
+      error,
+      'api/blocking-conditions'
+    );
 
     return NextResponse.json(
       {
         ok: false,
-        error: 'Detection failed',
-        message,
+        error: message,
         blockers: [],
       },
       { status: 503 }

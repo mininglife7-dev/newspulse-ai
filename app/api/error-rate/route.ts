@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getErrorRateReport, formatErrorAlert } from '@/lib/error-rate-monitor';
+import { getSafeErrorResponse } from '@/lib/error-handler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -50,15 +51,17 @@ export async function GET(req: Request) {
         },
       }
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[error-rate] Report failed:', message);
+  } catch (error: unknown) {
+    const message = getSafeErrorResponse(
+      'Error rate report failed',
+      error,
+      'api/error-rate'
+    );
 
     return NextResponse.json(
       {
         ok: false,
-        error: 'Error rate report failed',
-        message,
+        error: message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

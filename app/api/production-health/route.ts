@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runProductionHealthChecks } from '@/lib/production-monitoring';
+import { getSafeErrorResponse } from '@/lib/error-handler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -51,15 +52,17 @@ export async function GET(req: Request) {
         },
       }
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[production-health] Monitoring failed:', message);
+  } catch (error: unknown) {
+    const message = getSafeErrorResponse(
+      'Production health check failed',
+      error,
+      'api/production-health'
+    );
 
     return NextResponse.json(
       {
         ok: false,
-        error: 'Production health check failed',
-        message,
+        error: message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

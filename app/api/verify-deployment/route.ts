@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyDeployment, formatDeploymentAlert } from '@/lib/deployment-verifier';
+import { getSafeErrorResponse } from '@/lib/error-handler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,15 +66,17 @@ export async function GET(req: Request) {
         },
       }
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[verify-deployment] Check failed:', message);
+  } catch (error: unknown) {
+    const message = getSafeErrorResponse(
+      'Deployment verification failed',
+      error,
+      'api/verify-deployment'
+    );
 
     return NextResponse.json(
       {
         ok: false,
-        error: 'Deployment verification failed',
-        message,
+        error: message,
         status: 'error',
       },
       { status: 503 }

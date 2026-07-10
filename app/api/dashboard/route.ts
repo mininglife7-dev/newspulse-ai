@@ -9,6 +9,7 @@
  */
 
 import { buildDashboardState } from '@/lib/governance-state';
+import { getSafeErrorResponse } from '@/lib/error-handler';
 import type { DashboardResponse } from '@/types/governance';
 
 export async function GET(): Promise<Response> {
@@ -24,12 +25,16 @@ export async function GET(): Promise<Response> {
         'Content-Type': 'application/json',
       },
     });
-  } catch (err: any) {
-    console.error('Failed to build dashboard state:', err);
+  } catch (err: unknown) {
+    const errorMessage = getSafeErrorResponse(
+      'Failed to build dashboard state',
+      err,
+      'api/dashboard'
+    );
 
     const response: DashboardResponse = {
       ok: false,
-      error: err?.message || 'Failed to build dashboard state',
+      error: errorMessage,
       timestamp: new Date().toISOString(),
     };
 
