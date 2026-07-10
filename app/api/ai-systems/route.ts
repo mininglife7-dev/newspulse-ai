@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
@@ -54,9 +54,11 @@ async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteCli
   };
 }
 
-/** GET /api/ai-systems — list the caller's workspace AI-system inventory. */
-export async function GET() {
-  const supabase = await createRouteClient();
+/** GET /api/ai-systems — list the caller's workspace AI-system inventory or fetch a single system. */
+export async function GET(request: NextRequest) {
+  const systemId = request.nextUrl.searchParams.get('id');
+
+  const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -65,19 +67,34 @@ export async function GET() {
     );
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('ai_systems')
     .select('id, name, description, system_type, vendor, purpose, status, created_at')
-    .eq('workspace_id', ctx.workspaceId)
-    .order('created_at', { ascending: false });
+    .eq('workspace_id', ctx.workspaceId);
+
+  if (systemId) {
+    query = query.eq('id', systemId).limit(1);
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
-    console.error('[api/ai-systems] list failed:', error);
+    console.error('[api/ai-systems] query failed:', error);
     return NextResponse.json(
       { ok: false, error: 'Could not load AI systems' },
       { status: 500 }
     );
   }
+
+  if (systemId && (!data || data.length === 0)) {
+    return NextResponse.json(
+      { ok: false, error: 'System not found' },
+      { status: 404 }
+    );
+  }
+
   return NextResponse.json({ ok: true, systems: data ?? [] });
 }
 

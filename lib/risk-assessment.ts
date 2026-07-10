@@ -1,178 +1,468 @@
 /**
- * EU AI Act risk screening.
+ * Risk Assessment Engine
+ * EU AI Act compliance risk classification
  *
- * A simplified, honest first-pass classification into the AI Act's four risk
- * tiers based on yes/no screening questions. It is informational tooling for
- * prioritization — not a conformity assessment and not legal advice (see
- * /terms). The questions mirror the Act's structure: Article 5 prohibited
- * practices, Annex III high-risk areas, and transparency-risk systems.
+ * Based on EU AI Act Annex III (high-risk AI systems)
+ * Classifies systems into four tiers:
+ * - unacceptable: Prohibited under EU AI Act
+ * - high: Significant risk to fundamental rights
+ * - medium: Some risk, transparency requirements
+ * - low: Minimal risk or general-purpose AI
  */
 
 export type RiskLevel = 'unacceptable' | 'high' | 'medium' | 'low';
+export type RiskCategory =
+  | 'biometric-identification'
+  | 'emotion-recognition'
+  | 'credit-scoring'
+  | 'recruitment'
+  | 'education'
+  | 'employment'
+  | 'law-enforcement'
+  | 'critical-infrastructure'
+  | 'general-purpose'
+  | 'other';
 
-export interface ScreeningQuestion {
-  id: string;
-  tier: 'prohibited' | 'high' | 'transparency';
-  text: string;
+export interface AssessmentAnswer {
+  questionId: string;
+  value: boolean | string | number | string[];
+  riskWeight?: number;
 }
 
-export const SCREENING_QUESTIONS: ScreeningQuestion[] = [
-  // — Article 5: prohibited practices —
+export interface RiskAssessmentResult {
+  riskLevel: RiskLevel;
+  riskScore: number; // 0-100
+  score: {
+    prohibitedIndicators: number;
+    highRiskIndicators: number;
+    mediumRiskIndicators: number;
+  };
+  reasoning: string[];
+  affectedCategories: RiskCategory[];
+  recommendations: string[];
+  timestamp: string;
+}
+
+// ---------------------------------------------------------------
+// Question Definitions
+// ---------------------------------------------------------------
+
+export interface AssessmentQuestion {
+  id: string;
+  category: string;
+  question: string;
+  description?: string;
+  type: 'yes-no' | 'multiple-choice' | 'text' | 'select';
+  options?: string[];
+  riskWeight?: number; // 0-1, impact on risk score
+  showIf?: (answers: Map<string, any>) => boolean; // Conditional display
+  prohibitedIndicator?: boolean; // Does 'yes' make system prohibited?
+  highRiskIndicator?: boolean; // Does 'yes' make system high-risk?
+}
+
+const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
+  // Prohibited uses
   {
-    id: 'social_scoring',
-    tier: 'prohibited',
-    text: 'Does it score or classify people based on social behavior or personal traits, leading to detrimental treatment?',
+    id: 'q1-prohibited-biometric',
+    category: 'Prohibited Uses',
+    question: 'Does the system perform real-time remote biometric identification?',
+    description:
+      'Real-time remote biometric identification (e.g., facial recognition in public spaces) is prohibited unless in specific law enforcement scenarios.',
+    type: 'yes-no',
+    riskWeight: 1.0,
+    prohibitedIndicator: true,
   },
   {
-    id: 'manipulation',
-    tier: 'prohibited',
-    text: 'Does it use subliminal or purposefully manipulative techniques that materially distort behavior and may cause harm?',
+    id: 'q2-emotion-recognition',
+    category: 'Prohibited Uses',
+    question: 'Does the system use emotion recognition in sensitive contexts?',
+    description:
+      'Emotion recognition in workplaces, educational institutions, or law enforcement is prohibited.',
+    type: 'yes-no',
+    riskWeight: 0.95,
+    prohibitedIndicator: true,
   },
   {
-    id: 'realtime_biometric_public',
-    tier: 'prohibited',
-    text: 'Does it perform real-time remote biometric identification in publicly accessible spaces?',
+    id: 'q3-social-scoring',
+    category: 'Prohibited Uses',
+    question:
+      'Does the system create or use social credit scores to restrict rights or opportunities?',
+    description:
+      'Social credit systems that penalize individuals or restrict opportunities are prohibited.',
+    type: 'yes-no',
+    riskWeight: 0.95,
+    prohibitedIndicator: true,
+  },
+
+  // High-risk indicators
+  {
+    id: 'q4-credit-decision',
+    category: 'High-Risk Areas',
+    question: 'Does the system make decisions affecting creditworthiness or access to finance?',
+    description:
+      'Credit scoring, loan approval, insurance pricing based on AI are high-risk applications.',
+    type: 'yes-no',
+    riskWeight: 0.85,
+    highRiskIndicator: true,
   },
   {
-    id: 'emotion_work_school',
-    tier: 'prohibited',
-    text: 'Does it infer emotions of people in workplaces or educational institutions?',
-  },
-  // — Annex III: high-risk areas —
-  {
-    id: 'biometric_id',
-    tier: 'high',
-    text: 'Does it perform biometric identification or categorization of people (outside the prohibited cases)?',
-  },
-  {
-    id: 'critical_infrastructure',
-    tier: 'high',
-    text: 'Is it a safety component in critical infrastructure (energy, water, transport, digital networks)?',
+    id: 'q5-recruitment',
+    category: 'High-Risk Areas',
+    question: 'Does the system screen, filter, or make decisions in recruitment or employment?',
+    description:
+      'AI used for candidate screening, resume parsing, or hiring decisions is high-risk.',
+    type: 'yes-no',
+    riskWeight: 0.8,
+    highRiskIndicator: true,
   },
   {
-    id: 'education',
-    tier: 'high',
-    text: 'Does it determine access to education or evaluate learning outcomes?',
+    id: 'q6-education',
+    category: 'High-Risk Areas',
+    question: 'Does the system make decisions affecting educational access or outcomes?',
+    description:
+      'AI that determines student placement, eligibility, or evaluation is high-risk.',
+    type: 'yes-no',
+    riskWeight: 0.8,
+    highRiskIndicator: true,
   },
   {
-    id: 'employment',
-    tier: 'high',
-    text: 'Is it used in recruitment, promotion, termination, task allocation, or monitoring of workers?',
+    id: 'q7-law-enforcement',
+    category: 'High-Risk Areas',
+    question: 'Is the system used by law enforcement for profiling, risk assessment, or investigation?',
+    description:
+      'AI used for predictive policing, criminal risk assessment, or suspect profiling is high-risk.',
+    type: 'yes-no',
+    riskWeight: 0.85,
+    highRiskIndicator: true,
   },
   {
-    id: 'essential_services',
-    tier: 'high',
-    text: 'Does it decide eligibility for essential services (credit scoring, insurance, public benefits)?',
+    id: 'q8-critical-infrastructure',
+    category: 'High-Risk Areas',
+    question: 'Does the system control or monitor critical infrastructure?',
+    description:
+      'AI managing energy, water, transport, or other critical systems is high-risk.',
+    type: 'yes-no',
+    riskWeight: 0.8,
+    highRiskIndicator: true,
   },
   {
-    id: 'law_migration_justice',
-    tier: 'high',
-    text: 'Is it used in law enforcement, migration/border control, or the administration of justice?',
+    id: 'q9-fundamental-rights',
+    category: 'High-Risk Areas',
+    question:
+      'Does the system have the potential to significantly affect fundamental rights (privacy, dignity, non-discrimination)?',
+    description:
+      'Any system that could impact core human rights is considered high-risk.',
+    type: 'yes-no',
+    riskWeight: 0.75,
+    highRiskIndicator: true,
   },
-  // — Transparency-risk systems —
+
+  // Data processing
   {
-    id: 'interacts_humans',
-    tier: 'transparency',
-    text: 'Does it interact with people who might not know they are talking to an AI (e.g. chatbots)?',
+    id: 'q10-personal-data',
+    category: 'Data Processing',
+    question: 'Does the system process personal data?',
+    type: 'yes-no',
+    riskWeight: 0.4,
+    showIf: (answers) => !answers.has('q10-personal-data') || answers.get('q10-personal-data'),
   },
   {
-    id: 'generates_content',
-    tier: 'transparency',
-    text: 'Does it generate synthetic audio, image, video, or text content?',
+    id: 'q11-sensitive-data',
+    category: 'Data Processing',
+    question:
+      'Does the system process special categories of data (race, ethnicity, religion, health, biometric, genetic)?',
+    type: 'yes-no',
+    riskWeight: 0.7,
+    showIf: (answers) => answers.get('q10-personal-data') === true,
+  },
+  {
+    id: 'q12-vulnerable-groups',
+    category: 'Data Processing',
+    question:
+      'Does the system process data of vulnerable groups (children, elderly, persons with disabilities)?',
+    type: 'yes-no',
+    riskWeight: 0.65,
+    showIf: (answers) => answers.get('q10-personal-data') === true,
+  },
+
+  // Scale & Scope
+  {
+    id: 'q13-scale',
+    category: 'Scale & Scope',
+    question: 'How many individuals does the system affect?',
+    type: 'select',
+    options: [
+      'Fewer than 100',
+      '100-1,000',
+      '1,000-10,000',
+      '10,000-100,000',
+      'More than 100,000',
+    ],
+    riskWeight: 0.5,
+  },
+  {
+    id: 'q14-geographic-scope',
+    category: 'Scale & Scope',
+    question: 'What is the geographic scope of deployment?',
+    type: 'select',
+    options: ['Single country', 'EU member states', 'International', 'Global'],
+    riskWeight: 0.3,
+  },
+
+  // Transparency & Explainability
+  {
+    id: 'q15-transparency',
+    category: 'Transparency',
+    question:
+      'Can the system explain its decisions to affected individuals in human-understandable terms?',
+    type: 'yes-no',
+    riskWeight: 0.4,
+  },
+  {
+    id: 'q16-oversight',
+    category: 'Transparency',
+    question: 'Is there human oversight and ability to override system decisions?',
+    type: 'yes-no',
+    riskWeight: 0.45,
+  },
+
+  // Safety & Testing
+  {
+    id: 'q17-testing',
+    category: 'Safety & Testing',
+    question: 'Has the system undergone conformity assessment and testing for bias?',
+    type: 'yes-no',
+    riskWeight: 0.35,
+  },
+  {
+    id: 'q18-monitoring',
+    category: 'Safety & Testing',
+    question: 'Is there ongoing monitoring and documentation of system performance?',
+    type: 'yes-no',
+    riskWeight: 0.4,
   },
 ];
 
-export const QUESTION_IDS = SCREENING_QUESTIONS.map((q) => q.id);
+// ---------------------------------------------------------------
+// Risk Classification Logic
+// ---------------------------------------------------------------
 
-const OBLIGATIONS: Record<RiskLevel, string[]> = {
-  unacceptable: [
-    'Prohibited practice under EU AI Act Article 5 — this system must not be placed on the EU market or put into service.',
-    'Stop deployment planning and seek qualified legal counsel immediately.',
-  ],
-  high: [
-    'Establish a risk management system across the lifecycle (Art. 9)',
-    'Data governance: training/validation/testing data quality (Art. 10)',
-    'Technical documentation before placing on the market (Art. 11)',
-    'Automatic record-keeping / logging (Art. 12)',
-    'Transparency and instructions for deployers (Art. 13)',
-    'Effective human oversight (Art. 14)',
-    'Accuracy, robustness and cybersecurity (Art. 15)',
-    'Conformity assessment and CE marking; registration in the EU database',
-  ],
-  medium: [
-    'Disclose that people are interacting with an AI system',
-    'Label AI-generated or manipulated content (incl. deepfakes) as such',
-  ],
-  low: [
-    'No mandatory AI Act obligations — voluntary codes of conduct recommended',
-    'General law (GDPR, consumer protection, product safety) still applies',
-  ],
-};
-
-export interface ClassificationResult {
-  riskLevel: RiskLevel;
-  riskScore: number;
-  matched: string[]; // question ids that drove the classification
-  obligations: string[];
-  rationale: string;
+export function getAssessmentQuestions(): AssessmentQuestion[] {
+  return ASSESSMENT_QUESTIONS;
 }
 
-const SCORES: Record<RiskLevel, number> = {
-  unacceptable: 100,
-  high: 75,
-  medium: 40,
-  low: 10,
-};
+export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
+  const reasoning: string[] = [];
+  const affectedCategories: RiskCategory[] = [];
+  const recommendations: string[] = [];
 
-/** Classify from answers: map of question id → boolean. Unknown ids are ignored. */
-export function classify(answers: Record<string, boolean>): ClassificationResult {
-  const yes = (tier: ScreeningQuestion['tier']) =>
-    SCREENING_QUESTIONS.filter((q) => q.tier === tier && answers[q.id] === true).map(
-      (q) => q.id
+  let prohibitedCount = 0;
+  let highRiskCount = 0;
+  let mediumRiskCount = 0;
+  let riskScore = 0;
+
+  // Check for prohibited uses (triggers UNACCEPTABLE classification)
+  const prohibitedQuestions = ASSESSMENT_QUESTIONS.filter((q) => q.prohibitedIndicator);
+  for (const q of prohibitedQuestions) {
+    const answer = answers.get(q.id);
+    if (answer === true || answer === 'yes') {
+      prohibitedCount++;
+      reasoning.push(`Prohibited indicator: ${q.question}`);
+      riskScore = Math.min(100, riskScore + 30);
+    }
+  }
+
+  // If any prohibited indicator, classification is UNACCEPTABLE
+  if (prohibitedCount > 0) {
+    affectedCategories.push('biometric-identification');
+    recommendations.push(
+      'System uses prohibited AI practices. Deployment is not allowed under EU AI Act.',
+      'Immediately discontinue use or fundamentally redesign to avoid prohibited practices.'
     );
 
-  const prohibited = yes('prohibited');
-  if (prohibited.length > 0) {
     return {
       riskLevel: 'unacceptable',
-      riskScore: SCORES.unacceptable,
-      matched: prohibited,
-      obligations: OBLIGATIONS.unacceptable,
-      rationale:
-        'One or more answers indicate a practice prohibited by EU AI Act Article 5.',
+      riskScore: 100,
+      score: { prohibitedIndicators: prohibitedCount, highRiskIndicators: 0, mediumRiskIndicators: 0 },
+      reasoning,
+      affectedCategories,
+      recommendations,
+      timestamp: new Date().toISOString(),
     };
   }
 
-  const high = yes('high');
-  if (high.length > 0) {
-    return {
-      riskLevel: 'high',
-      riskScore: SCORES.high,
-      matched: high,
-      obligations: OBLIGATIONS.high,
-      rationale:
-        'The system falls into one or more Annex III high-risk areas of the EU AI Act.',
-    };
+  // Check for high-risk indicators
+  const highRiskQuestions = ASSESSMENT_QUESTIONS.filter((q) => q.highRiskIndicator);
+  for (const q of highRiskQuestions) {
+    const answer = answers.get(q.id);
+    if (answer === true || answer === 'yes') {
+      highRiskCount++;
+      reasoning.push(`High-risk indicator: ${q.question}`);
+      riskScore += 35;
+
+      // Map to categories
+      if (
+        q.id.includes('credit') ||
+        q.id.includes('finance')
+      ) {
+        affectedCategories.push('credit-scoring');
+      } else if (q.id.includes('recruitment') || q.id.includes('employment')) {
+        affectedCategories.push('recruitment');
+      } else if (q.id.includes('education')) {
+        affectedCategories.push('education');
+      } else if (q.id.includes('law-enforcement')) {
+        affectedCategories.push('law-enforcement');
+      } else if (q.id.includes('critical')) {
+        affectedCategories.push('critical-infrastructure');
+      }
+    }
   }
 
-  const transparency = yes('transparency');
-  if (transparency.length > 0) {
-    return {
-      riskLevel: 'medium',
-      riskScore: SCORES.medium,
-      matched: transparency,
-      obligations: OBLIGATIONS.medium,
-      rationale:
-        'The system carries transparency risk (limited-risk tier): people must be able to know AI is involved.',
-    };
+  // Check for medium-risk indicators (personal/sensitive data processing)
+  if (answers.get('q10-personal-data') === true) {
+    mediumRiskCount++;
+    riskScore += 20;
+    reasoning.push('System processes personal data');
+
+    if (answers.get('q11-sensitive-data') === true) {
+      mediumRiskCount++;
+      riskScore += 25;
+      reasoning.push('System processes special categories of personal data (sensitive)');
+    }
+
+    if (answers.get('q12-vulnerable-groups') === true) {
+      mediumRiskCount++;
+      riskScore += 20;
+      reasoning.push('System processes data of vulnerable groups');
+    }
   }
+
+  // Scale impact on risk score
+  const scaleAnswer = answers.get('q13-scale');
+  const scaleWeights: Record<string, number> = {
+    'Fewer than 100': 0,
+    '100-1,000': 5,
+    '1,000-10,000': 10,
+    '10,000-100,000': 15,
+    'More than 100,000': 20,
+  };
+  if (scaleAnswer && scaleWeights[scaleAnswer] !== undefined) {
+    riskScore += scaleWeights[scaleAnswer];
+  }
+
+  // Transparency & oversight reduce risk (only meaningful for high-risk systems)
+  if (answers.get('q15-transparency') === true) {
+    riskScore -= 5;
+    recommendations.push('Strong transparency in decision-making is positive. Maintain this.');
+  } else if (answers.get('q15-transparency') === false && highRiskCount > 0) {
+    riskScore += 5;
+    reasoning.push('Lack of transparency increases risk for high-risk systems');
+  }
+
+  if (answers.get('q16-oversight') === true) {
+    riskScore -= 5;
+    recommendations.push('Human oversight is in place. Continue to monitor and document decisions.');
+  } else if (answers.get('q16-oversight') === false && highRiskCount > 0) {
+    riskScore += 5;
+    reasoning.push('Lack of human oversight increases risk for high-risk systems');
+  }
+
+  // Testing & monitoring reduce risk (meaningful for high/medium-risk systems)
+  if (answers.get('q17-testing') === true) {
+    riskScore -= 4;
+    recommendations.push('Testing and conformity assessment have been completed.');
+  } else if (answers.get('q17-testing') === false && (highRiskCount > 0 || mediumRiskCount > 0)) {
+    riskScore += 4;
+    reasoning.push('No documented testing or conformity assessment');
+  }
+
+  if (answers.get('q18-monitoring') === true) {
+    riskScore -= 4;
+    recommendations.push('Ongoing monitoring is in place. Maintain documentation.');
+  } else if (answers.get('q18-monitoring') === false && (highRiskCount > 0 || mediumRiskCount > 0)) {
+    riskScore += 4;
+    reasoning.push('No ongoing monitoring or performance documentation');
+  }
+
+  // Clamp risk score 0-100
+  riskScore = Math.max(0, Math.min(100, riskScore));
+
+  // Determine risk level based on indicators and score
+  let riskLevel: RiskLevel;
+
+  // Any high-risk indicator makes it high-risk
+  if (highRiskCount >= 1) {
+    riskLevel = 'high';
+    if (recommendations.length === 0) {
+      recommendations.push(
+        'System meets high-risk criteria under EU AI Act.',
+        'Implement comprehensive conformity assessment.',
+        'Establish human oversight and documentation procedures.',
+        'Conduct regular bias and performance testing.'
+      );
+    }
+  } else if (mediumRiskCount >= 1 || riskScore >= 40) {
+    riskLevel = 'medium';
+    if (recommendations.length === 0) {
+      recommendations.push(
+        'System has medium-risk characteristics.',
+        'Ensure transparency in decision-making.',
+        'Implement basic monitoring and documentation.',
+        'Regular performance review recommended.'
+      );
+    }
+  } else {
+    riskLevel = 'low';
+    recommendations.push('System appears to be low-risk.');
+    if (mediumRiskCount === 0 && highRiskCount === 0) {
+      recommendations.push('Continue normal development and deployment practices.');
+    }
+  }
+
+  // Remove duplicates from affected categories
+  const uniqueCategories = Array.from(new Set(affectedCategories));
 
   return {
-    riskLevel: 'low',
-    riskScore: SCORES.low,
-    matched: [],
-    obligations: OBLIGATIONS.low,
-    rationale:
-      'No prohibited, high-risk, or transparency-risk indicators — minimal-risk tier.',
+    riskLevel,
+    riskScore,
+    score: {
+      prohibitedIndicators: prohibitedCount,
+      highRiskIndicators: highRiskCount,
+      mediumRiskIndicators: mediumRiskCount,
+    },
+    reasoning,
+    affectedCategories: uniqueCategories.length > 0 ? uniqueCategories : ['other'],
+    recommendations,
+    timestamp: new Date().toISOString(),
   };
+}
+
+// Map risk level to color for UI
+export function getRiskLevelColor(
+  riskLevel: RiskLevel
+): 'red' | 'orange' | 'amber' | 'green' {
+  switch (riskLevel) {
+    case 'unacceptable':
+      return 'red';
+    case 'high':
+      return 'orange';
+    case 'medium':
+      return 'amber';
+    case 'low':
+      return 'green';
+  }
+}
+
+// Map risk level to readable label
+export function getRiskLevelLabel(riskLevel: RiskLevel): string {
+  switch (riskLevel) {
+    case 'unacceptable':
+      return 'Prohibited';
+    case 'high':
+      return 'High-Risk';
+    case 'medium':
+      return 'Medium-Risk';
+    case 'low':
+      return 'Low-Risk';
+  }
 }

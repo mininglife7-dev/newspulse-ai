@@ -1,64 +1,276 @@
 import { describe, it, expect } from 'vitest';
-import {
-  classify,
-  SCREENING_QUESTIONS,
-  QUESTION_IDS,
-} from '@/lib/risk-assessment';
+import { classifyRisk, getRiskLevelLabel } from '../lib/risk-assessment';
 
-const allNo = Object.fromEntries(QUESTION_IDS.map((id) => [id, false]));
+describe('Risk Assessment Classification', () => {
+  describe('Prohibited uses detection', () => {
+    it('should classify as unacceptable for real-time biometric identification', () => {
+      const answers = new Map([['q1-prohibited-biometric', true]]);
+      const result = classifyRisk(answers);
 
-describe('EU AI Act screening classifier', () => {
-  it('classifies all-no as minimal risk', () => {
-    const r = classify(allNo);
-    expect(r.riskLevel).toBe('low');
-    expect(r.riskScore).toBe(10);
-    expect(r.matched).toEqual([]);
-    expect(r.obligations.length).toBeGreaterThan(0);
-  });
-
-  it('any prohibited answer dominates everything else', () => {
-    const r = classify({ ...allNo, social_scoring: true, employment: true });
-    expect(r.riskLevel).toBe('unacceptable');
-    expect(r.riskScore).toBe(100);
-    expect(r.matched).toEqual(['social_scoring']);
-    expect(r.obligations.join(' ')).toContain('Article 5');
-  });
-
-  it('Annex III areas classify as high risk', () => {
-    const r = classify({ ...allNo, employment: true, essential_services: true });
-    expect(r.riskLevel).toBe('high');
-    expect(r.matched).toEqual(['employment', 'essential_services']);
-    expect(r.obligations.join(' ')).toContain('human oversight');
-  });
-
-  it('transparency-only systems classify as medium (limited risk)', () => {
-    const r = classify({ ...allNo, interacts_humans: true });
-    expect(r.riskLevel).toBe('medium');
-    expect(r.obligations.join(' ')).toContain('interacting with an AI');
-  });
-
-  it('high beats transparency when both apply', () => {
-    const r = classify({
-      ...allNo,
-      generates_content: true,
-      critical_infrastructure: true,
+      expect(result.riskLevel).toBe('unacceptable');
+      expect(result.riskScore).toBe(100);
+      expect(result.score.prohibitedIndicators).toBeGreaterThan(0);
     });
-    expect(r.riskLevel).toBe('high');
+
+    it('should classify as unacceptable for emotion recognition', () => {
+      const answers = new Map([['q2-emotion-recognition', true]]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('unacceptable');
+      expect(result.riskScore).toBe(100);
+    });
+
+    it('should classify as unacceptable for social scoring', () => {
+      const answers = new Map([['q3-social-scoring', true]]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('unacceptable');
+      expect(result.riskScore).toBe(100);
+    });
   });
 
-  it('ignores unknown answer keys', () => {
-    const r = classify({ ...allNo, made_up_question: true } as any);
-    expect(r.riskLevel).toBe('low');
+  describe('High-risk indicators', () => {
+    it('should classify as high-risk for credit decision system', () => {
+      const answers = new Map([
+        ['q4-credit-decision', true],
+        ['q15-transparency', false],
+        ['q16-oversight', false],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('high');
+      expect(result.score.highRiskIndicators).toBeGreaterThan(0);
+      expect(result.riskScore).toBeGreaterThan(40);
+    });
+
+    it('should classify as high-risk for recruitment screening', () => {
+      const answers = new Map([
+        ['q5-recruitment', true],
+        ['q15-transparency', false],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('high');
+      expect(result.affectedCategories).toContain('recruitment');
+    });
+
+    it('should classify as high-risk for law enforcement profiling', () => {
+      const answers = new Map([['q7-law-enforcement', true]]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('high');
+      expect(result.affectedCategories).toContain('law-enforcement');
+    });
+
+    it('should classify as high-risk for educational decisions', () => {
+      const answers = new Map([['q6-education', true]]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('high');
+      expect(result.affectedCategories).toContain('education');
+    });
+
+    it('should classify as high-risk for critical infrastructure', () => {
+      const answers = new Map([['q8-critical-infrastructure', true]]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('high');
+      expect(result.affectedCategories).toContain('critical-infrastructure');
+    });
   });
 
-  it('treats missing answers as no', () => {
-    const r = classify({});
-    expect(r.riskLevel).toBe('low');
+  describe('Medium-risk indicators', () => {
+    it('should classify as medium-risk for personal data processing', () => {
+      const answers = new Map([
+        ['q10-personal-data', true],
+        ['q11-sensitive-data', false],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('medium');
+      expect(result.riskScore).toBeGreaterThan(15);
+    });
+
+    it('should increase risk for sensitive data categories', () => {
+      const answers = new Map([
+        ['q10-personal-data', true],
+        ['q11-sensitive-data', true],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('medium');
+      expect(result.score.mediumRiskIndicators).toBeGreaterThan(0);
+    });
+
+    it('should increase risk for vulnerable groups', () => {
+      const answers = new Map([
+        ['q10-personal-data', true],
+        ['q12-vulnerable-groups', true],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.score.mediumRiskIndicators).toBeGreaterThan(0);
+    });
   });
 
-  it('every question belongs to a known tier', () => {
-    for (const q of SCREENING_QUESTIONS) {
-      expect(['prohibited', 'high', 'transparency']).toContain(q.tier);
-    }
+  describe('Scale impact on risk', () => {
+    it('should increase risk score for large-scale deployment', () => {
+      const smallScale = classifyRisk(
+        new Map([['q13-scale', 'Fewer than 100']])
+      );
+      const largeScale = classifyRisk(
+        new Map([['q13-scale', 'More than 100,000']])
+      );
+
+      expect(largeScale.riskScore).toBeGreaterThan(smallScale.riskScore);
+    });
+  });
+
+  describe('Mitigating factors', () => {
+    it('should reduce risk for systems with transparency', () => {
+      const withoutTransparency = classifyRisk(
+        new Map([
+          ['q4-credit-decision', true],
+          ['q15-transparency', false],
+        ])
+      );
+      const withTransparency = classifyRisk(
+        new Map([
+          ['q4-credit-decision', true],
+          ['q15-transparency', true],
+        ])
+      );
+
+      expect(withTransparency.riskScore).toBeLessThan(withoutTransparency.riskScore);
+    });
+
+    it('should reduce risk for systems with human oversight', () => {
+      const withoutOversight = classifyRisk(
+        new Map([
+          ['q4-credit-decision', true],
+          ['q16-oversight', false],
+        ])
+      );
+      const withOversight = classifyRisk(
+        new Map([
+          ['q4-credit-decision', true],
+          ['q16-oversight', true],
+        ])
+      );
+
+      expect(withOversight.riskScore).toBeLessThan(withoutOversight.riskScore);
+    });
+
+    it('should reduce risk for systems with testing and monitoring', () => {
+      const noTesting = classifyRisk(
+        new Map([
+          ['q4-credit-decision', true],
+          ['q17-testing', false],
+          ['q18-monitoring', false],
+        ])
+      );
+      const withTesting = classifyRisk(
+        new Map([
+          ['q4-credit-decision', true],
+          ['q17-testing', true],
+          ['q18-monitoring', true],
+        ])
+      );
+
+      expect(withTesting.riskScore).toBeLessThan(noTesting.riskScore);
+    });
+  });
+
+  describe('Low-risk classification', () => {
+    it('should classify as low-risk for general-purpose systems', () => {
+      const answers = new Map([
+        ['q1-prohibited-biometric', false],
+        ['q4-credit-decision', false],
+        ['q5-recruitment', false],
+        ['q10-personal-data', false],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('low');
+      expect(result.riskScore).toBeLessThan(40);
+    });
+
+    it('should include recommendations for low-risk systems', () => {
+      const answers = new Map([['q10-personal-data', false]]);
+      const result = classifyRisk(answers);
+
+      expect(result.recommendations.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Complex scenarios', () => {
+    it('should correctly evaluate multi-factor high-risk scenario', () => {
+      const answers = new Map([
+        ['q5-recruitment', true],
+        ['q10-personal-data', true],
+        ['q11-sensitive-data', true],
+        ['q13-scale', 'More than 100,000'],
+        ['q15-transparency', false],
+        ['q16-oversight', false],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('high');
+      expect(result.riskScore).toBeGreaterThan(70);
+      expect(result.reasoning.length).toBeGreaterThan(0);
+      expect(result.recommendations.length).toBeGreaterThan(0);
+    });
+
+    it('should correctly evaluate mitigated high-risk scenario', () => {
+      const answers = new Map([
+        ['q4-credit-decision', true],
+        ['q15-transparency', true],
+        ['q16-oversight', true],
+        ['q17-testing', true],
+        ['q18-monitoring', true],
+      ]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskLevel).toBe('high');
+      // Risk score should be lower due to mitigating factors
+      expect(result.riskScore).toBeLessThan(70);
+    });
+  });
+
+  describe('Label generation', () => {
+    it('should generate correct labels for all risk levels', () => {
+      expect(getRiskLevelLabel('unacceptable')).toBe('Prohibited');
+      expect(getRiskLevelLabel('high')).toBe('High-Risk');
+      expect(getRiskLevelLabel('medium')).toBe('Medium-Risk');
+      expect(getRiskLevelLabel('low')).toBe('Low-Risk');
+    });
+  });
+
+  describe('Result structure', () => {
+    it('should always return complete result structure', () => {
+      const result = classifyRisk(new Map());
+
+      expect(result).toHaveProperty('riskLevel');
+      expect(result).toHaveProperty('riskScore');
+      expect(result).toHaveProperty('score');
+      expect(result).toHaveProperty('reasoning');
+      expect(result).toHaveProperty('affectedCategories');
+      expect(result).toHaveProperty('recommendations');
+      expect(result).toHaveProperty('timestamp');
+
+      expect(typeof result.riskLevel).toBe('string');
+      expect(typeof result.riskScore).toBe('number');
+      expect(Array.isArray(result.reasoning)).toBe(true);
+      expect(Array.isArray(result.recommendations)).toBe(true);
+      expect(Array.isArray(result.affectedCategories)).toBe(true);
+    });
+
+    it('should clamp risk score between 0-100', () => {
+      const answers = new Map([['q1-prohibited-biometric', true]]);
+      const result = classifyRisk(answers);
+
+      expect(result.riskScore).toBeGreaterThanOrEqual(0);
+      expect(result.riskScore).toBeLessThanOrEqual(100);
+    });
   });
 });

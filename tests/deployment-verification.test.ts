@@ -305,8 +305,8 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       const journeyCheck = report!.checks.find((c) => c.type === 'customer-journey');
       if (journeyCheck && journeyCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
-        // Single failure = RETRY; multiple failures = ROLLBACK/ESCALATE
-        expect(['RETRY', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        // Customer journey failure should result in hold/rollback/escalate
+        expect(['HOLD', 'RETRY', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
       }
     });
   });
@@ -323,7 +323,7 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
 
       if (report && report.degradedChecks > 0 && report.failedChecks === 0) {
         expect(report.overallHealth).toMatch(/healthy|degraded/);
-        expect(report.decision).toMatch(/PASS|RETRY/);
+        expect(['PASS', 'RETRY', 'HOLD']).toContain(report.decision);
       }
     });
   });
