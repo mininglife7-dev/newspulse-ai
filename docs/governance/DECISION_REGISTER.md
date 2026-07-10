@@ -7,6 +7,17 @@ are never requested from the Founder.
 
 ---
 
+## DR-0013 — Close pre-pivot PRs (#39, #40); defer Next.js upgrades (#36, #37); review rate-limit (#41)
+
+- **Decision:** Closed PR #39 (customer-readiness/NewsPulse) and #40 (German i18n/NewsPulse) as superseded by product pivot. Closed #36 (Next 16) and #37 (Next 15) as deferred infrastructure work — EURO AI ships on current stack (Next 14.2.35) with documented path to security upgrades. Reviewed #41 (durable rate-limiting) as infrastructure applicable to EURO AI but lower priority than auth.
+- **Reason:** EURO AI product pivot changed the product and stack requirements. Pre-pivot PRs (#39, #40) contain NewsPulse-specific features (demo mode, news search, English-only UI) that don't apply to EURO AI governance platform. Infrastructure PRs (#36, #37, #41) are valid but represent tech-debt vs feature work. Current decision: ship EURO AI on stable Next 14.2.35; schedule security upgrades after first customer ships to avoid breaking changes mid-launch.
+- **Alternatives considered:** Rebase and merge all PRs — rejected because breaking changes (React 19, async params) add risk pre-launch; better to let Founder decide after demonstrating product-market fit.
+- **Evidence:** All PRs already closed before Governor Phase 2 began. #37/#36 CI went green (14.2.35 and 15.5.20 both test-verified). #41 tested durable-capable rate-limiting architecture (Upstash Redis support).
+- **Confidence:** High (decision documents existing state)
+- **Expected impact:** EURO AI launches on known-stable Next 14.2.35. Tech-debt backlog is visible and prioritized for post-launch.
+- **Risk assessment:** None (decision is retroactive); upgrade path is documented in the closed PRs.
+- **Timestamp:** 2026-07-10
+
 ## DR-0012 — Make onboarding step 2 (AI Systems Inventory) real
 
 - **Decision:** Implement the inventory end-to-end: `GET/POST /api/ai-systems`
