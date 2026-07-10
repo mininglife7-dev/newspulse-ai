@@ -26,6 +26,52 @@ export default function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [clearing, setClearing] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Read a stored admin token, or prompt for one. Returns null if the user
+  // cancels. Shared by "Clear all" and per-row delete.
+  const acquireAdminToken = useCallback((purpose: string): string | null => {
+    let token = '';
+    try {
+      token = window.localStorage.getItem(ADMIN_TOKEN_KEY) ?? '';
+    } catch {
+      /* localStorage unavailable — fall through to prompt */
+    }
+    if (!token) {
+      const entered = window.prompt(
+        `${purpose} is an admin action. Enter the admin token:`
+      );
+      if (entered == null) return null;
+      token = entered.trim();
+      if (!token) return null;
+      try {
+        window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+      } catch {
+        /* ignore persistence failure */
+      }
+    }
+    return token;
+  }, []);
+
+  // Translate an auth failure into a user-facing message (and forget a bad
+  // token so the next attempt re-prompts). Returns null if not an auth error.
+  const adminAuthError = useCallback(
+    (status: number, json: any): string | null => {
+      if (status === 401) {
+        try {
+          window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+        } catch {
+          /* ignore */
+        }
+        return 'Admin token was rejected. Try the action again to re-enter it.';
+      }
+      if (status === 503) {
+        return json?.error || 'Admin actions are disabled on this deployment.';
+      }
+      return null;
+    },
+    []
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,29 +106,8 @@ export default function HistoryPage() {
 
   const handleClearAll = useCallback(async () => {
     if (history.length === 0) return;
-
-    // Clearing history is a destructive, admin-only action. Read a stored admin
-    // token, or prompt for one. It is sent as an x-admin-token header; the
-    // server rejects the request if it does not match ADMIN_TOKEN.
-    let token = '';
-    try {
-      token = window.localStorage.getItem(ADMIN_TOKEN_KEY) ?? '';
-    } catch {
-      /* localStorage unavailable — fall through to prompt */
-    }
-    if (!token) {
-      const entered = window.prompt(
-        'Clearing all history is an admin action. Enter the admin token:'
-      );
-      if (entered == null) return; // user cancelled
-      token = entered.trim();
-      if (!token) return;
-      try {
-        window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
-      } catch {
-        /* ignore persistence failure */
-      }
-    }
+    const token = acquireAdminToken('Clearing all history');
+    if (!token) return;
 
     if (
       !confirm(
@@ -101,22 +126,8 @@ export default function HistoryPage() {
       });
       const json = await res.json().catch(() => ({}));
 
-      if (res.status === 401) {
-        // Bad token — drop it so the next attempt re-prompts.
-        try {
-          window.localStorage.removeItem(ADMIN_TOKEN_KEY);
-        } catch {
-          /* ignore */
-        }
-        throw new Error(
-          'Admin token was rejected. Clear History again to re-enter it.'
-        );
-      }
-      if (res.status === 503) {
-        throw new Error(
-          json?.error || 'Admin actions are disabled on this deployment.'
-        );
-      }
+      const authErr = adminAuthError(res.status, json);
+      if (authErr) throw new Error(authErr);
       if (!res.ok || !json.ok) {
         throw new Error(json?.error || `Delete failed (${res.status})`);
       }
@@ -129,7 +140,48 @@ export default function HistoryPage() {
     } finally {
       setClearing(false);
     }
-  }, [history.length]);
+  }, [history.length, acquireAdminToken, adminAuthError]);
+
+  const handleDeleteOne = useCallback(
+    async (id: string, keyword: string) => {
+      const token = acquireAdminToken('Deleting a saved search');
+      if (!token) return;
+      if (
+        !confirm(`Delete the saved search “${keyword}”? This can't be undone.`)
+      ) {
+        return;
+      }
+
+      setDeletingId(id);
+      setError(null);
+      try {
+        const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-token': token },
+        });
+        const json = await res.json().catch(() => ({}));
+
+        const authErr = adminAuthError(res.status, json);
+        if (authErr) throw new Error(authErr);
+        if (!res.ok || !json.ok) {
+          throw new Error(json?.error || `Delete failed (${res.status})`);
+        }
+
+        setHistory((prev) => prev.filter((r) => r.id !== id));
+        setExpanded((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      } catch (err: any) {
+        console.error(err);
+        setError(err?.message || 'Failed to delete search.');
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [acquireAdminToken, adminAuthError]
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -230,6 +282,8 @@ export default function HistoryPage() {
                     entry={entry}
                     isOpen={isOpen}
                     onToggle={() => toggle(entry.id)}
+                    onDelete={() => handleDeleteOne(entry.id, entry.keyword)}
+                    isDeleting={deletingId === entry.id}
                   />
                 );
               })}
@@ -247,10 +301,14 @@ function Row({
   entry,
   isOpen,
   onToggle,
+  onDelete,
+  isDeleting,
 }: {
   entry: SearchHistoryRow;
   isOpen: boolean;
   onToggle: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
 }) {
   const articles = Array.isArray(entry.results) ? entry.results : [];
 
@@ -300,6 +358,20 @@ function Row({
               <ExternalLink className="h-3 w-3" />
               Re-run
             </Link>
+            <button
+              onClick={onDelete}
+              disabled={isDeleting}
+              title="Delete this search (admin action)"
+              aria-label={`Delete saved search: ${entry.keyword}`}
+              className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-950/20 px-2.5 py-1 text-xs text-red-300 transition hover:border-red-400 hover:bg-red-950/50 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2 className="h-3 w-3" />
+              )}
+              Delete
+            </button>
           </div>
         </td>
       </tr>
