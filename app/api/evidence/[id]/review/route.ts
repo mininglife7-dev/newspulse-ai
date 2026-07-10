@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -110,6 +111,31 @@ export async function PATCH(
     return NextResponse.json(
       { ok: false, error: 'Failed to review evidence' },
       { status: 500 }
+    );
+  }
+
+  // Log audit event
+  const evidence = data?.[0];
+  if (evidence) {
+    const actionTypeMap: Record<string, string> = {
+      under_review: 'evidence_reviewed',
+      approved: 'evidence_approved',
+      rejected: 'evidence_rejected',
+    };
+
+    await logAuditEvent(
+      supabase,
+      ctx.workspaceId,
+      ctx.user.id,
+      actionTypeMap[body.status] as any,
+      'evidence',
+      evidence.id,
+      evidence.title,
+      {
+        previous_status: (evidence as any).previous_status,
+        new_status: body.status,
+        review_comments: body.review_comments || null,
+      }
     );
   }
 

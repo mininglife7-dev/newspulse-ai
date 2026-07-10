@@ -201,6 +201,29 @@ create index if not exists remediation_plans_company_idx on public.remediation_p
 create index if not exists remediation_plans_status_idx on public.remediation_plans (status);
 
 -- ---------------------------------------------------------------
+-- Audit Log
+-- Track all compliance actions for regulatory audit requirements
+-- ---------------------------------------------------------------
+create table if not exists public.audit_log (
+    id                uuid        primary key default gen_random_uuid(),
+    workspace_id      uuid        not null references public.workspaces(id) on delete cascade,
+    user_id           uuid        references auth.users(id) on delete set null,
+    action_type       text        not null, -- assessment_created, evidence_submitted, evidence_approved, plan_created, plan_status_changed, etc.
+    entity_type       text        not null, -- risk_assessment, evidence, remediation_plan, obligation, etc.
+    entity_id         uuid,
+    entity_name       text,
+    details           jsonb       not null default '{}'::jsonb,
+    ip_address        text,
+    created_at        timestamptz not null default now()
+);
+
+create index if not exists audit_log_workspace_idx on public.audit_log (workspace_id);
+create index if not exists audit_log_user_idx on public.audit_log (user_id);
+create index if not exists audit_log_action_idx on public.audit_log (action_type);
+create index if not exists audit_log_entity_idx on public.audit_log (entity_type, entity_id);
+create index if not exists audit_log_created_idx on public.audit_log (created_at);
+
+-- ---------------------------------------------------------------
 -- Row Level Security
 -- Default: deny all. Grant specific access based on workspace membership.
 -- ---------------------------------------------------------------
@@ -213,6 +236,7 @@ alter table public.risk_assessments enable row level security;
 alter table public.obligations enable row level security;
 alter table public.evidence enable row level security;
 alter table public.remediation_plans enable row level security;
+alter table public.audit_log enable row level security;
 
 -- Allow users to read their own profile
 create policy "Users can read their own profile"
@@ -451,3 +475,21 @@ create policy "Members can delete workspace remediation_plans"
             and status = 'active'
         )
     );
+
+-- Audit log: active workspace members can read audit log for their workspace
+create policy "Members can read workspace audit_log"
+    on public.audit_log for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = audit_log.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Audit log: allow system to insert audit records (bypass auth check for service operations)
+-- In production, use a service role or trigger for this
+create policy "System can insert audit_log"
+    on public.audit_log for insert
+    with check (true);

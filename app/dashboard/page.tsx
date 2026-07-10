@@ -273,6 +273,24 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </div>
+
+          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-semibold text-white mb-2">Audit Log</h3>
+                <p className="text-sm text-slate-400">
+                  Track all compliance actions and changes for regulatory verification
+                </p>
+              </div>
+              <Link
+                href="/audit-log"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg"
+              >
+                View Log
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
         </>
       )}
 
