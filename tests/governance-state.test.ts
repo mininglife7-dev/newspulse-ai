@@ -104,20 +104,20 @@ describe('Governance State Builder', () => {
     expect(state.deploymentStatus).toMatch(/^(healthy|degraded|critical)$/);
   });
 
-  it('resolves blockers M-01, M-02, M-03, M-08', () => {
+  it('resolves blockers M-01, M-02, M-03, M-08, M-10', () => {
     const state = buildDashboardState();
 
-    const resolved = ['M-01', 'M-02', 'M-03', 'M-08'];
+    const resolved = ['M-01', 'M-02', 'M-03', 'M-08', 'M-10'];
     for (const id of resolved) {
       const blocker = state.blockers.find((b) => b.id === id);
       expect(blocker?.status).toBe('resolved');
     }
   });
 
-  it('has open blockers M-04, M-06, M-07, M-09, M-10', () => {
+  it('has open blockers M-04, M-06, M-07, M-09', () => {
     const state = buildDashboardState();
 
-    const open = ['M-04', 'M-06', 'M-07', 'M-09', 'M-10'];
+    const open = ['M-04', 'M-06', 'M-07', 'M-09'];
     for (const id of open) {
       const blocker = state.blockers.find((b) => b.id === id);
       expect(blocker?.status).toMatch(/^(open|blocked)$/);
