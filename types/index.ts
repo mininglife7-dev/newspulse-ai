@@ -20,6 +20,10 @@ export interface SearchResponseBody {
   ok: boolean;
   keyword?: string;
   count?: number;
+  /** Whether the search was persisted to history (false = shown but not saved). */
+  saved?: boolean;
+  /** Row id of the saved search, when persisted. */
+  search_id?: string | null;
   results?: import('@/lib/supabase').NewsArticle[];
   error?: string;
 }

@@ -33,6 +33,9 @@ export default function HomePage() {
   // label results with the live input value — the user can retype without
   // searching, and the screen would contradict its own data.
   const [lastQuery, setLastQuery] = useState('');
+  // True when the API returned results but could not persist them to
+  // history — the user deserves to know the search won't appear there.
+  const [saveFailed, setSaveFailed] = useState(false);
   const autoRanRef = useRef(false);
 
   const runSearch = useCallback(async (q: string) => {
@@ -45,6 +48,7 @@ export default function HomePage() {
     setResults([]);
     setSearched(true);
     setLastQuery(q);
+    setSaveFailed(false);
 
     try {
       const res = await fetch('/api/search', {
@@ -57,6 +61,9 @@ export default function HomePage() {
         throw new Error(json.error || `Search failed (${res.status})`);
       }
       setResults(json.results as NewsArticle[]);
+      setSaveFailed(
+        json.saved === false && (json.results as NewsArticle[]).length > 0
+      );
     } catch (err: any) {
       console.error(err);
       setError(err?.message || 'Something went wrong.');
@@ -189,6 +196,16 @@ export default function HomePage() {
             title={`No results for "${lastQuery}"`}
             description="Try a different keyword or a broader topic."
           />
+        </section>
+      )}
+
+      {/* Persistence warning — results are real, but history save failed */}
+      {!loading && saveFailed && results.length > 0 && (
+        <section className="mx-auto w-full max-w-2xl">
+          <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
+            These results couldn't be saved to your history, so this search
+            won't appear on the History page.
+          </div>
         </section>
       )}
 

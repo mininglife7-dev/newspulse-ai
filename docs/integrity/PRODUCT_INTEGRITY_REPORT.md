@@ -63,9 +63,10 @@ an incorrect number* — is now enforced and regression-tested:
 - The `/api/search` rate limiter is in-memory and per-instance; it resets on
   cold start and keys on spoofable `x-forwarded-for`. Acceptable at current
   scale; noted in `middleware.ts` for a future Upstash/KV swap.
-- `saveSearch` is intentionally fire-and-forget: a Supabase outage does not
-  block search results, but that search will not appear in history. Results
-  shown to the user are always real; only persistence is best-effort.
+- History persistence is best-effort by design: a Supabase outage never
+  blocks search results. The API now reports `saved: false` when persistence
+  fails and the UI shows a notice, so the user knows the search won't appear
+  in history.
 - Supabase RLS currently allows anonymous read/insert (see
   `supabase/schema.sql` comments) — fine for a single-user demo, must be
   tightened before multi-tenant use.

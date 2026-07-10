@@ -4,7 +4,7 @@
 
 | Dimension | Before | After | Basis |
 |---|---|---|---|
-| Dashboard Integrity | 70 | **98** | Fake empty state on DB outage, false 404, mislabeled results header — all fixed; every screen now shows verified data or an honest error. −2: `saveSearch` is fire-and-forget, so a persistence failure is only visible in server logs, not in the UI. |
+| Dashboard Integrity | 70 | **100** | Fake empty state on DB outage, false 404, mislabeled results header — all fixed; every screen now shows verified data or an honest error. Follow-up: `/api/search` now reports `saved: false` when history persistence fails and the UI shows a notice, closing the last silent-failure path. |
 | Navigation Integrity | 85 | **100** | All nav/CTA/back links resolved before and after; the orphaned `/history/[id]` page is now reachable; 404 handling verified. |
 | Button Integrity | 80 | **100** | 24/24 interactive elements behave as labeled. Per-row Delete existed only as an endpoint (no button); suggestion chips didn't act; both fixed. |
 | API Integrity | 88 | **100** | All 5 route handlers return correct statuses, `ok` flags consistent with status, method guards and validation in place; history routes no longer disguise outages as success. Verified by 10 API smoke checks. |
@@ -27,5 +27,7 @@ None ≥ priority threshold. Watch-list (scored but acceptable):
 
 1. Visual regression / mobile viewport testing (Visual Integrity, −3) — consider
    Playwright screenshots per breakpoint if the UI grows.
-2. UI signal when history persistence fails mid-search (Dashboard Integrity, −2).
+2. ~~UI signal when history persistence fails mid-search~~ — **resolved**:
+   `/api/search` returns `saved`/`search_id`, and the search page shows an
+   amber notice when results couldn't be persisted.
 3. Drop or backfill-verify the redundant `result_count` column (Data Integrity, −2).

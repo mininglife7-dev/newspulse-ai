@@ -107,6 +107,8 @@ export async function POST(req: NextRequest) {
       ok: true,
       keyword,
       count: 0,
+      saved: false,
+      search_id: null,
       results: [],
     });
   }
@@ -141,17 +143,21 @@ export async function POST(req: NextRequest) {
     ai_summary: summaries[i] || n.description || n.title || '',
   }));
 
-  // ---------- 5) Persist to Supabase `news_searches` (best-effort) ----------
-  // Don't block the response if Supabase is slow or down.
-  saveSearch(keyword, results).catch((err) =>
-    console.error('[/api/search] saveSearch failed:', err)
-  );
+  // ---------- 5) Persist to Supabase `news_searches` ----------
+  // Awaited so the response can truthfully report whether history was saved
+  // — but a failed save never blocks or fails the results themselves.
+  const savedRow = await saveSearch(keyword, results).catch((err) => {
+    console.error('[/api/search] saveSearch failed:', err);
+    return null;
+  });
 
   // ---------- 6) Return ----------
   return NextResponse.json({
     ok: true,
     keyword,
     count: results.length,
+    saved: savedRow !== null,
+    search_id: savedRow?.id ?? null,
     results,
   });
 }
