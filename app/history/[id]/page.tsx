@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /**
@@ -48,7 +48,8 @@ async function getSearchById(id: string): Promise<SearchHistoryRow | null> {
 }
 
 export default async function HistoryDetailPage({ params }: PageProps) {
-  const entry = await getSearchById(params.id);
+  const { id } = await params;
+  const entry = await getSearchById(id);
   if (!entry) notFound();
 
   const articles = Array.isArray(entry.results) ? entry.results : [];

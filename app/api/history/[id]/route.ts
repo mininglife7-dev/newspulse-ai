@@ -5,12 +5,8 @@ import { requireAdmin } from '@/lib/auth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-interface RouteContext {
-  params: { id: string };
-}
-
-export async function GET(_req: NextRequest, { params }: RouteContext) {
-  const id = params.id;
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   if (!id) {
     return NextResponse.json(
       { ok: false, error: 'Missing id.' },
@@ -49,11 +45,11 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: RouteContext) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
-  const id = params.id;
+  const { id } = await params;
   if (!id) {
     return NextResponse.json(
       { ok: false, error: 'Missing id.' },
