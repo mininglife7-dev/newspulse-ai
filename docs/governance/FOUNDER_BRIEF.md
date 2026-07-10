@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (9-hour autonomous mission, in progress)
-**State:** Executing
+**Last updated:** 2026-07-10 (9-hour autonomous mission)
+**State:** Executing — integration MERGED to main (#38, `8cb1f26`)
 
 ---
 
@@ -69,6 +69,13 @@ with a timer.
 2. Handover report.
 
 ## Founder attention (when you return)
+
+- **GitHub Actions stopped creating workflow runs repo-wide at ~04:15 UTC** —
+  every event after that (PR opened, pushes) produced no run at all while
+  workflows remain "active" and Vercel builds fine. Most likely cause: Actions
+  minutes/spending limit exhausted by today's ~14 parallel sessions. Only you
+  can check/fix billing. Until then, merges rely on local + Vercel verification
+  (as #38 did — full evidence in the PR description).
 
 - **Run `supabase/schema.sql` in the Supabase SQL editor** (idempotent) and confirm
   the project region + auth email settings. This is the one step code cannot do.
