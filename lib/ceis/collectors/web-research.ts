@@ -9,7 +9,7 @@ import {
   extractPublishedDate,
   firecrawlSearch,
   type FirecrawlSearchResult,
-} from '@/lib/firecrawl';
+} from './firecrawl';
 import type { Collector, CollectorContext } from './types';
 
 /**

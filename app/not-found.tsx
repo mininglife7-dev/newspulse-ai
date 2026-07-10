@@ -15,15 +15,15 @@ export default function NotFound() {
       <div className="flex gap-3">
         <Link
           href="/"
-          className="rounded-lg bg-gradient-to-br from-accent-500 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-accent-900/40 transition hover:from-accent-400 hover:to-indigo-500"
+          className="rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg hover:shadow-blue-500/40"
         >
-          Start a new search
+          Back to home
         </Link>
         <Link
-          href="/history"
-          className="rounded-lg border border-border bg-card px-5 py-2 text-sm text-white/80 transition hover:border-accent-500/60 hover:text-white"
+          href="/dashboard"
+          className="rounded-lg border border-slate-700 bg-slate-900 px-5 py-2 text-sm text-white/80 transition hover:border-cyan-500/60 hover:text-white"
         >
-          View history
+          Go to dashboard
         </Link>
       </div>
     </div>

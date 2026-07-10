@@ -1,8 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { Inter } from 'next/font/google';
-import { Zap, Search, History as HistoryIcon, Dna } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { HeaderNav } from '@/components/HeaderNav';
 import './globals.css';
 
 const inter = Inter({
@@ -13,28 +15,43 @@ const inter = Inter({
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  'https://newspulse-ai.vercel.app';
+  'https://euro-ai.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'NewsPulse AI — AI-Powered News Intelligence',
+  title: 'EURO AI — AI Governance Made Simple',
   description:
-    'Search. Scrape. Summarize. Real-time AI summaries of news from across the web, with saved search history.',
+    'Transform AI governance from compliance checklist into strategic advantage. Meet EU AI Act obligations with confidence.',
   keywords: [
-    'news',
-    'AI',
-    'scraper',
-    'summarizer',
-    'Firecrawl',
-    'OpenAI',
-    'Supabase',
+    'AI governance',
+    'EU AI Act',
+    'compliance',
+    'risk management',
+    'AI systems',
+    'regulatory framework',
   ],
-  authors: [{ name: 'NewsPulse AI' }],
+  authors: [{ name: 'EURO AI' }],
   openGraph: {
-    title: 'NewsPulse AI',
-    description: 'AI-Powered News Intelligence — Search. Scrape. Summarize.',
+    title: 'EURO AI — AI Governance Made Simple',
+    description:
+      'Transform AI governance from compliance checklist into strategic advantage.',
     type: 'website',
   },
+  // PWA: manifest is served by app/manifest.ts; these fields make iOS Safari
+  // treat the app as an installable standalone Home Screen app.
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'EURO AI',
+    statusBarStyle: 'black-translucent',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0f',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -46,51 +63,38 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body
         className={cn(
-          'min-h-screen bg-background text-white antialiased font-sans'
+          'min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white antialiased font-sans'
         )}
       >
-        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
+        <header className="sticky top-0 z-40 border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-indigo-600 glow">
-                <Zap className="h-4 w-4 text-white" strokeWidth={2.5} />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600">
+                <Shield className="h-5 w-5 text-white" strokeWidth={2} />
               </div>
               <span className="text-lg font-bold tracking-tight">
-                <span className="gradient-text">NewsPulse</span>
-                <span className="text-white/90"> AI</span>
+                <span className="text-white">EURO</span>
+                <span className="text-cyan-400"> AI</span>
               </span>
             </Link>
-            <nav className="flex items-center gap-1 text-sm">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </Link>
-              <Link
-                href="/history"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
-              >
-                <HistoryIcon className="h-4 w-4" />
-                History
-              </Link>
-              <Link
-                href="/evolution"
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-white/70 transition hover:bg-card hover:text-white"
-              >
-                <Dna className="h-4 w-4" />
-                Evolution
-              </Link>
-            </nav>
+            <HeaderNav />
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
-        <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
-          <p>
-            Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}
-            <span className="text-accent-400">NewsPulse AI</span>
+        <ServiceWorkerRegister />
+        <footer className="mt-20 border-t border-slate-800/50 py-8 text-center text-sm text-slate-400">
+          <p className="mb-3">
+            EURO AI · Making AI governance simple, beautiful, and trustworthy
           </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/privacy" className="hover:text-white/60 transition">
+              Privacy Policy
+            </Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-white/60 transition">
+              Terms of Service
+            </Link>
+          </div>
         </footer>
       </body>
     </html>

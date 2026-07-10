@@ -6,8 +6,8 @@ import type {
   QualityGate,
   QualityGateName,
 } from '@/lib/ceis/types';
+import { completeJson, llmAvailable } from '@/lib/ceis/llm';
 import { stableId } from '@/lib/ceis/util';
-import { getOpenAIClient } from '@/lib/openai';
 
 /**
  * DNA Generator — turns a validated, scored principle into a full DNA
@@ -39,9 +39,9 @@ export function freshGates(): QualityGate[] {
   }));
 }
 
-const DNA_SYSTEM_PROMPT = `You design engineering missions ("DNA") for the Cathedral — a Next.js 14 + Supabase + Firecrawl + OpenAI news-intelligence product (EURO AI / NewsPulse) running serverless on Vercel.
+const DNA_SYSTEM_PROMPT = `You design engineering missions ("DNA") for the Cathedral — EURO AI, a multi-tenant Next.js + Supabase AI-governance platform (AI inventory, EU AI Act risk assessments, obligations, evidence, remediation) running serverless on Vercel.
 
-Given a validated principle, write a concrete, right-sized mission that applies the PRINCIPLE (never copies any product). Respect the architecture: Next.js API routes, Supabase Postgres, no long-running daemons, reuse existing components (lib/firecrawl.ts, lib/openai.ts, lib/supabase.ts).
+Given a validated principle, write a concrete, right-sized mission that applies the PRINCIPLE (never copies any product). Respect the architecture: Next.js API routes, Supabase Postgres with RLS multi-tenancy, no long-running daemons, reuse existing components (lib/supabase.ts, lib/auth.ts, lib/ceis).
 
 Return ONLY valid JSON:
 {"title": string (max 80 chars), "mission": string, "problem_statement": string, "business_value": string, "architecture": string, "technical_design": string, "dependencies": string[], "implementation_plan": string[] (3-7 steps), "testing_plan": string[] (2-5 items), "rollback_plan": string, "metrics": string[] (2-4 measurable), "priority": "critical"|"high"|"medium"|"low", "estimated_effort": string (e.g. "2-3 days"), "expected_customer_impact": string}`;
@@ -169,32 +169,22 @@ export async function generateDna(
 ): Promise<DnaProposal> {
   let raw: RawDna = {};
 
-  if (process.env.OPENAI_API_KEY) {
+  if (llmAvailable()) {
     try {
-      const completion = await getOpenAIClient().chat.completions.create({
-        model: 'gpt-4o-mini',
+      raw = await completeJson<RawDna>({
+        system: DNA_SYSTEM_PROMPT,
+        user: [
+          `Principle: ${principle.principle}`,
+          `What happened: ${principle.what_happened}`,
+          `Why it worked: ${principle.why_it_worked}`,
+          `Category: ${principle.category}`,
+          `Gap analysis: ${gap.status} — ${gap.rationale}`,
+          `Evolution score: ${score.overall}/100`,
+          `Evidence:\n${principle.evidence.map((e) => `- ${e}`).join('\n')}`,
+        ].join('\n'),
+        maxTokens: 1400,
         temperature: 0.3,
-        max_tokens: 1400,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: DNA_SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: [
-              `Principle: ${principle.principle}`,
-              `What happened: ${principle.what_happened}`,
-              `Why it worked: ${principle.why_it_worked}`,
-              `Category: ${principle.category}`,
-              `Gap analysis: ${gap.status} — ${gap.rationale}`,
-              `Evolution score: ${score.overall}/100`,
-              `Evidence:\n${principle.evidence.map((e) => `- ${e}`).join('\n')}`,
-            ].join('\n'),
-          },
-        ],
       });
-      raw = JSON.parse(
-        completion.choices[0]?.message?.content ?? '{}'
-      ) as RawDna;
     } catch (err) {
       console.error('[ceis] generateDna LLM error, using template:', err);
     }

@@ -33,45 +33,78 @@ function seed(
 export const SEED_GENOME: GenomeEntry[] = [
   seed(
     'capability',
-    'Live web news search',
-    'Firecrawl /v1/search wrapper fetches and scrapes fresh news articles for any keyword (lib/firecrawl.ts, POST /api/search).',
-    ['search', 'firecrawl', 'news', 'scraping', 'web']
+    'Multi-tenant workspaces with auth and RBAC',
+    'Supabase Auth (email + magic links) with @supabase/ssr cookie sessions, workspace/company/profile onboarding, role-based membership and RLS-enforced tenant isolation (middleware.ts, lib/auth.ts, app/auth, app/workspace).',
+    [
+      'auth',
+      'multi-tenant',
+      'workspace',
+      'rbac',
+      'rls',
+      'supabase',
+      'session',
+      'security',
+    ]
   ),
   seed(
     'capability',
-    'AI article summarization',
-    'Every article is summarized into 2-3 neutral sentences by gpt-4o-mini with bounded parallel concurrency and graceful fallback (lib/openai.ts).',
-    ['ai', 'summarization', 'openai', 'llm', 'gpt-4o-mini']
+    'AI system inventory',
+    'Organizations catalog their AI systems — name, type, vendor, purpose, data categories, status — in the ai_systems table with per-workspace isolation (app/inventory, /api/ai-systems).',
+    ['inventory', 'ai-systems', 'catalog', 'vendors', 'registry']
   ),
   seed(
     'capability',
-    'Persistent search history',
-    'Every query and its results are stored in Supabase news_searches with replay, per-entry view and clear-all (app/history, /api/history).',
-    ['supabase', 'history', 'persistence', 'database', 'postgres']
+    'EU AI Act risk assessment and obligations',
+    'Risk classification per AI system with mapped EU AI Act obligations, assessment-obligation links and an obligations management page with search and filtering (risk_assessments, obligations tables, /api/risk-assessments).',
+    [
+      'eu-ai-act',
+      'risk',
+      'assessment',
+      'classification',
+      'obligations',
+      'compliance',
+      'regulation',
+    ]
   ),
   seed(
     'capability',
-    'API-first backend',
-    'JSON API routes with validation and error envelopes: POST /api/search, GET/DELETE /api/history, GET /api/health.',
-    ['api', 'rest', 'nextjs', 'routes', 'health', 'monitoring']
+    'Compliance evidence and remediation tracking',
+    'Evidence collection and remediation plans per obligation, with dashboards showing readiness state and obligation metrics (evidence, remediation_plans tables, compliance dashboard UI).',
+    [
+      'evidence',
+      'remediation',
+      'compliance',
+      'documentation',
+      'tracking',
+      'dashboard',
+    ]
   ),
   seed(
     'capability',
-    'Rate limiting middleware',
-    'In-memory per-IP rate limiter on expensive API routes with X-RateLimit headers (middleware.ts).',
-    ['rate-limit', 'middleware', 'security', 'abuse']
+    'Production health and deployment monitoring',
+    'Health, production-health, error-rate, blocking-conditions and verify-deployment API endpoints report system state truthfully for uptime probes and launch gates.',
+    ['health', 'monitoring', 'observability', 'deployment', 'uptime', 'api']
   ),
   seed(
     'capability',
-    'Dark polished UI',
-    'Tailwind dark theme, lucide-react icons, loading skeletons, empty states, error boundaries and OG social cards.',
-    ['ui', 'tailwind', 'dark-theme', 'ux', 'frontend']
+    'Dark polished UI with PWA support',
+    'Tailwind dark theme, lucide-react icons, loading skeletons, error boundaries, installable PWA with service worker, privacy/terms pages.',
+    ['ui', 'tailwind', 'dark-theme', 'ux', 'frontend', 'pwa']
   ),
   seed(
     'capability',
-    'CI and Vercel auto-deploy',
-    'GitHub Actions lint/type-check/build pipeline and production deploys to Vercel on push to main.',
-    ['ci', 'cd', 'vercel', 'github-actions', 'deploy']
+    'CI, test suites and Vercel auto-deploy',
+    'GitHub Actions pipeline (lint, type-check, vitest unit tests, build, smoke suite, Playwright E2E) and Vercel Git-integration deploys: main to production, PRs to previews.',
+    [
+      'ci',
+      'cd',
+      'vercel',
+      'github-actions',
+      'deploy',
+      'testing',
+      'vitest',
+      'playwright',
+    ]
   ),
   seed(
     'capability',
@@ -87,9 +120,9 @@ export const SEED_GENOME: GenomeEntry[] = [
   ),
   seed(
     'architecture-decision',
-    'Best-effort persistence, never block the user',
-    'Database writes on hot paths are fire-and-forget with logged errors (see saveSearch). User-facing latency wins over write guarantees for non-critical data.',
-    ['architecture', 'reliability', 'persistence', 'latency']
+    'RLS is the security boundary',
+    'Row-Level Security policies in Postgres enforce multi-tenant isolation; middleware route protection is a UX concern only. Server code must never trust getSession() without getUser() validation.',
+    ['architecture', 'security', 'rls', 'multi-tenant', 'postgres']
   ),
 ];
 

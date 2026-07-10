@@ -8,7 +8,7 @@ import {
   arxivEntriesToObservations,
   parseArxivAtom,
 } from '@/lib/ceis/collectors/arxiv';
-import { aggregateKeywords } from '@/lib/ceis/collectors/customer-signals';
+import { aggregateAiSystems } from '@/lib/ceis/collectors/customer-signals';
 import { parseGithubRepos } from '@/lib/ceis/collectors/github-trending';
 import { parseHnHits } from '@/lib/ceis/collectors/hacker-news';
 import { parseRedditPosts } from '@/lib/ceis/collectors/reddit';
@@ -128,18 +128,30 @@ describe('parseRedditPosts', () => {
   });
 });
 
-describe('aggregateKeywords', () => {
-  it('counts, normalizes and ranks first-party search keywords', () => {
+describe('aggregateAiSystems', () => {
+  it('counts, normalizes and ranks first-party inventory labels', () => {
     const rows = [
-      { keyword: 'EU AI Act', created_at: '2026-07-01T00:00:00Z' },
-      { keyword: 'eu ai act', created_at: '2026-07-03T00:00:00Z' },
-      { keyword: 'quantum', created_at: '2026-07-02T00:00:00Z' },
-      { keyword: '  ', created_at: '2026-07-02T00:00:00Z' },
+      {
+        system_type: 'Large_Language_Model',
+        vendor: 'OpenAI',
+        created_at: '2026-07-01T00:00:00Z',
+      },
+      {
+        system_type: 'large_language_model',
+        vendor: null,
+        created_at: '2026-07-03T00:00:00Z',
+      },
+      {
+        system_type: 'classification_system',
+        vendor: '  ',
+        created_at: '2026-07-02T00:00:00Z',
+      },
     ];
-    const obs = aggregateKeywords(rows, NOW, 5);
-    expect(obs).toHaveLength(2);
-    expect(obs[0].title).toContain('eu ai act');
-    expect(obs[0].evidence).toContain('2 times');
+    const obs = aggregateAiSystems(rows, NOW, 5);
+    // "large language model" ×2, "openai" ×1, "classification system" ×1.
+    expect(obs).toHaveLength(3);
+    expect(obs[0].title).toContain('large language model');
+    expect(obs[0].evidence).toContain('2 recent registrations');
     expect(obs[0].category).toBe('customer-insight');
     expect(obs[0].confidence).toBeGreaterThan(obs[1].confidence);
   });

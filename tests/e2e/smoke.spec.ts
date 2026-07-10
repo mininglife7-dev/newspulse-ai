@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// The flow builds on itself (search saves history), so run in order.
-test.describe.configure({ mode: 'serial' });
-
 test('health endpoint reports healthy with all integrations configured', async ({
   request,
 }) => {
@@ -12,71 +9,57 @@ test('health endpoint reports healthy with all integrations configured', async (
   expect(body.status).toBe('healthy');
 });
 
-test('home page renders search UI', async ({ page }) => {
+test('home page renders landing page with governance messaging', async ({
+  page,
+}) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
-    'Summarize'
+    'AI Governance'
   );
-  await expect(page.getByPlaceholder(/Try "AI regulation"/)).toBeVisible();
-  // Empty input → search is disabled
-  await expect(page.getByRole('button', { name: /Search/ })).toBeDisabled();
+  // Check for CTA buttons
+  await expect(page.getByRole('link', { name: /Start Free Trial/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Learn More/ })).toBeVisible();
 });
 
-test('search happy path returns labelled AI summaries', async ({ page }) => {
-  await page.goto('/');
-  await page.getByPlaceholder(/Try "AI regulation"/).fill('artificial intelligence');
-  await page.getByRole('button', { name: /Search/ }).click();
-
-  await expect(
-    page.getByRole('heading', { name: /3 results for/ })
-  ).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Researchers Announce Major AI Breakthrough' })
-  ).toBeVisible();
-  // Transparency: every summary is explicitly labelled as AI-generated
-  await expect(page.getByText('AI-generated summary')).toHaveCount(3);
-  await expect(page.getByText(/Mock AI summary of/).first()).toBeVisible();
-
-  // Let the card fade-in animation finish so screenshots are clean.
-  await page.waitForTimeout(1200);
-  await page.screenshot({
-    path: 'public/screenshots/search.png',
-    fullPage: false,
-  });
-});
-
-test('history lists the saved search and can expand results', async ({
+test('unauthenticated visit to /dashboard redirects to sign-in', async ({
   page,
 }) => {
-  await page.goto('/history');
-  const row = page.getByRole('row', { name: /artificial intelligence/ });
-  await expect(row).toBeVisible();
-  await expect(row.getByText('3', { exact: true })).toBeVisible();
-
-  await page.screenshot({
-    path: 'public/screenshots/history.png',
-    fullPage: false,
-  });
-
-  await row.getByRole('button', { name: 'View Results' }).click();
-  await expect(
-    page.getByRole('link', { name: 'Chipmakers Race to Meet AI Demand' })
-  ).toBeVisible();
+  await page.goto('/dashboard');
+  await expect(page).toHaveURL(/\/auth\/signin\?redirect=%2Fdashboard/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Welcome back'
+  );
 });
 
-test('clear history empties the table after confirmation', async ({
+test('unauthenticated visit to /workspace/setup redirects to sign-in', async ({
   page,
 }) => {
-  await page.goto('/history');
-  page.on('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: /Clear History/ }).click();
-  await expect(page.getByText('No searches yet')).toBeVisible();
+  await page.goto('/workspace/setup');
+  await expect(page).toHaveURL(/\/auth\/signin/);
 });
 
-test('search validation surfaces API errors in the UI', async ({ page }) => {
-  await page.goto('/');
-  const input = page.getByPlaceholder(/Try "AI regulation"/);
-  await input.fill('   ');
-  // Whitespace-only trims to empty → button stays disabled
-  await expect(page.getByRole('button', { name: /Search/ })).toBeDisabled();
+test('unauthenticated POST /api/workspace returns 401 JSON, not a redirect', async ({
+  request,
+}) => {
+  const res = await request.post('/api/workspace', {
+    data: {
+      companyName: 'Acme GmbH',
+      country: 'Germany',
+      industry: 'Manufacturing',
+    },
+  });
+  expect(res.status()).toBe(401);
+  const body = await res.json();
+  expect(body.ok).toBe(false);
+});
+
+test('auth pages render for signed-out visitors', async ({ page }) => {
+  await page.goto('/auth/signup');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Create your account'
+  );
+  await page.goto('/auth/signin');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Welcome back'
+  );
 });

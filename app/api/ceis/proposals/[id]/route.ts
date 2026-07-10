@@ -23,9 +23,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const proposal = await getProposal(params.id);
+  const { id } = await params;
+  const proposal = await getProposal(id);
   if (!proposal) {
     return NextResponse.json(
       { ok: false, error: 'Proposal not found.' },
@@ -45,8 +46,9 @@ interface PatchBody {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   let body: PatchBody;
   try {
     body = (await req.json()) as PatchBody;
@@ -57,7 +59,7 @@ export async function PATCH(
     );
   }
 
-  const proposal = await getProposal(params.id);
+  const proposal = await getProposal(id);
   if (!proposal) {
     return NextResponse.json(
       { ok: false, error: 'Proposal not found.' },
@@ -67,7 +69,7 @@ export async function PATCH(
 
   switch (body.action) {
     case 'start-review': {
-      const updated = await updateProposal(params.id, {
+      const updated = await updateProposal(id, {
         status: 'under-review',
       });
       return NextResponse.json({ ok: true, proposal: updated });
@@ -92,7 +94,7 @@ export async function PATCH(
           ? { ...g, status: body.status!, notes: body.notes ?? g.notes }
           : g
       );
-      const updated = await updateProposal(params.id, { gates });
+      const updated = await updateProposal(id, { gates });
       return NextResponse.json({ ok: true, proposal: updated });
     }
 
@@ -111,7 +113,7 @@ export async function PATCH(
           { status: 409 }
         );
       }
-      const updated = await updateProposal(params.id, { status: 'approved' });
+      const updated = await updateProposal(id, { status: 'approved' });
       await rememberGenomeEntry({
         id: stableId('successful', proposal.id),
         kind: 'successful-idea',
@@ -124,7 +126,7 @@ export async function PATCH(
     }
 
     case 'reject': {
-      const updated = await updateProposal(params.id, { status: 'rejected' });
+      const updated = await updateProposal(id, { status: 'rejected' });
       await rememberGenomeEntry({
         id: stableId('rejected', proposal.principle_id),
         kind: 'rejected-idea',

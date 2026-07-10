@@ -7,15 +7,15 @@ describe('gap analysis against the seed genome', () => {
   it('flags a duplicate of an existing capability as already-exists', () => {
     const p = makePrinciple({
       principle:
-        'Summarize news articles with an AI model into short neutral sentences',
+        'Let organizations catalog their AI systems with vendor, type and purpose in an inventory',
       what_happened:
-        'A product summarizes every article with gpt-4o-mini into 2-3 sentences.',
+        'A compliance product added an AI systems inventory where organizations register name, vendor, purpose and status.',
       why_it_worked:
-        'AI summarization of articles with parallel concurrency and fallback.',
+        'A per-workspace catalog registry of AI systems makes governance tractable.',
     });
     const gap = analyzeGap(p, SEED_GENOME);
     expect(gap.status).toBe('already-exists');
-    expect(gap.matched_capability).toBe('AI article summarization');
+    expect(gap.matched_capability).toBe('AI system inventory');
     expect(gap.similarity).toBeGreaterThan(0.5);
   });
 

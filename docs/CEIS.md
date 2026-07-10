@@ -92,9 +92,12 @@ flowchart LR
         DASHB[dashboard.ts]
     end
 
+    subgraph internal["CEIS-owned clients (self-contained)"]
+        FC[collectors/firecrawl.ts<br/>vendored wrapper]
+        OA[llm.ts<br/>fetch-based OpenAI client]
+    end
+
     subgraph reused["Existing Cathedral organs (reused)"]
-        FC[lib/firecrawl.ts]
-        OA[lib/openai.ts]
         SB[lib/supabase.ts]
     end
 
@@ -154,7 +157,7 @@ solid idea with strong evidence. Proposals below **55/100** never become DNA.
 | `ceis_reports`       | weekly reports               | markdown + stats                                                                                    |
 
 RLS is enabled with **no anon policies** — CEIS tables are server-only
-(service-role key), unlike `news_searches`.
+(service-role key).
 
 ## Success criteria
 

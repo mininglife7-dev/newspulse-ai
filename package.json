@@ -2,7 +2,7 @@
   "name": "newspulse-ai",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-Powered News Intelligence — Search. Scrape. Summarize.",
+  "description": "EURO AI — AI Governance Platform for EU AI Act compliance",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -18,11 +18,12 @@
     "test:smoke": "node scripts/smoke-test.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.110.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.453.0",
-    "next": "^14.2.35",
-    "openai": "^4.67.3",
+    "next": "15.5.20",
+    "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4"
@@ -34,12 +35,12 @@
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
+    "eslint-config-next": "15.5.20",
     "postcss": "^8.4.47",
-    "prettier": "^3.3.3",
+    "prettier": "^3.9.5",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=22.0.0"

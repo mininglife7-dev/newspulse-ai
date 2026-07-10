@@ -1,58 +1,42 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { GET } from '@/app/api/health/route';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const KEYS = [
-  'FIRECRAWL_API_KEY',
-  'OPENAI_API_KEY',
-  'NEXT_PUBLIC_SUPABASE_URL',
-  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY',
-];
-
-let snapshot: Record<string, string | undefined>;
-
-beforeEach(() => {
-  snapshot = {};
-  for (const k of KEYS) {
-    snapshot[k] = process.env[k];
-    delete process.env[k];
-  }
-});
-
-afterEach(() => {
-  for (const k of KEYS) {
-    if (snapshot[k] === undefined) delete process.env[k];
-    else process.env[k] = snapshot[k];
-  }
-});
+async function getHealth() {
+  vi.resetModules();
+  const { GET } = await import('@/app/api/health/route');
+  const res = await GET();
+  return { status: res.status, body: await res.json() };
+}
 
 describe('GET /api/health', () => {
-  it('reports degraded (503) when no integrations are configured', async () => {
-    const res = await GET();
-    expect(res.status).toBe(503);
-
-    const body = await res.json();
-    expect(body.ok).toBe(false);
-    expect(body.status).toBe('degraded');
-    expect(body.checks).toEqual({
-      firecrawl: false,
-      openai: false,
-      supabase_url: false,
-      supabase_anon: false,
-      supabase_service: false,
-    });
-    expect(typeof body.timestamp).toBe('string');
+  beforeEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it('reports healthy (200) when every integration has credentials', async () => {
-    for (const k of KEYS) process.env[k] = 'test-value';
+  it('reports healthy when all Supabase env vars are present', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'sb_publishable_x');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'sb_secret_x');
 
-    const res = await GET();
-    expect(res.status).toBe(200);
-
-    const body = await res.json();
+    const { status, body } = await getHealth();
+    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.status).toBe('healthy');
-    expect(Object.values(body.checks).every(Boolean)).toBe(true);
+    expect(body.checks).toEqual({
+      supabase_url: true,
+      supabase_anon: true,
+      supabase_service: true,
+    });
+  });
+
+  it('reports degraded with 503 when configuration is missing', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', '');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', '');
+
+    const { status, body } = await getHealth();
+    expect(status).toBe(503);
+    expect(body.ok).toBe(false);
+    expect(body.status).toBe('degraded');
+    expect(body.checks.supabase_url).toBe(false);
   });
 });

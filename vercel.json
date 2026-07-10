@@ -6,8 +6,17 @@
   "devCommand": "next dev",
   "installCommand": "npm install",
   "functions": {
-    "app/api/search/route.ts": {
-      "maxDuration": 60
+    "app/api/blocking-conditions/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/production-health/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/verify-deployment/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/error-rate/route.ts": {
+      "maxDuration": 30
     },
     "app/api/ceis/run/route.ts": {
       "maxDuration": 300

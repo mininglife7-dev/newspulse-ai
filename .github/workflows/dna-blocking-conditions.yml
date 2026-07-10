@@ -1,0 +1,27 @@
+name: DNA-GOV-001 - Blocking Conditions Monitor
+
+on:
+  schedule:
+    # Every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-blocking-conditions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check for blocking conditions
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ secrets.VERCEL_DEPLOYMENT_URL }}/api/blocking-conditions")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Blocking conditions check failed with status $HTTP_CODE"
+            echo "$BODY"
+            exit 1
+          fi
+
+          echo "✅ Blocking conditions check passed"
+          echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"

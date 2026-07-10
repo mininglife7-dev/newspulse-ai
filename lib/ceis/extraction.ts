@@ -3,8 +3,8 @@ import type {
   ObservationCategory,
   Principle,
 } from '@/lib/ceis/types';
+import { completeJson, llmAvailable } from '@/lib/ceis/llm';
 import { clamp, excerpt, stableId, toScore5 } from '@/lib/ceis/util';
-import { getOpenAIClient } from '@/lib/openai';
 
 /**
  * Principle Extraction Engine.
@@ -15,7 +15,7 @@ import { getOpenAIClient } from '@/lib/openai';
  * amount to copying a competitor.
  */
 
-const EXTRACTION_SYSTEM_PROMPT = `You are the Principle Extraction Engine of an evolution system for "the Cathedral" — an AI news-intelligence product (NewsPulse / EURO AI): users search a topic, articles are scraped, AI-summarized, and saved to history.
+const EXTRACTION_SYSTEM_PROMPT = `You are the Principle Extraction Engine of an evolution system for "the Cathedral" — EURO AI, a multi-tenant AI-governance platform: organizations inventory their AI systems, run EU AI Act risk assessments, track obligations, collect compliance evidence, and manage remediation plans.
 
 You receive public observations (titles, URLs, short excerpts, engagement metrics). For each observation worth learning from, extract ONE reusable principle.
 
@@ -145,28 +145,18 @@ export async function extractPrinciples(
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, MAX_OBSERVATIONS_FOR_EXTRACTION);
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!llmAvailable()) {
     console.warn('[ceis] OPENAI_API_KEY missing — using heuristic extraction.');
     return heuristicPrinciples(top);
   }
 
   try {
-    const completion = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4o-mini',
+    const parsed = await completeJson<{ principles?: RawPrinciple[] }>({
+      system: EXTRACTION_SYSTEM_PROMPT,
+      user: `Observations from this evolution cycle:\n\n${observationsPrompt(top)}`,
+      maxTokens: 3000,
       temperature: 0.2,
-      max_tokens: 3000,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: `Observations from this evolution cycle:\n\n${observationsPrompt(top)}`,
-        },
-      ],
     });
-
-    const text = completion.choices[0]?.message?.content ?? '{}';
-    const parsed = JSON.parse(text) as { principles?: RawPrinciple[] };
     const principles = (parsed.principles ?? [])
       .map((raw) => normalizePrinciple(raw, top))
       .filter((p): p is Principle => p !== null);

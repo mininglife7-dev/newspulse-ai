@@ -1,93 +1,81 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { classifyRoute } from '@/lib/routes';
 
 /**
- * Lightweight in-memory rate limiter for API routes.
- * Resets on cold start — fine for hackathon scale. For production, swap
- * for Upstash or Vercel KV.
+ * EURO AI middleware: session refresh + auth routing.
+ *
+ * Uses @supabase/ssr cookie sessions, so the session the browser client
+ * establishes at sign-in is visible here. Route protection is a UX
+ * concern — data security is enforced by RLS in the database.
  */
-const buckets = new Map<string, { count: number; resetAt: number }>();
-const WINDOW_MS = 60_000; // 1 minute
+export async function middleware(req: NextRequest) {
+  const kind = classifyRoute(req.nextUrl.pathname);
 
-// Per-IP request budgets per window, by route class.
-// /api/search is expensive (Firecrawl + OpenAI); the rest of the API
-// (including the destructive history DELETE endpoints) gets its own
-// budget so browsing history never competes with searching.
-const LIMITS = {
-  search: 30,
-  api: 60,
-} as const;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-function rateLimit(key: string, max: number) {
-  const now = Date.now();
-  const bucket = buckets.get(key);
-  if (!bucket || bucket.resetAt < now) {
-    buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return { allowed: true, remaining: max - 1, resetIn: WINDOW_MS };
-  }
-  bucket.count += 1;
-  if (bucket.count > max) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetIn: bucket.resetAt - now,
-    };
-  }
-  return {
-    allowed: true,
-    remaining: max - bucket.count,
-    resetIn: bucket.resetAt - now,
-  };
-}
-
-export function middleware(req: NextRequest) {
-  const url = req.nextUrl;
-
-  // Health checks are for uptime probes — never rate-limit them.
-  if (
-    !url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/api/health')
-  ) {
+  // Without Supabase config there are no sessions: public stays reachable,
+  // protected traffic goes to sign-in (which will explain the situation).
+  if (!url || !key) {
+    if (kind === 'protected') return redirectToSignIn(req);
     return NextResponse.next();
   }
 
-  // /api/ceis/run kicks off a full evolution cycle (many upstream calls) —
-  // as expensive as search, so it shares that budget.
-  const scope =
-    url.pathname.startsWith('/api/search') ||
-    url.pathname.startsWith('/api/ceis/run')
-      ? 'search'
-      : 'api';
-  const max = LIMITS[scope];
-
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'anonymous';
-
-  const { allowed, remaining, resetIn } = rateLimit(`${scope}:${ip}`, max);
-
-  const headers = new Headers();
-  headers.set('X-RateLimit-Limit', String(max));
-  headers.set('X-RateLimit-Remaining', String(remaining));
-  headers.set('X-RateLimit-Reset', String(Math.ceil(resetIn / 1000)));
-
-  if (!allowed) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `Rate limit exceeded. Try again in ${Math.ceil(
-          resetIn / 1000
-        )}s.`,
+  let res = NextResponse.next({ request: req });
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return req.cookies.getAll();
       },
-      { status: 429, headers }
-    );
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          req.cookies.set(name, value)
+        );
+        res = NextResponse.next({ request: req });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          res.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
+
+  // getUser() validates the JWT against Supabase and refreshes expired
+  // sessions (writing new cookies via setAll above). Never trust getSession()
+  // alone in server code.
+  let user = null;
+  if (req.cookies.getAll().some((c) => c.name.startsWith('sb-'))) {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
   }
 
-  const res = NextResponse.next();
-  headers.forEach((value, key) => res.headers.set(key, value));
+  if (kind === 'protected' && !user) return redirectToSignIn(req);
+  if (kind === 'auth' && user) {
+    return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+  }
   return res;
 }
 
+function redirectToSignIn(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json(
+      { ok: false, error: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+  const signInUrl = new URL('/auth/signin', req.nextUrl);
+  signInUrl.searchParams.set('redirect', pathname);
+  return NextResponse.redirect(signInUrl);
+}
+
 export const config = {
-  matcher: ['/api/:path*'],
+  matcher: [
+    /*
+     * Match all request paths except static assets:
+     * - _next/static, _next/image, favicon.ico, sw.js
+     * - icon/opengraph routes are static too but harmless to classify
+     */
+    '/((?!_next/static|_next/image|favicon.ico|sw.js).*)',
+  ],
 };

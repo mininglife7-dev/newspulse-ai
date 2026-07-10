@@ -1,216 +1,134 @@
-'use client';
-
+import Link from 'next/link';
 import {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  type FormEvent,
-} from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Search as SearchIcon, ArrowRight, Sparkles } from 'lucide-react';
-import NewsCard from '@/components/NewsCard';
-import EmptyState from '@/components/EmptyState';
-import { SUMMARY_MODEL } from '@/lib/constants';
-import type { NewsArticle } from '@/lib/supabase';
+  CheckCircle,
+  Shield,
+  Zap,
+  Users,
+  BarChart3,
+  ArrowRight,
+} from 'lucide-react';
 
-const SUGGESTIONS = [
-  'Artificial Intelligence',
-  'Tesla',
-  'Bitcoin',
-  'Climate change',
-  'NASA',
-];
-
-export default function HomePage() {
-  const searchParams = useSearchParams();
-  const [keyword, setKeyword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<NewsArticle[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [searched, setSearched] = useState(false);
-  // The query the visible results actually belong to. The header must never
-  // label results with the live input value — the user can retype without
-  // searching, and the screen would contradict its own data.
-  const [lastQuery, setLastQuery] = useState('');
-  const autoRanRef = useRef(false);
-
-  const runSearch = useCallback(async (q: string) => {
-    if (!q) {
-      setError('Please enter a keyword to search.');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    setResults([]);
-    setSearched(true);
-    setLastQuery(q);
-
-    try {
-      const res = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: q }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        throw new Error(json.error || `Search failed (${res.status})`);
-      }
-      setResults(json.results as NewsArticle[]);
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Auto-run if URL has ?q=...
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    const q = searchParams.get('q');
-    if (q && q.trim()) {
-      autoRanRef.current = true;
-      setKeyword(q);
-      runSearch(q.trim());
-    }
-  }, [searchParams, runSearch]);
-
-  const handleSearch = useCallback(
-    async (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      await runSearch(keyword.trim());
-    },
-    [keyword, runSearch]
-  );
-
+export default function LandingPage() {
   return (
-    <div className="flex flex-col gap-10">
+    <div className="space-y-20">
       {/* Hero */}
-      <section className="flex flex-col items-center gap-4 pt-6 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-accent-500/30 bg-accent-900/20 px-3 py-1 text-xs font-medium text-accent-300">
-          <Sparkles className="h-3.5 w-3.5" />
-          AI-Powered News Intelligence
-        </span>
-        <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-          Search. Scrape.{' '}
-          <span className="gradient-text">Summarize.</span>
-        </h1>
-        <p className="max-w-xl text-base text-white/60">
-          NewsPulse AI scrapes the latest articles from across the web and
-          generates concise, neutral summaries — so you can stay informed in
-          seconds.
-        </p>
-      </section>
-
-      {/* Search Form */}
-      <section className="mx-auto w-full max-w-2xl">
-        <form
-          onSubmit={handleSearch}
-          className="group relative flex items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-lg shadow-black/20 ring-1 ring-inset ring-white/5 transition focus-within:border-accent-500/60 focus-within:ring-accent-500/30"
-        >
-          <span className="pl-3 text-white/40">
-            <SearchIcon className="h-5 w-5" />
-          </span>
-          <input
-            type="text"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder='Try "AI regulation", "SpaceX", "climate summit"…'
-            className="flex-1 bg-transparent px-2 py-3 text-base text-white placeholder-white/30 outline-none"
-            disabled={loading}
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={loading || !keyword.trim()}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent-500 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-accent-900/40 transition hover:from-accent-400 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? (
-              <>
-                <span className="spinner" />
-                Searching…
-              </>
-            ) : (
-              <>
-                Search
-                <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Suggestions */}
-        {!searched && (
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-white/50">
-            <span>Suggestions:</span>
-            {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => {
-                  setKeyword(s);
-                  runSearch(s);
-                }}
-                className="rounded-full border border-border bg-card px-3 py-1 text-white/70 transition hover:border-accent-500/60 hover:text-accent-300"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="mt-4 rounded-lg border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-            {error}
-          </div>
-        )}
-      </section>
-
-      {/* Loading skeleton */}
-      {loading && (
-        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-52 animate-pulse rounded-xl border border-border/60 bg-card"
-              style={{ animationDelay: `${i * 80}ms` }}
-            />
-          ))}
-        </section>
-      )}
-
-      {/* No results — a truthful empty state, not an error */}
-      {!loading && searched && !error && results.length === 0 && (
-        <section className="mx-auto w-full max-w-2xl">
-          <EmptyState
-            icon={<SearchIcon className="h-6 w-6" />}
-            title={`No results for "${lastQuery}"`}
-            description="Try a different keyword or a broader topic."
-          />
-        </section>
-      )}
-
-      {/* Results */}
-      {!loading && results.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white/90">
-              {results.length} result{results.length === 1 ? '' : 's'} for{' '}
-              <span className="text-accent-300">"{lastQuery}"</span>
-            </h2>
-            <span className="text-xs text-white/40">
-              Summaries by {SUMMARY_MODEL}
+      <section className="space-y-6 py-20">
+        <div className="space-y-4">
+          <h1 className="text-5xl font-bold leading-tight tracking-tight md:text-6xl">
+            <span>AI Governance,</span>{' '}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Made Simple
             </span>
+          </h1>
+          <p className="max-w-2xl text-xl text-slate-300">
+            Transform AI governance from a compliance checklist into a strategic
+            advantage. Meet EU AI Act obligations with confidence.
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-8 py-3 font-semibold text-white transition hover:shadow-lg hover:shadow-blue-500/40"
+          >
+            Start Free Trial
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="#features"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 px-8 py-3 font-semibold text-white transition hover:border-slate-600 hover:bg-slate-900"
+          >
+            Learn More
+          </Link>
+        </div>
+      </section>
+
+      {/* Trust Badges */}
+      <section className="grid gap-6 sm:grid-cols-3">
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+          <CheckCircle className="mb-3 h-6 w-6 text-cyan-400" />
+          <h3 className="font-semibold text-white">Built for Europe</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            EU AI Act compliant from day one
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+          <Shield className="mb-3 h-6 w-6 text-cyan-400" />
+          <h3 className="font-semibold text-white">Enterprise Grade</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            Security and privacy by design
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+          <Zap className="mb-3 h-6 w-6 text-cyan-400" />
+          <h3 className="font-semibold text-white">Rapid Setup</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            From registration to insights in hours
+          </p>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="space-y-8 py-12">
+        <div className="space-y-2 text-center">
+          <h2 className="text-4xl font-bold text-white">
+            Everything You Need
+          </h2>
+          <p className="text-lg text-slate-400">
+            Complete AI governance in one elegant platform
+          </p>
+        </div>
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
+            <Users className="h-6 w-6 text-cyan-400" />
+            <h3 className="text-lg font-semibold text-white">AI Inventory</h3>
+            <p className="text-slate-400">
+              Catalog all AI systems, vendors, and purposes in your organization
+            </p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map((article, i) => (
-              <NewsCard key={article.url + i} article={article} index={i} />
-            ))}
+          <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
+            <BarChart3 className="h-6 w-6 text-cyan-400" />
+            <h3 className="text-lg font-semibold text-white">Risk Analysis</h3>
+            <p className="text-slate-400">
+              Classify risks and understand your regulatory obligations
+            </p>
           </div>
-        </section>
-      )}
+          <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
+            <Shield className="h-6 w-6 text-cyan-400" />
+            <h3 className="text-lg font-semibold text-white">
+              Evidence Collection
+            </h3>
+            <p className="text-slate-400">
+              Gather and organize compliance evidence in one place
+            </p>
+          </div>
+          <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
+            <CheckCircle className="h-6 w-6 text-cyan-400" />
+            <h3 className="text-lg font-semibold text-white">
+              Remediation Tracking
+            </h3>
+            <p className="text-slate-400">
+              Plan and track actions to close compliance gaps
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="rounded-2xl border border-slate-800 bg-gradient-to-r from-blue-950/40 to-cyan-950/40 px-8 py-16 text-center">
+        <h2 className="mb-4 text-3xl font-bold text-white">
+          Ready to transform AI governance?
+        </h2>
+        <p className="mb-8 text-lg text-slate-300">
+          Join companies across Europe who trust EURO AI
+        </p>
+        <Link
+          href="/auth/signup"
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-8 py-3 font-semibold text-white transition hover:shadow-lg hover:shadow-blue-500/40"
+        >
+          Get Started Free
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </section>
     </div>
   );
 }
