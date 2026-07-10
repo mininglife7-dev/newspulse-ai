@@ -1,0 +1,169 @@
+name: 'DNS-015: Security Audit Trail'
+
+on:
+  schedule:
+    # Run daily at 08:30 UTC (after DNS-011 at 08:00, before DNS-008 at 10:00)
+    - cron: '30 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  rotate-and-export:
+    name: Rotate Audit Log and Export for Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rotate audit log
+        id: rotate
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL not configured - audit rotation skipped"
+            exit 0
+          fi
+
+          echo "🔄 Rotating audit log (keeping 90 days)..."
+
+          # Call audit trail rotation endpoint
+          RESPONSE=$(curl -s -X POST "$DEPLOY_URL/api/audit-trail" \
+            -H "Content-Type: application/json" \
+            -d '{"keepDays": 90}')
+
+          echo "Rotation response:"
+          echo "$RESPONSE" | jq '.' || echo "$RESPONSE"
+
+          # Extract archived count
+          ARCHIVED=$(echo "$RESPONSE" | jq -r '.archived // 0' 2>/dev/null || echo "0")
+          echo "archived_count=$ARCHIVED" >> $GITHUB_OUTPUT
+
+      - name: Export audit trail for compliance
+        id: export
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL not configured - export skipped"
+            exit 0
+          fi
+
+          echo "📋 Exporting audit trail..."
+
+          # Export as JSON
+          curl -s "$DEPLOY_URL/api/audit-trail?format=export&exportFormat=json" \
+            -o /tmp/audit-export-json.json 2>/dev/null
+
+          # Export as CSV
+          curl -s "$DEPLOY_URL/api/audit-trail?format=export&exportFormat=csv" \
+            -o /tmp/audit-export-csv.csv 2>/dev/null
+
+          if [ -f /tmp/audit-export-json.json ]; then
+            ENTRY_COUNT=$(jq 'length' /tmp/audit-export-json.json 2>/dev/null || echo "unknown")
+            echo "entry_count=$ENTRY_COUNT" >> $GITHUB_OUTPUT
+            echo "json_exported=true" >> $GITHUB_OUTPUT
+          else
+            echo "json_exported=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -f /tmp/audit-export-csv.csv ]; then
+            echo "csv_exported=true" >> $GITHUB_OUTPUT
+          else
+            echo "csv_exported=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get audit report
+        id: report
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL not configured - report skipped"
+            exit 0
+          fi
+
+          echo "📊 Fetching audit report..."
+
+          # Get current day's report
+          RESPONSE=$(curl -s "$DEPLOY_URL/api/audit-trail?format=report")
+
+          echo "Audit Report:"
+          echo "$RESPONSE" | jq '.formatted // .summary' 2>/dev/null || echo "$RESPONSE"
+
+          # Extract counts for workflow output
+          TOTAL=$(echo "$RESPONSE" | jq -r '.totalEntries // 0' 2>/dev/null || echo "0")
+          CRITICAL=$(echo "$RESPONSE" | jq -r '.criticalCount // 0' 2>/dev/null || echo "0")
+
+          echo "total_entries=$TOTAL" >> $GITHUB_OUTPUT
+          echo "critical_actions=$CRITICAL" >> $GITHUB_OUTPUT
+
+      - name: Report audit status
+        run: |
+          echo "📋 Audit Trail Compliance Report"
+          echo "=================================="
+          echo "Rotation Status:"
+          echo "  - Archived entries: ${{ steps.rotate.outputs.archived_count }}"
+          echo ""
+          echo "Audit Report:"
+          echo "  - Total entries today: ${{ steps.report.outputs.total_entries }}"
+          echo "  - Critical actions: ${{ steps.report.outputs.critical_actions }}"
+          echo ""
+          echo "Export Status:"
+          echo "  - JSON exported: ${{ steps.export.outputs.json_exported }}"
+          echo "  - CSV exported: ${{ steps.export.outputs.csv_exported }}"
+          echo "  - Total entries exported: ${{ steps.export.outputs.entry_count }}"
+
+      - name: Create compliance issue if critical actions detected
+        if: steps.report.outputs.critical_actions != '0' && steps.report.outputs.critical_actions != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const criticalCount = '${{ steps.report.outputs.critical_actions }}';
+
+            const body = `## 🔐 Audit Trail: Critical Actions Detected
+
+**Period:** Yesterday's audit
+**Critical Actions Found:** ${criticalCount}
+
+Critical audit events require review for compliance and security purposes.
+
+### Investigation Required
+- Review [Audit Trail Report](/api/audit-trail?format=report)
+- Check detailed entries: [Audit Entries](/api/audit-trail?format=entries&severity=critical)
+- Export for analysis: [Download JSON](/api/audit-trail?format=export&exportFormat=json)
+
+### Audit Sources (critical events)
+- Deployment failures and rollbacks
+- Security vulnerabilities detected
+- Incident creation and escalation
+- Cost anomalies detected
+- Authentication and authorization changes
+- Secrets rotation
+- Environment configuration changes
+
+### Next Steps
+1. Review critical entries in audit trail
+2. Investigate root cause of flagged events
+3. Update incident response if necessary
+4. Archive audit exports for compliance records
+`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔐 Audit Trail: ${criticalCount} Critical Action(s) Detected`,
+              body: body,
+              labels: ['audit', 'compliance', 'security'],
+              assignees: ['mininglife7-dev']
+            });
