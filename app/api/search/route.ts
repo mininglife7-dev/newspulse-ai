@@ -6,6 +6,7 @@ import {
 } from '@/lib/firecrawl';
 import { summarizeBatch } from '@/lib/openai';
 import { saveSearch, type NewsArticle } from '@/lib/supabase';
+import { generateRequestId, getRequestId } from '@/lib/request-context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,13 +32,15 @@ interface SearchBody {
  *   { title, url, source, date, description, ai_summary }
  */
 export async function POST(req: NextRequest) {
+  const requestId = generateRequestId();
+
   // ---------- 1) Validate input ----------
   let body: SearchBody;
   try {
     body = (await req.json()) as SearchBody;
   } catch {
     return NextResponse.json(
-      { ok: false, error: 'Invalid JSON body.' },
+      { ok: false, error: 'Invalid JSON body.', requestId },
       { status: 400 }
     );
   }
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
   const keyword = (body.keyword ?? '').trim();
   if (!keyword) {
     return NextResponse.json(
-      { ok: false, error: 'Missing "keyword" in request body.' },
+      { ok: false, error: 'Missing "keyword" in request body.', requestId },
       { status: 400 }
     );
   }
@@ -89,12 +92,13 @@ export async function POST(req: NextRequest) {
       results: mockResults,
       _demo: true,
       _note: 'Demo mode active. Results are mock data. To use real search, configure FIRECRAWL_API_KEY.',
+      requestId,
     });
   }
 
   if (!apiKey) {
     return NextResponse.json(
-      { ok: false, error: 'Server misconfigured: FIRECRAWL_API_KEY missing. Set DEMO_MODE=true to use sample data, or add your Firecrawl API key to .env' },
+      { ok: false, error: 'Server misconfigured: FIRECRAWL_API_KEY missing. Set DEMO_MODE=true to use sample data, or add your Firecrawl API key to .env', requestId },
       { status: 500 }
     );
   }
@@ -111,7 +115,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error('[/api/search] Firecrawl error:', err);
     return NextResponse.json(
-      { ok: false, error: err?.message || 'Firecrawl search failed.' },
+      { ok: false, error: err?.message || 'Firecrawl search failed.', requestId },
       { status: 502 }
     );
   }
@@ -194,6 +198,7 @@ export async function POST(req: NextRequest) {
     keyword,
     count: results.length,
     results,
+    requestId,
   });
 }
 
