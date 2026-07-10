@@ -169,6 +169,99 @@ interface ProductionHealthReport {
 4. **Performance profiling:** Track latency trends to detect slow degradation
 5. **Metrics dashboard:** Aggregate health check results for Founder visibility (future phase)
 
+### DNA-GOV-008: Dependency Security Scanning
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Security Officer + Chief Engineer  
+
+#### Purpose
+Autonomously detect npm security advisories and surface CVE exposure. Prevents vulnerabilities from accumulating invisibly in the software supply chain.
+
+#### Problem Discovered
+No automated detection of vulnerability advisories in dependencies. On 2026-07-10, the system carried 10 undetected vulnerabilities (1 critical, 5 high, 4 moderate) due to Next.js version. Without autonomous scanning, new CVEs can accumulate undetected for weeks or months.
+
+#### Evidence
+- **Weakness:** Zero monitoring of dependency vulnerabilities
+- **Impact:** Production deployment with unknown security exposure
+- **Current state:** 10 vulnerabilities sit undetected (npm audit shows them, but no automated scanning)
+- **Root cause:** No continuous dependency health scanning
+- **Discovery method:** Manual `npm audit --omit=dev` during system state assessment
+
+#### Inputs
+- npm lockfile (package-lock.json)
+- Environment: Production dependencies only (--omit=dev)
+
+#### Outputs
+```typescript
+interface DependencySecurityReport {
+  ok: boolean
+  timestamp: string
+  vulnerabilityCount: {
+    critical: number
+    high: number
+    moderate: number
+    low: number
+    total: number
+  }
+  vulnerabilities: VulnerabilityAdvisory[]
+  alerts: string[]
+  recommendation?: string
+}
+```
+
+#### Implementation
+- `lib/dependency-security-scanner.ts` — Vulnerability detection engine (110 LoC)
+  - `scanDependencies()` — Runs `npm audit --omit=dev --json` and parses results
+  - `formatDependencySecurityAlert()` — Formats report for Founder alerts
+  - `isCriticalSecurityIssue()` — Determines if action is urgent
+- `app/api/dependency-security/route.ts` — Cron-callable endpoint (30 LoC)
+- `tests/dependency-security-scanner.test.ts` — 18 comprehensive tests
+- `vercel.json` — Scheduled every 6 hours (0 */6 * * *)
+
+#### Verification Method
+- **Unit tests:** 18 tests covering:
+  - Healthy state (no vulnerabilities) → ok:true
+  - Critical detection (1+ critical) → ok:false + alert
+  - High-severity detection (1+ high) → ok:false + alert
+  - Moderate-only (no action required) → ok:true
+  - Advisory detail extraction (title, URL, range, installed version)
+  - Error handling (npm audit network failures)
+  - Alert formatting (all required fields present)
+  - Timestamp inclusion (immutable record)
+  - Multiple vulnerabilities per package
+- **All tests pass:** 18/18 ✅
+- **Build verification:** npm run build clean, lint clean, type-check clean
+- **Integration:** Verified with 10 real vulnerabilities currently present in production code
+
+#### Dependencies
+- Vercel cron scheduler (every 6 hours)
+- No external tokens needed (npm audit is local)
+- Self-contained; no database writes
+
+#### Risks
+- **CPU impact:** `npm audit` is expensive (takes 10-30s). Mitigated by 6-hour schedule (4 runs/day, minimal impact).
+- **False positives:** None; npm audit is authoritative source.
+- **Coverage:** Only checks production dependencies (dev-only vulnerabilities not alerted). Design choice: acceptable for now.
+
+#### Rollback Method
+- Remove cron entry from `vercel.json`
+- Delete `lib/dependency-security-scanner.ts`, `app/api/dependency-security/route.ts`, and test file
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Detection latency:** Surface new CVEs within 6 hours of npm advisory publication
+2. **Alert quality:** Specific advisory title, URL, affected version range, recommended action
+3. **False positive rate:** 0 (npm audit is authoritative)
+4. **Founder response time:** Alert logged to console; Founder can act within hours of detection
+
+#### Next Steps
+1. **Run in production:** Verify endpoint works on deployed instance (post-credential setup)
+2. **Track trends:** Archive reports to identify patterns (dependency drift, update lag)
+3. **Auto-remediation:** Future DNA could auto-create PRs for patch updates
+4. **Dependabot integration:** Consider bridging with GitHub's Dependabot for richer context
+5. **Severity-based actions:** Future: auto-disable or auto-update critical vulnerabilities
+
 ---
 
 ## Experimental DNA

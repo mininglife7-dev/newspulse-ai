@@ -17,6 +17,9 @@
     },
     "app/api/error-rate/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/dependency-security/route.ts": {
+      "maxDuration": 60
     }
   },
   "env": {
@@ -40,6 +43,10 @@
     {
       "path": "/api/error-rate",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/dependency-security",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

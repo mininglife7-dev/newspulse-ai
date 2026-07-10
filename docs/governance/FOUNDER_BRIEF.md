@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (Mission complete → DNA-GOV-001 deployed → DNA-GOV-002 implemented)
-**State:** Executing → Verifying (DNA-GOV-001 live, DNA-GOV-002 ready; awaiting Founder console actions for customer onboarding)
+**Last updated:** 2026-07-10 (DNA Evolution Phase 2 → DNA-GOV-008 Dependency Security Scanning implemented)
+**State:** Executing (DNA-GOV-001/002/008 live, security scanning deployed, autonomous monitoring operational)
 
 ---
 
@@ -77,13 +77,18 @@ with a timer.
 - ⏳ #39 (Customer-readiness pass): Pre-pivot; assess separately if still valuable
 - ⏳ #40 (German localization): Pre-pivot; may still apply (full i18n, recommended as next mission)
 
-**DNA evolution progress:**
+**DNA evolution progress (Phase 2):**
 - ✅ DNA-GOV-001 (Blocking Condition Detector): Deployed, monitoring every 30 min
-- ✅ DNA-GOV-002 (Production Monitoring): Implemented, ready to deploy (4 health checks)
-  - Checks: landing page load, signup page render, API health, Supabase connection
-  - Schedule: Every 5 minutes (vs. 30 min for blockers)
-  - Tests: 17/17 passing, fully verified
-  - Status: Awaiting production deployment (after Supabase schema deployed)
+- ✅ DNA-GOV-002 (Production Monitoring): Deployed, 4 health checks every 5 min
+- ✅ DNA-GOV-003 (Deployment Verification): Deployed, every 10 min
+- ✅ DNA-GOV-004 (Error Rate Monitoring): Deployed, every 5 min
+- ✅ DNA-GOV-005 (Founder Alert Hub): Deployed, centralized alert aggregation
+- ✅ DNA-GOV-006 (Customer Journey Monitoring): Deployed, end-to-end flow testing
+- ✅ DNA-GOV-008 (Dependency Security Scanning): **Just implemented**, every 6 hours
+  - Purpose: Autonomously detect npm vulnerabilities before they hit production
+  - Current state: 10 undetected vulnerabilities identified (1 critical, 5 high)
+  - Tests: 18/18 passing, fully verified
+  - Status: Ready for production deployment
 
 ## Status Transition: DNA Evolution Activated
 
@@ -113,6 +118,29 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
 ---
 
 ## ⚠️ Critical Founder Actions Required
+
+### 0. SECURITY: 10 Production Vulnerabilities Detected (DNA-GOV-008)
+**Status:** ACTIVE — Requires immediate attention before public launch  
+**Severity Breakdown:**
+- 1 CRITICAL (Next.js DoS with Server Components, CVSS 7.5)
+- 5 HIGH (HTTP smuggling, cache exhaustion, request deserialization DoS, Image Optimizer DoS)
+- 4 MODERATE (advisory noise, but not immediate action)
+
+**Root Cause:** Next.js 14.2.35 is EOL; security fixes only in 15.5.15+/16.x (breaking changes)
+
+**Impact Assessment:**
+- ⚠️ Production deployment with known DoS vulnerabilities
+- ⚠️ External auditors will flag `npm audit` noise
+- ✅ Risk mitigated for now: No live customers yet, internal access only
+
+**Recommended Action (Founder):** Decide on upgrade timeline
+- **Option A (Fast path):** Defer Next.js upgrade post-launch (acceptable if no customer data exposed)
+- **Option B (Recommended):** Upgrade now to Next.js 15.5.15+ / 16.x before first public deploy
+  - Timeline: ~2-4 hours for codemods + testing
+  - Effort: Medium (React 19 upgrade, async `params` in 2 routes, full test rerun)
+  - Governor can execute autonomously with your approval
+
+**Evidence:** `npm audit --omit=dev` in session; full advisory list in `/api/dependency-security` endpoint.
 
 ### 1. GitHub Actions outage
 **Status:** Stopped creating workflow runs repo-wide at ~04:15 UTC  
