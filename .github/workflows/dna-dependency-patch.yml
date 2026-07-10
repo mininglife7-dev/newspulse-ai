@@ -1,0 +1,47 @@
+name: DNA-GOV-011 - Dependency Patch Automation
+
+on:
+  schedule:
+    # Run weekly on Mondays at 02:00 UTC (before business hours)
+    - cron: '0 2 * * 1'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  patch-dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run automated patch cycle
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "Warning: ADMIN_TOKEN not set. Skipping automated patch cycle."
+            exit 0
+          fi
+
+          echo "Running automated dependency patch cycle..."
+          curl -X POST \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            "${DEPLOYMENT_URL:-https://euro-ai.vercel.app}/api/dependency-patches"
+
+      - name: Log patch cycle
+        if: always()
+        run: echo "Dependency patch cycle completed at $(date)"
