@@ -58,6 +58,7 @@ export default function AssessmentDetailPage({ params }: { params: { id: string 
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -92,6 +93,30 @@ export default function AssessmentDetailPage({ params }: { params: { id: string 
     };
     load();
   }, [params.id]);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!assessment) return;
+    setUpdatingStatus(true);
+    try {
+      const res = await fetch(`/api/risk-assessments/${assessment.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await res.json();
+      if (!data.ok) {
+        throw new Error(data.error || 'Failed to update status');
+      }
+
+      setAssessment(data.assessment);
+    } catch (err: any) {
+      console.error('Status update failed:', err);
+      setLoadError(err?.message || 'Failed to update assessment status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -134,12 +159,46 @@ export default function AssessmentDetailPage({ params }: { params: { id: string 
           <ArrowLeft className="h-4 w-4" />
           Back to assessments
         </Link>
-        <h1 className="mt-3 text-3xl font-bold text-white">
-          {assessment.ai_systems?.name || 'Unknown System'}
-        </h1>
-        <p className="mt-1 text-slate-400">
-          Assessed {new Date(assessment.created_at).toLocaleDateString()} · Status: {assessment.status}
-        </p>
+        <div className="mt-3 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white">
+              {assessment.ai_systems?.name || 'Unknown System'}
+            </h1>
+            <p className="mt-1 text-slate-400">
+              Assessed {new Date(assessment.created_at).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Status</label>
+              <select
+                value={assessment.status}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={updatingStatus}
+                className="rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                <option value="draft">Draft</option>
+                <option value="in_review">In Review</option>
+                <option value="finalized">Finalized</option>
+              </select>
+            </div>
+            {assessment.status === 'draft' && (
+              <div className="text-xs text-amber-300 px-2 py-1 bg-amber-950/30 rounded border border-amber-800/50">
+                Ready to review
+              </div>
+            )}
+            {assessment.status === 'in_review' && (
+              <div className="text-xs text-blue-300 px-2 py-1 bg-blue-950/30 rounded border border-blue-800/50">
+                Under review
+              </div>
+            )}
+            {assessment.status === 'finalized' && (
+              <div className="text-xs text-green-300 px-2 py-1 bg-green-950/30 rounded border border-green-800/50">
+                ✓ Finalized
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Risk Summary Card */}
