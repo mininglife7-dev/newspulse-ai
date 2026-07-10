@@ -19,6 +19,12 @@ function slugify(name: string): string {
   return base ? `${base}-${suffix}` : suffix;
 }
 
+function isSlugCollisionError(error: any): boolean {
+  if (!error?.message) return false;
+  const msg = String(error.message).toLowerCase();
+  return msg.includes('duplicate') || msg.includes('unique constraint') || error.code === '23505';
+}
+
 /**
  * POST /api/workspace — create the customer's workspace, company profile,
  * and owner membership in one call. Runs as the signed-in user, so every
@@ -74,17 +80,33 @@ export async function POST(req: Request) {
     );
   }
 
-  // 1. Workspace (tenant boundary)
-  const { data: workspace, error: wsError } = await supabase
-    .from('workspaces')
-    .insert({
-      slug: slugify(companyName),
-      name: companyName,
-      description: validated.description || null,
-      owner_id: user.id,
-    })
-    .select('id, slug, name')
-    .single();
+  // 1. Workspace (tenant boundary) — retry on slug collision
+  let workspace;
+  let wsError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const result = await supabase
+      .from('workspaces')
+      .insert({
+        slug: slugify(companyName),
+        name: companyName,
+        description: validated.description || null,
+        owner_id: user.id,
+      })
+      .select('id, slug, name')
+      .single();
+
+    if (!result.error) {
+      workspace = result.data;
+      wsError = null;
+      break;
+    }
+
+    if (!isSlugCollisionError(result.error)) {
+      wsError = result.error;
+      break;
+    }
+    // Collision detected, retry with new slug
+  }
 
   if (wsError || !workspace) {
     console.error('[api/workspace] workspace insert failed:', wsError);
