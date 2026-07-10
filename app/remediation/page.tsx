@@ -11,6 +11,7 @@ import {
   FileText,
   Loader2,
   Shield,
+  Lightbulb,
 } from 'lucide-react';
 import {
   generateRemediationPlan,
@@ -29,6 +30,16 @@ interface AssessmentData {
   assessment_data: { responses: AssessmentResponse[] };
 }
 
+interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  effort: 'hours' | 'days' | 'weeks';
+  category: string;
+  rationale: string;
+}
+
 const RISK_COLORS: Record<RiskLevel, { bg: string; text: string; border: string }> = {
   low: { bg: 'bg-green-950/30', text: 'text-green-300', border: 'border-green-800/60' },
   medium: { bg: 'bg-amber-950/30', text: 'text-amber-300', border: 'border-amber-800/60' },
@@ -42,6 +53,7 @@ export default function RemediationPage() {
 
   const [assessment, setAssessment] = useState<AssessmentData | null>(null);
   const [remediationPlan, setRemediationPlan] = useState<RemediationPlan | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +86,17 @@ export default function RemediationPage() {
         data.assessment.assessment_data?.responses ?? []
       );
       setRemediationPlan(plan);
+
+      // Fetch recommendations
+      try {
+        const recsRes = await fetch(`/api/recommendations?ai_system_id=${data.assessment.ai_system_id}`);
+        const recsData = await recsRes.json();
+        if (recsRes.ok && recsData.ok) {
+          setRecommendations(recsData.recommendations || []);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch recommendations (non-critical):', err);
+      }
 
       // Persist obligations to database (idempotent — safe to call multiple times)
       if (plan.obligations.length > 0) {
@@ -202,6 +225,57 @@ export default function RemediationPage() {
           )}
         </div>
       </div>
+
+      {/* Recommended Actions */}
+      {recommendations.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-yellow-400" />
+            <h3 className="text-lg font-semibold text-white">Recommended Implementation Actions</h3>
+          </div>
+          <p className="text-sm text-slate-400">
+            Strategic guidance based on your risk assessment and the EU AI Act requirements
+          </p>
+
+          <div className="space-y-3">
+            {recommendations.map((rec) => {
+              const priorityColor = getPriorityColor(rec.priority);
+              return (
+                <div
+                  key={rec.id}
+                  className="rounded-lg border border-slate-800 bg-gradient-to-r from-slate-900/50 to-slate-900/30 p-5 hover:border-slate-700 transition"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-2 mb-2">
+                        <span
+                          className={`rounded px-2 py-1 text-xs font-semibold ${priorityColor}`}
+                        >
+                          {rec.priority.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-slate-400 bg-slate-800/50 rounded px-2 py-1">
+                          {rec.category}
+                        </span>
+                      </div>
+                      <h4 className="font-semibold text-white mb-2">{rec.title}</h4>
+                      <p className="text-sm text-slate-400 mb-3">{rec.description}</p>
+                      <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span className="capitalize">{rec.effort}</span>
+                        </div>
+                        <div className="text-slate-600">
+                          Legal: {rec.rationale}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Obligations by Priority */}
       <div className="space-y-4">
