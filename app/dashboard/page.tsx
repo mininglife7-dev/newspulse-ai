@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CheckCircle, ArrowRight, AlertCircle, Building2, AlertTriangle, Shield, Bell } from 'lucide-react';
 import { createRouteClient } from '@/lib/supabase-server';
+import { DashboardQuickStats } from '@/components/dashboard-quick-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -125,6 +126,9 @@ export default async function DashboardPage() {
             Manage Team
             <ArrowRight className="h-4 w-4" />
           </Link>
+
+          {/* Quick Stats */}
+          <DashboardQuickStats />
         </>
       )}
 
