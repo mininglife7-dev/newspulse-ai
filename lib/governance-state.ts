@@ -140,16 +140,26 @@ function buildLaunchBlockers(): LaunchBlocker[] {
     {
       id: 'M-04',
       title: 'Residual advisories require Next 15.5.16+',
-      status: 'open',
+      status: 'resolved',
       problem:
         '1 high (SSRF) + 1 moderate (RSC cache poisoning) remain; fixes only exist in Next ≥15.5.16.',
       impact:
         "Moderate — advisories partially require configurations this app doesn't use, but auditors will flag noise.",
       solution:
         'upgrade next→15.5.x LTS or 16.x, react→19, run codemods, fix async `params` in two routes.',
-      evidence: [],
-      riskLevel: 'medium',
-      rollbackPath: 'branch revert',
+      evidence: [
+        'Next.js 14.2.35 → 16.2.10 migration completed',
+        'React 18 → 19.2.7 upgraded',
+        'ESLint 8 → 10.6.0, flat config format implemented',
+        'OpenAI SDK 4 → 6 upgraded',
+        'Async params API: app/api/history/[id] and app/history/[id] fixed',
+        'TypeScript: clean compilation',
+        'Tests: 77/77 unit/integration passing; E2E: 2 pass (health, render), 1 skipped (React 19 limitation documented)',
+        'Vercel deployment: Ready',
+        'PR #64 created and verified',
+      ],
+      riskLevel: 'low',
+      rollbackPath: 'revert PR #64',
       blocksStage: 'post_launch',
     },
     {
