@@ -235,6 +235,27 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {/* Compliance Status (if assessments exist) */}
+      {assessmentSummary.total > 0 && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-white mb-2">Compliance Management</h3>
+              <p className="text-sm text-slate-400">
+                Track compliance obligations and remediation plans from your assessments
+              </p>
+            </div>
+            <Link
+              href="/compliance"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg"
+            >
+              Manage Compliance
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Next steps */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-8">
         <h2 className="text-2xl font-bold text-white mb-6">
