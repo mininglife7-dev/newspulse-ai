@@ -6,7 +6,7 @@ import {
 } from '@/lib/firecrawl';
 import { summarizeBatch } from '@/lib/openai';
 import { saveSearch, type NewsArticle } from '@/lib/supabase';
-import { generateRequestId, getRequestId } from '@/lib/request-context';
+import { generateRequestId } from '@/lib/request-context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
