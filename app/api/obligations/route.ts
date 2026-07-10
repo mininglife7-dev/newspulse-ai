@@ -21,6 +21,7 @@ interface UpdateObligationBody {
   status?: 'identified' | 'in_progress' | 'completed' | 'not_applicable';
   due_date?: string;
   priority?: 'critical' | 'high' | 'medium' | 'low';
+  owner_id?: string | null;
 }
 
 /**
@@ -71,7 +72,11 @@ export async function GET(req: Request) {
   try {
     let query = supabase
       .from('obligations')
-      .select('id, company_id, title, description, status, priority, due_date, created_at, updated_at')
+      .select(`
+        id, company_id, title, description, status, priority, due_date,
+        owner_id, assigned_at, created_at, updated_at,
+        owner:owner_id(email, first_name, last_name)
+      `)
       .eq('workspace_id', ctx.workspaceId);
 
     if (company_id) {
@@ -212,6 +217,17 @@ export async function PATCH(req: Request) {
   }
 
   try {
+    // Get current user for assignment tracking
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     // Verify user has access to this obligation
     const { data: existing } = await supabase
       .from('obligations')
@@ -227,6 +243,26 @@ export async function PATCH(req: Request) {
       );
     }
 
+    // If assigning to someone, verify they're a workspace member
+    if (body.owner_id !== undefined) {
+      if (body.owner_id !== null) {
+        const { data: member } = await supabase
+          .from('workspace_members')
+          .select('user_id')
+          .eq('workspace_id', ctx.workspaceId)
+          .eq('user_id', body.owner_id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (!member) {
+          return NextResponse.json(
+            { ok: false, error: 'Assignee is not a workspace member' },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const updateData: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
@@ -234,12 +270,20 @@ export async function PATCH(req: Request) {
     if (body.status) updateData.status = body.status;
     if (body.due_date) updateData.due_date = body.due_date;
     if (body.priority) updateData.priority = body.priority;
+    if (body.owner_id !== undefined) {
+      updateData.owner_id = body.owner_id;
+      updateData.assigned_at = body.owner_id ? new Date().toISOString() : null;
+      updateData.assigned_by = body.owner_id ? user.id : null;
+    }
 
     const { data, error } = await supabase
       .from('obligations')
       .update(updateData)
       .eq('id', obligationId)
-      .select('id, title, status, priority, due_date, updated_at')
+      .select(`
+        id, title, status, priority, due_date, owner_id, assigned_at, updated_at,
+        owner:owner_id(email, first_name, last_name)
+      `)
       .single();
 
     if (error || !data) {
