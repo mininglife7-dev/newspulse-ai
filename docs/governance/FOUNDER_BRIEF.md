@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (EURO AI complete → DNA-GOV-001 deployed → DNA-GOV-002 implemented → DNA-GOV-003 ready)
-**State:** Executing (DNA-GOV-001 live, DNA-GOV-002/003 ready; awaiting Vercel secret + Founder console actions)
+**Last updated:** 2026-07-10T12:35:00Z (Risk Assessment Phase 1 complete → DNA-GOV-001 deployed → DNA-GOV-002/003/004 ready)
+**State:** Executing (Risk Assessment + inventory integration live on branch; DNA deployment blocked by Vercel secret)
 
 ---
 
@@ -115,6 +115,70 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
 
 **Next DNA candidates:**
 - DNA-GOV-004: Cost Anomaly Detection (Vercel, Supabase spend monitoring)
+
+---
+
+## Phase 1 Feature: Risk Assessment Questionnaire (COMPLETE)
+
+**Branch:** `claude/governor-bootstrap-protocol-h56kwb`  
+**Status:** ✅ Complete and integrated (4 commits, all tests passing)
+
+**What was built:**
+- `lib/risk-assessment.ts` — EU AI Act scoring logic with 13 questions across 4 categories
+  - Prohibited practices (3Q): subliminal manipulation, vulnerable groups, social scoring
+  - High-risk indicators (5Q): employment, biometric ID, creditworthiness, health data, legal rights
+  - Transparency (2Q): explainability, user notification
+  - Governance (3Q): data classification, risk documentation, human oversight
+  - Scoring: Maps responses to 0-100 risk score, categorizes as low/medium/high/unacceptable
+  - Progress tracking: Counts answered questions, returns next unanswered for resuming
+
+- `app/api/risk-assessments/route.ts` — Three endpoints
+  - GET with ai_system_id param: fetch specific assessment or list all in workspace
+  - POST: create new assessment with initial responses
+  - PATCH: update responses and recalculate risk score
+  - All endpoints: RLS-scoped by workspace_id, verify user auth and workspace membership
+
+- `app/assessment/page.tsx` — Interactive multi-step questionnaire UI
+  - Real-time risk score calculation and level display
+  - Progress tracking sidebar with percentage complete
+  - Question-type-specific inputs (yes/no buttons, scale 1-5, multiple choice dropdowns)
+  - Auto-advance to next question after answering
+  - Save and finalize workflow
+  - Seamless experience: returns to inventory after completion
+
+- `app/inventory/page.tsx` — Integration with inventory workflow
+  - Loads assessment status for each AI system
+  - Shows badge: "No assessment started" → "In progress (draft)" → "Risk: high (75/100)"
+  - Action button: "Start" / "Continue" / "Review" assessment
+  - Assessment status displayed inline with system details
+
+- `app/dashboard/page.tsx` — Risk governance overview
+  - Step 3 (Risk Assessment) now shows actual progress instead of "coming soon"
+  - Displays: X/Y systems assessed, risk level distribution (low/medium/high/unacceptable)
+  - Badges show live count of each risk level across workspace
+  - Links directly to inventory for continuing assessments
+
+**Testing:**
+- `tests/api-risk-assessments.test.ts` — 19 comprehensive tests
+  - calculateRiskScore(): boundary testing (30, 60, 75 thresholds), all question types, empty/unknown responses
+  - getProgressSummary(): progress calculation, duplicate handling, completion tracking
+  - Question definitions: count, required fields, category distribution, type validation
+  - All 19 tests passing ✅
+
+**Full journey now works:**
+1. User completes workspace setup
+2. Navigates to Inventory and creates an AI system
+3. Sees assessment status badge ("No assessment started")
+4. Clicks "Start Assessment" → goes to /assessment?ai_system_id=X
+5. Answers questions progressively (auto-advance)
+6. Dashboard shows risk level immediately after finalization
+7. Can continue assessments at any time
+
+**Next Phase 1 work (unblocked):**
+- Obligation planning UI: display remediation tasks based on risk level
+- Compliance recommendations: "For high-risk systems, implement X/Y/Z"
+- Bulk assessment export (PDF report with risk summary)
+- Assessment history and versioning
 
 ---
 
