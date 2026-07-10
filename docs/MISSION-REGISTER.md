@@ -1,5 +1,32 @@
 # Mission Register — "Mission 99" Audit → Version 2
 
+## ⚡ Version 3 addendum — 2026-07-10: open-PR consolidation register
+
+The duplicate-work risk flagged in V2 has materialized. Seven draft PRs are open against a `main` that moves hourly, and they overlap heavily. Verified from the PR bodies and diffs on 2026-07-10:
+
+| PR | Branch | Claims | Overlap risk |
+|---|---|---|---|
+| #60 | `euro-ai-product-vision` | Full backend API: workspaces, AI systems, **risk assessments, obligations, evidence, remediation**, dashboards, audit log | **Collides with #55 and #48** (same domain objects, different implementations). Base commit already stale |
+| #55 | `governor-evolution-charter` | **Risk assessment + obligations + remediation** (lib/risk-assessment.ts, 3 API routes, 4 pages), 369 tests | **Collides with #60 and #48**. Note: main *already has* obligations pages/APIs (commits 0f57a35…f8e9027) — partially obsolete |
+| #48 | `governor-founder-freedom` | **Risk assessment step 3** + WCAG accessibility pass + customer-readiness audit doc | **Collides with #55 and #60** on assessment; accessibility work is unique |
+| #58 | `glo-foundation-dna` | Open-redirect fix, vercel.json deploy unblock, workspace atomicity, smoke gate, CRON_SECRET guard | Mostly unique, security-critical. **Recommend merging FIRST** |
+| #54 | `continuing-tasks` | Signup legal-link fix, workspace form fields | Small, unique. Merge second. Flags public ops endpoints (founder decision) |
+| #49 | `governor-bootstrap-protocol` | Dependency health monitoring (cron) | Overlaps #46 (dependency security scanning) — **two monitoring implementations of the same idea** |
+| #46 | `autonomous-process-governor` | Dependency security scanning + perf baseline + git governance (DNA-GOV-008/9/10) | Overlaps #49; also its vulnerability findings are **stale** (written pre-Next-15.5.20; audit is now 2 moderate, not 1 critical + 5 high) |
+
+**Recommended consolidation order (engineering judgment, founder confirms):**
+1. **#58** (security + deploy unblock — small, unique, verified)
+2. **#54** (small, unique, customer-facing)
+3. **Pick ONE assessment implementation**: compare #55 vs #60 vs #48 against what main already has (obligations management landed on main independently!). Recommend: keep main's obligations work, merge the best assessment UI/engine of the three, close the other two as superseded — do NOT merge all three.
+4. **#49 vs #46**: pick one dependency-monitoring approach, close the other; re-verify its findings against Next 15.5.20 first.
+5. Freeze new feature branches until the above lands (WIP limit), else the collision compounds.
+
+Every PR above reports its own green local verification, but **none have CI runs** (Actions billing outage) and several have stale base commits — merging without rebase + re-verification will break main.
+
+---
+
+# Version 2 (2026-07-09, historical)
+
 ## Rule 4 finding: Mission 99 does not exist
 
 The mission ordered a complete review of "Mission 99". Verified search results:
