@@ -11,6 +11,9 @@
     },
     "app/api/production-health/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/verify-deployment/route.ts": {
+      "maxDuration": 30
     }
   },
   "env": {
@@ -26,6 +29,10 @@
     {
       "path": "/api/production-health",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/verify-deployment",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
