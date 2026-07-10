@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Plus, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Plus, AlertTriangle, Trash2, Edit2, MoreVertical } from 'lucide-react';
 
 interface Obligation {
   id: string;
@@ -50,6 +50,7 @@ export default function CompliancePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [newPlanData, setNewPlanData] = useState({
     title: '',
     description: '',
@@ -59,6 +60,8 @@ export default function CompliancePage() {
   });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -139,6 +142,91 @@ export default function CompliancePage() {
       setCreateError(err?.message || 'Failed to create remediation plan');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleEditPlan = (plan: RemediationPlan) => {
+    setEditingPlanId(plan.id);
+    setNewPlanData({
+      title: plan.title,
+      description: plan.description || '',
+      owner: plan.owner || '',
+      target_date: plan.target_date || '',
+      obligation_text: '',
+    });
+    setShowCreatePlan(true);
+  };
+
+  const handleUpdatePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlanId || !newPlanData.title.trim()) {
+      setUpdateError('Title is required');
+      return;
+    }
+
+    setUpdating(true);
+    setUpdateError(null);
+    try {
+      const res = await fetch(`/api/remediation-plans/${editingPlanId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newPlanData.title,
+          description: newPlanData.description || undefined,
+          owner: newPlanData.owner || undefined,
+          target_date: newPlanData.target_date || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Failed to update plan' }));
+        throw new Error(data.error || `Error: ${res.status}`);
+      }
+
+      setNewPlanData({ title: '', description: '', owner: '', target_date: '', obligation_text: '' });
+      setShowCreatePlan(false);
+      setEditingPlanId(null);
+      await loadData();
+    } catch (err: any) {
+      setUpdateError(err?.message || 'Failed to update remediation plan');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    if (!confirm('Are you sure you want to delete this remediation plan?')) return;
+
+    try {
+      const res = await fetch(`/api/remediation-plans/${planId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to delete plan: ${res.status}`);
+      }
+
+      await loadData();
+    } catch (err: any) {
+      alert(err?.message || 'Failed to delete remediation plan');
+    }
+  };
+
+  const handleUpdateStatus = async (planId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/remediation-plans/${planId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to update status: ${res.status}`);
+      }
+
+      await loadData();
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update plan status');
     }
   };
 
@@ -230,6 +318,42 @@ export default function CompliancePage() {
             )}
           </div>
 
+          {/* Progress Summary */}
+          {plans.length > 0 && (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+              <h3 className="font-semibold text-white mb-4">Compliance Progress</h3>
+              <div className="grid gap-4 md:grid-cols-4">
+                <div>
+                  <div className="text-sm text-slate-400">Total Plans</div>
+                  <div className="mt-1 text-2xl font-bold text-white">{plans.length}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-400">Completed</div>
+                  <div className="mt-1 text-2xl font-bold text-green-400">{plans.filter(p => p.status === 'completed').length}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-400">In Progress</div>
+                  <div className="mt-1 text-2xl font-bold text-blue-400">{plans.filter(p => p.status === 'in_progress').length}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-400">Progress</div>
+                  <div className="mt-1 text-2xl font-bold text-cyan-400">
+                    {Math.round((plans.filter(p => p.status === 'completed').length / plans.length) * 100)}%
+                  </div>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="mt-4 h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-green-500 to-cyan-500 transition-all"
+                  style={{
+                    width: `${(plans.filter(p => p.status === 'completed').length / plans.length) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Remediation Plans Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -271,10 +395,33 @@ export default function CompliancePage() {
                             <span>Created: {new Date(plan.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        <div className="flex-shrink-0">
-                          <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusColor.text} ${statusColor.bg}`}>
-                            {plan.status}
-                          </span>
+                        <div className="flex flex-shrink-0 flex-col items-end gap-2">
+                          <select
+                            value={plan.status}
+                            onChange={(e) => handleUpdateStatus(plan.id, e.target.value)}
+                            className="rounded px-2.5 py-1 text-xs font-medium capitalize bg-slate-800 border border-slate-700 text-white focus:outline-none"
+                          >
+                            <option value="planned">Planned</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="on_hold">On Hold</option>
+                          </select>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleEditPlan(plan)}
+                              className="p-1.5 rounded hover:bg-slate-700/50 text-slate-400 hover:text-blue-300 transition"
+                              title="Edit plan"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePlan(plan.id)}
+                              className="p-1.5 rounded hover:bg-slate-700/50 text-slate-400 hover:text-red-300 transition"
+                              title="Delete plan"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
