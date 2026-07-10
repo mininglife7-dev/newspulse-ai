@@ -302,8 +302,8 @@ export const healthItems: HealthItem[] = [
     risk: 'Medium',
     trend: 'Improving',
     businessImpact: 'Materially safer: real sign-in, per-customer data isolation, no anonymous database access, and spend-protecting rate limits. Biggest remaining items are live auth enablement and external alerting.',
-    recommendedAction: 'Enable live auth, configure durable rate limiting (Upstash), and add security headers + dependency scanning.',
-    detail: 'Server-side secrets (good); Supabase Auth + owner-scoped queries + owner-only RLS; durable-capable rate limiter; anon DB policies removed. Closed a critical hole: the delete-any-row endpoint is now owner-locked.',
+    recommendedAction: 'Enable live auth, configure durable rate limiting (Upstash), and add dependency scanning.',
+    detail: 'Server-side secrets (good); Supabase Auth + owner-scoped queries + owner-only RLS; durable-capable rate limiter; anon DB policies removed; baseline security headers (nosniff, frame DENY, referrer, permissions, HSTS). Closed a critical hole: the delete-any-row endpoint is now owner-locked.',
   },
   {
     name: 'Backup',
@@ -454,7 +454,7 @@ export const deploymentReality: DeploymentFact[] = [
 export const healthScores: HealthScore[] = [
   { label: 'Deployment Readiness', score: 63, confidence: 'Verified', rationale: 'Automated deploy + CI now also runs tests; preview deploy verified. No staging and unverified prod URL still hold it back.' },
   { label: 'Infrastructure Readiness', score: 58, confidence: 'Verified', rationale: 'Auth, per-user data, tests, and structured logging now exist; live enablement and external alerting remain.' },
-  { label: 'Security Readiness', score: 58, confidence: 'Estimated', rationale: 'Real auth, owner-scoped data, no anon DB access, spend-protecting limits; a critical delete hole closed. Not yet verified against live auth, and no external alerting.' },
+  { label: 'Security Readiness', score: 60, confidence: 'Estimated', rationale: 'Real auth, owner-scoped data, no anon DB access, spend-protecting limits, baseline security headers; a critical delete hole closed. Not yet verified against live auth, and no external alerting.' },
   { label: 'Reliability', score: 50, confidence: 'Estimated', rationale: 'Graceful degradation, honest health checks, and a test suite; still no external monitoring or staging.' },
   { label: 'Scalability', score: 60, confidence: 'Estimated', rationale: 'Serverless scales; rate limiter is now durable-capable when Upstash is configured.' },
   { label: 'Maintainability', score: 70, confidence: 'Verified', rationale: 'Clean strict-typed code now backed by a 36-test suite in CI.' },
