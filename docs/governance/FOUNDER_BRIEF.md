@@ -1,70 +1,64 @@
 # 📋 Founder Brief
 
 Rolling status summary maintained under the
-[Governor Autonomous Decision Constitution](./GOVERNOR_CONSTITUTION.md).
+[Governor Autonomous Decision Constitution](./GOVERNOR_CONSTITUTION.md) and the
+[Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-07-10 (9-hour autonomous mission, in progress)
+**State:** Executing
 
 ---
 
-## Current DNA (active work)
+## Executive summary
 
-- Ratify and codify the Governor Constitution in-repo. *(this change)*
+The product is now **EURO AI on `main`'s full infrastructure**: the #22 pivot has
+been integrated with everything that landed after it branched, the NewsPulse dead
+code is gone, and — most importantly for the first German customer — the onboarding
+journey is now **real**: cookie-based Supabase sessions, middleware that actually
+protects routes (the previous one protected nothing), and a workspace setup form
+that persists to the database under Row Level Security instead of faking success
+with a timer.
 
-## Completed DNA
+## Completed DNA (this mission)
 
-- Initial NewsPulse AI scaffold (Next.js 14 + Supabase + Firecrawl + OpenAI) — `1f52ef3`.
+- **EURO AI ↔ main integration** — conflict policy: EURO AI wins product surface,
+  main infrastructure survives (PWA now branded EURO AI, governance dashboard moved
+  to `/governance`, tracing, Dependabot). NewsPulse routes/libs/tests removed.
+- **Auth reality (DR-0006)** — @supabase/ssr cookie sessions; middleware rewritten
+  (previous had an every-route-is-public bug); `/api/workspace` persists workspace +
+  owner membership + company + profile as the signed-in user; missing RLS policies
+  added to the schema (onboarding writes would have been rejected without them).
+- **Schema fixes** — `companies.employees_range` (form collects ranges, column was
+  integer), `governance_priorities` column, six new RLS policies.
 
-## Current progress
+## Verification status (all Verified, locally)
 
-- Governance framework established: constitution, decision register, and this brief
-  live under `docs/governance/`, loaded automatically each session via root `CLAUDE.md`.
-
-## Architecture improvements
-
-- None this cycle (documentation/governance only).
-
-## Tests executed / verification status
-
-- Full CI pipeline verified locally against the new lockfile: `npm ci` (426 packages),
-  `npm run lint` (0 warnings/errors), `tsc --noEmit` (clean), `next build` with CI stub
-  env vars (succeeds).
-
-## Important decisions
-
-- **DR-0001** — Adopted the Constitution as standing operating policy.
-- **DR-0002** — Governance docs in `docs/governance/`, wired via `CLAUDE.md`.
-- **DR-0003** — Committed `package-lock.json` to repair CI, which had been broken
-  since the initial scaffold (`npm ci` and `cache: npm` both require a lockfile).
-- **DR-0004** — Patched `next` to 14.2.35 (all backported CVE fixes); deferred the
-  breaking Next 16 migration to a dedicated PR.
+- Unit: 54/54 (route classification, workspace API incl. German umlaut slugs,
+  health endpoint, governance state, supabase clients, utils)
+- E2E (real browser): 6/6 — unauthenticated `/dashboard` redirects to sign-in,
+  APIs return 401 JSON, landing + auth pages render
+- Lint 0 errors · `tsc --noEmit` clean · production build green
 
 ## Risks
 
-- **Residual (accepted until migration):** Next 14.x is end-of-life; `npm audit`
-  lists high-severity advisories (DoS, cache poisoning, request smuggling, XSS
-  variants) whose fixes exist only in Next 16. 14.2.35 applies everything
-  backportable; full remediation requires the queued Next 16 migration.
+- **Live Supabase state is Unknown.** The schema (incl. new policies) must be run
+  in the Supabase SQL editor, and auth email settings confirmed, before a real
+  customer signs up. Code cannot verify this — dashboard access required.
+- Next 14.x EOL advisories remain (fix = Next 16 migration, still queued).
+- Sign-out UI does not exist yet; sessions expire but users can't log out.
 
-## Assumptions
+## Next planned work (this mission, in order)
 
-- "Governor" refers to the AI engineering agent operating in this repository;
-  "Founder" is the repository owner.
-- The seven Founder Gates are exhaustive — anything outside them is delegated.
+1. Merge the integration branch to main after CI is green; close superseded #22;
+   re-triage #18/#17/#15/#5 against the new base.
+2. German customer experience: complete the journey gaps (sign-out, dashboard
+   showing real workspace data instead of static onboarding steps).
+3. Handover report.
 
-## Next planned work
+## Founder attention (when you return)
 
-- Migrate to Next 16 (breaking: React 19, async request APIs) in a dedicated PR to
-  clear the remaining EOL security advisories.
-- Awaiting next DNA from the Founder, or autonomous continuation of launch-readiness
-  work (screenshots for README, CI hardening, test coverage) per the Constitution.
-
-## Questions that can wait
-
-- Should the Decision Register be mirrored into PR descriptions automatically?
-  (Current practice: linked manually.)
-
-## Recommendations
-
-- Merge this PR so the Constitution governs all future sessions from `main`.
+- **Run `supabase/schema.sql` in the Supabase SQL editor** (idempotent) and confirm
+  the project region + auth email settings. This is the one step code cannot do.
+- Decide fate of stale PRs #18 (GLO), #17 (founder dashboard), #15 (deploy audit),
+  #5 (CEIS) — all pre-pivot; recommendations in the mission handover.

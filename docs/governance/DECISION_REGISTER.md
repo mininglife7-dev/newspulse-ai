@@ -7,6 +7,58 @@ are never requested from the Founder.
 
 ---
 
+## DR-0006 — Replace simulated auth with real cookie-based Supabase auth
+
+- **Decision:** Adopt @supabase/ssr cookie sessions end-to-end: browser client,
+  middleware session validation/refresh, and a real `/api/workspace` route executing
+  onboarding writes under RLS. Add the RLS policies the schema was missing.
+- **Reason:** Three pieces of the customer journey were fake or broken: sessions
+  didn't persist (`persistSession: false`), the middleware protected nothing (a
+  `startsWith('/')` public-route bug plus a cookie name supabase-js never sets),
+  and the workspace form "saved" via `setTimeout`. A first customer would hit all
+  three in their first ten minutes. Mission quality bar: no fake buttons.
+- **Alternatives considered:**
+  1. Cookie-presence check in middleware without @supabase/ssr — no token refresh,
+     treats stale cookies as sessions.
+  2. Admin-client writes in /api/workspace — bypasses RLS; user-scoped client keeps
+     tenant isolation enforced by the database, and the missing policies were the
+     actual defect to fix.
+- **Evidence:** 54/54 unit tests (route classification, workspace API incl. German
+  umlaut slugs, health endpoint), 6/6 e2e (unauthenticated /dashboard →
+  /auth/signin redirect verified in a real browser; /api/workspace returns 401
+  JSON), lint/tsc/build clean.
+- **Confidence:** High for code paths verified by tests; **Unknown** for the live
+  Supabase project (deployment state of schema + policies can only be confirmed in
+  the Supabase dashboard — flagged in Founder Brief).
+- **Expected impact:** Sign-up → sign-in → workspace setup → dashboard is a real,
+  protected journey instead of a demo façade.
+- **Risk assessment:** Low-medium — auth flows are the most sensitive UX; mitigated
+  by e2e coverage and by RLS as the actual security boundary. Reversible per commit.
+- **Timestamp:** 2026-07-10
+
+## DR-0005 — Execute the EURO AI pivot; integration policy for conflicting work
+
+- **Decision:** Treat the Founder's 9-hour mission brief ("first German customer",
+  "EU AI workflow", "tenant isolation", "governance engine") as the product decision
+  on PR #22: EURO AI is the product. Integrate #22 with current main using the
+  policy: EURO AI wins the product surface; main-side infrastructure survives (PWA
+  layer, canonical governance state at /governance, tracing, Dependabot); the
+  NewsPulse-only surface is removed (recoverable from git history).
+- **Reason:** #22 was mergeable_state=dirty against a main that had absorbed #21,
+  #23, #2 and demo-mode work. Every queued task sequenced behind this integration.
+- **Alternatives considered:**
+  1. Merge #22 as-is via API — impossible (conflicts) and would silently drop the
+     PWA and governance-state work.
+  2. Wait for the Founder — contradicts the mission's explicit delegation.
+- **Evidence:** Local verification after integration + cleanup: lint clean, tsc
+  clean, 31/31 unit tests at the time, production build green, 2/2 e2e.
+- **Confidence:** High
+- **Expected impact:** One coherent codebase implementing the Founder vision;
+  six stale PRs become re-triageable against a settled base.
+- **Risk assessment:** Product-surface removal is the biggest step; mitigated by
+  the Founder's explicit direction and full git recoverability.
+- **Timestamp:** 2026-07-10
+
 ## DR-0004 — Patch `next` 14.2.15 → 14.2.35; defer major upgrade to a dedicated PR
 
 - **Decision:** Bump `next` and `eslint-config-next` to 14.2.35 (latest 14.x, pinned
