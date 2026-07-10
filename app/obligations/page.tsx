@@ -14,6 +14,7 @@ import {
   X,
   Download,
   Calendar,
+  FileText,
 } from 'lucide-react';
 
 interface Obligation {
@@ -219,7 +220,6 @@ export default function ObligationsPage() {
       setFilterStatus('');
       setFilterPriority('');
       setSearchQuery('');
-      // Show only overdue by setting a custom view (would need more refactoring)
     }},
     { label: `Critical Priority (${criticalCount})`, filter: () => {
       setFilterStatus('');
@@ -232,6 +232,29 @@ export default function ObligationsPage() {
       setSearchQuery('');
     }},
   ];
+
+  const handleExportCSV = () => {
+    const headers = ['Title', 'Priority', 'Status', 'Due Date', 'Source', 'Description'];
+    const rows = filteredObligations.map((o) => [
+      `"${o.title.replace(/"/g, '""')}"`,
+      o.priority,
+      o.status,
+      o.due_date ? new Date(o.due_date).toLocaleDateString() : '',
+      o.source,
+      `"${o.description.replace(/"/g, '""')}"`,
+    ]);
+
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `obligations-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
 
   const filteredObligations = obligations
     .filter((o) => {
@@ -273,16 +296,28 @@ export default function ObligationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href="/compliance"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to compliance
-        </Link>
-        <h1 className="text-3xl font-bold text-white mt-2">Compliance Obligations</h1>
-        <p className="text-slate-400">Manage EU AI Act obligations across your organization</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <Link
+            href="/compliance"
+            className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to compliance
+          </Link>
+          <h1 className="text-3xl font-bold text-white mt-2">Compliance Obligations</h1>
+          <p className="text-slate-400">Manage EU AI Act obligations across your organization</p>
+        </div>
+        {obligations.length > 0 && (
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:border-slate-600"
+            title="Export current view as CSV"
+          >
+            <FileText className="h-4 w-4" />
+            Export CSV
+          </button>
+        )}
       </div>
 
       {/* Quick Filters */}
