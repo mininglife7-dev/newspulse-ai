@@ -358,6 +358,16 @@ export default function CompliancePage() {
 
       {(obligations.length > 0 || plans.length > 0) && (
         <>
+          {/* Evidence Review Link */}
+          {evidence.length > 0 && (
+            <Link
+              href="/evidence-review"
+              className="inline-flex items-center gap-2 rounded-lg border border-purple-800/60 bg-purple-950/30 px-4 py-3 text-sm font-medium text-purple-200 transition hover:bg-purple-950/50"
+            >
+              📋 Review Evidence ({evidence.filter(e => e.status === 'submitted' || e.status === 'under_review').length} pending)
+            </Link>
+          )}
+
           {/* Obligations Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">

@@ -167,12 +167,16 @@ create table if not exists public.evidence (
     file_size         integer,
     uploaded_by       uuid        references auth.users(id),
     status            text        not null default 'submitted', -- submitted, under_review, approved, rejected
+    reviewer_id       uuid        references auth.users(id) on delete set null,
+    review_comments   text,
+    reviewed_at       timestamptz,
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
 
 create index if not exists evidence_company_idx on public.evidence (company_id);
 create index if not exists evidence_obligation_idx on public.evidence (obligation_id);
+create index if not exists evidence_status_idx on public.evidence (status);
 
 -- ---------------------------------------------------------------
 -- Remediation Plans
