@@ -12,6 +12,9 @@ import {
   Clock,
   AlertTriangle,
   X,
+  Download,
+  Calendar,
+  FileText,
 } from 'lucide-react';
 
 interface Obligation {
@@ -54,6 +57,11 @@ export default function ObligationsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<string>('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [importingTemplates, setImportingTemplates] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [editingDueDateId, setEditingDueDateId] = useState<string | null>(null);
+  const [editingDueDate, setEditingDueDate] = useState<string>('');
 
   useEffect(() => {
     loadObligations();
@@ -102,6 +110,152 @@ export default function ObligationsPage() {
     }
   };
 
+  const handleImportTemplates = async (riskLevel: string) => {
+    setImportingTemplates(riskLevel);
+    try {
+      const res = await fetch('/api/obligations/import-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ riskLevel }),
+      });
+      if (!res.ok) throw new Error('Failed to import templates');
+      const data = await res.json();
+      if (data.ok) {
+        alert(`${data.created} obligations imported${data.skipped > 0 ? ` (${data.skipped} already existed)` : ''}`);
+        loadObligations();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to import templates');
+    } finally {
+      setImportingTemplates(null);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredObligations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredObligations.map((o) => o.id)));
+    }
+  };
+
+  const toggleSelect = (obligationId: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(obligationId)) {
+      newSelected.delete(obligationId);
+    } else {
+      newSelected.add(obligationId);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedIds.size === 0) return;
+    setBulkUpdating(true);
+    try {
+      const promises = Array.from(selectedIds).map((id) =>
+        fetch(`/api/obligations/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        })
+      );
+
+      const results = await Promise.all(promises);
+      if (results.every((r) => r.ok)) {
+        setObligations((prev) =>
+          prev.map((o) =>
+            selectedIds.has(o.id) ? { ...o, status: newStatus as any } : o
+          )
+        );
+        setSelectedIds(new Set());
+      } else {
+        throw new Error('Some updates failed');
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update obligations');
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleUpdateDueDate = async (obligationId: string, newDueDate: string) => {
+    setUpdatingId(obligationId);
+    try {
+      const res = await fetch(`/api/obligations/${obligationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ due_date: newDueDate || null }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      const data = await res.json();
+      if (data.ok) {
+        setObligations((prev) =>
+          prev.map((o) => (o.id === obligationId ? data.obligation : o))
+        );
+        setEditingDueDateId(null);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update due date');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const isOverdue = (dueDate: string | null) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
+  };
+
+  const overdueCount = obligations.filter((o) => isOverdue(o.due_date)).length;
+  const criticalCount = obligations.filter((o) => o.priority === 'critical').length;
+  const identifiedCount = obligations.filter((o) => o.status === 'identified').length;
+
+  const quickFilters = [
+    { label: `Overdue (${overdueCount})`, filter: () => {
+      setFilterStatus('');
+      setFilterPriority('');
+      setSearchQuery('');
+    }},
+    { label: `Critical Priority (${criticalCount})`, filter: () => {
+      setFilterStatus('');
+      setFilterPriority('critical');
+      setSearchQuery('');
+    }},
+    { label: `Not Started (${identifiedCount})`, filter: () => {
+      setFilterStatus('identified');
+      setFilterPriority('');
+      setSearchQuery('');
+    }},
+  ];
+
+  const handleExportCSV = () => {
+    const headers = ['Title', 'Priority', 'Status', 'Due Date', 'Source', 'Description'];
+    const rows = filteredObligations.map((o) => [
+      `"${o.title.replace(/"/g, '""')}"`,
+      o.priority,
+      o.status,
+      o.due_date ? new Date(o.due_date).toLocaleDateString() : '',
+      o.source,
+      `"${o.description.replace(/"/g, '""')}"`,
+    ]);
+
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `obligations-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
   const filteredObligations = obligations
     .filter((o) => {
       if (filterStatus && o.status !== filterStatus) return false;
@@ -142,16 +296,83 @@ export default function ObligationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href="/compliance"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to compliance
-        </Link>
-        <h1 className="text-3xl font-bold text-white mt-2">Compliance Obligations</h1>
-        <p className="text-slate-400">Manage EU AI Act obligations across your organization</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <Link
+            href="/compliance"
+            className="inline-flex items-center gap-1 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to compliance
+          </Link>
+          <h1 className="text-3xl font-bold text-white mt-2">Compliance Obligations</h1>
+          <p className="text-slate-400">Manage EU AI Act obligations across your organization</p>
+        </div>
+        {obligations.length > 0 && (
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:border-slate-600"
+            title="Export current view as CSV"
+          >
+            <FileText className="h-4 w-4" />
+            Export CSV
+          </button>
+        )}
+      </div>
+
+      {/* Quick Filters */}
+      <div className="flex gap-2 flex-wrap">
+        {quickFilters.map((qf) => (
+          <button
+            key={qf.label}
+            onClick={qf.filter}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-slate-700 bg-slate-900/50 text-slate-300 hover:bg-slate-800 hover:border-slate-600 transition"
+          >
+            {qf.label}
+          </button>
+        ))}
+        {(filterStatus || filterPriority || searchQuery) && (
+          <button
+            onClick={() => {
+              setFilterStatus('');
+              setFilterPriority('');
+              setSearchQuery('');
+            }}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-slate-700 bg-slate-900/50 text-slate-400 hover:text-slate-300 hover:bg-slate-800 transition"
+          >
+            Clear all filters
+          </button>
+        )}
+      </div>
+
+      {/* Obligation Templates */}
+      <div className="rounded-lg border border-purple-800/60 bg-purple-950/20 p-4">
+        <div className="flex items-start gap-3 mb-4">
+          <Download className="h-5 w-5 text-purple-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-white mb-2">Quick Import: Obligation Templates</h3>
+            <p className="text-sm text-slate-400 mb-3">
+              Import pre-defined EU AI Act obligations based on your system risk levels
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { level: 'unacceptable', label: 'Unacceptable Risk', color: 'bg-red-900/40 text-red-300 border-red-800/60 hover:bg-red-900/60' },
+                { level: 'high', label: 'High Risk', color: 'bg-orange-900/40 text-orange-300 border-orange-800/60 hover:bg-orange-900/60' },
+                { level: 'medium', label: 'Medium Risk', color: 'bg-amber-900/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/60' },
+                { level: 'low', label: 'Low Risk', color: 'bg-blue-900/40 text-blue-300 border-blue-800/60 hover:bg-blue-900/60' },
+              ].map((template) => (
+                <button
+                  key={template.level}
+                  onClick={() => handleImportTemplates(template.level)}
+                  disabled={importingTemplates === template.level}
+                  className={`px-3 py-1.5 text-xs font-medium rounded border transition ${template.color} disabled:opacity-50`}
+                >
+                  {importingTemplates === template.level ? 'Importing...' : `Import ${template.label}`}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -159,6 +380,23 @@ export default function ObligationsPage() {
         <div className="flex gap-2">
           <Filter className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-3">
+            {/* Select All */}
+            {filteredObligations.length > 0 && (
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-700">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size === filteredObligations.length && filteredObligations.length > 0}
+                  onChange={toggleSelectAll}
+                  className="h-4 w-4 rounded cursor-pointer"
+                  aria-label="Select all obligations"
+                />
+                <label className="text-xs text-slate-400 cursor-pointer">
+                  {selectedIds.size === filteredObligations.length && filteredObligations.length > 0
+                    ? `Deselect all (${filteredObligations.length})`
+                    : `Select all (${filteredObligations.length})`}
+                </label>
+              </div>
+            )}
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
@@ -206,6 +444,40 @@ export default function ObligationsPage() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="rounded-lg border border-cyan-800/60 bg-cyan-950/30 p-4 sticky top-0 z-10">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-cyan-300">
+              {selectedIds.size} obligation{selectedIds.size !== 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleBulkStatusChange('in_progress')}
+                disabled={bulkUpdating}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-cyan-900/50 text-cyan-300 border border-cyan-800/60 hover:bg-cyan-900/70 disabled:opacity-50"
+              >
+                {bulkUpdating ? 'Updating...' : 'Mark In Progress'}
+              </button>
+              <button
+                onClick={() => handleBulkStatusChange('completed')}
+                disabled={bulkUpdating}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-green-900/50 text-green-300 border border-green-800/60 hover:bg-green-900/70 disabled:opacity-50"
+              >
+                {bulkUpdating ? 'Updating...' : 'Mark Complete'}
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                disabled={bulkUpdating}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-slate-800/50 text-slate-300 border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Obligations List */}
       {filteredObligations.length === 0 ? (
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-8 text-center text-slate-400">
@@ -221,6 +493,15 @@ export default function ObligationsPage() {
                 className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 hover:border-slate-700 transition"
               >
                 <div className="flex items-start gap-4">
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(obligation.id)}
+                    onChange={() => toggleSelect(obligation.id)}
+                    className="mt-1 h-4 w-4 rounded cursor-pointer"
+                    aria-label={`Select ${obligation.title}`}
+                  />
+
                   {/* Priority Badge & Status */}
                   <div className="flex gap-2 flex-shrink-0 pt-1">
                     <div
@@ -237,8 +518,49 @@ export default function ObligationsPage() {
                     <p className="text-sm text-slate-400 mt-1 line-clamp-2">{obligation.description}</p>
                     <div className="flex gap-4 text-xs text-slate-500 mt-2">
                       <span>Source: {obligation.source}</span>
-                      {obligation.due_date && (
-                        <span>Due: {new Date(obligation.due_date).toLocaleDateString()}</span>
+                      {editingDueDateId === obligation.id ? (
+                        <div className="flex gap-1.5">
+                          <input
+                            type="date"
+                            value={editingDueDate}
+                            onChange={(e) => setEditingDueDate(e.target.value)}
+                            className="px-2 py-1 rounded text-xs bg-slate-800 border border-slate-700 text-white"
+                            disabled={updatingId === obligation.id}
+                          />
+                          <button
+                            onClick={() => handleUpdateDueDate(obligation.id, editingDueDate)}
+                            disabled={updatingId === obligation.id}
+                            className="text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingDueDateId(null)}
+                            disabled={updatingId === obligation.id}
+                            className="text-slate-500 hover:text-slate-400 disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingDueDateId(obligation.id);
+                            setEditingDueDate(obligation.due_date?.split('T')[0] || '');
+                          }}
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                            obligation.due_date && isOverdue(obligation.due_date)
+                              ? 'bg-red-900/30 text-red-300 hover:bg-red-900/50'
+                              : obligation.due_date
+                                ? 'bg-amber-900/30 text-amber-300 hover:bg-amber-900/50'
+                                : 'text-slate-500 hover:text-slate-400'
+                          }`}
+                        >
+                          <Calendar className="h-3 w-3" />
+                          {obligation.due_date
+                            ? new Date(obligation.due_date).toLocaleDateString()
+                            : 'Set due date'}
+                        </button>
                       )}
                     </div>
                   </div>

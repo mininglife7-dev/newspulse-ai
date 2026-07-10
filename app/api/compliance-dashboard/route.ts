@@ -133,13 +133,24 @@ export async function GET(request: NextRequest) {
       critical_priority: obligations?.filter((o) => o.priority === 'critical').length ?? 0,
     };
 
-    // Calculate compliance health
+    // Calculate compliance health (incorporates risk, evidence, and obligations)
     let complianceHealth: 'critical' | 'warning' | 'good' | 'excellent';
-    if (riskDistribution.unacceptable > 0) {
+    if (riskDistribution.unacceptable > 0 || obligationMetrics.critical_priority > 0) {
+      // Critical if unacceptable risk or critical obligations exist
       complianceHealth = 'critical';
-    } else if (riskDistribution.high > 0 && (unassessedSystems > 0 || evidenceMetrics.submitted > 0)) {
+    } else if (
+      (riskDistribution.high > 0 && (unassessedSystems > 0 || evidenceMetrics.submitted > 0)) ||
+      (obligationMetrics.high_priority > 0 && (obligationMetrics.identified > 0 || obligationMetrics.in_progress > 0))
+    ) {
+      // Warning if high risk + incomplete work, or high-priority obligations not fully completed
       complianceHealth = 'warning';
-    } else if (assessedSystems === totalSystems && evidenceMetrics.under_review === 0 && evidenceMetrics.submitted === 0) {
+    } else if (
+      assessedSystems === totalSystems &&
+      evidenceMetrics.under_review === 0 &&
+      evidenceMetrics.submitted === 0 &&
+      (obligationMetrics.total === 0 || (obligationMetrics.completed + obligationMetrics.not_applicable === obligationMetrics.total))
+    ) {
+      // Excellent if all systems assessed, evidence approved, and obligations completed
       complianceHealth = 'excellent';
     } else {
       complianceHealth = 'good';
