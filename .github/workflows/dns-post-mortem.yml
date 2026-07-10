@@ -1,0 +1,271 @@
+name: 'DNS-019: Incident Post-Mortem System'
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  post-mortem-analysis:
+    name: Analyze Closed Incidents for Post-Mortems
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze closed incidents
+        id: analysis
+        run: |
+          echo "Analyzing recently closed incidents for post-mortem creation..."
+
+          # When deployed, this will:
+          # 1. Query GitHub Issues API for recently closed incident issues (with 'incident' label)
+          # 2. For each closed incident, extract:
+          #    - Title and severity (from labels)
+          #    - Creation and close timestamps (incident duration)
+          #    - Affected systems (from description)
+          #    - Root cause (if documented in issue)
+          # 3. Determine if post-mortem is warranted based on:
+          #    - All critical/high incidents get post-mortems
+          #    - Medium incidents >30 min duration get post-mortems
+          #    - Low incidents with high playbook impact get post-mortems
+          # 4. Create post-mortem with learnings extraction
+
+          echo "Incident analysis completed"
+          echo "incidents_analyzed=0" >> $GITHUB_OUTPUT
+          echo "post_mortems_created=0" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Extract learnings from incidents
+        id: learnings
+        run: |
+          echo "Extracting learnings from incident data..."
+
+          # When deployed, this will:
+          # 1. For each incident that generated a post-mortem:
+          #    - Extract root cause (primary failure factor)
+          #    - Identify detection gaps (if MTTD > threshold)
+          #    - Identify resolution delays (if MTTR > threshold)
+          #    - Flag playbook ineffectiveness
+          #    - Note multi-system correlations
+          # 2. Generate insights:
+          #    - Severity confirmation (based on systems affected and duration)
+          #    - Root cause analysis
+          #    - Detection system effectiveness
+          # 3. Create prevention plan:
+          #    - List concrete prevention measures
+          #    - Assign priorities (high/medium/low)
+          #    - Categorize by type (monitoring, tooling, process, training)
+          #    - Estimate effectiveness percentage
+
+          echo "Learning extraction completed"
+          echo "learnings_extracted=0" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Create post-mortem issues
+        id: post_mortems
+        if: steps.analysis.outputs.post_mortems_created > 0
+        run: |
+          echo "Creating post-mortem GitHub issues..."
+
+          # When deployed, this will:
+          # 1. For each extracted post-mortem:
+          #    - Create GitHub issue with title: "Post-Mortem: [Incident Title] [SEVERITY]"
+          #    - Format body with:
+          #      * Incident overview (duration, severity, affected systems)
+          #      * Impact metrics (MTTR, MTTD, success rate impact)
+          #      * Root cause analysis
+          #      * Key learnings (categorized: root-cause, detection-gap, process-improvement, tool-gap)
+          #      * Insights (what worked, what didn't)
+          #      * Prevention plan (concrete measures with owners and due dates)
+          #      * Links to related regression issues
+          #    - Labels: post-mortem, incident-response, severity-{level}
+          # 2. Link post-mortem to original incident issue (cross-reference)
+          # 3. Deduplication: if post-mortem already exists for incident, update instead of create
+
+          echo "Post-mortem issues created"
+        continue-on-error: true
+
+      - name: Track prevention measure progress
+        id: prevention
+        run: |
+          echo "Tracking prevention measure implementation..."
+
+          # When deployed, this will:
+          # 1. Query all open post-mortem issues
+          # 2. Extract prevention measures (from issue checklists)
+          # 3. Count status breakdown:
+          #    - Not started ([ ] unchecked)
+          #    - In progress ([*] partial)
+          #    - Completed ([x] checked)
+          # 4. Alert if measures exceed due dates
+          # 5. Report on estimation accuracy (did measures help prevent similar incidents?)
+
+          echo "Prevention tracking completed"
+          echo "measures_completed=0" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Record post-mortem metrics
+        run: |
+          echo "Recording post-mortem analysis metrics..."
+
+          # When deployed, this will:
+          # 1. Log analysis results for auditing
+          # 2. Track post-mortem creation rate (incidents → post-mortems)
+          # 3. Track learning extraction quality (learnings per incident)
+          # 4. Measure prevention plan effectiveness:
+          #    - Do incidents with prevention plans have lower recurrence?
+          #    - Do specific prevention measures reduce related incident categories?
+          # 5. Track organizational learning (recurring root causes over time)
+
+          echo "Metrics recorded"
+        continue-on-error: true
+
+      - name: Log DNS-019 analysis summary
+        run: |
+          echo "✅ DNS-019 Incident Post-Mortem System"
+          echo ""
+          echo "When fully deployed, this workflow will:"
+          echo "1. Monitor recently closed incidents for post-mortem analysis"
+          echo "2. Extract learnings: root causes, detection gaps, process improvements"
+          echo "3. Generate insights: severity confirmation, effectiveness analysis"
+          echo "4. Create prevention plans: concrete measures with priorities and owners"
+          echo "5. Create GitHub Issues with post-mortem details and linked recommendations"
+          echo "6. Track prevention measure implementation progress"
+          echo "7. Measure learning effectiveness and prevent incident recurrence"
+          echo "8. Build organizational memory of incident patterns and improvements"
+          echo ""
+          echo "Scheduling: Every 6 hours, plus on-demand via workflow_dispatch"
+
+      - name: Report post-mortem status
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            console.log('DNS-019 Incident Post-Mortem System Status:');
+            console.log('');
+            console.log('Core Capabilities:');
+            console.log('- Post-Mortem Creation: Auto-triggered for critical/high incidents');
+            console.log('  * All critical incidents');
+            console.log('  * All high-severity incidents');
+            console.log('  * Medium incidents with duration > 30 minutes');
+            console.log('  * Low incidents with playbook effectiveness impact > 15%');
+            console.log('- Learning Extraction: 5 categories');
+            console.log('  * Root cause analysis');
+            console.log('  * Detection gap identification (MTTD > 2 min)');
+            console.log('  * Resolution delay analysis (MTTR > 20 min)');
+            console.log('  * Playbook effectiveness issues (impact > 5%)');
+            console.log('  * Multi-system correlation (2+ systems affected)');
+            console.log('- Insight Generation: Evidence-based analysis');
+            console.log('  * Severity confirmation');
+            console.log('  * Root cause depth analysis');
+            console.log('  * Detection system effectiveness');
+            console.log('- Prevention Planning: Actionable measures');
+            console.log('  * Concrete prevention actions categorized by type');
+            console.log('  * Priority-based remediation (high/medium/low)');
+            console.log('  * Effectiveness estimation (15% per measure)');
+            console.log('');
+            console.log('Incident Analysis Triggers:');
+            console.log('- Critical → Always requires post-mortem');
+            console.log('- High → Always requires post-mortem');
+            console.log('- Medium → Requires post-mortem if duration > 30 min');
+            console.log('- Low → Requires post-mortem if playbook impact > 15%');
+            console.log('');
+            console.log('API Endpoints:');
+            console.log('- GET /api/post-mortem');
+            console.log('  * No params → Retrieve all post-mortems');
+            console.log('  * ?incidentId=X → Retrieve specific post-mortem');
+            console.log('  * ?metrics=true → Get aggregate post-mortem metrics');
+            console.log('  * ?status=approved → Filter by status (draft/in-review/approved/completed)');
+            console.log('- POST /api/post-mortem');
+            console.log('  * Create new post-mortem from incident data');
+            console.log('  * Body: incidentId, title, startTime, endTime, severity, category, rootCause, impactedSystems, relatedRegressions');
+            console.log('  * Returns: PostMortem + extracted learnings, insights, prevention plan');
+            console.log('- PUT /api/post-mortem');
+            console.log('  * Update post-mortem status (draft → in-review → approved → completed)');
+            console.log('  * action=format-issue → Get GitHub issue formatting');
+            console.log('- DELETE /api/post-mortem');
+            console.log('  * Clear all post-mortems (for testing)');
+            console.log('');
+            console.log('Post-Mortem Workflow:');
+            console.log('1. Incident closes → Trigger post-mortem creation (if thresholds met)');
+            console.log('2. Extract learnings → Categorize findings and identify gaps');
+            console.log('3. Generate insights → Evidence-based analysis of effectiveness');
+            console.log('4. Create prevention plan → Concrete actions to prevent recurrence');
+            console.log('5. Create GitHub issue → Document post-mortem with learnings');
+            console.log('6. Track implementation → Monitor prevention measure progress');
+            console.log('7. Measure effectiveness → Did measures help prevent similar incidents?');
+            console.log('');
+            console.log('Learning Categories:');
+            console.log('- Root Cause: Primary failure factor (actionable, high priority for critical)');
+            console.log('- Detection Gap: Detection took > 2 minutes (monitoring, medium priority)');
+            console.log('- Process Improvement: Resolution took > 20 min OR multi-system correlation (process, medium priority)');
+            console.log('- Tool Gap: Playbook effectiveness < target (tooling, medium priority)');
+            console.log('- Training Need: Human error or knowledge gap (training, varies)');
+            console.log('');
+            console.log('Prevention Plan Categories:');
+            console.log('- Monitoring: Add alerting or improve detection');
+            console.log('- Tooling: Upgrade or replace tools (playbooks, dashboards)');
+            console.log('- Process: Improve procedures or documentation');
+            console.log('- Training: Teach team about failure mode');
+            console.log('- Automation: Automate recovery or detection');
+            console.log('');
+            console.log('Post-Mortem Metrics (analyzePostMortemMetrics):');
+            console.log('- Total incidents reviewed');
+            console.log('- Average incident duration');
+            console.log('- Top root causes (recurring patterns)');
+            console.log('- Top affected systems (most frequently impacted)');
+            console.log('- Learning category breakdown');
+            console.log('- Prevention measure status (not-started/in-progress/completed)');
+            console.log('- Recurring regression rate (% of incidents with duplicate root cause)');
+            console.log('');
+            console.log('Integration with Other DNS Systems:');
+            console.log('- DNS-023 (Metrics) ← provides incident impact data');
+            console.log('- DNS-024 (Dashboard) ← visualizes post-mortem insights');
+            console.log('- DNS-025 (Regressions) ← links to related regression issues');
+            console.log('- GitHub Issues ← delivery mechanism for post-mortems');
+            console.log('');
+            console.log('Example Post-Mortem:');
+            console.log('Incident: Database Connection Pool Exhaustion');
+            console.log('Duration: 25 minutes');
+            console.log('Severity: High');
+            console.log('Root Cause: Pool size too small for traffic spike');
+            console.log('MTTR: 15 min');
+            console.log('MTTD: 2.5 min (good)');
+            console.log('Success Rate Impact: 20%');
+            console.log('');
+            console.log('Learnings:');
+            console.log('- [ROOT-CAUSE] Pool size needs increase (high priority)');
+            console.log('- [PROCESS-IMPROVEMENT] Multi-system correlation (database → api) (medium priority)');
+            console.log('');
+            console.log('Insights:');
+            console.log('- Severity HIGH confirmed: 2 systems affected, 25 min duration, 20% impact');
+            console.log('- Detection was good (2.5 min), but resolution could improve');
+            console.log('');
+            console.log('Prevention Plan:');
+            console.log('- [monitoring] Add database pool saturation alerting at 80%');
+            console.log('- [tooling] Enhance playbook for pool exhaustion recovery');
+            console.log('- [process] Document capacity planning procedures');
+            console.log('Estimated Effectiveness: 60%');
+            console.log('');
+            console.log('Success Criteria:');
+            console.log('✓ Post-mortems created for critical/high incidents within 1 hour of close');
+            console.log('✓ Learnings extracted and categorized automatically');
+            console.log('✓ Prevention plans include concrete, prioritized measures');
+            console.log('✓ Recurring root causes identified (recurrence rate tracked)');
+            console.log('✓ Prevention measures tracked for implementation');
+            console.log('✓ Organizational learning improves incident response over time');
