@@ -301,25 +301,41 @@ interface KnowledgeMemory {
 
 ## Infrastructure Decisions
 
-### Vercel Cron Frequency (2026-07-10)
+### Vercel Cron Limitation → GitHub Actions Migration (2026-07-10)
 
-**Decision:** All DNA cron jobs run hourly (0 * * * *) instead of every 5-30 minutes.
+**Problem:** Vercel Hobby plan only allows ONE cron job per day that runs once. All DNA checks (5-30 min frequency) violated this limit.
 
-**Rationale:** Vercel Hobby plan (free tier) only allows daily cron schedules. Investigated 5 alternatives:
-1. Reduce frequency to hourly ✅ **CHOSEN** (free, immediate, acceptable detection latency)
-2. GitHub Actions scheduled workflows (free, but requires 45 min setup)
-3. Event-driven webhooks (free, but requires 2-3 hrs, event-dependent reliability)
-4. On-demand only (free, but defeats monitoring purpose)
-5. Upgrade to Pro plan ($240/year, unnecessary given alternatives)
+**Investigation:** Evaluated 5 alternatives:
+1. Reduce to daily (24-hr latency) — unacceptable for production monitoring
+2. Remove crons, on-demand only — defeats automation
+3. GitHub Actions scheduled workflows ✅ **CHOSEN** (free, unlimited frequency)
+4. Event-driven webhooks — free but complex
+5. Upgrade to Pro plan — $240/year, unnecessary given superior free alternative
 
-**Impact on Detection Latency:**
-- Before: 5-30 minute detection
-- After: 60 minute detection
-- Trade-off: Acceptable for MVP. GitHub Actions outage earlier today went 4+ hours undetected. 60-min detection is 96% improvement.
+**Decision:** Migrate DNA monitoring from Vercel cron to GitHub Actions.
 
-**Future:** If hourly proves insufficient post-launch, implement GitHub Actions backup monitoring (free) before considering Pro plan upgrade.
+**Implementation:**
+- 4 GitHub Actions workflows created (one per DNA)
+- Each workflow triggers on GitHub's free schedule
+- Removed all Vercel cron entries
+- No functional change to DNA logic; monitoring endpoints remain identical
 
-**Cost:** $0 (no budget impact)
+**Benefits:**
+- **Cost:** $0 (GitHub Actions free tier)
+- **Frequency:** Full frequency restored (5-30 min detection vs. 24-hour Vercel limit)
+- **Reliability:** GitHub infrastructure handles scheduling independently of Vercel
+- **Scalability:** Survives infrastructure changes, deployments, Vercel incidents
+- **Visibility:** Workflow runs visible in GitHub Actions tab for debugging
+
+**Detection Latency Restored:**
+- DNA-GOV-001: Every 30 minutes (was 24 hrs with Vercel limit)
+- DNA-GOV-002: Every 5 minutes (was 24 hrs with Vercel limit)
+- DNA-GOV-003: Every 10 minutes (was 24 hrs with Vercel limit)
+- DNA-GOV-004: Every 5 minutes (was 24 hrs with Vercel limit)
+
+**Cost:** $0 (GitHub Actions included free; no Pro plan upgrade needed)
+
+**Lesson:** When infrastructure imposes artificial limits, prefer platform-independent alternatives. GitHub Actions is superior to Vercel cron for scheduled monitoring because it decouples monitoring from deployment infrastructure.
 
 ---
 
