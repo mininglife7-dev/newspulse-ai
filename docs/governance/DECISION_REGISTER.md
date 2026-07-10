@@ -7,6 +7,33 @@ are never requested from the Founder.
 
 ---
 
+## DR-0015 — RLS policies for evidence/team/obligations; security-definer membership helpers
+
+- **Decision:** Add the RLS policies that the sibling-built Evidence Collection and
+  Team Collaboration features require but the schema lacked: evidence
+  (select/insert/update/delete), workspace_members roster read + admin
+  invite/update, obligations and remediation_plans (member read/insert/update).
+  Membership checks use new SECURITY DEFINER helpers (`is_workspace_member`,
+  `is_workspace_admin`) because policies on workspace_members cannot query
+  workspace_members directly (RLS recursion).
+- **Reason:** Verification-first audit of the newly-landed features found their
+  user-scoped queries would be rejected wholesale on a deployed schema: evidence
+  had RLS enabled with ZERO policies; the roster select policy only exposed the
+  caller's own row; owners could not insert invited members; no update policy
+  existed for role changes.
+- **Alternatives considered:** Switching those APIs to the admin client — rejected:
+  bypasses tenant isolation, the actual defect is the missing policies.
+- **Evidence:** grep audit of app/api/evidence and app/api/team query patterns vs
+  `create policy` statements per table; full suite re-verified after the change
+  (286/286 unit, lint, tsc, build).
+- **Confidence:** High for the policy logic; live behavior verifiable only after
+  the Founder runs schema.sql (unchanged standing action).
+- **Expected impact:** Evidence and Team features actually work under tenant
+  isolation instead of failing on first write.
+- **Risk assessment:** Low — additive policies; SECURITY DEFINER functions are
+  narrow (boolean membership checks, search_path pinned).
+- **Timestamp:** 2026-07-10
+
 ## DR-0014 — Make onboarding step 3 (Risk Assessment) real: EU AI Act screening
 
 - **Decision:** Implement risk assessment end-to-end: a 12-question EU AI Act

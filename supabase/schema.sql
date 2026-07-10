@@ -380,5 +380,90 @@ create policy "Members can insert workspace risk_assessments"
         )
     );
 
--- Similar RLS policies for obligations, evidence, remediation_plans
--- Follow same pattern: check if user is an active member of the workspace
+-- ---------------------------------------------------------------
+-- Membership helper functions (SECURITY DEFINER)
+-- Policies on workspace_members cannot query workspace_members directly
+-- (infinite RLS recursion); these helpers run outside RLS.
+-- ---------------------------------------------------------------
+create or replace function public.is_workspace_member(ws uuid)
+returns boolean
+language sql security definer stable
+set search_path = public
+as $$
+    select exists (
+        select 1 from public.workspace_members
+        where workspace_id = ws
+        and user_id = auth.uid()
+        and status = 'active'
+    );
+$$;
+
+create or replace function public.is_workspace_admin(ws uuid)
+returns boolean
+language sql security definer stable
+set search_path = public
+as $$
+    select exists (
+        select 1 from public.workspace_members
+        where workspace_id = ws
+        and user_id = auth.uid()
+        and status = 'active'
+        and role in ('owner', 'admin')
+    );
+$$;
+
+-- Team collaboration: members see the whole roster; owners/admins manage it
+create policy "Members can read their workspace roster"
+    on public.workspace_members for select
+    using (public.is_workspace_member(workspace_id));
+
+create policy "Admins can invite members"
+    on public.workspace_members for insert
+    with check (public.is_workspace_admin(workspace_id));
+
+create policy "Admins can update members"
+    on public.workspace_members for update
+    using (public.is_workspace_admin(workspace_id));
+
+-- Evidence: active workspace members can manage evidence records
+create policy "Members can read workspace evidence"
+    on public.evidence for select
+    using (public.is_workspace_member(workspace_id));
+
+create policy "Members can insert workspace evidence"
+    on public.evidence for insert
+    with check (public.is_workspace_member(workspace_id));
+
+create policy "Members can update workspace evidence"
+    on public.evidence for update
+    using (public.is_workspace_member(workspace_id));
+
+create policy "Members can delete workspace evidence"
+    on public.evidence for delete
+    using (public.is_workspace_member(workspace_id));
+
+-- Obligations: active workspace members can read and manage
+create policy "Members can read workspace obligations"
+    on public.obligations for select
+    using (public.is_workspace_member(workspace_id));
+
+create policy "Members can insert workspace obligations"
+    on public.obligations for insert
+    with check (public.is_workspace_member(workspace_id));
+
+create policy "Members can update workspace obligations"
+    on public.obligations for update
+    using (public.is_workspace_member(workspace_id));
+
+-- Remediation plans: active workspace members can read and manage
+create policy "Members can read workspace remediation_plans"
+    on public.remediation_plans for select
+    using (public.is_workspace_member(workspace_id));
+
+create policy "Members can insert workspace remediation_plans"
+    on public.remediation_plans for insert
+    with check (public.is_workspace_member(workspace_id));
+
+create policy "Members can update workspace remediation_plans"
+    on public.remediation_plans for update
+    using (public.is_workspace_member(workspace_id));
