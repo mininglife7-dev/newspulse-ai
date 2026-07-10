@@ -245,15 +245,29 @@ describe('Alert Hub (DNA-GOV-005)', () => {
       recordAlert('production-health', 'warning', 'Health check failed', 'desc');
       recordAlert('deployment', 'warning', 'Deployment issue', 'desc');
       recordAlert('error-rate', 'critical', 'High error rate', 'desc');
+      recordAlert('security', 'critical', 'Critical vulnerabilities found', 'CVE-2024-12345');
 
       const report = getAlertHubReport();
 
-      expect(report.alertCount).toBe(4);
+      expect(report.alertCount).toBe(5);
       const sources = report.alerts.map((a) => a.source);
       expect(sources).toContain('blocking-conditions');
       expect(sources).toContain('production-health');
       expect(sources).toContain('deployment');
       expect(sources).toContain('error-rate');
+      expect(sources).toContain('security');
+    });
+
+    it('tracks security vulnerabilities as alerts', () => {
+      recordAlert('security', 'critical', 'Critical dependencies outdated', '1 critical CVE requiring immediate patching');
+      recordAlert('security', 'warning', 'High severity vulnerabilities', '5 high-severity CVEs available for patching');
+
+      const report = getAlertHubReport();
+      const securityAlerts = report.alerts.filter((a) => a.source === 'security');
+
+      expect(securityAlerts).toHaveLength(2);
+      expect(securityAlerts[0].severity).toBe('critical');
+      expect(securityAlerts[1].severity).toBe('warning');
     });
   });
 });

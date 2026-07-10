@@ -21,6 +21,7 @@ export const dynamic = 'force-dynamic';
  * - DNA-GOV-002: Production health (connectivity, latency)
  * - DNA-GOV-003: Deployment verification (code not live)
  * - DNA-GOV-004: Error rates (runtime failures)
+ * - DNA-GOV-008: Security vulnerabilities (CVEs, npm advisories)
  *
  * Used by: Founder's monitoring dashboard, automated alerting
  */
