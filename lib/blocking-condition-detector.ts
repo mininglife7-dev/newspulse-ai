@@ -58,7 +58,9 @@ export async function detectActionsOutage(
       };
     }
 
-    const data = (await response.json()) as { workflow_runs: Array<{ created_at: string; conclusion: string }> };
+    const data = (await response.json()) as {
+      workflow_runs: Array<{ created_at: string; conclusion: string }>;
+    };
     const runs = data.workflow_runs || [];
 
     if (runs.length === 0) {
@@ -83,15 +85,19 @@ export async function detectActionsOutage(
     );
 
     if (!recentSuccessfulRun && runs.length > 0) {
-      const oldestRun = new Date(runs[0].created_at);
+      // The GitHub runs API returns runs newest-first, so runs[0] is the most
+      // recent run (previously mislabeled "oldestRun", which made the evidence
+      // self-contradictory — it called the same timestamp both "Oldest run"
+      // and "Most recent run").
+      const mostRecentRun = new Date(runs[0].created_at);
       return {
         type: 'actions_no_recent_runs',
         severity: 'critical',
-        description: `No successful workflow runs in the last 2 hours. Oldest run: ${oldestRun.toISOString()}`,
+        description: `No successful workflow runs in the last 2 hours. Most recent run: ${mostRecentRun.toISOString()}`,
         evidence: [
           `Last 10 runs examined`,
           `None succeeded after ${twoHoursAgo.toISOString()}`,
-          `Most recent run at ${oldestRun.toISOString()}`,
+          `Most recent run at ${mostRecentRun.toISOString()}`,
         ],
         discoveredAt: new Date().toISOString(),
         recommendedAction:
@@ -109,7 +115,8 @@ export async function detectActionsOutage(
       description: `Could not check GitHub Actions: ${error instanceof Error ? error.message : 'Unknown error'}`,
       evidence: [`Exception during Actions check`],
       discoveredAt: new Date().toISOString(),
-      recommendedAction: 'Retry the check. If persistent, verify network access.',
+      recommendedAction:
+        'Retry the check. If persistent, verify network access.',
       estimatedImpact: 'Cannot verify Actions health status.',
     };
   }

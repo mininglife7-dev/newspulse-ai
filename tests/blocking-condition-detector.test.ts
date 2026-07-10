@@ -18,7 +18,10 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
             created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
             conclusion: 'success',
           },
-          { created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), conclusion: 'success' },
+          {
+            created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+            conclusion: 'success',
+          },
         ],
       };
 
@@ -44,14 +47,17 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
     });
 
     it('detects outage when no recent successful runs', async () => {
+      // GitHub returns runs newest-first: runs[0] is the most recent.
       const mockRuns = {
         workflow_runs: [
           {
-            created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+            created_at: new Date(
+              Date.now() - 2.5 * 60 * 60 * 1000
+            ).toISOString(), // most recent: 2.5h ago
             conclusion: 'failure',
           },
           {
-            created_at: new Date(Date.now() - 2.5 * 60 * 60 * 1000).toISOString(),
+            created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // older: 3h ago
             conclusion: 'failure',
           },
         ],
@@ -66,7 +72,13 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
       expect(result).not.toBeNull();
       expect(result?.type).toBe('actions_no_recent_runs');
       expect(result?.severity).toBe('critical');
-      expect(result?.description).toContain('No successful workflow runs in the last 2 hours');
+      expect(result?.description).toContain(
+        'No successful workflow runs in the last 2 hours'
+      );
+      // Evidence must be self-consistent: the reported run is the most recent
+      // one (runs[0]), not mislabeled as "Oldest".
+      expect(result?.description).toContain('Most recent run:');
+      expect(result?.description).not.toContain('Oldest run');
     });
 
     it('detects API errors', async () => {
@@ -108,7 +120,11 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
         json: async () => mockRuns,
       });
 
-      const result = await detectAllBlockingConditions('owner', 'repo', 'token');
+      const result = await detectAllBlockingConditions(
+        'owner',
+        'repo',
+        'token'
+      );
       expect(result).toHaveLength(0);
     });
 
@@ -118,7 +134,11 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
         json: async () => ({ workflow_runs: [] }),
       });
 
-      const result = await detectAllBlockingConditions('owner', 'repo', 'token');
+      const result = await detectAllBlockingConditions(
+        'owner',
+        'repo',
+        'token'
+      );
       expect(result.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('actions_no_recent_runs');
     });
