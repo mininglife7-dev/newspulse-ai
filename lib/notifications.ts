@@ -12,7 +12,8 @@ export type NotificationEntityType =
   | 'remediation_plan'
   | 'evidence'
   | 'risk_assessment'
-  | 'workspace_member';
+  | 'workspace_member'
+  | 'obligation';
 
 export interface Notification {
   id: string;

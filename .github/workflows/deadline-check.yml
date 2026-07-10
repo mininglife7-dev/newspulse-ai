@@ -1,0 +1,38 @@
+name: Daily Deadline Check
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC (can be adjusted to match business hours)
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  check-deadlines:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check for upcoming deadlines
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "Warning: ADMIN_TOKEN not set. Skipping deadline check."
+            exit 0
+          fi
+
+          if [ -z "$DEPLOYMENT_URL" ]; then
+            echo "Warning: DEPLOYMENT_URL not set. Using production default."
+            DEPLOYMENT_URL="https://euro-ai.vercel.app"
+          fi
+
+          echo "Checking deadlines..."
+          curl -X GET \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$DEPLOYMENT_URL/api/notifications/check-deadlines"
+
+      - name: Log deadline check
+        if: always()
+        run: echo "Deadline check workflow completed at $(date)"
