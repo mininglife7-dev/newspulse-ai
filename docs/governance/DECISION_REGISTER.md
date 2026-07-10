@@ -7,6 +7,31 @@ are never requested from the Founder.
 
 ---
 
+## DR-0017 — Migrate to Next 16 + React 19 + eslint 9 (with an honest correction)
+
+- **Decision:** Upgrade next 15.5.20 → 16.2.10, react/react-dom 18 → 19.2.4,
+  eslint 8 → 9 with flat config (`next lint` was removed in Next 16; lint script
+  is now `eslint .` via eslint-config-next's flat export). Two new react-hooks v6
+  rules that flag pre-existing working patterns are disabled with a comment,
+  preserving pre-migration lint semantics.
+- **Reason & correction:** This was queued as "clears the final audit moderates" —
+  **that turned out to be false**: the vulnerable postcss is bundled in every
+  stable Next release including 16.2.10 (advisory range through 16.3.0-canary),
+  so the two moderates remain, upstream-unfixable today. The migration's actual
+  value: off the maintenance-only 15.x backport line onto the supported major,
+  React 19, and the codebase was already async-API-ready so the cost was low.
+- **Alternatives considered:** Stay on 15.5.20 — viable short-term, but the gap
+  only grows and CI is now available to verify the jump safely.
+- **Evidence:** 528/528 unit tests, 6/6 browser e2e (route protection intact),
+  lint 0, tsc clean, production build green — all on the upgraded tree.
+- **Confidence:** High (verification); the postcss residual is tracked and will
+  clear automatically on a future Next patch.
+- **Expected impact:** Supported framework major; no EOL flags; React 19.
+- **Risk assessment:** Medium-low — major framework bump, mitigated by full local
+  verification + real CI gate before merge; lockfile churn for in-flight sibling
+  branches is expected and resolvable.
+- **Timestamp:** 2026-07-10
+
 ## DR-0016 — Clear the fixable npm vulnerabilities (vitest 2 → 4)
 
 - **Decision:** Upgrade vitest to v4.1.10, clearing 5 of the 7 audit findings —
