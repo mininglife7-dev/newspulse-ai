@@ -162,7 +162,7 @@ export async function scanDependencies(): Promise<SecurityScanResult> {
     // npm audit exits with non-zero if vulnerabilities found
     // Retry to capture the output
     try {
-      const auditOutput = execSync('npm audit --json 2>&1 || true', { encoding: 'utf-8', shell: true });
+      const auditOutput = execSync('npm audit --json 2>&1 || true', { encoding: 'utf-8', shell: '/bin/bash' } as any);
       const vulnerabilities = parseAuditOutput(auditOutput);
 
       const previousVulns = readVulnerabilityCacheSync();
