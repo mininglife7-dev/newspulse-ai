@@ -3,6 +3,9 @@
  *
  * Autonomously detect npm security advisories and alert on CVE exposure.
  * Prevents vulnerabilities from accumulating invisibly in the supply chain.
+ *
+ * Schedule: Once daily at 00:00 UTC
+ * Note: Vercel Hobby tier limits all crons to ≤1/day. Pro tier required for higher frequency.
  */
 
 import { execSync } from 'child_process'

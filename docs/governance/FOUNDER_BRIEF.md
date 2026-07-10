@@ -119,7 +119,22 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
 
 ## ⚠️ Critical Founder Actions Required
 
-### 0. SECURITY: 10 Production Vulnerabilities Detected (DNA-GOV-008)
+### 0a. INFRASTRUCTURE: Vercel Hobby Tier Cron Limitation (Blocks all monitoring DNA)
+**Status:** BLOCKING — Prevents deployment of monitoring system  
+**Problem:** Vercel Hobby accounts (free tier) limit all crons to ≤1 execution per day. Current config attempts 5 daily crons:
+- `/api/blocking-conditions` — 48/day (*/30 * * * *)
+- `/api/production-health` — 288/day (*/5 * * * *)
+- `/api/verify-deployment` — 144/day (*/10 * * * *)
+- `/api/error-rate` — 288/day (*/5 * * * *)
+- `/api/dependency-security` (DNA-GOV-008) — 1/day (0 0 * * *) ← already reduced to fit
+
+**Action Required (Founder only):**
+- **Option A:** Upgrade Vercel to Pro plan ($20/month) to restore full cron capability
+- **Option B:** Keep Hobby tier + accept reduced monitoring (DNA running once daily only)
+
+**Timeline:** Blocking PR #46 merge until plan decision made.
+
+### 0b. SECURITY: 10 Production Vulnerabilities Detected (DNA-GOV-008)
 **Status:** ACTIVE — Requires immediate attention before public launch  
 **Severity Breakdown:**
 - 1 CRITICAL (Next.js DoS with Server Components, CVSS 7.5)
@@ -140,7 +155,7 @@ As of commit 213e0c0, Governor has transitioned to autonomous DNA evolution per 
   - Effort: Medium (React 19 upgrade, async `params` in 2 routes, full test rerun)
   - Governor can execute autonomously with your approval
 
-**Evidence:** `npm audit --omit=dev` in session; full advisory list in `/api/dependency-security` endpoint.
+**Evidence:** `npm audit --omit=dev` in session; full advisory list in `/api/dependency-security` endpoint (runs daily at 00:00 UTC).
 
 ### 1. GitHub Actions outage
 **Status:** Stopped creating workflow runs repo-wide at ~04:15 UTC  
