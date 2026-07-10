@@ -90,25 +90,7 @@ export default function LandingPage() {
             <BarChart3 className="h-6 w-6 text-cyan-400" aria-hidden="true" />
             <h3 className="text-lg font-semibold text-white">Risk Analysis</h3>
             <p className="text-slate-300">
-              Classify risks and understand your regulatory obligations
-            </p>
-          </div>
-          <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
-            <Shield className="h-6 w-6 text-cyan-400" aria-hidden="true" />
-            <h3 className="text-lg font-semibold text-white">
-              Evidence Collection
-            </h3>
-            <p className="text-slate-300">
-              Gather and organize compliance evidence in one place
-            </p>
-          </div>
-          <div className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/30 p-6">
-            <CheckCircle className="h-6 w-6 text-cyan-400" aria-hidden="true" />
-            <h3 className="text-lg font-semibold text-white">
-              Remediation Tracking
-            </h3>
-            <p className="text-slate-300">
-              Plan and track actions to close compliance gaps
+              Classify risks based on EU AI Act and understand regulatory obligations
             </p>
           </div>
         </div>

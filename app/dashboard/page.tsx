@@ -229,7 +229,7 @@ export default async function DashboardPage() {
               <h3 className="font-medium text-white">
                 Complete company profile
               </h3>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-300">
                 {hasWorkspace
                   ? 'Done — workspace created'
                   : 'Set up your organization details'}
@@ -240,8 +240,8 @@ export default async function DashboardPage() {
             <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
             <div>
               <h3 className="font-medium text-white">Add team members</h3>
-              <p className="text-sm text-slate-400">
-                Invite colleagues to collaborate — coming soon
+              <p className="text-sm text-slate-300">
+                Invite colleagues to collaborate — coming in next update
               </p>
             </div>
           </div>
@@ -261,11 +261,17 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle
+              className={`h-6 w-6 flex-shrink-0 ${assessmentCount > 0 ? 'text-green-400' : hasWorkspace ? 'text-cyan-400' : 'text-slate-600'}`}
+            />
             <div>
-              <h3 className="font-medium text-white">Start assessment</h3>
-              <p className="text-sm text-slate-400">
-                Evaluate compliance gaps — coming soon
+              <h3 className="font-medium text-white">Assess for compliance</h3>
+              <p className="text-sm text-slate-300">
+                {assessmentCount > 0
+                  ? `${assessmentCount} assessment${assessmentCount === 1 ? '' : 's'} completed`
+                  : hasWorkspace && systemCount > 0
+                    ? 'Evaluate EU AI Act risks'
+                    : 'Unlocked after adding AI systems'}
               </p>
             </div>
           </div>
@@ -275,12 +281,12 @@ export default async function DashboardPage() {
       {/* Help Section */}
       <div className="rounded-lg border border-slate-700/50 bg-slate-900/20 p-6">
         <div className="flex gap-4">
-          <AlertCircle className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
-            <h3 className="font-medium text-white">Need help?</h3>
-            <p className="text-sm text-slate-400 mt-1">
-              In-app documentation and support are on the way. Until then,
-              your onboarding contact is happy to help directly.
+            <h3 className="font-medium text-white">Questions?</h3>
+            <p className="text-sm text-slate-300 mt-1">
+              Each step in your onboarding is designed to be self-explanatory.
+              If you need assistance, reach out to your onboarding contact.
             </p>
           </div>
         </div>
