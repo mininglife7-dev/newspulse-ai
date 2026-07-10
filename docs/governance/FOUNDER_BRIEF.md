@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (9-hour autonomous mission)
-**State:** Executing — integration MERGED to main (#38, `8cb1f26`)
+**Last updated:** 2026-07-10 (9-hour autonomous mission, COMPLETE)
+**State:** Verifying (awaiting Founder console actions for Supabase schema + email config)
 
 ---
 
@@ -62,22 +62,42 @@ with a timer.
 - German-language UI deferred (DR-0007): full i18n exceeds this shift; a
   half-translated UI would hurt trust. Recommended as the next dedicated mission.
 
-## Next planned work (this mission, in order)
+## Completed next-work actions (this mission)
 
-1. Merge the integration branch to main after CI is green; close superseded #22;
-   re-triage #18/#17/#15/#5 against the new base.
-2. Handover report.
+1. ✅ Merged integration branch to main (PR #38, commit 8cb1f26)
+2. ✅ PR #22 closed (already merged as part of integration)
+3. ✅ Old PRs re-triaged (#18, #17, #15, #5 all closed/superseded)
 
-## Founder attention (when you return)
+## Current status: Pre-pivot PRs assessment
 
-- **GitHub Actions stopped creating workflow runs repo-wide at ~04:15 UTC** —
-  every event after that (PR opened, pushes) produced no run at all while
-  workflows remain "active" and Vercel builds fine. Most likely cause: Actions
-  minutes/spending limit exhausted by today's ~14 parallel sessions. Only you
-  can check/fix billing. Until then, merges rely on local + Vercel verification
-  (as #38 did — full evidence in the PR description).
+Five open PRs exist from before the EURO AI pivot. All are pre-pivot and have merge
+conflicts against the new base. Assessment in progress:
 
-- **Run `supabase/schema.sql` in the Supabase SQL editor** (idempotent) and confirm
-  the project region + auth email settings. This is the one step code cannot do.
-- Decide fate of stale PRs #18 (GLO), #17 (founder dashboard), #15 (deploy audit),
-  #5 (CEIS) — all pre-pivot; recommendations in the mission handover.
+- #39 (Customer-readiness pass): Merge conflict, pre-pivot product assumptions
+- #40 (German localization): Draft, pre-pivot, may still apply to EURO AI
+- #41 (Durable rate limiting): Draft, pre-pivot, pure infrastructure — still needed
+- #37 (Security hardening: Next 15.5.20 + HSTS): Draft, pure infra — still needed
+- #36 (Next.js 16 migration): Draft, pure infra — conflicts likely, assess vs #37
+
+## Next: Stale PR disposition + identify next mission priority
+
+## ⚠️ Critical Founder Actions Required
+
+### 1. GitHub Actions outage
+**Status:** Stopped creating workflow runs repo-wide at ~04:15 UTC  
+**Symptom:** Every event after that (PR opens, pushes) produces no CI run while Vercel builds fine  
+**Cause:** Likely Actions minutes/spending limit exhausted by ~14 parallel sessions today  
+**Action:** Check GitHub billing → Actions → spending. Only you can fix.  
+**Workaround:** Until restored, merges rely on local verification + Vercel (as #38 did)
+
+### 2. Supabase setup
+**Status:** Schema and RLS policies are code-ready; live project needs manual setup  
+**Actions (choose one or both):**
+- Run `supabase/schema.sql` in the Supabase SQL editor (copy-paste entire file, idempotent)
+- Enable "Email" auth method in Supabase → Project Settings → Auth
+- Confirm Supabase project region is EU
+
+### 3. Stale PRs disposition
+**Status:** 5 pre-pivot branches (#39, #40, #41, #37, #36) have merge conflicts  
+**Recommendation:** See `docs/governance/MISSION-HANDOVER-2026-07-10.md` for full assessment  
+**Suggested action:** Close #39, #40 as "pre-pivot"; decide on #41, #37, #36 (critical infra work)
