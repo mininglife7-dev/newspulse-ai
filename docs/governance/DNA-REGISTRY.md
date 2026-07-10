@@ -169,6 +169,108 @@ interface ProductionHealthReport {
 4. **Performance profiling:** Track latency trends to detect slow degradation
 5. **Metrics dashboard:** Aggregate health check results for Founder visibility (future phase)
 
+### DNA-GOV-007: Knowledge Memory
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief of Staff + Chief Knowledge Officer  
+
+#### Purpose
+Persist organizational learnings, decisions, and discoveries across Governor sessions. Future sessions inherit knowledge from past sessions, eliminating repeated analysis and building institutional intelligence.
+
+#### Problem Discovered
+Every Governor session begins from scratch with no memory of previous discoveries. If a weakness is identified and fixed in one session, the next session may analyze the same problem independently. This creates waste: duplicate analysis time, lost decision context, no learning curve.
+
+#### Evidence
+- **Weakness:** Session-to-session amnesia; no institutional memory
+- **Impact:** Repeated analysis, lost context when sessions end, no organizational learning
+- **Root cause:** No persistent mechanism for capturing and retrieving knowledge across sessions
+- **Risk:** Governor becomes less efficient over time instead of more efficient
+
+#### Inputs
+- Knowledge entry: type, title, description, evidence[], impact, tags[]
+- Optional: relatedDNA, resolved status
+
+#### Outputs
+```typescript
+interface KnowledgeEntry {
+  timestamp: string
+  sessionId: string
+  type: 'decision' | 'learning' | 'pattern' | 'fix' | 'risk'
+  title: string
+  description: string
+  evidence: string[]
+  impact: 'high' | 'medium' | 'low'
+  tags: string[]
+  relatedDNA?: string
+  resolved?: boolean
+}
+
+interface KnowledgeMemory {
+  entries: KnowledgeEntry[]
+  lastUpdated: string
+  sessionsSeen: number
+  entriesByTag: Record<string, number>
+}
+```
+
+#### Implementation
+- `lib/knowledge-memory.ts` — Core knowledge persistence library (180 LoC)
+  - `readKnowledge()` — Load all entries from persistent storage
+  - `writeKnowledge()` — Append new entry to append-only log
+  - `queryKnowledgeByTag()` — Find entries by category
+  - `queryKnowledgeByType()` — Find entries by type (decision/learning/pattern/fix/risk)
+  - `getKnowledgeSummary()` — Aggregate stats for Founder briefing
+  - `getUnresolvedKnowledge()` — Identify open issues
+  - `getHighImpactLearnings()` — Surface top insights
+  - `knowledgeExists()` — Prevent duplicates
+- `app/api/knowledge/route.ts` — HTTP API for query and write (80 LoC)
+  - `GET /api/knowledge` — Query knowledge with filters (type, tag, unresolved, highImpact, summary)
+  - `POST /api/knowledge` — Write new knowledge entry
+- `tests/knowledge-memory.test.ts` — 13 tests covering all operations
+- Storage: `docs/governance/KNOWLEDGE-MEMORY.jsonl` (append-only JSON lines)
+
+#### Verification Method
+- **Unit tests:** 13 tests covering:
+  - Read/write persistence
+  - Query by tag, type, impact
+  - Deduplication detection
+  - Summary generation
+  - Filter unresolved vs. resolved
+  - Sort by recency
+- **All tests pass:** 13/13 ✅
+- **Build verification:** npm run build clean, type-check clean
+- **Linting:** ESLint clean
+
+#### Dependencies
+- Filesystem (append-only JSONL log)
+- No external services
+- Self-contained, fully testable
+
+#### Risks
+- **Storage growth:** JSONL file grows unbounded. Mitigation: Archive old entries annually
+- **Query performance:** Linear scan of entries. Mitigation: For large files, implement indexing
+- **Duplicate prevention:** Relies on title matching. Mitigation: Case-insensitive comparison
+
+#### Rollback Method
+- Delete `/api/knowledge` endpoint
+- Delete `lib/knowledge-memory.ts`
+- Delete `docs/governance/KNOWLEDGE-MEMORY.jsonl`
+- No schema changes, no data mutations; fully reversible
+
+#### Success Metrics
+1. **Reuse rate:** Future sessions retrieve and apply past knowledge 80%+ of the time
+2. **Analysis time:** Repeated problem analysis decreases over time
+3. **Knowledge quality:** High-impact entries have strong evidence (3+ proof points)
+4. **Founder value:** Critical learnings are surfaced without manual search
+
+#### Next Steps
+1. **Wire to session startup:** Governor reads high-impact learnings on initialization
+2. **Auto-capture from logs:** Extract learnings from completion logs
+3. **Knowledge dashboard:** Founder can browse organizational memory via web interface
+4. **Archival strategy:** Implement yearly archive + purge to keep active knowledge fresh
+5. **Semantic search:** Enable searching by meaning, not just tags
+
 ---
 
 ## Experimental DNA
@@ -195,9 +297,52 @@ interface ProductionHealthReport {
 
 ---
 
+---
+
+## Infrastructure Decisions
+
+### Vercel Cron Limitation → GitHub Actions Migration (2026-07-10)
+
+**Problem:** Vercel Hobby plan only allows ONE cron job per day that runs once. All DNA checks (5-30 min frequency) violated this limit.
+
+**Investigation:** Evaluated 5 alternatives:
+1. Reduce to daily (24-hr latency) — unacceptable for production monitoring
+2. Remove crons, on-demand only — defeats automation
+3. GitHub Actions scheduled workflows ✅ **CHOSEN** (free, unlimited frequency)
+4. Event-driven webhooks — free but complex
+5. Upgrade to Pro plan — $240/year, unnecessary given superior free alternative
+
+**Decision:** Migrate DNA monitoring from Vercel cron to GitHub Actions.
+
+**Implementation:**
+- 4 GitHub Actions workflows created (one per DNA)
+- Each workflow triggers on GitHub's free schedule
+- Removed all Vercel cron entries
+- No functional change to DNA logic; monitoring endpoints remain identical
+
+**Benefits:**
+- **Cost:** $0 (GitHub Actions free tier)
+- **Frequency:** Full frequency restored (5-30 min detection vs. 24-hour Vercel limit)
+- **Reliability:** GitHub infrastructure handles scheduling independently of Vercel
+- **Scalability:** Survives infrastructure changes, deployments, Vercel incidents
+- **Visibility:** Workflow runs visible in GitHub Actions tab for debugging
+
+**Detection Latency Restored:**
+- DNA-GOV-001: Every 30 minutes (was 24 hrs with Vercel limit)
+- DNA-GOV-002: Every 5 minutes (was 24 hrs with Vercel limit)
+- DNA-GOV-003: Every 10 minutes (was 24 hrs with Vercel limit)
+- DNA-GOV-004: Every 5 minutes (was 24 hrs with Vercel limit)
+
+**Cost:** $0 (GitHub Actions included free; no Pro plan upgrade needed)
+
+**Lesson:** When infrastructure imposes artificial limits, prefer platform-independent alternatives. GitHub Actions is superior to Vercel cron for scheduled monitoring because it decouples monitoring from deployment infrastructure.
+
+---
+
 ## Notes
 
 - All DNA must pass 8-test survival rule before integration
 - DNA evolves only within 7 categories: Executive, Engineering, Product, Revenue, Research, Risk, Founder
 - Every DNA must show improvement in: customer value, Founder hours, quality, reliability, security, delivery speed, operational excellence, or commercial readiness
 - Nothing is assumed. Everything is auditable.
+- **Blocker protocol:** Always investigate free alternatives exhaustively before escalating spending decisions to Founder
