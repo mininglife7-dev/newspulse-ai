@@ -2,19 +2,11 @@ import { NextResponse } from 'next/server';
 import type { Request } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { WorkspaceCreateSchema } from '@/lib/validation';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-export interface WorkspaceSetupBody {
-  companyName: string;
-  legalName?: string;
-  country: string;
-  industry: string;
-  employees?: string;
-  website?: string;
-  description?: string;
-}
 
 function slugify(name: string): string {
   const base = name
@@ -48,7 +40,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: WorkspaceSetupBody;
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
@@ -58,15 +50,24 @@ export async function POST(req: Request) {
     );
   }
 
-  const companyName = body.companyName?.trim();
-  const country = body.country?.trim();
-  const industry = body.industry?.trim();
-  if (!companyName || !country || !industry) {
+  let validated;
+  try {
+    validated = WorkspaceCreateSchema.parse(body);
+  } catch (error) {
+    let message = 'Validation failed';
+    if (error instanceof z.ZodError && error.issues.length > 0) {
+      const issue = error.issues[0];
+      message = issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message;
+    }
     return NextResponse.json(
-      { ok: false, error: 'companyName, country and industry are required' },
-      { status: 400 }
+      { ok: false, error: message },
+      { status: 400, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }
+
+  const companyName = validated.companyName;
+  const country = validated.country;
+  const industry = validated.industry;
 
   const supabase = await createRouteClient();
   const {
@@ -85,7 +86,7 @@ export async function POST(req: Request) {
     .insert({
       slug: slugify(companyName),
       name: companyName,
-      description: body.description?.trim() || null,
+      description: validated.description || null,
       owner_id: user.id,
     })
     .select('id, slug, name')
@@ -125,12 +126,12 @@ export async function POST(req: Request) {
     .insert({
       workspace_id: workspace.id,
       name: companyName,
-      legal_name: body.legalName?.trim() || null,
+      legal_name: validated.legalName || null,
       country,
       industry,
-      employees_range: body.employees?.trim() || null,
-      website: body.website?.trim() || null,
-      governance_priorities: body.description?.trim() || null,
+      employees_range: validated.employees || null,
+      website: validated.website || null,
+      governance_priorities: validated.description || null,
     })
     .select('id')
     .single();

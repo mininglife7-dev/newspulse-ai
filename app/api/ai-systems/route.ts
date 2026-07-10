@@ -2,20 +2,11 @@ import { NextResponse } from 'next/server';
 import type { Request } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { AiSystemCreateSchema } from '@/lib/validation';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-import { SYSTEM_TYPES, SYSTEM_STATUSES } from '@/lib/ai-systems';
-
-interface CreateAiSystemBody {
-  name: string;
-  description?: string;
-  systemType?: string;
-  vendor?: string;
-  purpose?: string;
-  status?: 'active' | 'pilot' | 'deprecated';
-}
 
 /**
  * Resolve the caller's active workspace (and company) or explain why not.
@@ -116,7 +107,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: CreateAiSystemBody;
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
@@ -126,26 +117,22 @@ export async function POST(req: Request) {
     );
   }
 
-  const name = body.name?.trim();
-  if (!name) {
+  let validated;
+  try {
+    validated = AiSystemCreateSchema.parse(body);
+  } catch (error) {
+    let message = 'Validation failed';
+    if (error instanceof z.ZodError && error.issues.length > 0) {
+      const issue = error.issues[0];
+      message = issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message;
+    }
     return NextResponse.json(
-      { ok: false, error: 'name is required' },
-      { status: 400 }
+      { ok: false, error: message },
+      { status: 400, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }
-  if (body.systemType && !SYSTEM_TYPES.includes(body.systemType as any)) {
-    return NextResponse.json(
-      { ok: false, error: `systemType must be one of: ${SYSTEM_TYPES.join(', ')}` },
-      { status: 400 }
-    );
-  }
-  const status = body.status ?? 'active';
-  if (!SYSTEM_STATUSES.includes(status as any)) {
-    return NextResponse.json(
-      { ok: false, error: 'status must be active, pilot or deprecated' },
-      { status: 400 }
-    );
-  }
+
+  const name = validated.name;
 
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
@@ -168,11 +155,11 @@ export async function POST(req: Request) {
       workspace_id: ctx.workspaceId,
       company_id: ctx.companyId,
       name,
-      description: body.description?.trim() || null,
-      system_type: body.systemType || null,
-      vendor: body.vendor?.trim() || null,
-      purpose: body.purpose?.trim() || null,
-      status,
+      description: validated.description || null,
+      system_type: validated.systemType || null,
+      vendor: validated.vendor || null,
+      purpose: validated.purpose || null,
+      status: validated.status,
     })
     .select('id, name, system_type, vendor, purpose, status, created_at')
     .single();
