@@ -82,3 +82,19 @@ a {
     transform: rotate(360deg);
   }
 }
+
+/*
+ * Respect the user's reduced-motion preference: neutralise the pulse/spin/
+ * fade animations and long transitions for people who get motion sick or
+ * have vestibular disorders. A11y baseline for a trustworthy product.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
