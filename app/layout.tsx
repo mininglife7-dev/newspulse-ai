@@ -83,9 +83,18 @@ export default function RootLayout({
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
         <ServiceWorkerRegister />
         <footer className="mt-20 border-t border-slate-800/50 py-8 text-center text-sm text-slate-400">
-          <p>
+          <p className="mb-3">
             EURO AI · Making AI governance simple, beautiful, and trustworthy
           </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/privacy" className="hover:text-white/60 transition">
+              Privacy Policy
+            </Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-white/60 transition">
+              Terms of Service
+            </Link>
+          </div>
         </footer>
       </body>
     </html>

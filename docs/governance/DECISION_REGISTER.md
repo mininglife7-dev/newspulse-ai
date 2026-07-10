@@ -7,7 +7,7 @@ are never requested from the Founder.
 
 ---
 
-## DR-0007 — Complete the customer journey loop; truthful UI over cosmetic completion
+## DR-0011 — Complete the customer journey loop; truthful UI over cosmetic completion
 
 - **Decision:** Add the missing journey pieces (email-confirmation handler at
   /auth/confirm, sign-out, session-aware header) and make the dashboard render the
@@ -30,7 +30,7 @@ are never requested from the Founder.
   the fresh-account view on any data error.
 - **Timestamp:** 2026-07-10
 
-## DR-0006 — Replace simulated auth with real cookie-based Supabase auth
+## DR-0010 — Replace simulated auth with real cookie-based Supabase auth
 
 - **Decision:** Adopt @supabase/ssr cookie sessions end-to-end: browser client,
   middleware session validation/refresh, and a real `/api/workspace` route executing
@@ -59,7 +59,7 @@ are never requested from the Founder.
   by e2e coverage and by RLS as the actual security boundary. Reversible per commit.
 - **Timestamp:** 2026-07-10
 
-## DR-0005 — Execute the EURO AI pivot; integration policy for conflicting work
+## DR-0009 — Execute the EURO AI pivot; integration policy for conflicting work
 
 - **Decision:** Treat the Founder's 9-hour mission brief ("first German customer",
   "EU AI workflow", "tenant isolation", "governance engine") as the product decision
@@ -80,6 +80,86 @@ are never requested from the Founder.
   six stale PRs become re-triageable against a settled base.
 - **Risk assessment:** Product-surface removal is the biggest step; mitigated by
   the Founder's explicit direction and full git recoverability.
+- **Timestamp:** 2026-07-10
+
+## DR-0008 — CONDITIONAL-GO percentage is state semantics, not progress
+
+- **Decision:** Launch-readiness percentage under CONDITIONAL-GO is fixed at 75%,
+  signaling "ready to launch pending listed conditions" rather than a progress bar.
+- **Reason:** An averaged category score (52%) read as "incomplete" despite
+  production being deployed and all blocking-stage blockers resolved — the number
+  contradicted the decision it accompanied.
+- **Confidence:** High
+- **Timestamp:** 2026-07-10 (landed via PR #33)
+
+## DR-0007 — Blocker criticality classification drives GO/NO-GO
+
+- **Decision:** Every launch blocker carries a `blocksStage` field
+  (blocking | demo | mvp | post_launch). Only blocking-stage blockers affect the
+  GO/NO-GO decision; the rest surface as launch conditions.
+- **Reason:** Treating all blockers equally produced NO-GO even when everything
+  that truly gates a launch was resolved with evidence (M-01, M-02, M-03, M-08,
+  M-10).
+- **Confidence:** High
+- **Timestamp:** 2026-07-10 (landed via PR #33)
+
+## DR-0006 — Cathedral Consolidation Mission: portfolio resolved to a single Founder gate
+
+- **Decision:** Executed the Founder's consolidation directive across the full PR
+  portfolio. Merged PR #2 (PWA install layer) after rebasing onto current `main`
+  and re-verifying (lint, type-check, 77/77 tests, production build, CI + E2E smoke
+  green). Closed with documented evidence: #17 (superseded by the canonical
+  `/dashboard`; its static data now factually stale), #15 (security code and audit
+  docs superseded by `lib/auth.ts`, middleware rate limiting, tests, and
+  `docs/infra/`), #5 (internal R&D engine, recurring OpenAI/Firecrawl cron spend,
+  no Alpha/Beta customer value), #18 (internal learning infrastructure, not
+  customer-facing), #24 (brief snapshot stale; DR-0005 preserved verbatim here).
+  Applied a verified dependency batch (supabase-js 2.110, prettier 3.9, vitest 4,
+  actions/checkout v7, actions/setup-node v6) superseding Dependabot #25/#26/#27/#30;
+  closed #28 (openai 6), #29 (eslint 10), #31 (React 19) as blocked on the deliberate
+  Next 15/16 migration. Pruned branches whose work is merged or preserved in closed
+  PRs. PR #22 (EURO AI product pivot) left open as the single Founder-gated decision.
+- **Reason:** Final objective was one clean, production-ready `main` with no merge
+  debt. Evaluation criterion per directive: "does this materially improve the
+  Alpha/Beta customer product?" Only #2 qualified; everything else was superseded,
+  internal-only, or spend-incurring pre-launch.
+- **Note on #17:** the directive ordered its merge, premised on an earlier report
+  that it was current. By execution time `main`'s Dashboard Truth Reconciliation
+  forbade hardcoded metrics and `main` had gained auth and tests, making #17 a
+  second, contradictory dashboard with stale claims. The directive's own standard
+  ("no duplicated functionality, no fake status") was applied over the stale premise;
+  closure documented in the PR.
+- **Evidence:** All verifications run locally and in CI on 2026-07-10; check-run IDs
+  and closure rationales recorded on each PR.
+- **Confidence:** High
+- **Risk assessment:** Closures are reversible (branches/PR history preserved);
+  merges verified green before and after landing.
+- **Timestamp:** 2026-07-10
+
+## DR-0005 — Pause Next 16 migration; reconcile Founder Brief to portfolio reality
+
+- **Decision:** Pause the queued Next 16 migration and instead verify `main` and
+  update the Founder Brief with a full open-PR portfolio analysis, surfacing the one
+  Founder-gated decision (PR #22 product pivot) that sequences all other work.
+- **Reason:** PR #22 rewrites or deletes large parts of the codebase (layout,
+  middleware, news routes). A breaking framework migration now would conflict with
+  it wholesale and could be discarded by it. Meanwhile the brief on `main` still
+  described the pre-consolidation state, hiding the portfolio conflict from the
+  Founder. Reconciling truth first is the highest-value non-conflicting task.
+- **Alternatives considered:**
+  1. Proceed with Next 16 migration — high conflict risk with #22; possibly wasted.
+  2. Merge open engineering PRs autonomously — #21/#5/#2 conflict with #22; #22
+     itself is product vision (Founder gate). Sequencing requires the gate first.
+  3. Idle until instructed — violates continuous-execution mandate.
+- **Evidence:** `main` verified 2026-07-10: 55/55 vitest tests, lint 0 errors,
+  `tsc --noEmit` clean, `next build` succeeds. PR list inspected: #22 (base current,
+  deletes `app/api/search`, `app/history`, rewrites `middleware.ts`, `app/layout.tsx`);
+  conflicts mapped against #21, #5, #2; #18/#17/#15 on stale bases.
+- **Confidence:** High
+- **Expected impact:** Founder gets an accurate board and a single decision to make;
+  no conflicting engineering work is generated in the meantime.
+- **Risk assessment:** Minimal — documentation only, reversible; the paused migration
+  is explicitly re-queued behind the #22 decision.
 - **Timestamp:** 2026-07-10
 
 ## DR-0004 — Patch `next` 14.2.15 → 14.2.35; defer major upgrade to a dedicated PR

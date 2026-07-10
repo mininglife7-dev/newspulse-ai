@@ -44,6 +44,15 @@ with a timer.
   APIs return 401 JSON, landing + auth pages render
 - Lint 0 errors · `tsc --noEmit` clean · production build green
 
+## Absorbed from parallel sessions during final integration
+
+- Legal pages (`/privacy`, `/terms`) + footer links — content rewritten from
+  NewsPulse data practices (now false) to EURO AI reality, and explicitly marked
+  DRAFT pending Founder/legal review.
+- Dependency batch (#34): @supabase/supabase-js ^2.110.2, prettier ^3.9.5.
+- Governance canonicalization + register entries DR-0005..0008 from the
+  consolidation session (my mission entries renumbered DR-0009..0011).
+
 ## Risks
 
 - **Live Supabase state is Unknown.** The schema (incl. new policies) must be run
