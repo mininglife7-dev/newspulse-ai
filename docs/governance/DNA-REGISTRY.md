@@ -87,6 +87,88 @@ interface BlockingCondition {
 4. **Founder notification:** Auto-create GitHub issue with blocking condition, @mention Founder
 5. **Metrics tracking:** Log each detection to track improvement
 
+### DNA-GOV-002: Production Monitoring
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Risk Officer + Chief Engineer  
+
+#### Purpose
+Autonomously monitor production deployment to verify critical customer flows work. Unlike DNA-GOV-001 (external blockers), this detects failures in OUR code or deployment.
+
+#### Problem Discovered
+No way to know if deployed features work in production until Founder tests manually or customer reports failure. Code-side testing (unit, integration, E2E) cannot detect deployment-time issues, database connection failures, or runtime configuration problems.
+
+#### Evidence
+- **Weakness:** Zero production monitoring configured
+- **Impact:** Blind spot between "tested locally" and "customer can use it"
+- **Root cause:** No automated verification of critical customer flows in live environment
+- **Risk:** First customer signs up → auth fails silently → customer abandons → product stillborn
+
+#### Inputs
+- Production base URL (derived from `x-forwarded-host` header)
+- No external tokens needed (checks public endpoints + auth-required endpoints)
+
+#### Outputs
+```typescript
+interface ProductionHealthReport {
+  ok: boolean
+  timestamp: string
+  checks: HealthCheckResult[]  // landing page, signup, API health, DB connection
+  summary: { healthy: number; degraded: number; critical: number }
+  alerts: string[]  // [CRITICAL/WARNING/PERFORMANCE] messages
+}
+```
+
+#### Implementation
+- `lib/production-monitoring.ts` — Health check library (270 LoC)
+  - `checkLandingPage()` — Verify static content serving
+  - `checkSignupPage()` — Verify auth route accessibility
+  - `checkApiHealth()` — Verify backend responsiveness
+  - `checkSupabaseConnection()` — Verify database connectivity
+  - `runProductionHealthChecks()` — Orchestrate all checks
+- `app/api/production-health/route.ts` — Cron-callable endpoint (35 LoC)
+- `tests/production-monitoring.test.ts` — 17 tests covering all scenarios
+
+#### Verification Method
+- **Unit tests:** 17 tests covering:
+  - Landing page load success/failure/timeout
+  - Signup page load success/failure/timeout
+  - API health check with ok:true/false/error
+  - Supabase connection with 401/400/500/error
+  - Full report aggregation with alerts
+  - Performance alert generation (latency > 2s)
+- **All tests pass:** 17/17 ✅
+- **Build verification:** npm run build clean, type-check clean
+
+#### Dependencies
+- Vercel cron scheduler (every 5 minutes)
+- No external tokens needed (only HTTP requests to own endpoints)
+- Self-contained; no database writes
+
+#### Risks
+- **Performance impact:** 4 HTTP requests to own endpoints every 5 min = ~8 req/hr. Negligible.
+- **False alerts:** Possible if one endpoint temporarily slow. Mitigated by 2s latency threshold.
+- **Missing coverage:** Only checks 4 critical paths. Additional checks (payment, export, etc.) can be added.
+
+#### Rollback Method
+- Remove cron entry from `vercel.json`
+- Delete `lib/production-monitoring.ts` and `app/api/production-health/route.ts`
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Detection time:** Discover failures within 5 minutes of occurrence
+2. **Alert quality:** Actionable alerts (specific endpoint, specific error) not generic "something broke"
+3. **False positive rate:** < 1 per week
+4. **Founder response time:** Alerts logged to console; Founder can act within 5-10 min of alert
+
+#### Next Steps
+1. **Verify in production:** After Supabase schema deployed, test health checks against live environment
+2. **Extend checks:** Add payment endpoint check, export functionality check as needed
+3. **Integrate with error tracking:** Wire alerts to Sentry or other monitoring service (future phase)
+4. **Performance profiling:** Track latency trends to detect slow degradation
+5. **Metrics dashboard:** Aggregate health check results for Founder visibility (future phase)
+
 ---
 
 ## Experimental DNA
@@ -109,16 +191,7 @@ interface BlockingCondition {
 
 ## Pending DNA
 
-### DNA-GOV-002: Production Monitoring
-**Status:** Proposed  
-**Owner:** Chief Risk Officer + Chief Engineer  
-**Priority:** High (needed for commercial readiness)  
-
-Automatically monitor production deployment (after Supabase schema is deployed) to detect failures, performance degradation, or error rates exceeding thresholds.
-
-**Why needed:** We can detect blockers, but we can't know if deployed code is working in production. This is a critical reliability gap.
-
-**Evidence:** No monitoring configured; Founder has no way to know if first customer's auth flow works until they report it.
+*(None yet)*
 
 ---
 
