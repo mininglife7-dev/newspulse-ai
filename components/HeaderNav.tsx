@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard, Zap } from 'lucide-react';
 import { createRouteClient } from '@/lib/supabase-server';
 import { SignOutButton } from './SignOutButton';
 
@@ -36,6 +36,14 @@ export async function HeaderNav() {
         >
           <LayoutDashboard className="h-4 w-4" />
           Dashboard
+        </Link>
+        <Link
+          href="/incident-observability"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/70 transition hover:bg-slate-800/60 hover:text-white"
+          title="Incident Response System"
+        >
+          <Zap className="h-4 w-4" />
+          <span className="hidden sm:inline">Incidents</span>
         </Link>
         <span className="hidden text-slate-500 sm:inline" title="Signed in">
           {user.email}
