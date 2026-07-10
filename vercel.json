@@ -6,8 +6,19 @@
   "devCommand": "next dev",
   "installCommand": "npm install",
   "functions": {
-    "app/api/search/route.ts": {
-      "maxDuration": 60
+    "app/api/blocking-conditions/route.ts": {
+      "maxDuration": 30
     }
-  }
+  },
+  "env": {
+    "GITHUB_TOKEN": "@github-token",
+    "GITHUB_OWNER": "mininglife7-dev",
+    "GITHUB_REPO": "newspulse-ai"
+  },
+  "crons": [
+    {
+      "path": "/api/blocking-conditions",
+      "schedule": "*/30 * * * *"
+    }
+  ]
 }
