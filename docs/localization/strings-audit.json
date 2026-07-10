@@ -1,0 +1,505 @@
+{
+  "metadata": {
+    "date": "2026-07-10T09:54:09.398Z",
+    "version": "1.0",
+    "totalStrings": 99,
+    "estimatedCharacters": 2149
+  },
+  "strings": {
+    "AI Governance": {
+      "location": "app/page.tsx",
+      "type": "hero",
+      "priority": "high"
+    },
+    "Made Simple": {
+      "location": "app/page.tsx",
+      "type": "hero",
+      "priority": "high"
+    },
+    "Transform AI governance from a compliance checklist into a strategic advantage. Meet EU AI Act obligations with confidence.": {
+      "location": "app/page.tsx",
+      "type": "tagline",
+      "priority": "high"
+    },
+    "Start Free Trial": {
+      "location": "app/page.tsx, app/auth/signin/page.tsx, etc",
+      "type": "button",
+      "priority": "high"
+    },
+    "Learn More": {
+      "location": "app/page.tsx",
+      "type": "button",
+      "priority": "medium"
+    },
+    "Built for Europe": {
+      "location": "app/page.tsx",
+      "type": "trust-badge",
+      "priority": "high"
+    },
+    "EU AI Act compliant from day one": {
+      "location": "app/page.tsx",
+      "type": "trust-badge-description",
+      "priority": "high"
+    },
+    "Enterprise Grade": {
+      "location": "app/page.tsx",
+      "type": "trust-badge",
+      "priority": "high"
+    },
+    "Security and privacy by design": {
+      "location": "app/page.tsx",
+      "type": "trust-badge-description",
+      "priority": "high"
+    },
+    "Rapid Setup": {
+      "location": "app/page.tsx",
+      "type": "trust-badge",
+      "priority": "high"
+    },
+    "From registration to insights in hours": {
+      "location": "app/page.tsx",
+      "type": "trust-badge-description",
+      "priority": "high"
+    },
+    "Everything You Need": {
+      "location": "app/page.tsx",
+      "type": "section-heading",
+      "priority": "high"
+    },
+    "Complete AI governance in one elegant platform": {
+      "location": "app/page.tsx",
+      "type": "section-subheading",
+      "priority": "high"
+    },
+    "AI Inventory": {
+      "location": "app/inventory/page.tsx",
+      "type": "heading",
+      "priority": "high"
+    },
+    "Catalog all AI systems, vendors, and purposes in your organization": {
+      "location": "app/page.tsx",
+      "type": "feature-description",
+      "priority": "high"
+    },
+    "Risk Analysis": {
+      "location": "app/page.tsx, app/dashboard/page.tsx",
+      "type": "feature-name",
+      "priority": "high"
+    },
+    "Classify risks based on EU AI Act and understand regulatory obligations": {
+      "location": "app/page.tsx",
+      "type": "feature-description",
+      "priority": "high"
+    },
+    "Ready to transform AI governance?": {
+      "location": "app/page.tsx",
+      "type": "cta-heading",
+      "priority": "high"
+    },
+    "Join companies across Europe who trust EURO AI for EU AI Act compliance": {
+      "location": "app/page.tsx",
+      "type": "cta-tagline",
+      "priority": "high"
+    },
+    "Get Started Free": {
+      "location": "app/page.tsx",
+      "type": "button",
+      "priority": "high"
+    },
+    "Create your account": {
+      "location": "app/auth/signup/page.tsx",
+      "type": "heading",
+      "priority": "high"
+    },
+    "Sign up to get started": {
+      "location": "app/auth/signup/page.tsx",
+      "type": "subtitle",
+      "priority": "high"
+    },
+    "Email": {
+      "location": "app/auth/signup/page.tsx, app/auth/signin/page.tsx, etc",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Password": {
+      "location": "app/auth/signup/page.tsx, app/auth/signin/page.tsx, etc",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Confirm Password": {
+      "location": "app/auth/signup/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Min. 8 characters": {
+      "location": "app/auth/signup/page.tsx",
+      "type": "validation-help",
+      "priority": "high"
+    },
+    "I agree to the Terms and Privacy Policy": {
+      "location": "app/auth/signup/page.tsx",
+      "type": "checkbox-label",
+      "priority": "high"
+    },
+    "Create account": {
+      "location": "app/auth/signup/page.tsx",
+      "type": "button",
+      "priority": "high"
+    },
+    "Already have an account?": {
+      "location": "app/auth/signup/page.tsx",
+      "type": "link-text",
+      "priority": "medium"
+    },
+    "Sign in": {
+      "location": "app/auth/signin/page.tsx",
+      "type": "link-text",
+      "priority": "medium"
+    },
+    "Welcome back": {
+      "location": "app/auth/signin/page.tsx",
+      "type": "heading",
+      "priority": "high"
+    },
+    "Sign in to your account": {
+      "location": "app/auth/signin/page.tsx",
+      "type": "subtitle",
+      "priority": "high"
+    },
+    "Forgot password?": {
+      "location": "app/auth/signin/page.tsx",
+      "type": "link-text",
+      "priority": "medium"
+    },
+    "Don't have an account?": {
+      "location": "app/auth/signin/page.tsx",
+      "type": "link-text",
+      "priority": "medium"
+    },
+    "Check your email": {
+      "location": "app/auth/verify-email/page.tsx",
+      "type": "heading",
+      "priority": "high"
+    },
+    "We sent a verification link to your email. Click it to confirm your account.": {
+      "location": "app/auth/verify-email/page.tsx",
+      "type": "instruction",
+      "priority": "high"
+    },
+    "Email verified!": {
+      "location": "app/auth/verify-email/page.tsx",
+      "type": "success-heading",
+      "priority": "high"
+    },
+    "Your account is confirmed. Sign in to get started.": {
+      "location": "app/auth/verify-email/page.tsx",
+      "type": "success-message",
+      "priority": "high"
+    },
+    "Welcome to EURO AI": {
+      "location": "app/dashboard/page.tsx",
+      "type": "greeting",
+      "priority": "high"
+    },
+    "Here is where your organization stands": {
+      "location": "app/dashboard/page.tsx",
+      "type": "subheading",
+      "priority": "high"
+    },
+    "Let's get your organization set up for AI governance": {
+      "location": "app/dashboard/page.tsx",
+      "type": "subheading",
+      "priority": "high"
+    },
+    "Workspace": {
+      "location": "app/dashboard/page.tsx",
+      "type": "label",
+      "priority": "medium"
+    },
+    "Company Setup": {
+      "location": "app/dashboard/page.tsx, app/workspace/setup/page.tsx",
+      "type": "step-name",
+      "priority": "high"
+    },
+    "Completed — your workspace is ready": {
+      "location": "app/dashboard/page.tsx",
+      "type": "status-message",
+      "priority": "medium"
+    },
+    "Tell us about your organization and its AI use": {
+      "location": "app/dashboard/page.tsx",
+      "type": "step-description",
+      "priority": "high"
+    },
+    "Unlocked after company setup": {
+      "location": "app/dashboard/page.tsx",
+      "type": "status-message",
+      "priority": "medium"
+    },
+    "Unlocked after adding AI systems": {
+      "location": "app/dashboard/page.tsx",
+      "type": "status-message",
+      "priority": "medium"
+    },
+    "What you can do next": {
+      "location": "app/dashboard/page.tsx",
+      "type": "section-heading",
+      "priority": "high"
+    },
+    "Complete company profile": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-item",
+      "priority": "high"
+    },
+    "Done — workspace created": {
+      "location": "app/dashboard/page.tsx",
+      "type": "status-message",
+      "priority": "medium"
+    },
+    "Set up your organization details": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-description",
+      "priority": "high"
+    },
+    "Add team members": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-item",
+      "priority": "high"
+    },
+    "Invite colleagues to collaborate — coming in next update": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-description",
+      "priority": "medium"
+    },
+    "Begin AI inventory": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-item",
+      "priority": "high"
+    },
+    "Document your AI systems": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-description",
+      "priority": "high"
+    },
+    "Assess for compliance": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-item",
+      "priority": "high"
+    },
+    "Evaluate EU AI Act risks": {
+      "location": "app/dashboard/page.tsx",
+      "type": "action-description",
+      "priority": "high"
+    },
+    "Questions?": {
+      "location": "app/dashboard/page.tsx",
+      "type": "help-heading",
+      "priority": "medium"
+    },
+    "Each step in your onboarding is designed to be self-explanatory. If you need assistance, reach out to your onboarding contact.": {
+      "location": "app/dashboard/page.tsx",
+      "type": "help-text",
+      "priority": "medium"
+    },
+    "Your Company Setup": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "heading",
+      "priority": "high"
+    },
+    "Company Name": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Country": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Industry": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Germany": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Manufacturing": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Technology": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Continue": {
+      "location": "app/workspace/setup/page.tsx",
+      "type": "button",
+      "priority": "high"
+    },
+    "Catalog all AI systems in use": {
+      "location": "app/inventory/page.tsx",
+      "type": "description",
+      "priority": "high"
+    },
+    "Add AI system": {
+      "location": "app/inventory/page.tsx",
+      "type": "button",
+      "priority": "high"
+    },
+    "Name": {
+      "location": "app/inventory/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Type": {
+      "location": "app/inventory/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "LLM": {
+      "location": "app/inventory/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Generative AI": {
+      "location": "app/inventory/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Classification": {
+      "location": "app/inventory/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Vendor / Provider": {
+      "location": "app/inventory/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Status": {
+      "location": "app/inventory/page.tsx",
+      "type": "form-label",
+      "priority": "high"
+    },
+    "Active": {
+      "location": "app/inventory/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Pilot": {
+      "location": "app/inventory/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Deprecated": {
+      "location": "app/inventory/page.tsx",
+      "type": "option",
+      "priority": "high"
+    },
+    "Save system": {
+      "location": "app/inventory/page.tsx",
+      "type": "button",
+      "priority": "high"
+    },
+    "Risk Assessment": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "heading",
+      "priority": "high"
+    },
+    "Classify risks and obligations": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "description",
+      "priority": "high"
+    },
+    "Fundamental Rights": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "category",
+      "priority": "high"
+    },
+    "Safety": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "category",
+      "priority": "high"
+    },
+    "Bias & Discrimination": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "category",
+      "priority": "high"
+    },
+    "Transparency": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "category",
+      "priority": "high"
+    },
+    "Accountability": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "category",
+      "priority": "high"
+    },
+    "Submit Assessment": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "button",
+      "priority": "high"
+    },
+    "Low": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "risk-level",
+      "priority": "high"
+    },
+    "Medium": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "risk-level",
+      "priority": "high"
+    },
+    "High": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "risk-level",
+      "priority": "high"
+    },
+    "Unacceptable": {
+      "location": "app/risk-assessments/page.tsx",
+      "type": "risk-level",
+      "priority": "high"
+    },
+    "Back": {
+      "location": "multiple pages",
+      "type": "button",
+      "priority": "high"
+    },
+    "Cancel": {
+      "location": "multiple pages",
+      "type": "button",
+      "priority": "high"
+    },
+    "Save": {
+      "location": "multiple pages",
+      "type": "button",
+      "priority": "high"
+    },
+    "Submit": {
+      "location": "multiple pages",
+      "type": "button",
+      "priority": "high"
+    },
+    "required": {
+      "location": "multiple pages",
+      "type": "validation-error",
+      "priority": "high"
+    },
+    "Error": {
+      "location": "multiple pages",
+      "type": "error-label",
+      "priority": "high"
+    },
+    "Loading...": {
+      "location": "multiple pages",
+      "type": "status-message",
+      "priority": "medium"
+    }
+  }
+}
