@@ -17,6 +17,7 @@ export default async function DashboardPage() {
   let workspace: WorkspaceSummary | null = null;
   let firstName: string | null = null;
   let systemCount = 0;
+  let assessmentCount = 0;
 
   try {
     const supabase = createRouteClient();
@@ -38,11 +39,18 @@ export default async function DashboardPage() {
       workspace = Array.isArray(ws) ? (ws[0] ?? null) : (ws ?? null);
 
       if (membership?.workspace_id) {
-        const { count } = await supabase
-          .from('ai_systems')
-          .select('id', { count: 'exact', head: true })
-          .eq('workspace_id', membership.workspace_id);
-        systemCount = count ?? 0;
+        const [systemsRes, assessmentsRes] = await Promise.all([
+          supabase
+            .from('ai_systems')
+            .select('id', { count: 'exact', head: true })
+            .eq('workspace_id', membership.workspace_id),
+          supabase
+            .from('risk_assessments')
+            .select('id', { count: 'exact', head: true })
+            .eq('workspace_id', membership.workspace_id),
+        ]);
+        systemCount = systemsRes.count ?? 0;
+        assessmentCount = assessmentsRes.count ?? 0;
       }
     }
   } catch (err) {
@@ -51,6 +59,7 @@ export default async function DashboardPage() {
   }
 
   const hasWorkspace = Boolean(workspace);
+  const hasInventory = systemCount > 0;
 
   return (
     <div className="space-y-8">
@@ -163,21 +172,47 @@ export default async function DashboardPage() {
         )}
 
         {/* Step 3: Risk Assessment */}
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
-                  3
+        {hasInventory ? (
+          <Link
+            href="/risk-assessments"
+            className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${assessmentCount > 0 ? 'bg-green-600' : 'bg-blue-500 text-sm font-bold'}`}
+                  >
+                    {assessmentCount > 0 ? <CheckCircle className="h-5 w-5" /> : '3'}
+                  </div>
+                  <h3 className="font-semibold text-white">Risk Assessment</h3>
                 </div>
-                <h3 className="font-semibold text-white">Risk Assessment</h3>
+                <p className="text-sm text-slate-400">
+                  {assessmentCount > 0
+                    ? `${assessmentCount} assessment${assessmentCount === 1 ? '' : 's'} completed — assess more`
+                    : 'Classify risks and obligations'}
+                </p>
               </div>
-              <p className="text-sm text-slate-400">
-                Classify risks and obligations — coming soon
-              </p>
+              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
+            </div>
+          </Link>
+        ) : (
+          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                    3
+                  </div>
+                  <h3 className="font-semibold text-white">Risk Assessment</h3>
+                </div>
+                <p className="text-sm text-slate-400">
+                  Classify risks and obligations — unlocked after AI inventory
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Next steps */}
