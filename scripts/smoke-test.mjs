@@ -398,6 +398,19 @@ async function run() {
     }
   );
 
+  await check(
+    'page',
+    'Content-Security-Policy served on documents',
+    async () => {
+      const res = await get('/');
+      const csp = res.headers.get('content-security-policy') || '';
+      assert(csp.includes("default-src 'self'"), 'default-src missing');
+      assert(csp.includes("frame-ancestors 'none'"), 'frame-ancestors missing');
+      assert(csp.includes("object-src 'none'"), 'object-src missing');
+      assert(csp.includes("connect-src 'self'"), 'connect-src missing');
+    }
+  );
+
   // ----- SEO / meta routes -----
   await check('meta', 'GET /robots.txt responds', async () => {
     const res = await get('/robots.txt');

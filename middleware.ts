@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-/**
- * Lightweight in-memory rate limiter for API routes.
- * Resets on cold start — fine for hackathon scale. For production, swap
- * for Upstash or Vercel KV.
- */
+// =============================================================================
+// Rate limiting (in-memory, /api/search only)
+// -----------------------------------------------------------------------------
+// Lightweight in-memory rate limiter. Resets on cold start — fine for
+// hackathon scale. For production, swap for Upstash or Vercel KV.
+// =============================================================================
 const buckets = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_REQUESTS = 30; // per IP per window
@@ -44,7 +45,10 @@ function rateLimit(ip: string) {
 export function middleware(req: NextRequest) {
   const url = req.nextUrl;
 
-  // Only apply to API routes that perform expensive work
+  // Only apply to API routes that perform expensive work.
+  // (The Content-Security-Policy lives in next.config.js as a static
+  // header — a per-request nonce CSP was tried and rejected because it
+  // requires dynamic rendering everywhere; see docs/decisions/0002-csp.md.)
   const isExpensive = url.pathname.startsWith('/api/search');
   if (!isExpensive) return NextResponse.next();
 

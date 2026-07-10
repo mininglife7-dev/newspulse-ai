@@ -107,6 +107,24 @@ test.describe('search dashboard (/)', () => {
     expect(calls).toBe(1);
   });
 
+  test('no CSP violations while exercising the app', async ({ page }) => {
+    const violations: string[] = [];
+    page.on('console', (msg) => {
+      if (/Content.Security.Policy|Refused to/i.test(msg.text())) {
+        violations.push(msg.text());
+      }
+    });
+    await page.route('**/api/search', (route) =>
+      route.fulfill({ json: SEARCH_OK })
+    );
+    await page.goto('/');
+    // Interactivity proves hydration ran — scripts were not blocked.
+    await page.getByLabel('Search keyword').fill('ai');
+    await page.getByRole('button', { name: /^Search$/ }).click();
+    await expect(page.getByText('2 results for')).toBeVisible();
+    expect(violations).toEqual([]);
+  });
+
   test('skip link is the first tab stop on pages without autofocus', async ({
     page,
     isMobile,
