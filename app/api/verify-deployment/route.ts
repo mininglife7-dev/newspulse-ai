@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyDeployment, formatDeploymentAlert } from '@/lib/deployment-verifier';
 import { getSafeErrorResponse } from '@/lib/error-handler';
+import { cacheHeaders } from '@/lib/cache-control';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -63,6 +64,7 @@ export async function GET(req: Request) {
         headers: {
           'X-Deployment-Status': result.status,
           'X-Is-Live': result.currentDeployment?.isLive ? 'true' : 'false',
+          ...cacheHeaders.short,
         },
       }
     );

@@ -4,6 +4,7 @@ import {
   formatBlockingConditionAlert,
 } from '@/lib/blocking-condition-detector';
 import { getSafeErrorResponse } from '@/lib/error-handler';
+import { cacheHeaders } from '@/lib/cache-control';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,12 +42,15 @@ export async function GET(req: Request) {
     const blockers = await detectAllBlockingConditions(owner, repo, actionsToken);
 
     if (blockers.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        message: 'No external blockers detected',
-        blockers: [],
-        checkedAt: new Date().toISOString(),
-      });
+      return NextResponse.json(
+        {
+          ok: true,
+          message: 'No external blockers detected',
+          blockers: [],
+          checkedAt: new Date().toISOString(),
+        },
+        { headers: cacheHeaders.short }
+      );
     }
 
     // Blockers found — format for Founder
@@ -80,6 +84,7 @@ export async function GET(req: Request) {
           'X-Critical-Severity': String(
             blockers.filter((b) => b.severity === 'critical').length
           ),
+          ...cacheHeaders.short,
         },
       }
     );

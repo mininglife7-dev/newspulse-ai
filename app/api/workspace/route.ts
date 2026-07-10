@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { WorkspaceCreateSchema } from '@/lib/validation';
+import { cacheHeaders } from '@/lib/cache-control';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
@@ -160,6 +161,11 @@ export async function POST(req: Request) {
       workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name },
       companyId: company.id,
     },
-    { headers: getRateLimitHeaders(rateLimitResult) }
+    {
+      headers: {
+        ...getRateLimitHeaders(rateLimitResult),
+        ...cacheHeaders.noCache,
+      },
+    }
   );
 }

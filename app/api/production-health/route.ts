@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { runProductionHealthChecks } from '@/lib/production-monitoring';
 import { getSafeErrorResponse } from '@/lib/error-handler';
+import { cacheHeaders } from '@/lib/cache-control';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +50,7 @@ export async function GET(req: Request) {
           'X-Health-Status': report.ok ? 'healthy' : 'degraded',
           'X-Critical-Issues': String(report.summary.critical),
           'X-Warnings': String(report.summary.degraded),
+          ...cacheHeaders.short,
         },
       }
     );

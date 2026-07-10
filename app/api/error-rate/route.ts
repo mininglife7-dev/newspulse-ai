@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getErrorRateReport, formatErrorAlert } from '@/lib/error-rate-monitor';
 import { getSafeErrorResponse } from '@/lib/error-handler';
+import { cacheHeaders } from '@/lib/cache-control';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,7 @@ export async function GET(req: Request) {
           'X-Error-Status': report.ok ? 'healthy' : 'degraded',
           'X-Total-Errors': String(report.summary.totalErrors),
           'X-Critical-Endpoints': String(report.summary.criticalEndpoints.length),
+          ...cacheHeaders.short,
         },
       }
     );

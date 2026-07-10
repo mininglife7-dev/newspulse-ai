@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { AiSystemCreateSchema } from '@/lib/validation';
+import { cacheHeaders } from '@/lib/cache-control';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
@@ -86,7 +87,12 @@ export async function GET(req: Request) {
   }
   return NextResponse.json(
     { ok: true, systems: data ?? [] },
-    { headers: getRateLimitHeaders(rateLimitResult) }
+    {
+      headers: {
+        ...getRateLimitHeaders(rateLimitResult),
+        ...cacheHeaders.noCache,
+      },
+    }
   );
 }
 
@@ -172,6 +178,11 @@ export async function POST(req: Request) {
   }
   return NextResponse.json(
     { ok: true, system: data },
-    { headers: getRateLimitHeaders(rateLimitResult) }
+    {
+      headers: {
+        ...getRateLimitHeaders(rateLimitResult),
+        ...cacheHeaders.noCache,
+      },
+    }
   );
 }

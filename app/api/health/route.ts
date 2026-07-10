@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cacheHeaders } from '@/lib/cache-control';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,9 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       uptime_s: typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
     },
-    { status: allOk ? 200 : 503 }
+    {
+      status: allOk ? 200 : 503,
+      headers: cacheHeaders.short,
+    }
   );
 }

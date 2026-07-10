@@ -5,6 +5,7 @@ import {
   cleanupResolvedAlerts,
 } from '@/lib/alert-hub';
 import { getSafeErrorResponse } from '@/lib/error-handler';
+import { cacheHeaders } from '@/lib/cache-control';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +63,7 @@ export async function GET(req: Request) {
           'X-Alert-Level': report.criticalCount > 0 ? 'critical' : report.warningCount > 0 ? 'warning' : 'info',
           'X-Alert-Count': String(report.alertCount),
           'X-Critical-Count': String(report.criticalCount),
+          ...cacheHeaders.short,
         },
       }
     );

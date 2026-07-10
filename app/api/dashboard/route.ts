@@ -10,6 +10,7 @@
 
 import { buildDashboardState } from '@/lib/governance-state';
 import { getSafeErrorResponse } from '@/lib/error-handler';
+import { cacheHeaders } from '@/lib/cache-control';
 import type { DashboardResponse } from '@/types/governance';
 
 export async function GET(): Promise<Response> {
@@ -21,7 +22,7 @@ export async function GET(): Promise<Response> {
     return Response.json(response, {
       status: 200,
       headers: {
-        'Cache-Control': 'public, max-age=60', // Cache for 1 minute
+        ...cacheHeaders.medium,
         'Content-Type': 'application/json',
       },
     });
