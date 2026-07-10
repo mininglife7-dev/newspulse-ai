@@ -12,6 +12,9 @@
     "app/api/production-health/route.ts": {
       "maxDuration": 30
     },
+    "app/api/dependency-health/route.ts": {
+      "maxDuration": 60
+    },
     "app/api/verify-deployment/route.ts": {
       "maxDuration": 30
     },
@@ -32,6 +35,10 @@
     {
       "path": "/api/production-health",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/dependency-health",
+      "schedule": "0 2 * * *"
     },
     {
       "path": "/api/verify-deployment",

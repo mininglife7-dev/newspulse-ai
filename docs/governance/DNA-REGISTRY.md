@@ -171,6 +171,95 @@ interface ProductionHealthReport {
 
 ---
 
+### DNA-GOV-003: Dependency Health
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Engineering Officer + Security Engineer  
+
+#### Purpose
+Autonomously monitor npm packages for security vulnerabilities and outdated major versions, surfacing them to Founder daily. Unlike code-side testing (which catches logic bugs), this catches supply-chain risks.
+
+#### Problem Discovered
+Current npm audit shows 10 vulnerabilities (4 moderate, 5 high, 1 critical). Without automated tracking, vulnerabilities can accumulate silently until a first-customer incident. Major version upgrades are deferred indefinitely, accruing technical debt.
+
+#### Evidence
+- **Weakness:** No dependency security monitoring; only manual spot-checks
+- **Impact:** Critical vulnerabilities could remain in production undetected
+- **Root cause:** No automated scanning of npm security advisories + version tracking
+- **Risk:** Supply-chain compromise, zero-day exploit, first customer hit by known vulnerability → reputational damage
+
+#### Inputs
+- `npm audit --json` (built-in, no external tokens needed)
+- `npm outdated --json` (built-in, no external tokens needed)
+- Runs in Node.js runtime; no API keys required
+
+#### Outputs
+```typescript
+interface DependencyHealthReport {
+  ok: boolean
+  timestamp: string
+  vulnerabilities: VulnerabilityAlert[]
+  outdatedMajors: Record<string, { current: string; latest: string }>
+  summary: { vulnerablePackages: number; criticalCount: number; highCount: number; outdatedMajors: number }
+  alerts: string[]  // [CRITICAL/HIGH/WARNING] messages
+}
+```
+
+#### Implementation
+- `lib/dependency-health.ts` — Dependency health check library (160 LoC)
+  - `checkNpmVulnerabilities()` — Parse npm audit for high/critical severities
+  - `checkOutdatedMajors()` — Detect major version upgrades available
+  - `runDependencyHealthChecks()` — Orchestrate all checks, aggregate results
+  - `formatDependencyAlert()` — Human-readable alert formatting
+- `app/api/dependency-health/route.ts` — Cron-callable endpoint (20 LoC)
+- `tests/dependency-health.test.ts` — 19 tests covering all scenarios
+
+#### Verification Method
+- **Unit tests:** 19 tests covering:
+  - No vulnerabilities → ok:true
+  - Critical/high severities detected → ok:false with alert
+  - Low/moderate severities ignored (not surfaced)
+  - Major version detection (14 → 16, not 14.1 → 14.2)
+  - Minor/patch upgrades ignored
+  - Error handling (npm audit failure, invalid JSON)
+  - Alert formatting with severity levels
+  - Multiple vulnerability aggregation
+- **All tests pass:** 19/19 ✅
+- **Build verification:** npm run build clean, type-check clean, lint clean
+- **Production verification:** Endpoint recognized in build output as `/api/dependency-health`
+
+#### Dependencies
+- Vercel cron scheduler (daily at 2 AM UTC)
+- No external tokens needed (uses only built-in npm commands)
+- Self-contained; no database writes
+
+#### Risks
+- **Performance impact:** ~60s to run `npm audit` + `npm outdated` once daily. Negligible.
+- **npm command timeout:** Set 30s timeout per command; if exceeded, returns empty (fail-safe).
+- **False positives:** Only high/critical severities flagged. Low/moderate ignored to prevent alert fatigue.
+- **Missing context:** Npm advisories sometimes require manual assessment (e.g., "affects only CommonJS builds"); alerts are informational, not prescriptive.
+
+#### Rollback Method
+- Remove cron entry from `vercel.json`
+- Delete `lib/dependency-health.ts` and `app/api/dependency-health/route.ts`
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Detection time:** Identify new vulnerabilities within 24 hours
+2. **Alert quality:** Specific package names + severity + recommended action
+3. **False positive rate:** < 1 per month (only high/critical flagged)
+4. **Founder action time:** Alerts logged to console daily; Founder can review + decide on upgrade strategy
+5. **Major version visibility:** Track outdated majors; enable planning for upgrade sprints
+
+#### Next Steps
+1. **Founder review:** After daily run, review vulnerabilities in production; decide on upgrade strategy
+2. **Integrate with error tracking:** Wire to Sentry/monitoring service if vulnerabilities reach production (future phase)
+3. **Auto-remediation rules:** Define which updates are auto-mergeable vs. require Founder decision (future phase)
+4. **Dependency monitoring dashboard:** Aggregate health history for trends + patterns (future phase)
+
+---
+
 ## Experimental DNA
 
 *(None yet)*
