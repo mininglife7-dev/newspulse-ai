@@ -8,6 +8,7 @@ import {
   Loader2,
   ShieldAlert,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { SCREENING_QUESTIONS } from '@/lib/risk-assessment';
 
@@ -93,6 +94,24 @@ export default function AssessmentPage() {
     setActiveSystem(system);
     setAnswers({});
     setFormError(null);
+  };
+
+  const handleExport = async (systemId: string) => {
+    try {
+      const res = await fetch(`/api/reports/assessment/${systemId}`);
+      if (!res.ok) throw new Error('Failed to generate report');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `assessment-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err?.message || 'Failed to export report');
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -273,12 +292,24 @@ export default function AssessmentPage() {
                           </span>
                         )}
                       </div>
-                      <button
-                        onClick={() => startAssessment(s)}
-                        className="rounded-lg border border-slate-700 px-4 py-1.5 text-sm text-slate-300 transition hover:border-cyan-500/60 hover:text-white"
-                      >
-                        {latest ? 'Reassess' : 'Assess now'}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startAssessment(s)}
+                          className="rounded-lg border border-slate-700 px-4 py-1.5 text-sm text-slate-300 transition hover:border-cyan-500/60 hover:text-white"
+                        >
+                          {latest ? 'Reassess' : 'Assess now'}
+                        </button>
+                        {latest && (
+                          <button
+                            onClick={() => handleExport(s.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-950/30 px-3 py-1.5 text-xs font-medium text-amber-300 transition hover:bg-amber-950/50 hover:border-amber-600/50"
+                            title="Export assessment as PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                            Export
+                          </button>
+                        )}
+                      </div>
                       {latest?.assessment_data?.obligations && (
                         <div className="w-full text-sm text-slate-400">
                           <div className="mb-1 text-slate-500">
