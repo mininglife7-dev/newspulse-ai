@@ -13,6 +13,7 @@ const PROTECTED_PREFIXES = [
   '/inventory',
   '/api/workspace',
   '/api/ai-systems',
+  '/api/risk-assessments',
 ];
 
 /** Auth screens: send already-authenticated users to the dashboard. */
