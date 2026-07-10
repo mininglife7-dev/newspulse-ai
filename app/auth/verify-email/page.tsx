@@ -82,9 +82,9 @@ export default function VerifyEmailPage() {
           </p>
 
           {error && (
-            <div className="rounded-lg border border-red-800 bg-red-950/30 p-3 flex gap-2">
+            <div className="rounded-lg border border-red-800 bg-red-950/30 p-3 flex gap-2" role="alert" aria-live="polite">
               <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-red-300">{error}</p>
+              <p className="text-xs text-red-300" id="verify-email-error">{error}</p>
             </div>
           )}
 

@@ -116,9 +116,9 @@ export default function WorkspaceSetupPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg border border-red-800 bg-red-950/30 p-4 flex gap-3">
+          <div className="rounded-lg border border-red-800 bg-red-950/30 p-4 flex gap-3" role="alert" aria-live="polite">
             <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-300">{error}</p>
+            <p className="text-sm text-red-300" id="workspace-setup-error">{error}</p>
           </div>
         )}
 

@@ -162,9 +162,9 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-lg border border-red-800 bg-red-950/30 p-4 flex gap-3">
+            <div className="rounded-lg border border-red-800 bg-red-950/30 p-4 flex gap-3" role="alert" aria-live="polite">
               <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-300">{error}</p>
+              <p className="text-sm text-red-300" id="reset-password-error">{error}</p>
             </div>
           )}
 
@@ -185,6 +185,8 @@ export default function ResetPasswordPage() {
               placeholder="••••••••"
               disabled={loading}
               required
+              minLength={8}
+              aria-describedby={error ? "reset-password-error" : undefined}
             />
             <p className="text-xs text-slate-500 mt-1">
               Minimum 8 characters
@@ -208,6 +210,7 @@ export default function ResetPasswordPage() {
               placeholder="••••••••"
               disabled={loading}
               required
+              aria-describedby={error ? "reset-password-error" : undefined}
             />
           </div>
 
