@@ -36,8 +36,7 @@ serverEnv.NODE_ENV = 'production';
 const results = [];
 function record(category, name, status, detail = '') {
   results.push({ category, name, status, detail });
-  const icon =
-    status === 'PASS' ? '✓' : status === 'FAIL' ? '✗' : '·';
+  const icon = status === 'PASS' ? '✓' : status === 'FAIL' ? '✗' : '·';
   console.log(
     `  ${icon} [${status}] ${category} — ${name}${detail ? `  (${detail})` : ''}`
   );
@@ -154,49 +153,80 @@ async function run() {
   });
 
   // ----- Protected Routes -----
-  await check('page', 'GET /dashboard renders (protected route)', async () => {
-    const res = await get('/dashboard');
-    assert(res.status === 200, `expected 200, got ${res.status}`);
-    const html = await res.text();
-    assert(html.includes('Welcome'), 'dashboard content missing');
-  });
+  // Unauthenticated (no Supabase session in smoke env), so the auth middleware
+  // must redirect these to sign-in rather than render them. Asserting the guard
+  // is a stronger check than the old "renders 200" (which only held before auth
+  // existed, and silently regressed after the EURO AI pivot).
+  await check(
+    'page',
+    'GET /dashboard redirects unauthenticated to sign-in',
+    async () => {
+      const res = await get('/dashboard');
+      assert(
+        [302, 303, 307].includes(res.status),
+        `expected redirect, got ${res.status}`
+      );
+      const location = res.headers.get('location') || '';
+      assert(
+        location.includes('/auth/signin'),
+        `expected redirect to /auth/signin, got "${location}"`
+      );
+    }
+  );
 
-  await check('page', 'GET /workspace/setup renders (protected route)', async () => {
-    const res = await get('/workspace/setup');
-    assert(res.status === 200, `expected 200, got ${res.status}`);
-    const html = await res.text();
-    assert(html.includes('Company'), 'workspace setup content missing');
-  });
+  await check(
+    'page',
+    'GET /workspace/setup redirects unauthenticated to sign-in',
+    async () => {
+      const res = await get('/workspace/setup');
+      assert(
+        [302, 303, 307].includes(res.status),
+        `expected redirect, got ${res.status}`
+      );
+      const location = res.headers.get('location') || '';
+      assert(
+        location.includes('/auth/signin'),
+        `expected redirect to /auth/signin, got "${location}"`
+      );
+    }
+  );
 
   // ----- Health -----
-  await check('api', '/api/health reports degraded without Supabase', async () => {
-    const res = await get('/api/health');
-    const json = await res.json();
-    assert(
-      json.ok === (res.status === 200),
-      `ok flag (${json.ok}) contradicts HTTP status (${res.status})`
-    );
-    assert(
-      ['healthy', 'degraded'].includes(json.status),
-      `unexpected status "${json.status}"`
-    );
-    assert(
-      typeof json.checks?.supabase_url === 'boolean',
-      'checks.supabase_url missing'
-    );
-    assert(
-      typeof json.checks?.supabase_anon === 'boolean',
-      'checks.supabase_anon missing'
-    );
-    assert(
-      typeof json.checks?.supabase_service === 'boolean',
-      'checks.supabase_service missing'
-    );
-    // With credentials stripped it must NOT claim to be healthy.
-    assert(res.status === 503, `expected 503 without creds, got ${res.status}`);
-    assert(json.status === 'degraded', 'must report degraded without creds');
-    return `status=${json.status}`;
-  });
+  await check(
+    'api',
+    '/api/health reports degraded without Supabase',
+    async () => {
+      const res = await get('/api/health');
+      const json = await res.json();
+      assert(
+        json.ok === (res.status === 200),
+        `ok flag (${json.ok}) contradicts HTTP status (${res.status})`
+      );
+      assert(
+        ['healthy', 'degraded'].includes(json.status),
+        `unexpected status "${json.status}"`
+      );
+      assert(
+        typeof json.checks?.supabase_url === 'boolean',
+        'checks.supabase_url missing'
+      );
+      assert(
+        typeof json.checks?.supabase_anon === 'boolean',
+        'checks.supabase_anon missing'
+      );
+      assert(
+        typeof json.checks?.supabase_service === 'boolean',
+        'checks.supabase_service missing'
+      );
+      // With credentials stripped it must NOT claim to be healthy.
+      assert(
+        res.status === 503,
+        `expected 503 without creds, got ${res.status}`
+      );
+      assert(json.status === 'degraded', 'must report degraded without creds');
+      return `status=${json.status}`;
+    }
+  );
 
   // ----- SEO / meta routes -----
   await check('meta', 'GET /robots.txt responds', async () => {
