@@ -273,6 +273,115 @@ interface KnowledgeMemory {
 
 ---
 
+### DNA-GOV-009: Performance Baseline Tracking
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Technology Officer + Performance Engineering  
+
+#### Purpose
+Autonomously track performance metrics across builds and detect regressions before they affect customers. Establish baselines for build time, page load latency, bundle size, and API response times; alert when metrics degrade beyond acceptable thresholds.
+
+#### Problem Discovered
+Performance regressions are discovered by customers (slow page loads) or during manual testing (longer build times). No automated system tracks when changes degrade performance. A code change that doubles bundle size or adds 2 seconds to page load goes undetected until deployed to production, potentially impacting customer experience and infrastructure costs.
+
+#### Evidence
+- **Weakness:** No automated performance regression detection; changes deployed without baseline comparison
+- **Impact:** Customers experience slow pages before regression is discovered; infrastructure costs increase silently; developer productivity decreases (longer builds undetected)
+- **Root cause:** No baseline tracking system; performance metrics treated as one-off measurements, not continuous observations
+- **Risk:** Performance paper-cuts accumulate over time; end users affected by performance degradation
+
+#### Inputs
+- Build metrics: build duration, bundle size
+- Runtime metrics: page load latency (LCP, FCP)
+- API metrics: response times for critical endpoints
+- Baseline comparison data
+
+#### Outputs
+```typescript
+interface PerformanceReport {
+  timestamp: string
+  buildId: string
+  metricsTracked: number
+  regressionsFound: number
+  regressions: RegressionAlert[]
+  improvements: RegressionAlert[]
+  summary: string
+}
+
+interface RegressionAlert {
+  metric: string
+  baseline: number
+  current: number
+  change: number
+  changePercent: number
+  threshold: number
+  severity: 'critical' | 'warning' | 'info'
+}
+```
+
+#### Implementation
+- `lib/performance-baseline.ts` — Core performance tracking library (280 LoC)
+  - `recordBaseline()` — Store metric baseline from build
+  - `detectRegressions()` — Compare current vs. baseline; identify degradations
+  - `detectImprovements()` — Identify metrics that improved
+  - `generatePerformanceReport()` — Synthesize findings with alerts
+  - `formatPerformanceAlert()` — Display results for Founder
+  - `estimateMetricsFromBuild()` — Extract metrics from build artifacts
+- `app/api/performance-baseline/route.ts` — HTTP endpoint for checks (60 LoC)
+  - `GET /api/performance-baseline` — Run performance check and return report
+- `tests/performance-baseline.test.ts` — 16 tests covering all operations
+- `.github/workflows/dna-performance.yml` — Daily scheduled workflow
+  - Schedule: 08:00 UTC daily (after security scan, before traffic peak)
+  - Compares metrics against historical baseline
+  - Alerts if regressions exceed thresholds
+
+#### Verification Method
+- **Unit tests:** 16 tests covering:
+  - Baseline recording
+  - Regression detection at various thresholds
+  - Improvement detection (>5% gains)
+  - Report generation with mixed results
+  - Severity classification (critical vs. warning)
+  - Edge cases (zero baselines, missing metrics)
+- **All tests pass:** 16/16 ✅
+- **Build verification:** npm run build clean
+- **Type checking:** tsc --noEmit clean
+
+#### Dependencies
+- Build artifact analysis (npm/next internals)
+- Filesystem for baseline persistence (optional, for historical tracking)
+- GitHub Actions (free tier)
+
+#### Risks
+- **Baseline staleness:** Old baselines become irrelevant after major refactors. Mitigation: Regenerate baselines quarterly
+- **Metric noise:** Small fluctuations in build time can trigger false alerts. Mitigation: Run multiple samples, average
+- **External factors:** CI slowdowns from GitHub infrastructure affect build metrics. Mitigation: Track 7-day rolling average
+- **Actionability:** Regression alert without remediation path. Mitigation: Link to recent commits that changed metric
+
+#### Rollback Method
+- Delete `app/api/performance-baseline/route.ts`
+- Delete `lib/performance-baseline.ts`
+- Delete `.github/workflows/dna-performance.yml`
+- Delete `tests/performance-baseline.test.ts`
+- No schema changes, no data mutations; fully reversible
+
+#### Success Metrics
+1. **Regression detection latency:** Identify regressions within 1 build (vs. manually discovered during QA)
+2. **Threshold adherence:** 0 regressions > 30% reach production
+3. **Developer impact:** Team uses performance reports to guide optimization
+4. **Customer experience:** No performance paper-cuts; metrics stable or improving over time
+5. **Operational visibility:** Founder sees performance trends in rolling 30-day graph
+
+#### Next Steps
+1. **Baseline persistence:** Store baselines in Supabase for historical tracking across deployments
+2. **Comparative analysis:** Show performance trend graphs (build time, bundle size) over time
+3. **Alert hub integration:** Route performance alerts through DNA-GOV-005 (Founder Alert Hub)
+4. **Threshold tuning:** Adjust thresholds based on real-world variance patterns
+5. **Custom metrics:** Track additional metrics (time-to-interactive, core web vitals)
+
+---
+
 ## Experimental DNA
 
 *(None yet)*
