@@ -61,8 +61,9 @@ Fill in `.env.local` with your keys:
 FIRECRAWL_API_KEY=fc-...
 OPENAI_API_KEY=sk-proj-...
 NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+# Optional — only needed if client-side Supabase access is ever added:
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 ```
 
 Verify with the included script (it never prints full secrets):
@@ -119,11 +120,11 @@ gh secret set VERCEL_PROJECT_ID
 
 ## 🔑 Where to get API keys
 
-| Service | Link | What you need |
-|---|---|---|
-| Firecrawl | https://firecrawl.dev | API key (Dashboard → API Keys) |
-| OpenAI | https://platform.openai.com/api-keys | API key |
-| Supabase | https://supabase.com | Project URL + publishable + secret keys (Settings → API) |
+| Service   | Link                                 | What you need                                            |
+| --------- | ------------------------------------ | -------------------------------------------------------- |
+| Firecrawl | https://firecrawl.dev                | API key (Dashboard → API Keys)                           |
+| OpenAI    | https://platform.openai.com/api-keys | API key                                                  |
+| Supabase  | https://supabase.com                 | Project URL + publishable + secret keys (Settings → API) |
 
 ---
 
@@ -187,7 +188,17 @@ npm run lint          # next lint
 npm run type-check    # tsc --noEmit
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
+npm run test:smoke    # boot the prod build with no credentials; assert every
+                      # route responds and fails honestly (16 checks)
+npm run test:e2e      # Playwright e2e: desktop + mobile, real UI flows via
+                      # API fixtures — needs no credentials (38 checks)
+npm run test          # smoke + e2e
 ```
+
+Both test suites run in CI on every push and pull request. They
+deliberately run **without** integration credentials: happy paths are
+covered with intercepted API fixtures, and degraded paths assert the app
+reports honest errors instead of fabricated success.
 
 ---
 
@@ -215,7 +226,7 @@ POST /api/search
 ## 🏆 Hackathon Notes
 
 - **Project:** NewsPulse AI
-- **Tagline:** *AI-Powered News Intelligence — Search. Scrape. Summarize.*
+- **Tagline:** _AI-Powered News Intelligence — Search. Scrape. Summarize._
 - **Differentiator:** Real-time AI summaries + persistent search history
 - **Built for:** Outskill AI Generalist Accelerator Hackathon
 

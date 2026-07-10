@@ -113,9 +113,7 @@ export default function HistoryPage() {
             disabled={loading}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-white/80 transition hover:border-accent-500/60 hover:text-white disabled:opacity-50"
           >
-            <RotateCw
-              className={cn('h-4 w-4', loading && 'animate-spin')}
-            />
+            <RotateCw className={cn('h-4 w-4', loading && 'animate-spin')} />
             Refresh
           </button>
           <button
@@ -145,7 +143,11 @@ export default function HistoryPage() {
 
       {/* Loading skeleton */}
       {loading && (
-        <div role="status" aria-label="Loading search history" className="space-y-2">
+        <div
+          role="status"
+          aria-label="Loading search history"
+          className="space-y-2"
+        >
           <span className="sr-only">Loading…</span>
           {Array.from({ length: 5 }).map((_, i) => (
             <div
@@ -312,11 +314,7 @@ function Row({
             {articles.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {articles.map((a, i) => (
-                  <NewsCard
-                    key={(a.url || '') + i}
-                    article={a}
-                    index={i}
-                  />
+                  <NewsCard key={(a.url || '') + i} article={a} index={i} />
                 ))}
               </div>
             ) : (

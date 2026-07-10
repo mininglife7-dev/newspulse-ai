@@ -20,14 +20,14 @@ The dev server runs on [http://localhost:3000](http://localhost:3000) with hot r
 
 ## Required environment variables
 
-| Variable                          | Required | Where to get it             |
-| --------------------------------- | -------- | --------------------------- |
-| `FIRECRAWL_API_KEY`               | yes      | https://firecrawl.dev       |
-| `OPENAI_API_KEY`                  | yes      | https://platform.openai.com |
-| `NEXT_PUBLIC_SUPABASE_URL`        | yes      | Supabase → Settings → API   |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | yes      | Supabase → Settings → API   |
-| `SUPABASE_SERVICE_ROLE_KEY`       | yes      | Supabase → Settings → API   |
-| `NEXT_PUBLIC_SITE_URL`            | no       | Used for sitemap/robots     |
+| Variable                        | Required | Where to get it                                                                     |
+| ------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| `FIRECRAWL_API_KEY`             | yes      | https://firecrawl.dev                                                               |
+| `OPENAI_API_KEY`                | yes      | https://platform.openai.com                                                         |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | Supabase → Settings → API                                                           |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | no       | Supabase → Settings → API (unused by current code; reserved for client-side access) |
+| `SUPABASE_SERVICE_ROLE_KEY`     | yes      | Supabase → Settings → API                                                           |
+| `NEXT_PUBLIC_SITE_URL`          | no       | Used for sitemap/robots                                                             |
 
 ---
 

@@ -1,5 +1,13 @@
 # Product Integrity Report — NewsPulse AI
 
+> **2026-07-10 second-wave addendum:** a deep autonomous pass added a
+> 38-check Playwright e2e suite (desktop + mobile, credential-less), a full
+> accessibility/keyboard pass, seven further fixes (D-12 – D-18 in the
+> defect register, including a false health alarm and a false-success
+> DELETE), and a Postgres-validated integrity constraint for
+> `result_count` (ADR 0001). Scores in `PRODUCT_HEALTH_SCORE.md` reflect
+> the post-wave-2 state.
+
 **Audit date:** 2026-07-09
 **Auditor:** Dashboard Integrity Governor (DNA-203)
 **Scope:** every page, button, link, API route, and displayed metric in the app.
@@ -22,18 +30,18 @@ no code ever used). **All 10 were fixed and verified in this audit** — see
 
 ## Verification performed
 
-| Gate | Result |
-|---|---|
-| `tsc --noEmit` | PASS |
-| `next lint` | PASS (0 warnings) |
-| `next build` with CI stub env | PASS |
-| `next build` with **no** env vars | PASS (failed before fixes) |
-| Smoke suite (16 end-to-end checks) | 16/16 PASS |
+| Gate                               | Result                     |
+| ---------------------------------- | -------------------------- |
+| `tsc --noEmit`                     | PASS                       |
+| `next lint`                        | PASS (0 warnings)          |
+| `next build` with CI stub env      | PASS                       |
+| `next build` with **no** env vars  | PASS (failed before fixes) |
+| Smoke suite (16 end-to-end checks) | 16/16 PASS                 |
 
 ## Truthfulness (Founder Trust Rule)
 
-The governing rule — *if a metric cannot be verified, show an error/UNKNOWN, never
-an incorrect number* — is now enforced and regression-tested:
+The governing rule — _if a metric cannot be verified, show an error/UNKNOWN, never
+an incorrect number_ — is now enforced and regression-tested:
 
 - `GET /api/history` with an unreachable database now returns **500 + error**,
   where it previously returned a fabricated empty list (the UI showed

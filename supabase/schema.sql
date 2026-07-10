@@ -16,9 +16,31 @@ create table if not exists public.news_searches (
     id            uuid        primary key default gen_random_uuid(),
     keyword       text        not null,
     results       jsonb       not null default '[]'::jsonb,
+    -- Cached derivation of jsonb_array_length(results) so listings (e.g.
+    -- the news_searches_recent view) never have to parse the payload.
+    -- The CHECK below makes drift impossible: this is a cache, not a
+    -- second source of truth. See docs/decisions/0001-result-count.md.
     result_count  integer     not null default 0,
-    created_at    timestamptz not null default now()
+    created_at    timestamptz not null default now(),
+    constraint news_searches_result_count_matches check (
+        jsonb_typeof(results) = 'array'
+        and result_count = jsonb_array_length(results)
+    )
 );
+
+-- Migration for databases created before the CHECK existed:
+-- backfill any drifted rows, then (re)apply the constraint.
+alter table public.news_searches
+    drop constraint if exists news_searches_result_count_matches;
+update public.news_searches
+    set result_count = jsonb_array_length(results)
+    where jsonb_typeof(results) = 'array'
+      and result_count is distinct from jsonb_array_length(results);
+alter table public.news_searches
+    add constraint news_searches_result_count_matches check (
+        jsonb_typeof(results) = 'array'
+        and result_count = jsonb_array_length(results)
+    );
 
 -- Helpful indexes
 create index if not exists news_searches_created_at_idx

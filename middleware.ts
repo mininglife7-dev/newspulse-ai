@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 const buckets = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 60_000; // 1 minute
-const MAX_REQUESTS = 30;  // per IP per window
+const MAX_REQUESTS = 30; // per IP per window
 const SWEEP_THRESHOLD = 1_000; // prune expired buckets past this many IPs
 
 function rateLimit(ip: string) {
