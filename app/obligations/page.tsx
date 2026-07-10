@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   X,
   Download,
+  Calendar,
 } from 'lucide-react';
 
 interface Obligation {
@@ -58,6 +59,8 @@ export default function ObligationsPage() {
   const [importingTemplates, setImportingTemplates] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [editingDueDateId, setEditingDueDateId] = useState<string | null>(null);
+  const [editingDueDate, setEditingDueDate] = useState<string>('');
 
   useEffect(() => {
     loadObligations();
@@ -175,6 +178,36 @@ export default function ObligationsPage() {
     } finally {
       setBulkUpdating(false);
     }
+  };
+
+  const handleUpdateDueDate = async (obligationId: string, newDueDate: string) => {
+    setUpdatingId(obligationId);
+    try {
+      const res = await fetch(`/api/obligations/${obligationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ due_date: newDueDate || null }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      const data = await res.json();
+      if (data.ok) {
+        setObligations((prev) =>
+          prev.map((o) => (o.id === obligationId ? data.obligation : o))
+        );
+        setEditingDueDateId(null);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update due date');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const isOverdue = (dueDate: string | null) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
   };
 
   const filteredObligations = obligations
@@ -402,8 +435,49 @@ export default function ObligationsPage() {
                     <p className="text-sm text-slate-400 mt-1 line-clamp-2">{obligation.description}</p>
                     <div className="flex gap-4 text-xs text-slate-500 mt-2">
                       <span>Source: {obligation.source}</span>
-                      {obligation.due_date && (
-                        <span>Due: {new Date(obligation.due_date).toLocaleDateString()}</span>
+                      {editingDueDateId === obligation.id ? (
+                        <div className="flex gap-1.5">
+                          <input
+                            type="date"
+                            value={editingDueDate}
+                            onChange={(e) => setEditingDueDate(e.target.value)}
+                            className="px-2 py-1 rounded text-xs bg-slate-800 border border-slate-700 text-white"
+                            disabled={updatingId === obligation.id}
+                          />
+                          <button
+                            onClick={() => handleUpdateDueDate(obligation.id, editingDueDate)}
+                            disabled={updatingId === obligation.id}
+                            className="text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingDueDateId(null)}
+                            disabled={updatingId === obligation.id}
+                            className="text-slate-500 hover:text-slate-400 disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingDueDateId(obligation.id);
+                            setEditingDueDate(obligation.due_date?.split('T')[0] || '');
+                          }}
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                            obligation.due_date && isOverdue(obligation.due_date)
+                              ? 'bg-red-900/30 text-red-300 hover:bg-red-900/50'
+                              : obligation.due_date
+                                ? 'bg-amber-900/30 text-amber-300 hover:bg-amber-900/50'
+                                : 'text-slate-500 hover:text-slate-400'
+                          }`}
+                        >
+                          <Calendar className="h-3 w-3" />
+                          {obligation.due_date
+                            ? new Date(obligation.due_date).toLocaleDateString()
+                            : 'Set due date'}
+                        </button>
                       )}
                     </div>
                   </div>
