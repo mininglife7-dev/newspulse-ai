@@ -42,7 +42,17 @@ export default function WorkspaceSetupPage() {
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch('/api/workspace/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create workspace');
+      }
+
       setSuccess(true);
       setTimeout(() => {
         window.location.href = "/dashboard";
