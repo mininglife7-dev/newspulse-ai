@@ -238,6 +238,46 @@ export function recordPerformanceAlerts(performanceReport: {
 }
 
 /**
+ * Bridge DNA-GOV-012 deployment recovery events into Alert Hub
+ *
+ * Called by /api/deployment-recovery to record deployment incidents and recoveries
+ */
+export function recordDeploymentAlert(params: {
+  deploymentId: string;
+  severity: 'warning' | 'critical';
+  reason: string;
+  errorRate?: number;
+  latency?: number;
+  decision: string;
+  canAutoRecover: boolean;
+}): Alert {
+  const title =
+    params.severity === 'critical'
+      ? `Production incident: ${params.deploymentId}`
+      : `Deployment health degradation: ${params.deploymentId}`;
+
+  const details = [
+    params.reason,
+    ...(params.errorRate !== undefined ? [`Error rate: ${(params.errorRate * 100).toFixed(1)}%`] : []),
+    ...(params.latency !== undefined ? [`Latency: ${params.latency}ms`] : []),
+  ].join('\n');
+
+  const recommendation = params.canAutoRecover
+    ? params.decision === 'rollback'
+      ? 'Automatic rollback initiated. Monitor for side effects.'
+      : 'Auto-recovery mechanism active. Monitoring closely.'
+    : 'Manual review required. Rollback not available.';
+
+  return recordAlert(
+    'deployment', // DNA-GOV-003/012
+    params.severity,
+    title,
+    details,
+    recommendation
+  );
+}
+
+/**
  * Format alert hub report for Founder display
  */
 export function formatAlertHubReport(report: AlertHubReport): string {
