@@ -158,6 +158,71 @@ export async function POST(req: Request) {
     );
   }
 
+  // Auto-generate obligations based on assessment
+  if (result.obligations && result.obligations.length > 0) {
+    try {
+      const priorityMap: Record<string, string> = {
+        unacceptable: 'critical',
+        high: 'high',
+        medium: 'medium',
+        low: 'low',
+      };
+      const priority = priorityMap[result.riskLevel] || 'medium';
+
+      for (const obligationText of result.obligations) {
+        // Check if obligation already exists for this company
+        const { data: existing } = await supabase
+          .from('obligations')
+          .select('id')
+          .eq('company_id', system.company_id)
+          .eq('workspace_id', ctx.workspaceId)
+          .ilike('title', obligationText.substring(0, 100))
+          .limit(1)
+          .maybeSingle();
+
+        let obligationId: string;
+
+        if (existing) {
+          obligationId = existing.id;
+        } else {
+          // Create new obligation
+          const { data: created, error: createError } = await supabase
+            .from('obligations')
+            .insert({
+              company_id: system.company_id,
+              workspace_id: ctx.workspaceId,
+              title: obligationText.substring(0, 200),
+              description: obligationText,
+              source: 'EU_AI_ACT',
+              status: 'identified',
+              priority,
+            })
+            .select('id')
+            .single();
+
+          if (createError || !created) {
+            console.warn('[api/risk-assessments] failed to create obligation:', createError);
+            continue;
+          }
+          obligationId = created.id;
+        }
+
+        // Link obligation to assessment
+        const { error: linkError } = await supabase.from('assessment_obligations').insert({
+          assessment_id: saved.id,
+          obligation_id: obligationId,
+        });
+
+        if (linkError) {
+          console.warn('[api/risk-assessments] failed to link obligation:', linkError);
+        }
+      }
+    } catch (err) {
+      // Log but don't fail the assessment if obligation generation fails
+      console.warn('[api/risk-assessments] obligation auto-generation failed:', err);
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     assessment: saved,

@@ -30,6 +30,17 @@ interface Assessment {
   created_at: string;
 }
 
+interface Obligation {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  status: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  due_date: string | null;
+  created_at: string;
+}
+
 const LEVEL_STYLE: Record<string, string> = {
   unacceptable: 'bg-red-950/60 text-red-300 border-red-800/70',
   high: 'bg-orange-950/60 text-orange-300 border-orange-800/70',
@@ -47,6 +58,7 @@ const LEVEL_LABEL: Record<string, string> = {
 export default function AssessmentPage() {
   const [systems, setSystems] = useState<AiSystem[] | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [obligations, setObligations] = useState<Record<string, Obligation[]>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
 
@@ -77,6 +89,25 @@ export default function AssessmentPage() {
       if (!asmRes.ok || !asm.ok) throw new Error(asm.error || 'Failed to load');
       setSystems(sys.systems);
       setAssessments(asm.assessments);
+
+      // Fetch obligations for each assessment
+      const obligationsMap: Record<string, Obligation[]> = {};
+      for (const assessment of asm.assessments) {
+        try {
+          const obRes = await fetch(
+            `/api/obligations?assessmentId=${assessment.id}`
+          );
+          if (obRes.ok) {
+            const obData = await obRes.json();
+            if (obData.ok) {
+              obligationsMap[assessment.id] = obData.obligations || [];
+            }
+          }
+        } catch {
+          // Silently skip obligation loading errors
+        }
+      }
+      setObligations(obligationsMap);
     } catch (err: any) {
       setLoadError(err?.message || 'Could not load assessment data');
       setSystems([]);
@@ -310,18 +341,54 @@ export default function AssessmentPage() {
                           </button>
                         )}
                       </div>
-                      {latest?.assessment_data?.obligations && (
-                        <div className="w-full text-sm text-slate-400">
-                          <div className="mb-1 text-slate-500">
-                            {latest.assessment_data.rationale}
+                      {latest && (obligations[latest.id]?.length ?? 0) > 0 && (
+                        <div className="w-full space-y-3">
+                          {latest.assessment_data?.rationale && (
+                            <div className="text-sm text-slate-500">
+                              {latest.assessment_data.rationale}
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <h3 className="text-xs font-semibold text-slate-400 uppercase">
+                              Generated Obligations
+                            </h3>
+                            <ul className="space-y-1.5">
+                              {obligations[latest.id]
+                                ?.slice(0, 3)
+                                .map((o) => {
+                                  const priorityColors: Record<string, string> = {
+                                    critical: 'bg-red-900/40 text-red-300 border-red-800/60',
+                                    high: 'bg-orange-900/40 text-orange-300 border-orange-800/60',
+                                    medium: 'bg-amber-900/40 text-amber-300 border-amber-800/60',
+                                    low: 'bg-green-900/40 text-green-300 border-green-800/60',
+                                  };
+                                  return (
+                                    <li
+                                      key={o.id}
+                                      className="rounded border border-slate-700 bg-slate-800/30 p-2 text-xs"
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        <span
+                                          className={`flex-shrink-0 rounded border px-1.5 py-0.5 text-xs font-medium ${
+                                            priorityColors[o.priority] || priorityColors.medium
+                                          }`}
+                                        >
+                                          {o.priority}
+                                        </span>
+                                        <div className="flex-1 text-slate-300">
+                                          {o.title}
+                                        </div>
+                                      </div>
+                                    </li>
+                                  );
+                                })}
+                            </ul>
+                            {(obligations[latest.id]?.length ?? 0) > 3 && (
+                              <p className="text-xs text-slate-500">
+                                +{obligations[latest.id].length - 3} more
+                              </p>
+                            )}
                           </div>
-                          <ul className="list-inside list-disc space-y-0.5">
-                            {latest.assessment_data.obligations
-                              .slice(0, 4)
-                              .map((o) => (
-                                <li key={o}>{o}</li>
-                              ))}
-                          </ul>
                         </div>
                       )}
                     </li>
