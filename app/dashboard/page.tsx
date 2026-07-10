@@ -16,6 +16,7 @@ interface WorkspaceSummary {
 export default async function DashboardPage() {
   let workspace: WorkspaceSummary | null = null;
   let firstName: string | null = null;
+  let systemCount = 0;
 
   try {
     const supabase = createRouteClient();
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
       firstName = (user.user_metadata?.first_name as string) || null;
       const { data: membership } = await supabase
         .from('workspace_members')
-        .select('workspaces ( name, slug )')
+        .select('workspace_id, workspaces ( name, slug )')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .limit(1)
@@ -35,6 +36,14 @@ export default async function DashboardPage() {
 
       const ws = (membership as any)?.workspaces;
       workspace = Array.isArray(ws) ? (ws[0] ?? null) : (ws ?? null);
+
+      if (membership?.workspace_id) {
+        const { count } = await supabase
+          .from('ai_systems')
+          .select('id', { count: 'exact', head: true })
+          .eq('workspace_id', membership.workspace_id);
+        systemCount = count ?? 0;
+      }
     }
   } catch (err) {
     // Render the fresh-account state rather than crashing the dashboard.
@@ -111,21 +120,47 @@ export default async function DashboardPage() {
         )}
 
         {/* Step 2: AI Inventory */}
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
-                  2
+        {hasWorkspace ? (
+          <Link
+            href="/inventory"
+            className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${systemCount > 0 ? 'bg-green-600' : 'bg-blue-500 text-sm font-bold'}`}
+                  >
+                    {systemCount > 0 ? <CheckCircle className="h-5 w-5" /> : '2'}
+                  </div>
+                  <h3 className="font-semibold text-white">AI Inventory</h3>
                 </div>
-                <h3 className="font-semibold text-white">AI Inventory</h3>
+                <p className="text-sm text-slate-400">
+                  {systemCount > 0
+                    ? `${systemCount} system${systemCount === 1 ? '' : 's'} registered — add more`
+                    : 'Catalog all AI systems in use'}
+                </p>
               </div>
-              <p className="text-sm text-slate-400">
-                Catalog all AI systems in use — coming soon
-              </p>
+              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
+            </div>
+          </Link>
+        ) : (
+          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                    2
+                  </div>
+                  <h3 className="font-semibold text-white">AI Inventory</h3>
+                </div>
+                <p className="text-sm text-slate-400">
+                  Catalog all AI systems in use — unlocked after company setup
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Step 3: Risk Assessment */}
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
@@ -176,11 +211,17 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle
+              className={`h-6 w-6 flex-shrink-0 ${systemCount > 0 ? 'text-green-400' : hasWorkspace ? 'text-cyan-400' : 'text-slate-600'}`}
+            />
             <div>
               <h3 className="font-medium text-white">Begin AI inventory</h3>
               <p className="text-sm text-slate-400">
-                Document your AI systems — coming soon
+                {systemCount > 0
+                  ? `${systemCount} registered`
+                  : hasWorkspace
+                    ? 'Document your AI systems'
+                    : 'Unlocked after company setup'}
               </p>
             </div>
           </div>
