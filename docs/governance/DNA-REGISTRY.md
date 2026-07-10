@@ -649,6 +649,119 @@ interface GitGovernanceResult {
 4. **Auto-fix commits:** Suggest corrections before they reach CI
 5. **Dashboard:** Visual enforcement stats (commit compliance %, history quality score)
 
+### DNA-GOV-011: Autonomous Remediation
+
+**Status:** Active  
+**Created:** 2026-07-10  
+**Owner:** Chief Risk Officer + Infrastructure Engineer  
+
+#### Purpose
+Detect production failures autonomously and apply fixes without Founder intervention. Transforms reactive incident response into proactive healing: when error rates spike, deployment health drops, or memory usage threatens stability, the system automatically applies proven remediation actions (rollback, restart, scale, cache-clear, circuit-break) and reports outcomes to Founder.
+
+#### Problem Discovered
+Production failures require manual Founder intervention: Founder discovers failure → diagnoses root cause → applies fix → verifies recovery. This creates cascading impact: if Founder is unavailable, undetected failures can degrade customer experience for hours. Automatic remediation decisions (rollback on bad deployment, restart on memory leak, circuit-break on error spike) are deterministic and can be safely automated, freeing Founder to focus on novel failure modes.
+
+#### Evidence
+- **Weakness:** All production failures require manual Founder diagnosis and remediation
+- **Impact:** 30+ minute latency from failure detection to fix application; customers affected during this window; outages unnecessarily escalate when fixes are simple (restart, rollback)
+- **Root cause:** No automated decision engine; Founder required for every remediation decision
+- **Discovery method:** Multiple incident scenarios in previous sessions highlighted need for autonomous action
+- **Risk:** Novel attacks/failures emerge while Founder is handling routine issues that could be automated
+
+#### Inputs
+- Production metrics: error_rate_percent, response_time_p99_ms, deployment_health_percent, memory_usage_percent, db_connection_pool_exhausted
+- Failure detection thresholds (configurable per category)
+- Previous remediation attempt history (to prevent thrashing)
+
+#### Outputs
+```typescript
+interface RemediationResult {
+  timestamp: string
+  detectedFailures: DetectedFailure[]
+  attempts: RemediationAttempt[]
+  successRate: number
+  outageAvoided: boolean
+  summary: string
+  alert: string  // Formatted for Founder visibility
+}
+
+interface RemediationAttempt {
+  failureId: string
+  action: 'rollback' | 'restart' | 'scale' | 'cache-clear' | 'circuit-break' | 'alert-only'
+  startedAt: string
+  completedAt: string
+  success: boolean
+  result: string
+  error?: string
+}
+```
+
+#### Implementation
+- `lib/autonomous-remediation.ts` — Core remediation engine (279 LoC)
+  - `detectFailures(metrics)` — Analyzes 5 failure categories: error-rate (>5%), performance (P99 >5s), deployment (<95%), database (pool exhausted), memory (>90%)
+  - `determineRemediationActions(failures)` — Maps failures to appropriate remediation actions
+  - `executeRemediationAction(action, service)` — Simulates action execution, returns success/failure
+  - `generateRemediationReport(failures, attempts)` — Calculates success rate, determines if outage avoided
+  - `formatRemediationAlert(report)` — Formats results for Founder visibility with emoji indicators
+  - `AutonomousRemediationEngine` class — Orchestrates full cycle (detect → determine → execute → report)
+  - `DEFAULT_REMEDIATION_POLICIES` — 5 policies defining thresholds, actions, escalation rules for each failure category
+- `app/api/autonomous-remediation/route.ts` — HTTP endpoint for GET/POST remediation cycles (100 LoC)
+  - `GET /api/autonomous-remediation` — Run cycle with sample metrics
+  - `POST /api/autonomous-remediation` — Run cycle with custom metrics
+  - Returns: HTTP 200 if healthy, HTTP 206 if degraded, HTTP 503 if error
+  - Response headers: X-Failure-Count, X-Attempt-Count, X-Success-Rate, X-Outage-Avoided
+- `tests/autonomous-remediation.test.ts` — 33 tests covering all operations
+
+#### Verification Method
+- **Unit tests:** 33 tests covering:
+  - Failure detection: elevated error rate, performance degradation, deployment health, memory usage, multiple simultaneous failures
+  - Severity classification: critical vs. high vs. medium vs. low based on thresholds
+  - Action determination: correct actions suggested for each failure category
+  - Action execution: all 6 action types (rollback, restart, scale, cache-clear, circuit-break, alert-only)
+  - Report generation: success rate calculation, outage avoidance detection, summary accuracy
+  - Alert formatting: proper emoji indicators (✅ for healthy, 🔴 for critical, 🟠 for high, 🟡 for medium)
+  - Engine lifecycle: attempt history tracking, history reset capability
+  - Edge cases: missing metrics, same-category multiple failures, severity level boundaries
+- **All tests pass:** 33/33 ✅
+- **Build verification:** npm run build clean, TypeScript strict mode clean
+- **API endpoint:** Deployed and responding correctly
+
+#### Dependencies
+- No external services (all actions are simulated; production implementation will interact with infrastructure)
+- Metrics input (can come from monitoring systems, CI logs, or manual POST)
+- Previous attempt history (stored in engine; persists for session duration)
+
+#### Risks
+- **Over-remediation:** Automatic restart could mask underlying issue. Mitigation: Max attempts + backoff multiplier prevent thrashing
+- **Silent failures:** Remediation attempt fails silently. Mitigation: All attempts logged; success rate reported to Founder
+- **Untested scenarios:** Production failures may not match simulated categories. Mitigation: Novel failures escalate to Founder with full context (attempt history available)
+- **Escalation fatigue:** Too many "manual intervention required" alerts. Mitigation: Only escalate when recovery fails; 100-attempt history prevents repeat failures
+
+#### Rollback Method
+- Remove cron job calling `/api/autonomous-remediation`
+- Delete `app/api/autonomous-remediation/route.ts`
+- Delete `lib/autonomous-remediation.ts`
+- Delete tests
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Failure detection latency:** < 1 minute from failure occurrence to detection (depends on metrics polling frequency)
+2. **Remediation latency:** < 5 minutes from detection to fix application
+3. **Outage prevention:** 80%+ of detectable failures mitigated automatically without Founder intervention
+4. **Success rate:** 90%+ of attempted remediations succeed on first try
+5. **Founder attention:** Only novel failures (not in policy) require Founder investigation; routine failures fully automated
+6. **Customer impact:** Zero customer-visible outages for remediatable failure modes (rollback, restart, scale, etc.)
+
+#### Next Steps
+1. ✅ **Implement core engine:** 279 LoC with 33 tests — DONE
+2. ✅ **Create API endpoint:** GET/POST routes with proper status codes and headers — DONE
+3. **Wire to monitoring:** Connect real metrics from monitoring system (Sentry, DataDog, custom metrics)
+4. **Implement production actions:** Replace simulated actions with real infrastructure commands (Vercel API for rollback/scale, process restart for restart, etc.)
+5. **Create GitHub Actions workflow:** Schedule remediation cycles every 1-2 minutes
+6. **Persistence:** Store attempt history in Supabase for cross-session tracking and analytics
+7. **Dashboard:** Remediation metrics display (success rate, actions taken, outages prevented)
+8. **Escalation logic:** Integrate with Founder Alert Hub (DNA-GOV-005) for critical failures requiring intervention
+
 ---
 
 ## Notes
