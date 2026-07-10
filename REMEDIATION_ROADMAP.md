@@ -10,7 +10,7 @@
 
 ## Progress Log (verified)
 
-Completed on branch `claude/deployment-reality-audit-hog4gc` and verified by 82 unit/integration tests, HTTP smoke tests, and real-browser (Chromium) end-to-end checks, plus green lint/type-check/build:
+Completed on branch `claude/deployment-reality-audit-hog4gc` and verified by 90 unit/integration tests, HTTP smoke tests, and real-browser (Chromium) end-to-end checks, plus green lint/type-check/build:
 
 | Item                                      | What shipped                                                                                                                        | Evidence                                                              |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
@@ -18,14 +18,17 @@ Completed on branch `claude/deployment-reality-audit-hog4gc` and verified by 82 
 | **1.1 (partial)** Admin auth primitive    | Constant-time token check via `Authorization: Bearer` or `x-admin-token`; History UI acquires/stores the token, no dead button      | `tests/auth.test.ts`, `tests/historyRoute.test.ts`                    |
 | **Feature — per-row delete**              | History table now has a per-row Delete backed by the (previously unused) `:id` endpoint; shared token flow                          | Browser E2E: correct id deleted, other rows preserved, no page errors |
 | **API input hardening**                   | `POST /api/search` rejects non-string / empty / >200-char keywords with `400` instead of crashing with a `500`                      | HTTP + `tests/validation.test.ts` + `tests/searchRoute.test.ts`       |
-| **Test infrastructure**                   | Vitest + jsdom; **82 tests** over lib, all API routes, and components; wired into CI                                                | `npm test` green; CI `Test` step                                      |
+| **Audit log (P1)**                        | Append-only `audit_log` table + best-effort `recordAuditEvent`; destructive admin actions (clear-all, delete-one) now recorded      | `tests/auditLog.test.ts` + history-route audit assertion              |
+| **Test infrastructure**                   | Vitest + jsdom; **90 tests** over lib, all API routes, and components; wired into CI                                                | `npm test` green; CI `Test` step                                      |
 | **Perf / architecture**                   | Rate limiter extracted to a memory-bounded, tested module; Firecrawl→article normalization extracted from the route and tested      | `tests/rateLimit.test.ts`, `tests/firecrawl.test.ts`                  |
-| **Security headers**                      | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` on every route; `X-Powered-By` off                      | Observed over HTTP                                                    |
+| **Security headers + CSP**                | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Powered-By` off, plus a safe CSP subset             | Observed over HTTP; browser: 0 CSP violations, hydration works        |
+| **Dependencies**                          | Next.js bumped 14.2.15 → 14.2.35 (latest 14.2 security patch)                                                                       | build + 90 tests green                                                |
 | **A11y**                                  | Labelled search input; `role="alert"`/`role="status"` live regions; skip-to-content link; `prefers-reduced-motion`                  | Browser render check; lint/build green                                |
 | **UX**                                    | Fixed stale results-header; zero-results now a neutral empty state (not a red error); health endpoint `Cache-Control: no-store`     | `tests/healthRoute.test.ts`; browser render                           |
 | **Docs**                                  | README security/testing sections; `SECURITY.md`; `CONTRIBUTING.md` testing + `ADMIN_TOKEN`; removed broken screenshot links         | this repo                                                             |
 
-Still outstanding (unchanged priority): EU region confirmation/migration (needs your look-up), backups (needs spend), audit-log table (P1, pending), durable rate-limit store (P1, needs Upstash/KV + spend), Content-Security-Policy (P2), founder dashboard (P2), full end-user authentication (P0 for real users — needs your provider/product decision). Reads on `/api/history` remain public by design for the demo.
+Still outstanding — all genuinely gated on your input, not on more coding:
+**full end-user authentication** (P0 for real users — needs your provider/product decision), **EU region confirmation/migration** (needs your dashboard look-up), **backups** (needs spend), **durable rate-limit store** (P1 — needs Upstash/KV + spend), **Next.js 16 major upgrade** (clears the residual `npm audit` advisories but is a breaking migration — needs a scheduled effort), **nonce-based `script-src` CSP** (P2), and a **founder dashboard** (P2). The `audit_log` table must be created by running `supabase/schema.sql`. Reads on `/api/history` remain public by design for the demo.
 
 ---
 
