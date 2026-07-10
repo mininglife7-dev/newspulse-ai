@@ -9,6 +9,7 @@ import {
   Cpu,
   Loader2,
   Plus,
+  TrendingDown,
 } from 'lucide-react';
 
 interface AiSystem {
@@ -353,12 +354,23 @@ export default function InventoryPage() {
                           <span className="text-xs text-slate-500">No assessment started</span>
                         )}
                       </div>
-                      <Link
-                        href={`/assessment?ai_system_id=${s.id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-blue-600/40 bg-blue-950/30 px-3 py-1.5 text-xs font-medium text-blue-300 transition hover:border-blue-500 hover:bg-blue-950/50"
-                      >
-                        {isAssessmentComplete ? 'Review' : assessment ? 'Continue' : 'Start'} Assessment
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        {isAssessmentComplete && (
+                          <Link
+                            href={`/assessment-progress?ai_system_id=${s.id}`}
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-600/40 bg-emerald-950/30 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:border-emerald-500 hover:bg-emerald-950/50"
+                          >
+                            <TrendingDown className="h-3 w-3" />
+                            View Progress
+                          </Link>
+                        )}
+                        <Link
+                          href={`/assessment?ai_system_id=${s.id}`}
+                          className="inline-flex items-center gap-1 rounded-lg border border-blue-600/40 bg-blue-950/30 px-3 py-1.5 text-xs font-medium text-blue-300 transition hover:border-blue-500 hover:bg-blue-950/50"
+                        >
+                          {isAssessmentComplete ? 'Review' : assessment ? 'Continue' : 'Start'} Assessment
+                        </Link>
+                      </div>
                     </div>
                   </li>
                 );
