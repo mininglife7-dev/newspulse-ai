@@ -1,417 +1,427 @@
 /**
- * DNS-019: Post-Mortem Automation
+ * DNS-019: Incident Post-Mortem System
  *
- * Automatically capture incident learning and generate post-mortem reports.
- * Bridges remediation (DNS-011-012) with operational learning to prevent recurrence.
- * Enables data-driven improvement and institutional knowledge building.
+ * Captures learnings from resolved incidents to prevent recurrence.
+ * Extracts actionable insights, links to regressions, builds organizational memory.
  */
 
-export type PostMortemPhase = 'drafted' | 'scheduled' | 'in-progress' | 'completed' | 'archived';
+import { getIncidentMetrics } from './incident-metrics';
 
-export type PostMortemStatus = 'pending' | 'scheduled' | 'in-progress' | 'completed';
-
-export type FindingCategory = 'root-cause' | 'process-gap' | 'monitoring-blind-spot' | 'automation-opportunity' | 'communication-improvement';
-
-export interface PostMortemFinding {
-  id: string;
-  category: FindingCategory;
+export interface PostMortemLearning {
+  category: 'root-cause' | 'process-improvement' | 'training-need' | 'tool-gap' | 'detection-gap';
   title: string;
   description: string;
-  impact: 'high' | 'medium' | 'low';
+  actionable: boolean;
+  priority: 'high' | 'medium' | 'low';
   owner?: string;
-  actionItems?: string[];
+  dueDate?: string;
 }
 
-export interface PostMortemSummary {
-  title: string;
-  incidentId: string;
-  timestamp: string;
-  severity: string;
-  duration: number; // minutes
-  affectedServices: string[];
-  affectedUsers: number;
-  rootCause: string;
-  resolution: string;
-  preventionSteps: string[];
+export interface PostMortemInsight {
+  insight: string;
+  impact: 'high' | 'medium' | 'low';
+  supportingEvidence: string[];
 }
 
 export interface PostMortem {
-  id: string;
   incidentId: string;
+  issueNumber?: number;
+  title: string;
   timestamp: string;
-  scheduledFor?: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  category: string;
+  rootCause: string;
+  impactedUsers?: number;
+  impactedSystems: string[];
+  metrics: {
+    mttr: number;
+    mttd: number;
+    successRateImpact: number;
+  };
+  timelineEvents: TimelineEvent[];
+  learnings: PostMortemLearning[];
+  insights: PostMortemInsight[];
+  relatedRegressions: string[];
+  preventionPlan: PreventionPlan;
+  status: 'draft' | 'in-review' | 'approved' | 'completed';
+  createdBy?: string;
+  approvedBy?: string;
   completedAt?: string;
-  status: PostMortemStatus;
-  phase: PostMortemPhase;
-  summary: PostMortemSummary;
-  findings: PostMortemFinding[];
-  actionItems: { id: string; title: string; owner?: string; dueDate?: string; completed: boolean }[];
-  participants: { name: string; role: string; email: string }[];
-  reviewNotes: string;
+}
+
+export interface TimelineEvent {
+  timestamp: string;
+  actor: string;
+  action: string;
+  details?: string;
+}
+
+export interface PreventionPlan {
+  preventionMeasures: PreventionMeasure[];
+  targetImplementationDate?: string;
+  estimatedEffectiveness: number;
+}
+
+export interface PreventionMeasure {
+  measure: string;
+  category: 'process' | 'tooling' | 'training' | 'monitoring' | 'automation';
+  priority: 'high' | 'medium' | 'low';
+  owner?: string;
+  dueDate?: string;
+  status: 'not-started' | 'in-progress' | 'completed';
 }
 
 export interface PostMortemMetrics {
-  totalPostMortems: number;
-  completedPostMortems: number;
-  averageTimeToComplete: number; // hours
-  findingsByCategory: Record<FindingCategory, number>;
-  highImpactFindings: number;
-  avgActionsPerIncident: number;
-  completionRate: number; // percent
+  timestamp: string;
+  totalIncidents: number;
+  incidentsReviewed: number;
+  avgDurationMinutes: number;
+  topRootCauses: { cause: string; count: number }[];
+  topAffectedSystems: { system: string; count: number }[];
+  learningCategories: Record<string, number>;
+  preventionMeasuresNotStarted: number;
+  preventionMeasuresInProgress: number;
+  preventionMeasuresCompleted: number;
+  regressionRecurrenceRate: number;
 }
 
-// In-memory post-mortem store
-const postMortemStore = new Map<string, PostMortem>();
-const postMortemHistory: PostMortem[] = [];
+/**
+ * Determine if incident warrants a post-mortem
+ */
+export function shouldCreatePostMortem(
+  severity: string,
+  durationMinutes: number,
+  playbookEffectivenessImpact: number
+): boolean {
+  if (severity === 'critical' || severity === 'high') {
+    return true;
+  }
+  if (severity === 'medium' && durationMinutes > 30) {
+    return true;
+  }
+  if (severity === 'low' && playbookEffectivenessImpact > 15) {
+    return true;
+  }
+  return false;
+}
 
 /**
- * Create post-mortem for resolved incident
+ * Create post-mortem from incident data
  */
 export function createPostMortem(
   incidentId: string,
-  summary: PostMortemSummary,
-  scheduledFor?: Date
+  title: string,
+  startTime: string,
+  endTime: string,
+  severity: string,
+  category: string,
+  rootCause: string,
+  impactedSystems: string[],
+  metrics: ReturnType<typeof getIncidentMetrics>,
+  relatedRegressions: string[] = []
 ): PostMortem {
-  const id = `postmortem-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-  const postMortem: PostMortem = {
-    id,
-    incidentId,
-    timestamp: new Date().toISOString(),
-    scheduledFor: scheduledFor?.toISOString(),
-    status: scheduledFor ? 'scheduled' : 'pending',
-    phase: 'drafted',
-    summary,
-    findings: [],
-    actionItems: [],
-    participants: [],
-    reviewNotes: '',
-  };
-
-  postMortemStore.set(id, postMortem);
-  return postMortem;
-}
-
-/**
- * Add finding to post-mortem
- */
-export function addFinding(
-  postMortemId: string,
-  category: FindingCategory,
-  title: string,
-  description: string,
-  impact: 'high' | 'medium' | 'low'
-): PostMortem | undefined {
-  const pm = postMortemStore.get(postMortemId);
-  if (!pm) return undefined;
-
-  const finding: PostMortemFinding = {
-    id: `finding-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    category,
-    title,
-    description,
-    impact,
-  };
-
-  pm.findings.push(finding);
-  return pm;
-}
-
-/**
- * Add action item to post-mortem
- */
-export function addActionItem(
-  postMortemId: string,
-  title: string,
-  owner?: string,
-  dueDate?: Date
-): PostMortem | undefined {
-  const pm = postMortemStore.get(postMortemId);
-  if (!pm) return undefined;
-
-  const action = {
-    id: `action-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    title,
-    owner,
-    dueDate: dueDate?.toISOString(),
-    completed: false,
-  };
-
-  pm.actionItems.push(action);
-  return pm;
-}
-
-/**
- * Mark action item as completed
- */
-export function completeAction(postMortemId: string, actionId: string): PostMortem | undefined {
-  const pm = postMortemStore.get(postMortemId);
-  if (!pm) return undefined;
-
-  const action = pm.actionItems.find((a) => a.id === actionId);
-  if (action) {
-    action.completed = true;
-  }
-
-  return pm;
-}
-
-/**
- * Add participant to post-mortem
- */
-export function addParticipant(
-  postMortemId: string,
-  name: string,
-  role: string,
-  email: string
-): PostMortem | undefined {
-  const pm = postMortemStore.get(postMortemId);
-  if (!pm) return undefined;
-
-  // Avoid duplicates
-  if (!pm.participants.find((p) => p.email === email)) {
-    pm.participants.push({ name, role, email });
-  }
-
-  return pm;
-}
-
-/**
- * Schedule post-mortem meeting
- */
-export function schedulePostMortem(postMortemId: string, scheduledFor: Date): PostMortem | undefined {
-  const pm = postMortemStore.get(postMortemId);
-  if (!pm) return undefined;
-
-  pm.scheduledFor = scheduledFor.toISOString();
-  pm.status = 'scheduled';
-
-  return pm;
-}
-
-/**
- * Start post-mortem session
- */
-export function startPostMortemSession(postMortemId: string): PostMortem | undefined {
-  const pm = postMortemStore.get(postMortemId);
-  if (!pm) return undefined;
-
-  pm.status = 'in-progress';
-  pm.phase = 'in-progress';
-
-  return pm;
-}
-
-/**
- * Complete post-mortem
- */
-export function completePostMortem(postMortemId: string, reviewNotes: string): PostMortem | undefined {
-  const pm = postMortemStore.get(postMortemId);
-  if (!pm) return undefined;
-
-  pm.status = 'completed';
-  pm.phase = 'completed';
-  pm.completedAt = new Date().toISOString();
-  pm.reviewNotes = reviewNotes;
-
-  postMortemHistory.push(pm);
-  postMortemStore.delete(postMortemId);
-
-  return pm;
-}
-
-/**
- * Get post-mortem by ID
- */
-export function getPostMortem(postMortemId: string): PostMortem | undefined {
-  return postMortemStore.get(postMortemId);
-}
-
-/**
- * Get post-mortem by incident ID
- */
-export function getPostMortemByIncident(incidentId: string): PostMortem | undefined {
-  for (const [, pm] of postMortemStore) {
-    if (pm.incidentId === incidentId) {
-      return pm;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Get all active post-mortems
- */
-export function getActivePostMortems(): PostMortem[] {
-  return Array.from(postMortemStore.values()).sort((a, b) =>
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
-}
-
-/**
- * Get post-mortems by status
- */
-export function getPostMortemsByStatus(status: PostMortemStatus): PostMortem[] {
-  return Array.from(postMortemStore.values())
-    .filter((pm) => pm.status === status)
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-}
-
-/**
- * Generate post-mortem metrics
- */
-export function generatePostMortemMetrics(): PostMortemMetrics {
-  const allPostMortems = [...postMortemHistory, ...Array.from(postMortemStore.values())];
-  const completed = postMortemHistory;
-
-  let totalTime = 0;
-  const findingsByCategory: Record<FindingCategory, number> = {
-    'root-cause': 0,
-    'process-gap': 0,
-    'monitoring-blind-spot': 0,
-    'automation-opportunity': 0,
-    'communication-improvement': 0,
-  };
-
-  let highImpactCount = 0;
-  let totalActions = 0;
-
-  for (const pm of allPostMortems) {
-    if (pm.completedAt) {
-      const completedTime = new Date(pm.completedAt).getTime();
-      const createdTime = new Date(pm.timestamp).getTime();
-      totalTime += (completedTime - createdTime) / (1000 * 60 * 60); // hours
-    }
-
-    pm.findings.forEach((f) => {
-      findingsByCategory[f.category]++;
-      if (f.impact === 'high') highImpactCount++;
-    });
-
-    totalActions += pm.actionItems.length;
-  }
-
-  const averageTime = completed.length > 0 ? totalTime / completed.length : 0;
-  const avgActions = allPostMortems.length > 0 ? totalActions / allPostMortems.length : 0;
-  const completionRate = allPostMortems.length > 0 ? Math.round((completed.length / allPostMortems.length) * 100) : 0;
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
 
   return {
-    totalPostMortems: allPostMortems.length,
-    completedPostMortems: completed.length,
-    averageTimeToComplete: Math.round(averageTime * 10) / 10,
-    findingsByCategory,
-    highImpactFindings: highImpactCount,
-    avgActionsPerIncident: Math.round(avgActions * 10) / 10,
-    completionRate,
+    incidentId,
+    title,
+    timestamp: new Date().toISOString(),
+    startTime,
+    endTime,
+    durationMinutes,
+    severity: severity as 'critical' | 'high' | 'medium' | 'low',
+    category,
+    rootCause,
+    impactedSystems,
+    metrics: {
+      mttr: metrics.averageMTTR,
+      mttd: metrics.averageMTTD,
+      successRateImpact: 100 - metrics.successRate,
+    },
+    timelineEvents: [],
+    learnings: [],
+    insights: [],
+    relatedRegressions,
+    preventionPlan: {
+      preventionMeasures: [],
+      estimatedEffectiveness: 0,
+    },
+    status: 'draft',
   };
 }
 
 /**
- * Format post-mortem report as markdown
+ * Extract learnings from incident
  */
-export function formatPostMortemReport(postMortem: PostMortem): string {
-  const lines = [
-    '# Post-Mortem Report',
-    '',
-    `**Title:** ${postMortem.summary.title}`,
-    `**Incident ID:** ${postMortem.summary.incidentId}`,
-    `**Date:** ${new Date(postMortem.timestamp).toLocaleDateString()}`,
-    '',
-    '## Incident Summary',
-    `- **Severity:** ${postMortem.summary.severity}`,
-    `- **Duration:** ${postMortem.summary.duration} minutes`,
-    `- **Affected Services:** ${postMortem.summary.affectedServices.join(', ')}`,
-    `- **Affected Users:** ${postMortem.summary.affectedUsers.toLocaleString()}`,
-    '',
-    '## Root Cause',
-    postMortem.summary.rootCause,
-    '',
-    '## Resolution',
-    postMortem.summary.resolution,
-    '',
-  ];
+export function extractLearnings(postMortem: PostMortem): PostMortemLearning[] {
+  const learnings: PostMortemLearning[] = [];
 
-  if (postMortem.findings.length > 0) {
-    lines.push('## Key Findings');
-    postMortem.findings.forEach((f) => {
-      const impact = f.impact === 'high' ? '🔴' : f.impact === 'medium' ? '🟡' : '🟢';
-      lines.push(`${impact} **${f.title}** (${f.category})`);
-      lines.push(`   - ${f.description}`);
-      if (f.owner) {
-        lines.push(`   - Owner: ${f.owner}`);
-      }
-    });
-    lines.push('');
-  }
-
-  if (postMortem.actionItems.length > 0) {
-    lines.push('## Action Items');
-    postMortem.actionItems.forEach((a) => {
-      const status = a.completed ? '✓' : '⚠️';
-      lines.push(`${status} ${a.title}`);
-      if (a.owner) {
-        lines.push(`   - Owner: ${a.owner}`);
-      }
-      if (a.dueDate) {
-        lines.push(`   - Due: ${new Date(a.dueDate).toLocaleDateString()}`);
-      }
-    });
-    lines.push('');
-  }
-
-  if (postMortem.participants.length > 0) {
-    lines.push('## Participants');
-    postMortem.participants.forEach((p) => {
-      lines.push(`- ${p.name} (${p.role})`);
-    });
-    lines.push('');
-  }
-
-  if (postMortem.summary.preventionSteps.length > 0) {
-    lines.push('## Prevention Steps');
-    postMortem.summary.preventionSteps.forEach((step, i) => {
-      lines.push(`${i + 1}. ${step}`);
-    });
-  }
-
-  return lines.join('\n');
-}
-
-/**
- * Reset post-mortem store (testing/admin only)
- */
-export function resetPostMortemStore(): void {
-  postMortemStore.clear();
-  postMortemHistory.length = 0;
-}
-
-/**
- * Get post-mortem trend (incidents with high-impact findings)
- */
-export function getHighImpactTrends(): { category: FindingCategory; count: number; examples: string[] }[] {
-  const trends: Record<FindingCategory, { count: number; examples: Set<string> }> = {
-    'root-cause': { count: 0, examples: new Set() },
-    'process-gap': { count: 0, examples: new Set() },
-    'monitoring-blind-spot': { count: 0, examples: new Set() },
-    'automation-opportunity': { count: 0, examples: new Set() },
-    'communication-improvement': { count: 0, examples: new Set() },
-  };
-
-  postMortemHistory.forEach((pm) => {
-    pm.findings
-      .filter((f) => f.impact === 'high')
-      .forEach((f) => {
-        trends[f.category].count++;
-        trends[f.category].examples.add(f.title);
-      });
+  learnings.push({
+    category: 'root-cause',
+    title: `Root Cause: ${postMortem.rootCause}`,
+    description: `${postMortem.title} was caused by: ${postMortem.rootCause}`,
+    actionable: true,
+    priority: postMortem.severity === 'critical' ? 'high' : 'medium',
   });
 
-  return Object.entries(trends)
-    .filter(([, v]) => v.count > 0)
-    .map(([category, data]) => ({
-      category: category as FindingCategory,
-      count: data.count,
-      examples: Array.from(data.examples).slice(0, 3),
-    }))
-    .sort((a, b) => b.count - a.count);
+  if (postMortem.metrics.mttd > 2) {
+    learnings.push({
+      category: 'detection-gap',
+      title: 'Detection Time Improvement',
+      description: `Time to detect was ${postMortem.metrics.mttd.toFixed(1)} minutes. Consider improving monitoring/alerting.`,
+      actionable: true,
+      priority: 'medium',
+    });
+  }
+
+  if (postMortem.metrics.mttr > 20) {
+    learnings.push({
+      category: 'process-improvement',
+      title: 'Resolution Process Optimization',
+      description: `Time to resolve was ${postMortem.metrics.mttr} minutes. Review incident response procedures.`,
+      actionable: true,
+      priority: postMortem.severity === 'critical' ? 'high' : 'medium',
+    });
+  }
+
+  if (postMortem.metrics.successRateImpact > 5) {
+    learnings.push({
+      category: 'tool-gap',
+      title: 'Playbook Effectiveness Issue',
+      description: `Success rate impacted by ${postMortem.metrics.successRateImpact.toFixed(1)}%. Review and enhance relevant playbooks.`,
+      actionable: true,
+      priority: 'medium',
+    });
+  }
+
+  if (postMortem.impactedSystems.length > 1) {
+    learnings.push({
+      category: 'process-improvement',
+      title: 'Multi-System Correlation',
+      description: `Incident affected ${postMortem.impactedSystems.join(', ')}. Improve system dependency monitoring.`,
+      actionable: true,
+      priority: 'medium',
+    });
+  }
+
+  return learnings;
+}
+
+/**
+ * Generate insights from post-mortem analysis
+ */
+export function generateInsights(postMortem: PostMortem): PostMortemInsight[] {
+  const insights: PostMortemInsight[] = [];
+
+  const severityInsight = `Severity classification of "${postMortem.severity}" confirmed by ${postMortem.impactedSystems.length} affected systems and ${postMortem.durationMinutes} minute resolution time.`;
+  insights.push({
+    insight: severityInsight,
+    impact: postMortem.severity === 'critical' ? 'high' : 'medium',
+    supportingEvidence: [
+      `Systems affected: ${postMortem.impactedSystems.join(', ')}`,
+      `Duration: ${postMortem.durationMinutes} minutes`,
+      `MTTR: ${postMortem.metrics.mttr} minutes`,
+    ],
+  });
+
+  insights.push({
+    insight: `Primary factor was: ${postMortem.rootCause}. Prevention measures should focus on eliminating this class of failure.`,
+    impact: postMortem.severity === 'critical' ? 'high' : 'medium',
+    supportingEvidence: [
+      `MTTD: ${postMortem.metrics.mttd.toFixed(1)} minutes`,
+      `Category: ${postMortem.category}`,
+    ],
+  });
+
+  if (postMortem.metrics.mttd < 1) {
+    insights.push({
+      insight: 'Detection system performed excellently with sub-1 minute MTTD. Maintain current monitoring levels.',
+      impact: 'high',
+      supportingEvidence: [`MTTD: ${postMortem.metrics.mttd.toFixed(1)} minutes`],
+    });
+  } else if (postMortem.metrics.mttd > 5) {
+    insights.push({
+      insight: 'Detection was delayed. Consider adding alerting for this failure class.',
+      impact: 'medium',
+      supportingEvidence: [`MTTD: ${postMortem.metrics.mttd.toFixed(1)} minutes`],
+    });
+  }
+
+  return insights;
+}
+
+/**
+ * Create prevention plan based on learnings
+ */
+export function createPreventionPlan(learnings: PostMortemLearning[]): PreventionPlan {
+  const measures: PreventionMeasure[] = [];
+
+  learnings.forEach((learning) => {
+    if (!learning.actionable) return;
+
+    let category: 'process' | 'tooling' | 'training' | 'monitoring' | 'automation' = 'process';
+    if (learning.category === 'detection-gap') {
+      category = 'monitoring';
+    } else if (learning.category === 'tool-gap') {
+      category = 'tooling';
+    } else if (learning.category === 'training-need') {
+      category = 'training';
+    }
+
+    measures.push({
+      measure: learning.title,
+      category,
+      priority: learning.priority,
+      status: 'not-started',
+    });
+  });
+
+  return {
+    preventionMeasures: measures,
+    estimatedEffectiveness: Math.min(100, measures.length * 15),
+  };
+}
+
+/**
+ * Analyze post-mortem metrics across incidents
+ */
+export function analyzePostMortemMetrics(postMortems: PostMortem[]): PostMortemMetrics {
+  if (postMortems.length === 0) {
+    return {
+      timestamp: new Date().toISOString(),
+      totalIncidents: 0,
+      incidentsReviewed: 0,
+      avgDurationMinutes: 0,
+      topRootCauses: [],
+      topAffectedSystems: [],
+      learningCategories: {},
+      preventionMeasuresNotStarted: 0,
+      preventionMeasuresInProgress: 0,
+      preventionMeasuresCompleted: 0,
+      regressionRecurrenceRate: 0,
+    };
+  }
+
+  const reviewed = postMortems.filter((pm) => pm.status !== 'draft');
+  const avgDuration =
+    reviewed.reduce((sum, pm) => sum + pm.durationMinutes, 0) / Math.max(1, reviewed.length);
+
+  const rootCauses = new Map<string, number>();
+  const affectedSystems = new Map<string, number>();
+  const learningCounts: Record<string, number> = {};
+  let preventionNotStarted = 0;
+  let preventionInProgress = 0;
+  let preventionCompleted = 0;
+
+  postMortems.forEach((pm) => {
+    rootCauses.set(pm.rootCause, (rootCauses.get(pm.rootCause) || 0) + 1);
+    pm.impactedSystems.forEach((sys) => {
+      affectedSystems.set(sys, (affectedSystems.get(sys) || 0) + 1);
+    });
+    pm.learnings.forEach((learning) => {
+      learningCounts[learning.category] = (learningCounts[learning.category] || 0) + 1;
+    });
+    pm.preventionPlan.preventionMeasures.forEach((measure) => {
+      if (measure.status === 'not-started') preventionNotStarted++;
+      if (measure.status === 'in-progress') preventionInProgress++;
+      if (measure.status === 'completed') preventionCompleted++;
+    });
+  });
+
+  const recurringRootCauses = postMortems.filter(
+    (pm) => postMortems.filter((other) => other.rootCause === pm.rootCause).length > 1
+  ).length;
+  const regressionRecurrenceRate =
+    postMortems.length > 0 ? (recurringRootCauses / postMortems.length) * 100 : 0;
+
+  return {
+    timestamp: new Date().toISOString(),
+    totalIncidents: postMortems.length,
+    incidentsReviewed: reviewed.length,
+    avgDurationMinutes: avgDuration,
+    topRootCauses: Array.from(rootCauses.entries())
+      .map(([cause, count]) => ({ cause, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5),
+    topAffectedSystems: Array.from(affectedSystems.entries())
+      .map(([system, count]) => ({ system, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5),
+    learningCategories: learningCounts,
+    preventionMeasuresNotStarted: preventionNotStarted,
+    preventionMeasuresInProgress: preventionInProgress,
+    preventionMeasuresCompleted: preventionCompleted,
+    regressionRecurrenceRate,
+  };
+}
+
+/**
+ * Format post-mortem for GitHub issue
+ */
+export function formatPostMortemIssue(postMortem: PostMortem): { title: string; body: string; labels: string[] } {
+  const title = `Post-Mortem: ${postMortem.title} [${postMortem.severity.toUpperCase()}]`;
+
+  let body = `## Incident Overview\n\n`;
+  body += `**Incident ID:** ${postMortem.incidentId}\n`;
+  body += `**Severity:** ${postMortem.severity}\n`;
+  body += `**Category:** ${postMortem.category}\n`;
+  body += `**Duration:** ${postMortem.durationMinutes} minutes\n`;
+  body += `**Start Time:** ${postMortem.startTime}\n`;
+  body += `**End Time:** ${postMortem.endTime}\n\n`;
+
+  body += `## Impact\n\n`;
+  body += `**Affected Systems:** ${postMortem.impactedSystems.join(', ')}\n`;
+  body += `**Success Rate Impact:** ${postMortem.metrics.successRateImpact.toFixed(1)}%\n`;
+  body += `**Detection Time (MTTD):** ${postMortem.metrics.mttd.toFixed(1)} minutes\n`;
+  body += `**Resolution Time (MTTR):** ${postMortem.metrics.mttr} minutes\n\n`;
+
+  body += `## Root Cause\n\n`;
+  body += `${postMortem.rootCause}\n\n`;
+
+  if (postMortem.learnings.length > 0) {
+    body += `## Key Learnings\n\n`;
+    postMortem.learnings.forEach((learning) => {
+      body += `- **[${learning.category.toUpperCase()}]** ${learning.title}: ${learning.description}\n`;
+    });
+    body += `\n`;
+  }
+
+  if (postMortem.insights.length > 0) {
+    body += `## Insights\n\n`;
+    postMortem.insights.forEach((insight) => {
+      body += `- ${insight.insight}\n`;
+    });
+    body += `\n`;
+  }
+
+  if (postMortem.preventionPlan.preventionMeasures.length > 0) {
+    body += `## Prevention Plan\n\n`;
+    body += `**Estimated Effectiveness:** ${postMortem.preventionPlan.estimatedEffectiveness}%\n\n`;
+    postMortem.preventionPlan.preventionMeasures.forEach((measure) => {
+      body += `- [${measure.status === 'completed' ? 'x' : ' '}] ${measure.measure} (${measure.category})\n`;
+    });
+    body += `\n`;
+  }
+
+  if (postMortem.relatedRegressions.length > 0) {
+    body += `## Related Regressions\n\n`;
+    postMortem.relatedRegressions.forEach((regression) => {
+      body += `- Linked to regression detection: #${regression}\n`;
+    });
+    body += `\n`;
+  }
+
+  body += `---\n`;
+  body += `*This is an automated post-mortem from DNS-019 (Incident Post-Mortem System). Review, approve, and track prevention measures.*\n`;
+
+  return {
+    title,
+    body,
+    labels: ['post-mortem', 'incident-response', `severity-${postMortem.severity}`],
+  };
 }

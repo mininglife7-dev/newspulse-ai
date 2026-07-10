@@ -1,605 +1,591 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createPostMortem,
-  addFinding,
-  addActionItem,
-  completeAction,
-  addParticipant,
-  schedulePostMortem,
-  startPostMortemSession,
-  completePostMortem,
-  getPostMortem,
-  getPostMortemByIncident,
-  getActivePostMortems,
-  getPostMortemsByStatus,
-  generatePostMortemMetrics,
-  formatPostMortemReport,
-  resetPostMortemStore,
-  getHighImpactTrends,
-  type PostMortemSummary,
+  extractLearnings,
+  generateInsights,
+  createPreventionPlan,
+  analyzePostMortemMetrics,
+  formatPostMortemIssue,
+  shouldCreatePostMortem,
+  type PostMortem,
 } from '@/lib/post-mortem';
+import type { IncidentMetrics } from '@/lib/incident-metrics';
 
-describe('Post-Mortem Automation', () => {
-  beforeEach(() => {
-    resetPostMortemStore();
+describe('Post-Mortem System', () => {
+  const createMockMetrics = (overrides: Partial<IncidentMetrics>): IncidentMetrics => ({
+    totalIncidents: 10,
+    resolvedIncidents: 9,
+    unresolvedIncidents: 1,
+    averageMTTR: 15,
+    averageMTTD: 2.5,
+    successRate: 80,
+    playbookEffectiveness: {
+      deployment: 85,
+      database: 75,
+      api: 80,
+    },
+    medianResolutionTime: 14,
+    p95ResolutionTime: 30,
+    p99ResolutionTime: 45,
+    trendDirection: 'stable',
+    trendMagnitude: 0,
+    ...overrides,
   });
 
-  describe('createPostMortem', () => {
-    it('should create post-mortem for resolved incident', () => {
-      const summary: PostMortemSummary = {
-        title: 'API Deployment Outage - July 10',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api', 'web'],
-        affectedUsers: 5000,
-        rootCause: 'Database connection pool exhaustion',
-        resolution: 'Rolled back to previous stable version',
-        preventionSteps: ['Increase connection pool size', 'Add better monitoring'],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-
-      expect(pm.incidentId).toBe('incident-123');
-      expect(pm.status).toBe('pending');
-      expect(pm.phase).toBe('drafted');
-      expect(pm.summary.title).toBe('API Deployment Outage - July 10');
-    });
-
-    it('should create post-mortem with scheduled date', () => {
-      const summary: PostMortemSummary = {
-        title: 'Database Failure',
-        incidentId: 'incident-456',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 30,
-        affectedServices: ['database'],
-        affectedUsers: 10000,
-        rootCause: 'Disk space exhaustion',
-        resolution: 'Purged old logs',
-        preventionSteps: [],
-      };
-
-      const scheduledDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      const pm = createPostMortem('incident-456', summary, scheduledDate);
-
-      expect(pm.status).toBe('scheduled');
-      expect(pm.scheduledFor).toBeDefined();
-    });
-  });
-
-  describe('addFinding', () => {
-    it('should add finding to post-mortem', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-      const updated = addFinding(
-        pm.id,
-        'monitoring-blind-spot',
-        'Connection pool not monitored',
-        'We did not have alerts on connection pool percentage',
-        'high'
+  describe('Post-Mortem Creation', () => {
+    it('should create post-mortem from incident data', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-001',
+        'Database Connection Pool Exhaustion',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'high',
+        'database',
+        'Connection pool max size too low for traffic spike',
+        ['database', 'api'],
+        metrics
       );
 
-      expect(updated?.findings).toHaveLength(1);
-      expect(updated?.findings[0].category).toBe('monitoring-blind-spot');
-      expect(updated?.findings[0].impact).toBe('high');
+      expect(postMortem.incidentId).toBe('incident-001');
+      expect(postMortem.durationMinutes).toBe(25);
+      expect(postMortem.severity).toBe('high');
+      expect(postMortem.status).toBe('draft');
+      expect(postMortem.impactedSystems).toContain('database');
     });
 
-    it('should add multiple findings', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-
-      addFinding(pm.id, 'monitoring-blind-spot', 'No alerts', 'Description 1', 'high');
-      addFinding(pm.id, 'process-gap', 'No runbook', 'Description 2', 'medium');
-      addFinding(pm.id, 'automation-opportunity', 'Manual recovery', 'Description 3', 'low');
-
-      const updated = getPostMortem(pm.id);
-
-      expect(updated?.findings).toHaveLength(3);
-    });
-  });
-
-  describe('addActionItem', () => {
-    it('should add action item to post-mortem', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-      const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-      const updated = addActionItem(pm.id, 'Increase connection pool size', 'Sarah', dueDate);
-
-      expect(updated?.actionItems).toHaveLength(1);
-      expect(updated?.actionItems[0].title).toBe('Increase connection pool size');
-      expect(updated?.actionItems[0].owner).toBe('Sarah');
-      expect(updated?.actionItems[0].completed).toBe(false);
-    });
-  });
-
-  describe('completeAction', () => {
-    it('should mark action as completed', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-      addActionItem(pm.id, 'Update monitoring rules', 'Sarah');
-
-      const updated = getPostMortem(pm.id)!;
-      const actionId = updated.actionItems[0].id;
-
-      completeAction(pm.id, actionId);
-
-      const final = getPostMortem(pm.id)!;
-      expect(final.actionItems[0].completed).toBe(true);
-    });
-  });
-
-  describe('addParticipant', () => {
-    it('should add participant to post-mortem', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-
-      addParticipant(pm.id, 'Sarah', 'Engineering Lead', 'sarah@example.com');
-      addParticipant(pm.id, 'John', 'On-call Engineer', 'john@example.com');
-
-      const updated = getPostMortem(pm.id);
-
-      expect(updated?.participants).toHaveLength(2);
-    });
-
-    it('should avoid duplicate participants', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-
-      addParticipant(pm.id, 'Sarah', 'Engineering Lead', 'sarah@example.com');
-      addParticipant(pm.id, 'Sarah Different', 'Different Role', 'sarah@example.com');
-
-      const updated = getPostMortem(pm.id);
-
-      expect(updated?.participants).toHaveLength(1);
-    });
-  });
-
-  describe('schedulePostMortem', () => {
-    it('should schedule post-mortem meeting', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-      const scheduleDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-      const updated = schedulePostMortem(pm.id, scheduleDate);
-
-      expect(updated?.status).toBe('scheduled');
-      expect(updated?.scheduledFor).toBeDefined();
-    });
-  });
-
-  describe('startPostMortemSession', () => {
-    it('should start post-mortem session', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-      const updated = startPostMortemSession(pm.id);
-
-      expect(updated?.status).toBe('in-progress');
-      expect(updated?.phase).toBe('in-progress');
-    });
-  });
-
-  describe('completePostMortem', () => {
-    it('should complete post-mortem', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-      const completed = completePostMortem(pm.id, 'Session completed successfully with all findings documented');
-
-      expect(completed?.status).toBe('completed');
-      expect(completed?.phase).toBe('completed');
-      expect(completed?.completedAt).toBeDefined();
-    });
-  });
-
-  describe('getPostMortemByIncident', () => {
-    it('should retrieve post-mortem by incident ID', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      createPostMortem('incident-123', summary);
-
-      const retrieved = getPostMortemByIncident('incident-123');
-
-      expect(retrieved).toBeDefined();
-      expect(retrieved?.incidentId).toBe('incident-123');
-    });
-  });
-
-  describe('getActivePostMortems', () => {
-    it('should retrieve all active post-mortems sorted by date', () => {
-      const summary1: PostMortemSummary = {
-        title: 'Outage 1',
-        incidentId: 'incident-123',
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const summary2: PostMortemSummary = {
-        title: 'Outage 2',
-        incidentId: 'incident-456',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 30,
-        affectedServices: ['database'],
-        affectedUsers: 10000,
-        rootCause: 'Disk space',
-        resolution: 'Purge logs',
-        preventionSteps: [],
-      };
-
-      createPostMortem('incident-123', summary1);
-      // Add small delay to ensure different creation times
-      const start = Date.now();
-      while (Date.now() - start < 10) {} // ~10ms delay
-      createPostMortem('incident-456', summary2);
-
-      const active = getActivePostMortems();
-
-      expect(active).toHaveLength(2);
-      // Most recent (incident-456) should be first since it was created second
-      const incidentIds = active.map((pm) => pm.incidentId);
-      expect(incidentIds).toEqual(['incident-456', 'incident-123']);
-    });
-  });
-
-  describe('getPostMortemsByStatus', () => {
-    it('should retrieve post-mortems by status', () => {
-      const summary1: PostMortemSummary = {
-        title: 'Scheduled',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const summary2: PostMortemSummary = {
-        title: 'In Progress',
-        incidentId: 'incident-456',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 30,
-        affectedServices: ['database'],
-        affectedUsers: 10000,
-        rootCause: 'Disk space',
-        resolution: 'Purge logs',
-        preventionSteps: [],
-      };
-
-      const pm1 = createPostMortem('incident-123', summary1);
-      const pm2 = createPostMortem('incident-456', summary2);
-
-      schedulePostMortem(pm1.id, new Date());
-      startPostMortemSession(pm2.id);
-
-      const scheduled = getPostMortemsByStatus('scheduled');
-      const inProgress = getPostMortemsByStatus('in-progress');
-
-      expect(scheduled).toHaveLength(1);
-      expect(inProgress).toHaveLength(1);
-    });
-  });
-
-  describe('generatePostMortemMetrics', () => {
-    it('should calculate post-mortem metrics', () => {
-      const summary: PostMortemSummary = {
-        title: 'Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-
-      addFinding(pm.id, 'root-cause', 'Found root cause', 'Pool exhaustion', 'high');
-      addFinding(pm.id, 'process-gap', 'No runbook', 'Missing procedures', 'high');
-      addFinding(pm.id, 'monitoring-blind-spot', 'No alerts', 'No monitoring', 'medium');
-
-      addActionItem(pm.id, 'Action 1');
-      addActionItem(pm.id, 'Action 2');
-
-      completePostMortem(pm.id, 'Completed');
-
-      const metrics = generatePostMortemMetrics();
-
-      expect(metrics.totalPostMortems).toBe(1);
-      expect(metrics.completedPostMortems).toBe(1);
-      expect(metrics.completionRate).toBe(100);
-      expect(metrics.highImpactFindings).toBe(2);
-      expect(metrics.avgActionsPerIncident).toBe(2);
-    });
-  });
-
-  describe('formatPostMortemReport', () => {
-    it('should format post-mortem as markdown', () => {
-      const summary: PostMortemSummary = {
-        title: 'API Deployment Outage',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api', 'web'],
-        affectedUsers: 5000,
-        rootCause: 'Database connection pool exhaustion',
-        resolution: 'Rolled back to previous stable version',
-        preventionSteps: [
-          'Increase connection pool size from 50 to 100',
-          'Add connection pool monitoring alerts',
-        ],
-      };
-
-      const pm = createPostMortem('incident-123', summary);
-
-      addFinding(
-        pm.id,
-        'monitoring-blind-spot',
-        'Connection pool not monitored',
-        'No alerts on connection pool percentage',
-        'high'
+    it('should calculate duration correctly', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-002',
+        'API Timeout',
+        '2026-07-10T10:00:00Z',
+        '2026-07-10T10:35:30Z',
+        'medium',
+        'api',
+        'Slow database query',
+        ['api'],
+        metrics
       );
 
-      addActionItem(pm.id, 'Update monitoring rules', 'Sarah');
-      addParticipant(pm.id, 'Sarah', 'Engineering Lead', 'sarah@example.com');
+      expect(postMortem.durationMinutes).toBe(36);
+    });
 
-      const report = formatPostMortemReport(pm);
+    it('should include incident metrics in post-mortem', () => {
+      const metrics = createMockMetrics({ averageMTTR: 20, averageMTTD: 3.5, successRate: 75 });
+      const postMortem = createPostMortem(
+        'incident-003',
+        'Auth Service Down',
+        '2026-07-10T14:00:00Z',
+        '2026-07-10T14:20:00Z',
+        'critical',
+        'auth',
+        'Certificate expired',
+        ['auth', 'api'],
+        metrics
+      );
 
-      expect(report).toContain('Post-Mortem Report');
-      expect(report).toContain('API Deployment Outage');
-      expect(report).toContain('Root Cause');
-      expect(report).toContain('Database connection pool exhaustion');
-      expect(report).toContain('Key Findings');
-      expect(report).toContain('Connection pool not monitored');
-      expect(report).toContain('Action Items');
-      expect(report).toContain('Update monitoring rules');
-      expect(report).toContain('Participants');
-      expect(report).toContain('Sarah');
+      expect(postMortem.metrics.mttr).toBe(20);
+      expect(postMortem.metrics.mttd).toBe(3.5);
+      expect(postMortem.metrics.successRateImpact).toBe(25);
+    });
+
+    it('should handle related regressions', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-004',
+        'Memory Leak',
+        '2026-07-10T16:00:00Z',
+        '2026-07-10T16:45:00Z',
+        'high',
+        'deployment',
+        'New code version leaked memory',
+        ['api'],
+        metrics,
+        ['82', '83']
+      );
+
+      expect(postMortem.relatedRegressions).toContain('82');
+      expect(postMortem.relatedRegressions).toContain('83');
     });
   });
 
-  describe('getHighImpactTrends', () => {
-    it('should identify high-impact finding trends', () => {
-      const summary1: PostMortemSummary = {
-        title: 'Outage 1',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api'],
-        affectedUsers: 5000,
-        rootCause: 'Pool exhaustion',
-        resolution: 'Rollback',
-        preventionSteps: [],
-      };
+  describe('Post-Mortem Trigger Logic', () => {
+    it('should require post-mortem for critical incidents', () => {
+      expect(shouldCreatePostMortem('critical', 5, 2)).toBe(true);
+    });
 
-      const summary2: PostMortemSummary = {
-        title: 'Outage 2',
-        incidentId: 'incident-456',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 30,
-        affectedServices: ['database'],
-        affectedUsers: 10000,
-        rootCause: 'Disk space',
-        resolution: 'Purge logs',
-        preventionSteps: [],
-      };
+    it('should require post-mortem for high-severity incidents', () => {
+      expect(shouldCreatePostMortem('high', 5, 2)).toBe(true);
+    });
 
-      const pm1 = createPostMortem('incident-123', summary1);
-      const pm2 = createPostMortem('incident-456', summary2);
+    it('should require post-mortem for medium incidents > 30 minutes', () => {
+      expect(shouldCreatePostMortem('medium', 35, 2)).toBe(true);
+    });
 
-      addFinding(pm1.id, 'monitoring-blind-spot', 'Issue 1', 'Desc', 'high');
-      addFinding(pm1.id, 'monitoring-blind-spot', 'Issue 2', 'Desc', 'high');
+    it('should not require post-mortem for medium incidents < 30 minutes', () => {
+      expect(shouldCreatePostMortem('medium', 20, 2)).toBe(false);
+    });
 
-      addFinding(pm2.id, 'monitoring-blind-spot', 'Issue 3', 'Desc', 'high');
-      addFinding(pm2.id, 'process-gap', 'Issue 4', 'Desc', 'high');
+    it('should require post-mortem for low incidents with high playbook impact', () => {
+      expect(shouldCreatePostMortem('low', 5, 20)).toBe(true);
+    });
 
-      completePostMortem(pm1.id, 'Done');
-      completePostMortem(pm2.id, 'Done');
-
-      const trends = getHighImpactTrends();
-
-      expect(trends.length).toBeGreaterThan(0);
-      expect(trends[0].category).toBe('monitoring-blind-spot');
-      expect(trends[0].count).toBe(3);
+    it('should not require post-mortem for low incidents with low playbook impact', () => {
+      expect(shouldCreatePostMortem('low', 5, 10)).toBe(false);
     });
   });
 
-  describe('integration: full post-mortem lifecycle', () => {
-    it('should handle complete post-mortem workflow', () => {
-      const summary: PostMortemSummary = {
-        title: 'Critical Database Outage - July 10, 2026',
-        incidentId: 'incident-123',
-        timestamp: new Date().toISOString(),
-        severity: 'critical',
-        duration: 45,
-        affectedServices: ['api', 'database', 'web'],
-        affectedUsers: 8500,
-        rootCause: 'Database connection pool exhaustion due to memory leak in new query handler',
-        resolution: 'Rolled back to v1.2.3, memory leak fixed in v1.2.4',
-        preventionSteps: [
-          'Increase connection pool monitoring',
-          'Add automatic pool reset on threshold',
-          'Implement query performance regression testing',
-        ],
-      };
+  describe('Learning Extraction', () => {
+    it('should extract root cause learning', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-005',
+        'Test Incident',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'high',
+        'database',
+        'Connection pool exhausted',
+        ['database'],
+        metrics
+      );
 
-      // Create post-mortem
-      const pm = createPostMortem('incident-123', summary);
-      expect(pm.status).toBe('pending');
+      const learnings = extractLearnings(postMortem);
 
-      // Schedule meeting
-      const meetingDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      schedulePostMortem(pm.id, meetingDate);
-      expect(getPostMortem(pm.id)?.status).toBe('scheduled');
+      expect(learnings.length).toBeGreaterThan(0);
+      const rootCauseLearning = learnings.find((l) => l.category === 'root-cause');
+      expect(rootCauseLearning).toBeDefined();
+      expect(rootCauseLearning?.title).toContain('Root Cause');
+    });
 
-      // Add findings
-      addFinding(pm.id, 'monitoring-blind-spot', 'No connection pool alerts', 'Missing monitoring', 'high');
-      addFinding(pm.id, 'process-gap', 'No query performance test', 'Missing regression tests', 'high');
-      addFinding(pm.id, 'automation-opportunity', 'Manual restart required', 'Could be automated', 'medium');
+    it('should extract detection gap for high MTTD', () => {
+      const metrics = createMockMetrics({ averageMTTD: 5 });
+      const postMortem = createPostMortem(
+        'incident-006',
+        'Slow Detection',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:15:00Z',
+        'medium',
+        'api',
+        'Silent failure',
+        ['api'],
+        metrics
+      );
 
-      // Add action items
-      addActionItem(pm.id, 'Increase pool monitoring', 'Sarah', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
-      addActionItem(pm.id, 'Add regression tests', 'John', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
+      const learnings = extractLearnings(postMortem);
+      const detectionGap = learnings.find((l) => l.category === 'detection-gap');
+      expect(detectionGap).toBeDefined();
+    });
 
-      // Add participants
-      addParticipant(pm.id, 'Sarah', 'Infrastructure Lead', 'sarah@example.com');
-      addParticipant(pm.id, 'John', 'Engineering Manager', 'john@example.com');
+    it('should extract resolution improvement need for high MTTR', () => {
+      const metrics = createMockMetrics({ averageMTTR: 45 });
+      const postMortem = createPostMortem(
+        'incident-007',
+        'Slow Resolution',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:50:00Z',
+        'high',
+        'deployment',
+        'Complex rollback procedure',
+        ['api'],
+        metrics
+      );
 
-      // Start session
-      startPostMortemSession(pm.id);
-      expect(getPostMortem(pm.id)?.status).toBe('in-progress');
+      const learnings = extractLearnings(postMortem);
+      const processImprovement = learnings.find((l) => l.category === 'process-improvement');
+      expect(processImprovement?.description).toContain('45 minutes');
+    });
 
-      // Complete action item
-      const updated = getPostMortem(pm.id)!;
-      completeAction(pm.id, updated.actionItems[0].id);
+    it('should extract playbook effectiveness issues', () => {
+      const metrics = createMockMetrics({ successRate: 60 });
+      const postMortem = createPostMortem(
+        'incident-008',
+        'Playbook Failed',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:20:00Z',
+        'medium',
+        'database',
+        'Playbook not applicable',
+        ['database'],
+        metrics
+      );
 
-      // Complete post-mortem
-      completePostMortem(pm.id, 'Comprehensive review completed. All findings documented. Action items assigned.');
+      const learnings = extractLearnings(postMortem);
+      const toolGap = learnings.find((l) => l.category === 'tool-gap');
+      expect(toolGap).toBeDefined();
+    });
 
-      // Verify metrics
-      const metrics = generatePostMortemMetrics();
-      expect(metrics.completedPostMortems).toBe(1);
-      expect(metrics.highImpactFindings).toBe(2);
+    it('should extract multi-system correlation insights', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-009',
+        'Cascading Failure',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:30:00Z',
+        'critical',
+        'infrastructure',
+        'Network partition',
+        ['database', 'api', 'deployment'],
+        metrics
+      );
 
-      // Get trends
-      const trends = getHighImpactTrends();
-      expect(trends.length).toBeGreaterThan(0);
+      const learnings = extractLearnings(postMortem);
+      const correlation = learnings.find((l) => l.category === 'process-improvement' && l.title === 'Multi-System Correlation');
+      expect(correlation).toBeDefined();
+    });
+  });
+
+  describe('Insight Generation', () => {
+    it('should generate severity confirmation insight', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-010',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'high',
+        'api',
+        'Cause',
+        ['api'],
+        metrics
+      );
+
+      const insights = generateInsights(postMortem);
+
+      expect(insights.length).toBeGreaterThan(0);
+      expect(insights[0].insight).toContain('Severity classification');
+    });
+
+    it('should generate root cause insight', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-011',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'medium',
+        'database',
+        'Pool size too small',
+        ['database'],
+        metrics
+      );
+
+      const insights = generateInsights(postMortem);
+      expect(insights.some((i) => i.insight.includes('Pool size too small'))).toBe(true);
+    });
+
+    it('should praise fast detection', () => {
+      const metrics = createMockMetrics({ averageMTTD: 0.5 });
+      const postMortem = createPostMortem(
+        'incident-012',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'medium',
+        'api',
+        'Cause',
+        ['api'],
+        metrics
+      );
+
+      const insights = generateInsights(postMortem);
+      expect(insights.some((i) => i.insight.includes('performed excellently'))).toBe(true);
+    });
+
+    it('should flag slow detection', () => {
+      const metrics = createMockMetrics({ averageMTTD: 10 });
+      const postMortem = createPostMortem(
+        'incident-013',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'high',
+        'api',
+        'Cause',
+        ['api'],
+        metrics
+      );
+
+      const insights = generateInsights(postMortem);
+      expect(insights.some((i) => i.insight.includes('Detection was delayed'))).toBe(true);
+    });
+  });
+
+  describe('Prevention Plan Creation', () => {
+    it('should create prevention plan from learnings', () => {
+      const learnings = [
+        {
+          category: 'root-cause' as const,
+          title: 'Database Pool Size',
+          description: 'Pool size needs increase',
+          actionable: true,
+          priority: 'high' as const,
+        },
+        {
+          category: 'detection-gap' as const,
+          title: 'Add Monitoring',
+          description: 'Monitor pool usage',
+          actionable: true,
+          priority: 'medium' as const,
+        },
+      ];
+
+      const plan = createPreventionPlan(learnings);
+
+      expect(plan.preventionMeasures.length).toBe(2);
+      expect(plan.preventionMeasures[0].category).toBe('process');
+      expect(plan.preventionMeasures[1].category).toBe('monitoring');
+    });
+
+    it('should set effectiveness based on measure count', () => {
+      const learnings = Array(5).fill({
+        category: 'root-cause' as const,
+        title: 'Test',
+        description: 'Test',
+        actionable: true,
+        priority: 'medium' as const,
+      });
+
+      const plan = createPreventionPlan(learnings);
+      expect(plan.estimatedEffectiveness).toBe(75);
+    });
+
+    it('should handle non-actionable learnings', () => {
+      const learnings = [
+        {
+          category: 'root-cause' as const,
+          title: 'Actionable',
+          description: 'Can fix',
+          actionable: true,
+          priority: 'high' as const,
+        },
+        {
+          category: 'training-need' as const,
+          title: 'Non-actionable',
+          description: 'Cannot fix',
+          actionable: false,
+          priority: 'low' as const,
+        },
+      ];
+
+      const plan = createPreventionPlan(learnings);
+      expect(plan.preventionMeasures.length).toBe(1);
+    });
+  });
+
+  describe('Post-Mortem Metrics Analysis', () => {
+    it('should analyze metrics from empty list', () => {
+      const metrics = analyzePostMortemMetrics([]);
+
+      expect(metrics.totalIncidents).toBe(0);
+      expect(metrics.incidentsReviewed).toBe(0);
+      expect(metrics.topRootCauses.length).toBe(0);
+    });
+
+    it('should calculate average duration', () => {
+      const pm1 = createPostMortem('inc1', 'T1', '2026-07-10T12:00:00Z', '2026-07-10T12:20:00Z', 'medium', 'db', 'C1', ['db'], createMockMetrics({}));
+      pm1.status = 'approved';
+      const pm2 = createPostMortem('inc2', 'T2', '2026-07-10T13:00:00Z', '2026-07-10T13:30:00Z', 'medium', 'api', 'C2', ['api'], createMockMetrics({}));
+      pm2.status = 'approved';
+
+      const metrics = analyzePostMortemMetrics([pm1, pm2]);
+
+      expect(metrics.avgDurationMinutes).toBe(25);
+    });
+
+    it('should identify top root causes', () => {
+      const pm1 = createPostMortem('inc1', 'T1', '2026-07-10T12:00:00Z', '2026-07-10T12:20:00Z', 'medium', 'db', 'Out of Memory', ['db'], createMockMetrics({}));
+      const pm2 = createPostMortem('inc2', 'T2', '2026-07-10T13:00:00Z', '2026-07-10T13:30:00Z', 'medium', 'db', 'Out of Memory', ['db'], createMockMetrics({}));
+      const pm3 = createPostMortem('inc3', 'T3', '2026-07-10T14:00:00Z', '2026-07-10T14:15:00Z', 'low', 'api', 'Timeout', ['api'], createMockMetrics({}));
+
+      const metrics = analyzePostMortemMetrics([pm1, pm2, pm3]);
+
+      expect(metrics.topRootCauses[0].cause).toBe('Out of Memory');
+      expect(metrics.topRootCauses[0].count).toBe(2);
+    });
+
+    it('should identify top affected systems', () => {
+      const pm1 = createPostMortem('inc1', 'T1', '2026-07-10T12:00:00Z', '2026-07-10T12:20:00Z', 'medium', 'db', 'C1', ['database', 'api'], createMockMetrics({}));
+      const pm2 = createPostMortem('inc2', 'T2', '2026-07-10T13:00:00Z', '2026-07-10T13:30:00Z', 'medium', 'api', 'C2', ['api'], createMockMetrics({}));
+
+      const metrics = analyzePostMortemMetrics([pm1, pm2]);
+
+      expect(metrics.topAffectedSystems.some((s) => s.system === 'api')).toBe(true);
+    });
+
+    it('should calculate recurring regression rate', () => {
+      const pm1 = createPostMortem('inc1', 'T1', '2026-07-10T12:00:00Z', '2026-07-10T12:20:00Z', 'medium', 'db', 'Connection Pool', ['db'], createMockMetrics({}));
+      const pm2 = createPostMortem('inc2', 'T2', '2026-07-10T13:00:00Z', '2026-07-10T13:30:00Z', 'medium', 'db', 'Connection Pool', ['db'], createMockMetrics({}));
+      const pm3 = createPostMortem('inc3', 'T3', '2026-07-10T14:00:00Z', '2026-07-10T14:15:00Z', 'low', 'api', 'Different Cause', ['api'], createMockMetrics({}));
+
+      const metrics = analyzePostMortemMetrics([pm1, pm2, pm3]);
+
+      expect(metrics.regressionRecurrenceRate).toBeGreaterThan(0);
+    });
+  });
+
+  describe('GitHub Issue Formatting', () => {
+    it('should format post-mortem for GitHub issue', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-014',
+        'Database Failure',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'critical',
+        'database',
+        'Connection pool exhausted',
+        ['database', 'api'],
+        metrics
+      );
+      postMortem.learnings = extractLearnings(postMortem);
+      postMortem.insights = generateInsights(postMortem);
+
+      const issue = formatPostMortemIssue(postMortem);
+
+      expect(issue.title).toContain('Post-Mortem');
+      expect(issue.title).toContain('CRITICAL');
+      expect(issue.body).toContain('Incident Overview');
+      expect(issue.body).toContain('impact');
+      expect(issue.labels).toContain('post-mortem');
+      expect(issue.labels).toContain('severity-critical');
+    });
+
+    it('should include incident metrics in issue', () => {
+      const metrics = createMockMetrics({ averageMTTR: 30, averageMTTD: 5 });
+      const postMortem = createPostMortem(
+        'incident-015',
+        'API Timeout',
+        '2026-07-10T10:00:00Z',
+        '2026-07-10T10:45:00Z',
+        'high',
+        'api',
+        'Database slow query',
+        ['api', 'database'],
+        metrics
+      );
+
+      const issue = formatPostMortemIssue(postMortem);
+
+      expect(issue.body).toContain('30');
+      expect(issue.body).toContain('5');
+    });
+
+    it('should include learnings in issue', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-016',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'medium',
+        'api',
+        'Cause',
+        ['api'],
+        metrics
+      );
+      postMortem.learnings = extractLearnings(postMortem);
+
+      const issue = formatPostMortemIssue(postMortem);
+
+      expect(issue.body).toContain('Key Learnings');
+    });
+
+    it('should include prevention plan in issue', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-017',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'high',
+        'db',
+        'Cause',
+        ['db'],
+        metrics
+      );
+      postMortem.learnings = extractLearnings(postMortem);
+      postMortem.preventionPlan = createPreventionPlan(postMortem.learnings);
+
+      const issue = formatPostMortemIssue(postMortem);
+
+      expect(issue.body).toContain('Prevention Plan');
+    });
+
+    it('should include related regressions in issue', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-018',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:25:00Z',
+        'high',
+        'api',
+        'Cause',
+        ['api'],
+        metrics,
+        ['82', '83']
+      );
+
+      const issue = formatPostMortemIssue(postMortem);
+
+      expect(issue.body).toContain('Related Regressions');
+      expect(issue.body).toContain('#82');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle incidents with no affected systems', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-019',
+        'Test',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:05:00Z',
+        'low',
+        'unknown',
+        'Unknown cause',
+        [],
+        metrics
+      );
+
+      expect(postMortem).toBeDefined();
+      expect(postMortem.impactedSystems.length).toBe(0);
+    });
+
+    it('should handle very short incidents', () => {
+      const metrics = createMockMetrics({});
+      const postMortem = createPostMortem(
+        'incident-020',
+        'Brief Issue',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:00:01Z',
+        'low',
+        'api',
+        'Quick recovery',
+        ['api'],
+        metrics
+      );
+
+      expect(postMortem.durationMinutes).toBe(0);
+    });
+
+    it('should handle incidents with zero metrics', () => {
+      const metrics = createMockMetrics({ averageMTTR: 0, averageMTTD: 0, successRate: 100 });
+      const postMortem = createPostMortem(
+        'incident-021',
+        'No impact incident',
+        '2026-07-10T12:00:00Z',
+        '2026-07-10T12:05:00Z',
+        'low',
+        'monitoring',
+        'False alarm',
+        [],
+        metrics
+      );
+
+      expect(postMortem.metrics.successRateImpact).toBe(0);
     });
   });
 });
