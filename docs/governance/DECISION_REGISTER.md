@@ -7,6 +7,27 @@ are never requested from the Founder.
 
 ---
 
+## DR-0016 — Clear the fixable npm vulnerabilities (vitest 2 → 4)
+
+- **Decision:** Upgrade vitest to v4.1.10, clearing 5 of the 7 audit findings —
+  including the critical (Vitest UI arbitrary file read/execute) and the high
+  (Vite path traversal) — all in the dev-only vitest→vite→esbuild chain. The two
+  remaining moderates (postcss bundled inside next@15.5.20) have no fix within
+  Next 15.x; they are accepted residual until the Next 16 migration.
+- **Reason:** DNA-GOV-008's scanner reports these to the Founder daily; a critical
+  finding sitting in the report erodes trust even when dev-only, and the fix is a
+  test-runner major bump with zero runtime surface.
+- **Alternatives considered:** `npm audit fix --force` — suggests downgrading
+  next to 9.3.3, absurd; targeted vitest bump is the real fix.
+- **Evidence:** `npm audit`: 7 vulns (1 critical, 1 high, 5 moderate) → 2 moderate.
+  Full suite unchanged under vitest 4: 286/286 unit, 6/6 e2e, lint, tsc,
+  production build.
+- **Confidence:** High
+- **Expected impact:** Security scanner shows zero critical/high findings.
+- **Risk assessment:** Minimal — dev-dependency only; test behavior verified
+  identical.
+- **Timestamp:** 2026-07-10
+
 ## DR-0015 — RLS policies for evidence/team/obligations; security-definer membership helpers
 
 - **Decision:** Add the RLS policies that the sibling-built Evidence Collection and
