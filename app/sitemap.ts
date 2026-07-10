@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  'https://newspulse-ai.vercel.app';
+  'https://euro-ai.vercel.app';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -10,14 +10,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${SITE_URL}/`,
       lastModified: now,
-      changeFrequency: 'daily',
+      changeFrequency: 'weekly',
       priority: 1.0,
     },
     {
-      url: `${SITE_URL}/history`,
+      url: `${SITE_URL}/auth/signup`,
       lastModified: now,
-      changeFrequency: 'hourly',
-      priority: 0.7,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/auth/signin`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
   ];
 }

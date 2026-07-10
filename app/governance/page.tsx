@@ -92,7 +92,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-4xl font-bold">Governor Dashboard</h1>
           <p className="mt-2 text-white/60">
-            Canonical source of truth for NewsPulse AI launch readiness
+            Canonical source of truth for EURO AI launch readiness
           </p>
         </div>
         <DataSourceLabel

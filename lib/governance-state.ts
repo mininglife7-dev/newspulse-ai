@@ -309,7 +309,9 @@ function buildMissions(): Mission[] {
       id: 'V2-10',
       title:
         'Decide the product identity (NewsPulse vs "Governor" vs "EURO AI")',
-      status: 'open',
+      // Founder decided 2026-07-10: the product is EURO AI (AI governance
+      // platform). NewsPulse surface removed; EURO AI journey integrated.
+      status: 'completed',
       impactScore: 8,
       effortEstimate: 'founder decision',
       owner: 'Founder',

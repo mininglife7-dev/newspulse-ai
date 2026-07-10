@@ -16,14 +16,14 @@ export default function AppleIcon() {
           alignItems: 'center',
           justifyContent: 'center',
           background:
-            'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #4f46e5 100%)',
+            'linear-gradient(135deg, #3b82f6 0%, #0891b2 100%)',
           color: 'white',
           fontSize: 112,
           fontWeight: 900,
           fontFamily: 'system-ui, sans-serif',
         }}
       >
-        G
+        E
       </div>
     ),
     { ...size }

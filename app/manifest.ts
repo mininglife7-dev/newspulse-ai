@@ -2,12 +2,12 @@ import type { MetadataRoute } from 'next';
 
 // PWA Web App Manifest — served by Next.js at /manifest.webmanifest and
 // linked automatically into <head>. This is what makes the app installable
-// on the iPhone Home Screen (Safari → Share → Add to Home Screen) as "Governor".
+// on the iPhone Home Screen (Safari → Share → Add to Home Screen).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Governor',
-    short_name: 'Governor',
-    description: 'AI-Powered News Intelligence — Search. Scrape. Summarize.',
+    name: 'EURO AI',
+    short_name: 'EURO AI',
+    description: 'AI Governance Made Simple — EU AI Act compliance with confidence.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
