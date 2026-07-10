@@ -137,7 +137,8 @@ export default function HistoryPage() {
           <button
             onClick={load}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-white/80 transition hover:border-accent-500/60 hover:text-white disabled:opacity-50"
+            title="Refresh search history"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-white/80 transition hover:border-accent-500/60 hover:text-white disabled:cursor-wait disabled:opacity-70"
           >
             <RotateCw
               className={cn('h-4 w-4', loading && 'animate-spin')}

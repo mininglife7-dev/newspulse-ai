@@ -18,19 +18,33 @@ interface PageProps {
  * must not be presented to the user as "Page not found".
  */
 async function getSearchById(id: string): Promise<SearchHistoryRow | null> {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from('news_searches')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  if (error) {
-    // 22P02 = malformed UUID — such an id can't exist, so it's a real 404.
-    if (error.code === '22P02') return null;
-    console.error('[history/[id]] supabase error:', error);
-    throw new Error(`Failed to load saved search: ${error.message}`);
+  const demoMode = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+  if (demoMode) {
+    // In demo mode, individual saved searches don't exist
+    return null;
   }
-  return (data as SearchHistoryRow) ?? null;
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('news_searches')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) {
+      // 22P02 = malformed UUID — such an id can't exist, so it's a real 404.
+      if (error.code === '22P02') return null;
+      console.error('[history/[id]] supabase error:', error);
+      throw new Error(`Failed to load saved search: ${error.message}`);
+    }
+    return (data as SearchHistoryRow) ?? null;
+  } catch (err: any) {
+    // If Supabase is not configured, return null (404)
+    if (err?.message?.includes('NEXT_PUBLIC_SUPABASE_URL') || err?.message?.includes('SUPABASE_SERVICE_ROLE_KEY')) {
+      return null;
+    }
+    throw err;
+  }
 }
 
 export default async function HistoryDetailPage({ params }: PageProps) {
