@@ -1,0 +1,63 @@
+name: DNA-GOV-012 - Deployment Recovery
+
+on:
+  # Monitor deployments every 5 minutes
+  schedule:
+    - cron: '*/5 * * * *'
+  # Allow manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      deploymentId:
+        description: 'Vercel deployment ID to recover (optional)'
+        required: false
+        type: string
+
+jobs:
+  check-and-recover:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get latest deployment ID
+        id: deployment
+        run: |
+          # Try to get deployment ID from environment or previous workflow
+          DEPLOYMENT_ID="${{ github.event.inputs.deploymentId }}"
+
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            # Extract from recent git commit or deployment tracking
+            DEPLOYMENT_ID=$(cat .github/last-deployment.txt 2>/dev/null || echo "")
+          fi
+
+          if [ -n "$DEPLOYMENT_ID" ]; then
+            echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          else
+            echo "deployment_id=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check deployment status
+        if: steps.deployment.outputs.deployment_id != ''
+        env:
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL || 'https://euro-ai.vercel.app' }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          DEPLOYMENT_ID="${{ steps.deployment.outputs.deployment_id }}"
+
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "⚠️ ADMIN_TOKEN not configured, skipping deployment recovery"
+            exit 0
+          fi
+
+          echo "Checking deployment status for $DEPLOYMENT_ID..."
+          curl -s -X POST \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"deploymentId\":\"$DEPLOYMENT_ID\",\"owner\":\"${{ github.repository_owner }}\",\"repo\":\"${{ github.event.repository.name }}\",\"branchName\":\"${{ github.ref_name }}\"}" \
+            "${{ env.DEPLOYMENT_URL }}/api/deployment-recovery" | jq '.' || true
+
+      - name: Log recovery check
+        if: always()
+        run: echo "Deployment recovery check completed at $(date)"
