@@ -360,12 +360,22 @@ export default function InventoryPage() {
                             {s.status}
                           </span>
                         </div>
-                        <Link
-                          href={`/assessment/${s.id}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-700/50 bg-blue-950/30 px-3 py-2 text-xs font-medium text-blue-300 transition hover:bg-blue-950/50 hover:border-blue-600/50"
-                        >
-                          {assessment ? 'View Assessment' : 'Assess Risk'}
-                        </Link>
+                        <div className="flex gap-2">
+                          <Link
+                            href={`/assessment/${s.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-700/50 bg-blue-950/30 px-3 py-2 text-xs font-medium text-blue-300 transition hover:bg-blue-950/50 hover:border-blue-600/50"
+                          >
+                            {assessment ? 'View Assessment' : 'Assess Risk'}
+                          </Link>
+                          {assessment && (
+                            <Link
+                              href={`/evidence/${s.id}`}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-950/30 px-3 py-2 text-xs font-medium text-amber-300 transition hover:bg-amber-950/50 hover:border-amber-600/50"
+                            >
+                              Evidence
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </li>
