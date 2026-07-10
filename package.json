@@ -14,6 +14,7 @@
     "check-env": "node --env-file=.env.local scripts/check-env.mjs",
     "test:smoke": "node scripts/smoke-test.mjs",
     "test:e2e": "playwright test",
+    "screenshots": "node scripts/capture-screenshots.mjs",
     "test": "npm run test:smoke && npm run test:e2e"
   },
   "dependencies": {

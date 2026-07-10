@@ -23,7 +23,12 @@ Built for the **Outskill AI Generalist Accelerator Hackathon**.
 
 ## 📸 Screenshots
 
-> _Screenshots coming soon — drop them in `/public/screenshots/` as `search.png` and `history.png`, then re-add the image table here._
+|                   Search                    |                     History                      |
+| :-----------------------------------------: | :----------------------------------------------: |
+| ![Search UI](./docs/screenshots/search.png) | ![History table](./docs/screenshots/history.png) |
+
+> Regenerate anytime with `npm run screenshots` — boots the production build
+> with fixture data and captures both pages headlessly.
 
 ---
 
@@ -152,25 +157,39 @@ newspulse-ai/
 │   └── sitemap.ts                   # sitemap.xml
 ├── components/
 │   ├── EmptyState.tsx
+│   ├── LocalDateTime.tsx            # visitor-locale timestamps on every screen
 │   └── NewsCard.tsx
+├── docs/
+│   ├── decisions/                   # architecture decision records (ADRs)
+│   ├── integrity/                   # product-integrity audit reports
+│   └── screenshots/                 # README images (npm run screenshots)
+├── e2e/                             # Playwright suite (desktop + mobile)
+│   ├── fixtures.mjs                 # shared API fixtures
+│   ├── home.spec.ts
+│   ├── history.spec.ts
+│   └── navigation.spec.ts
 ├── lib/
+│   ├── constants.ts                 # SUMMARY_MODEL, SITE_URL — single source of truth
 │   ├── firecrawl.ts                 # Firecrawl /v1/search wrapper
-│   ├── openai.ts                    # gpt-4o-mini summarizer
-│   ├── supabase.ts                  # supabase client + helpers
+│   ├── openai.ts                    # summarizer (SUMMARY_MODEL)
+│   ├── supabase.ts                  # server-side supabase client + helpers
 │   └── utils.ts                     # cn() + date formatters
 ├── scripts/
-│   └── check-env.mjs                # verify env vars without leaking values
+│   ├── capture-screenshots.mjs      # regenerate README screenshots
+│   ├── check-env.mjs                # verify env vars without leaking values
+│   └── smoke-test.mjs               # credential-less prod smoke suite
 ├── supabase/
-│   └── schema.sql                   # news_searches table + RLS
+│   └── schema.sql                   # news_searches table + RLS + integrity CHECK
 ├── types/
-│   └── index.ts                     # shared API types
+│   └── index.ts                     # shared API contract types (used by routes)
 ├── .github/workflows/
-│   ├── ci.yml                       # lint, type-check, build
+│   ├── ci.yml                       # lint, format, type-check, build, smoke, e2e
 │   └── deploy.yml                   # Vercel production deploy on push to main
 ├── .env.example
 ├── middleware.ts                    # rate limit on /api/search
-├── next.config.js
+├── next.config.js                   # security headers incl. CSP
 ├── package.json
+├── playwright.config.ts
 ├── tailwind.config.js
 ├── tsconfig.json
 └── vercel.json
@@ -189,10 +208,11 @@ npm run type-check    # tsc --noEmit
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
 npm run test:smoke    # boot the prod build with no credentials; assert every
-                      # route responds and fails honestly (16 checks)
+                      # route responds and fails honestly (21 checks)
 npm run test:e2e      # Playwright e2e: desktop + mobile, real UI flows via
-                      # API fixtures — needs no credentials (38 checks)
+                      # API fixtures — needs no credentials (40 checks)
 npm run test          # smoke + e2e
+npm run screenshots   # regenerate docs/screenshots/*.png headlessly
 ```
 
 Both test suites run in CI on every push and pull request. They

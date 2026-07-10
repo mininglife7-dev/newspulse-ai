@@ -4,7 +4,7 @@ import {
   HISTORY_EMPTY,
   HISTORY_ERROR,
   HISTORY_ROWS,
-} from './fixtures';
+} from './fixtures.mjs';
 
 test.describe('history dashboard (/history)', () => {
   test('renders rows with counts derived from saved results, not the stored column', async ({

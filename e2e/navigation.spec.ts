@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { HISTORY_EMPTY, SEARCH_OK } from './fixtures';
+import { HISTORY_EMPTY, SEARCH_OK } from './fixtures.mjs';
 
 test.describe('navigation & layout', () => {
   test('header nav navigates between search and history', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { SEARCH_OK, SEARCH_UNSAVED, SEARCH_EMPTY } from './fixtures';
+import { SEARCH_OK, SEARCH_UNSAVED, SEARCH_EMPTY } from './fixtures.mjs';
 
 // Next.js injects an always-present, empty route announcer with role=alert;
 // filter to alerts that actually say something.
