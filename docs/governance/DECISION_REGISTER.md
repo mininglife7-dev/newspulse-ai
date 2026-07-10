@@ -7,6 +7,31 @@ are never requested from the Founder.
 
 ---
 
+## DR-0014 — Make onboarding step 3 (Risk Assessment) real: EU AI Act screening
+
+- **Decision:** Implement risk assessment end-to-end: a 12-question EU AI Act
+  screening classifier (`lib/risk-assessment.ts` — Article 5 prohibited practices,
+  Annex III high-risk areas, transparency tier), `GET/POST /api/risk-assessments`
+  with server-side classification so the stored level always matches the stored
+  answers, `risk_assessments` RLS policies, an `/assessment` page, and dashboard
+  step-3 unlock with assessed-of-total counts.
+- **Reason:** The last onboarding step existed only as a grayed card; it consumes
+  the inventory shipped in DR-0012 and is the product's core value claim (EU AI
+  Act risk classification).
+- **Alternatives considered:** LLM-based free-text classification — rejected for
+  v1: a deterministic rules screen is explainable, testable, and cannot
+  hallucinate obligations; the terms page already frames output as informational
+  tooling, not legal advice, and the UI repeats that.
+- **Evidence:** 286/286 unit tests (8 classifier + 7 API new), 6/6 e2e, lint,
+  tsc, production build — all green locally on the Next 15.5.20 base.
+- **Confidence:** High (code); the classifier is deliberately a first-pass
+  screening — labeled as such in the UI.
+- **Expected impact:** All three onboarding steps are real features; a German
+  customer can sign up, inventory systems, and get tiered obligations today.
+- **Risk assessment:** Low — additive; classification stored with answers and
+  method tag for auditability.
+- **Timestamp:** 2026-07-10
+
 ## DR-0013 — Close pre-pivot PRs (#39, #40); defer Next.js upgrades (#36, #37); review rate-limit (#41)
 
 - **Decision:** Closed PR #39 (customer-readiness/NewsPulse) and #40 (German i18n/NewsPulse) as superseded by product pivot. Closed #36 (Next 16) and #37 (Next 15) as deferred infrastructure work — EURO AI ships on current stack (Next 14.2.35) with documented path to security upgrades. Reviewed #41 (durable rate-limiting) as infrastructure applicable to EURO AI but lower priority than auth.

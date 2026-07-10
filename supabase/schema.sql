@@ -357,5 +357,28 @@ create policy "Members can update workspace ai_systems"
         )
     );
 
--- Similar RLS policies for risk_assessments, obligations, evidence, remediation_plans
+-- Risk assessments: active workspace members can read and create
+create policy "Members can read workspace risk_assessments"
+    on public.risk_assessments for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = risk_assessments.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace risk_assessments"
+    on public.risk_assessments for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = risk_assessments.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Similar RLS policies for obligations, evidence, remediation_plans
 -- Follow same pattern: check if user is an active member of the workspace

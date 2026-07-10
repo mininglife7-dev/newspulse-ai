@@ -17,6 +17,7 @@ export default async function DashboardPage() {
   let workspace: WorkspaceSummary | null = null;
   let firstName: string | null = null;
   let systemCount = 0;
+  let assessedCount = 0;
 
   try {
     const supabase = await createRouteClient();
@@ -43,6 +44,14 @@ export default async function DashboardPage() {
           .select('id', { count: 'exact', head: true })
           .eq('workspace_id', membership.workspace_id);
         systemCount = count ?? 0;
+
+        const { data: assessed } = await supabase
+          .from('risk_assessments')
+          .select('ai_system_id')
+          .eq('workspace_id', membership.workspace_id);
+        assessedCount = new Set(
+          (assessed ?? []).map((a: any) => a.ai_system_id)
+        ).size;
       }
     }
   } catch (err) {
@@ -163,21 +172,52 @@ export default async function DashboardPage() {
         )}
 
         {/* Step 3: Risk Assessment */}
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
-                  3
+        {systemCount > 0 ? (
+          <Link
+            href="/assessment"
+            className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${assessedCount >= systemCount ? 'bg-green-600' : 'bg-blue-500 text-sm font-bold'}`}
+                  >
+                    {assessedCount >= systemCount ? (
+                      <CheckCircle className="h-5 w-5" />
+                    ) : (
+                      '3'
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-white">Risk Assessment</h3>
                 </div>
-                <h3 className="font-semibold text-white">Risk Assessment</h3>
+                <p className="text-sm text-slate-400">
+                  {assessedCount === 0
+                    ? 'Classify each system against EU AI Act risk tiers'
+                    : `${assessedCount} of ${systemCount} system${systemCount === 1 ? '' : 's'} assessed`}
+                </p>
               </div>
-              <p className="text-sm text-slate-400">
-                Classify risks and obligations — coming soon
-              </p>
+              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
+            </div>
+          </Link>
+        ) : (
+          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                    3
+                  </div>
+                  <h3 className="font-semibold text-white">Risk Assessment</h3>
+                </div>
+                <p className="text-sm text-slate-400">
+                  Classify risks and obligations — unlocked once systems are
+                  in your inventory
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Next steps */}
@@ -226,11 +266,17 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle
+              className={`h-6 w-6 flex-shrink-0 ${assessedCount > 0 ? 'text-green-400' : systemCount > 0 ? 'text-cyan-400' : 'text-slate-600'}`}
+            />
             <div>
               <h3 className="font-medium text-white">Start assessment</h3>
               <p className="text-sm text-slate-400">
-                Evaluate compliance gaps — coming soon
+                {assessedCount > 0
+                  ? `${assessedCount} assessed`
+                  : systemCount > 0
+                    ? 'Evaluate compliance gaps'
+                    : 'Unlocked once systems are inventoried'}
               </p>
             </div>
           </div>
