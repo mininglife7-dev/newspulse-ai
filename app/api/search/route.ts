@@ -6,15 +6,12 @@ import {
 } from '@/lib/firecrawl';
 import { summarizeBatch } from '@/lib/openai';
 import { saveSearch, type NewsArticle } from '@/lib/supabase';
+import { parseSearchKeyword, readBodyField } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const FIRECRAWL_LIMIT = 10;
-
-interface SearchBody {
-  keyword?: string;
-}
 
 /**
  * POST /api/search
@@ -32,9 +29,9 @@ interface SearchBody {
  */
 export async function POST(req: NextRequest) {
   // ---------- 1) Validate input ----------
-  let body: SearchBody;
+  let body: unknown;
   try {
-    body = (await req.json()) as SearchBody;
+    body = await req.json();
   } catch {
     return NextResponse.json(
       { ok: false, error: 'Invalid JSON body.' },
@@ -42,13 +39,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const keyword = (body.keyword ?? '').trim();
-  if (!keyword) {
+  // Guard against non-string / missing / abusively long keywords before
+  // spending any Firecrawl or OpenAI budget on the request.
+  const parsed = parseSearchKeyword(readBodyField(body, 'keyword'));
+  if (!parsed.ok || !parsed.keyword) {
     return NextResponse.json(
-      { ok: false, error: 'Missing "keyword" in request body.' },
+      { ok: false, error: parsed.error ?? 'Invalid keyword.' },
       { status: 400 }
     );
   }
+  const keyword = parsed.keyword;
 
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) {
