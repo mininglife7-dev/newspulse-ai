@@ -7,6 +7,27 @@ are never requested from the Founder.
 
 ---
 
+## DR-0008 — CONDITIONAL-GO percentage is state semantics, not progress
+
+- **Decision:** Launch-readiness percentage under CONDITIONAL-GO is fixed at 75%,
+  signaling "ready to launch pending listed conditions" rather than a progress bar.
+- **Reason:** An averaged category score (52%) read as "incomplete" despite
+  production being deployed and all blocking-stage blockers resolved — the number
+  contradicted the decision it accompanied.
+- **Confidence:** High
+- **Timestamp:** 2026-07-10 (landed via PR #33)
+
+## DR-0007 — Blocker criticality classification drives GO/NO-GO
+
+- **Decision:** Every launch blocker carries a `blocksStage` field
+  (blocking | demo | mvp | post_launch). Only blocking-stage blockers affect the
+  GO/NO-GO decision; the rest surface as launch conditions.
+- **Reason:** Treating all blockers equally produced NO-GO even when everything
+  that truly gates a launch was resolved with evidence (M-01, M-02, M-03, M-08,
+  M-10).
+- **Confidence:** High
+- **Timestamp:** 2026-07-10 (landed via PR #33)
+
 ## DR-0006 — Cathedral Consolidation Mission: portfolio resolved to a single Founder gate
 
 - **Decision:** Executed the Founder's consolidation directive across the full PR
