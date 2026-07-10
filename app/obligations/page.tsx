@@ -11,6 +11,10 @@ import {
   Loader2,
   ChevronDown,
   Filter,
+  Upload,
+  FileText,
+  Trash2,
+  Download,
 } from 'lucide-react';
 
 interface Obligation {
@@ -22,6 +26,17 @@ interface Obligation {
   due_date?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface Evidence {
+  id: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  storage_path: string;
+  uploaded_by_name: string;
+  uploaded_at: string;
+  notes?: string;
 }
 
 const PRIORITY_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
@@ -57,12 +72,28 @@ const STATUS_ICONS: Record<string, { icon: React.ReactNode; text: string; color:
 export default function ObligationsPage() {
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [filteredObligations, setFilteredObligations] = useState<Obligation[]>([]);
+  const [evidence, setEvidence] = useState<Record<string, Evidence[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const loadEvidence = useCallback(async (obligationId: string) => {
+    try {
+      const res = await fetch(`/api/evidence?obligation_id=${obligationId}`);
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        setEvidence((prev) => ({ ...prev, [obligationId]: data.evidence || [] }));
+      }
+    } catch (err) {
+      console.error('Failed to load evidence:', err);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -84,6 +115,13 @@ export default function ObligationsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Load evidence when obligation is expanded
+  useEffect(() => {
+    if (expandedId) {
+      loadEvidence(expandedId);
+    }
+  }, [expandedId, loadEvidence]);
 
   // Apply filters
   useEffect(() => {
@@ -119,6 +157,46 @@ export default function ObligationsPage() {
       setError(err?.message || 'Failed to update obligation');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleFileUpload = async (obligationId: string, file: File, notes?: string) => {
+    setUploadingId(obligationId);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append('obligation_id', obligationId);
+      formData.append('file', file);
+      if (notes) formData.append('notes', notes);
+
+      const res = await fetch('/api/evidence', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to upload evidence');
+
+      await loadEvidence(obligationId);
+    } catch (err: any) {
+      setUploadError(err?.message || 'Failed to upload file');
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const handleDeleteEvidence = async (obligationId: string, evidenceId: string) => {
+    try {
+      const res = await fetch(`/api/evidence?evidence_id=${evidenceId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to delete evidence');
+
+      await loadEvidence(obligationId);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to delete evidence');
     }
   };
 
@@ -383,6 +461,79 @@ export default function ObligationsPage() {
                         <div className="text-slate-400">Last Updated</div>
                         <div className="text-white">{new Date(obligation.updated_at).toLocaleDateString()}</div>
                       </div>
+                    </div>
+
+                    {/* Evidence Section */}
+                    <div className="border-t border-slate-800 pt-4">
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-slate-300 mb-3">
+                          Compliance Evidence
+                        </label>
+                        <p className="text-xs text-slate-400 mb-3">
+                          Attach screenshots, documents, or reports proving this obligation is complete.
+                        </p>
+
+                        {uploadError && (
+                          <div className="mb-3 rounded-lg border border-red-800/60 bg-red-950/30 p-2 text-xs text-red-200">
+                            {uploadError}
+                          </div>
+                        )}
+
+                        {/* Upload Input */}
+                        <label className="flex items-center gap-2 rounded-lg border border-dashed border-slate-700 bg-slate-950/30 px-4 py-3 text-sm text-slate-400 transition cursor-pointer hover:border-blue-500/50 hover:text-slate-300">
+                          <Upload className="h-4 w-4" />
+                          <span>
+                            {uploadingId === obligation.id ? 'Uploading...' : 'Click to upload evidence'}
+                          </span>
+                          <input
+                            type="file"
+                            disabled={uploadingId === obligation.id}
+                            onChange={(e) => {
+                              const file = e.currentTarget.files?.[0];
+                              if (file) {
+                                handleFileUpload(obligation.id, file);
+                                e.currentTarget.value = '';
+                              }
+                            }}
+                            className="hidden"
+                            accept=".pdf,.png,.jpg,.jpeg,.gif,.txt,.doc,.docx"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Evidence List */}
+                      {(evidence[obligation.id] || []).length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          <div className="text-sm text-slate-400">
+                            {(evidence[obligation.id] || []).length} file
+                            {(evidence[obligation.id] || []).length === 1 ? '' : 's'} uploaded
+                          </div>
+                          {(evidence[obligation.id] || []).map((ev) => (
+                            <div
+                              key={ev.id}
+                              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/50 p-3"
+                            >
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <FileText className="h-4 w-4 text-cyan-400 flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <div className="text-sm text-white truncate">{ev.file_name}</div>
+                                  <div className="text-xs text-slate-500">
+                                    {(ev.file_size / 1024).toFixed(1)} KB · {ev.uploaded_by_name} ·{' '}
+                                    {new Date(ev.uploaded_at).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteEvidence(obligation.id, ev.id)}
+                                className="ml-2 p-1.5 text-slate-500 transition hover:text-red-400 flex-shrink-0"
+                                title="Delete evidence"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
