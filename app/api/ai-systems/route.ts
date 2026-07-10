@@ -19,7 +19,7 @@ interface CreateAiSystemBody {
  * Resolve the caller's active workspace (and company) or explain why not.
  * All queries run as the signed-in user, so RLS applies.
  */
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -56,7 +56,7 @@ async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
 
 /** GET /api/ai-systems — list the caller's workspace AI-system inventory. */
 export async function GET() {
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const supabase = createRouteClient();
+  const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(

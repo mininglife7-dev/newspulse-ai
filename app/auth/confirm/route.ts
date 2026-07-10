@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   const type = url.searchParams.get('type') as EmailOtpType | null;
 
   try {
-    const supabase = createRouteClient();
+    const supabase = await createRouteClient();
 
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
