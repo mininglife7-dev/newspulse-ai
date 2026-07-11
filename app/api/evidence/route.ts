@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { withLogging } from '@/lib/middleware-logging';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,53 +36,73 @@ async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteCli
 
 /** GET /api/evidence — fetch evidence for a company or obligation */
 export async function GET(request: NextRequest) {
-  const obligationId = request.nextUrl.searchParams.get('obligationId');
-  const aiSystemId = request.nextUrl.searchParams.get('aiSystemId');
-
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+
+  let userId: string | undefined;
+  let workspaceId: string | undefined;
+
+  if (ctx.status === 200) {
+    userId = ctx.userId;
+    workspaceId = ctx.workspaceId;
   }
 
-  let query = supabase
-    .from('evidence')
-    .select('*')
-    .eq('workspace_id', ctx.workspaceId);
+  return withLogging(
+    request,
+    async () => {
+      const obligationId = request.nextUrl.searchParams.get('obligationId');
+      const aiSystemId = request.nextUrl.searchParams.get('aiSystemId');
 
-  if (obligationId) {
-    query = query.eq('obligation_id', obligationId);
-  }
+      if (ctx.status !== 200) {
+        return NextResponse.json(
+          { ok: false, error: ctx.error },
+          { status: ctx.status }
+        );
+      }
 
-  // If filtering by AI system, find related obligations (via risk assessment)
-  if (aiSystemId) {
-    // Get obligations related to this system's assessment
-    const { data: obligations } = await supabase
-      .from('obligations')
-      .select('id')
-      .eq('workspace_id', ctx.workspaceId)
-      .limit(100);
+      let query = supabase
+        .from('evidence')
+        .select('*')
+        .eq('workspace_id', ctx.workspaceId);
 
-    if (obligations && obligations.length > 0) {
-      const obligationIds = obligations.map((o) => o.id);
-      query = query.in('obligation_id', obligationIds);
+      if (obligationId) {
+        query = query.eq('obligation_id', obligationId);
+      }
+
+      // If filtering by AI system, find related obligations (via risk assessment)
+      if (aiSystemId) {
+        // Get obligations related to this system's assessment
+        const { data: obligations } = await supabase
+          .from('obligations')
+          .select('id')
+          .eq('workspace_id', ctx.workspaceId)
+          .limit(100);
+
+        if (obligations && obligations.length > 0) {
+          const obligationIds = obligations.map((o) => o.id);
+          query = query.in('obligation_id', obligationIds);
+        }
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[api/evidence] GET failed:', error);
+        return NextResponse.json(
+          { ok: false, error: 'Failed to fetch evidence' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ ok: true, evidence: data ?? [] });
+    },
+    {
+      endpoint: '/api/evidence',
+      method: 'GET',
+      userId,
+      workspaceId,
     }
-  }
-
-  const { data, error } = await query.order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('[api/evidence] GET failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to fetch evidence' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ ok: true, evidence: data ?? [] });
+  );
 }
 
 /** POST /api/evidence — upload evidence metadata (file storage handled separately) */
