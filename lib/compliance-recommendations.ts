@@ -244,6 +244,113 @@ const RECOMMENDATIONS_LIBRARY: Recommendation[] = [
       'EU AI Act Article 63-64: Requires incident reporting to authorities. Internal process enables rapid response and regulatory cooperation.',
     triggers: [{ type: 'risk_level', condition: 'risk_score >= 40' }],
   },
+
+  // Transparency & Data Handling (Enhanced)
+  {
+    id: 'rec_016',
+    title: 'Transparency logging and audit trail',
+    description:
+      'Implement immutable audit logs recording: model inputs, decisions, confidence scores, human overrides, and outcomes. Enable traceability for regulatory review and incident investigation.',
+    priority: 'high',
+    effort: 'weeks',
+    category: 'Transparency & Explainability',
+    rationale:
+      'EU AI Act Article 13: High-risk systems must maintain records of decision-making process. Audit trails essential for accountability and regulatory compliance.',
+    triggers: [{ type: 'risk_level', condition: 'risk_score >= 60' }],
+  },
+  {
+    id: 'rec_017',
+    title: 'Data retention and deletion policy',
+    description:
+      'Define data retention schedules by data type (training, operational, audit). Implement automated deletion after retention period. Document legal basis for retention (GDPR Article 17 right to erasure).',
+    priority: 'high',
+    effort: 'weeks',
+    category: 'Governance',
+    rationale:
+      'GDPR Article 5: Data minimization principle. EU AI Act requires documented data handling. Deletion policy demonstrates compliance with retention limits.',
+    triggers: [
+      { type: 'risk_level', condition: 'risk_score >= 50' },
+      { type: 'answer', condition: 'q_data_classification_level >= 3' },
+    ],
+  },
+  {
+    id: 'rec_018',
+    title: 'Algorithmic bias testing program',
+    description:
+      'Establish regular testing (quarterly minimum) for bias across demographic groups, regions, and use cases. Document methodology, results, and remediation for any detected disparities.',
+    priority: 'high',
+    effort: 'weeks',
+    category: 'High-Risk Systems',
+    rationale:
+      'EU AI Act Article 26: Bias testing mandatory for high-risk systems. Regular testing demonstrates proactive risk management and commitment to fairness.',
+    triggers: [
+      { type: 'risk_level', condition: 'risk_score >= 60' },
+      { type: 'answer', condition: 'q_employment_decisions === "yes" || q_vulnerable_groups === "yes"' },
+    ],
+  },
+  {
+    id: 'rec_019',
+    title: 'Model performance monitoring dashboard',
+    description:
+      'Build real-time monitoring of key metrics: accuracy, fairness, precision, recall, latency, error rates. Set alert thresholds for degradation. Monthly performance reviews with stakeholders.',
+    priority: 'medium',
+    effort: 'weeks',
+    category: 'Governance',
+    rationale:
+      'EU AI Act requires ongoing performance monitoring. Real-time dashboards enable rapid detection and response to model drift or performance issues.',
+    triggers: [{ type: 'risk_level', condition: 'risk_score >= 50' }],
+  },
+  {
+    id: 'rec_020',
+    title: 'Third-party AI component audit',
+    description:
+      'If using third-party AI services (API, model, library): audit their compliance approach, documentation, and SLAs. Maintain audit trail of usage. Document liability allocation in contracts.',
+    priority: 'high',
+    effort: 'days',
+    category: 'High-Risk Systems',
+    rationale:
+      'EU AI Act Article 25: Liability chain remains with deployer. Audit of third-party components essential to assess combined system risk and contractual responsibilities.',
+    triggers: [{ type: 'risk_level', condition: 'risk_score >= 50' }],
+  },
+  {
+    id: 'rec_021',
+    title: 'Regulatory documentation package',
+    description:
+      'Prepare for regulatory inspection: compilation of technical documentation, risk assessment, training data provenance, performance reports, incident history, and remediation actions. Annual refresh.',
+    priority: 'medium',
+    effort: 'weeks',
+    category: 'Governance',
+    rationale:
+      'EU AI Act Articles 37, 61: Regulators may request documentation. Pre-assembled package enables rapid response and demonstrates organizational preparedness.',
+    triggers: [{ type: 'risk_level', condition: 'risk_score >= 50' }],
+  },
+  {
+    id: 'rec_022',
+    title: 'User consent and opt-out mechanisms',
+    description:
+      'For systems interacting with end users: implement clear consent flows (GDPR Article 7), easy opt-out options, and right to human review. Log all consent decisions.',
+    priority: 'high',
+    effort: 'weeks',
+    category: 'Transparency & Explainability',
+    rationale:
+      'GDPR Articles 7, 21: Users must have meaningful control. Clear opt-out and human review options demonstrate respect for user rights and regulatory compliance.',
+    triggers: [
+      { type: 'answer', condition: 'q_user_notification === "no"' },
+      { type: 'risk_level', condition: 'risk_score >= 50' },
+    ],
+  },
+  {
+    id: 'rec_023',
+    title: 'Training data documentation and governance',
+    description:
+      'Document training data: sources, volume, composition, potential biases, preprocessing steps. Establish data governance: versioning, lineage tracking, quality checks before training.',
+    priority: 'medium',
+    effort: 'weeks',
+    category: 'Transparency & Explainability',
+    rationale:
+      'EU AI Act Article 25: Technical documentation required for training data and methodology. Governance ensures reproducibility and enables bias remediation.',
+    triggers: [{ type: 'risk_level', condition: 'risk_score >= 60' }],
+  },
 ];
 
 export function generateRecommendations(
