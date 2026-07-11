@@ -31,10 +31,12 @@ export async function GET(req: Request) {
   try {
     const report = await detectCostAnomalies();
 
-    // Convert anomalies to alert hub format and record
+    // Convert anomalies to alert hub format and record. recordAlert takes the
+    // alert fields positionally (same as every other DNA source), so unpack
+    // each generated alert into it.
     const alerts = anomaliesToAlerts(report);
     for (const alert of alerts) {
-      recordAlert(alert);
+      recordAlert('cost-anomaly', alert.severity, alert.title, alert.message);
     }
 
     // Determine response status based on severity

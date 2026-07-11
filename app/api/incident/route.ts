@@ -62,9 +62,10 @@ export async function POST(req: Request) {
     // Process incident
     const command = await commandIncident(body);
 
-    // Convert to alert and record
+    // Convert to alert and record. recordAlert takes the alert fields
+    // positionally (same as every other DNA source), so unpack the alert.
     const alert = commandToAlert(command);
-    recordAlert(alert);
+    recordAlert('incident', alert.severity, alert.title, alert.message);
 
     const status = command.decision === 'autorollback' ? 200 : 202; // 200 for executed, 202 for pending
     const statusText =
