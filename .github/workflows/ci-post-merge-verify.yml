@@ -1,0 +1,96 @@
+name: Post-Merge Main Verification
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  verify-main:
+    name: Verify main branch integrity after push/merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check main
+        run: npm run type-check
+        continue-on-error: false
+
+      - name: Lint main
+        run: npm run lint --if-present
+        continue-on-error: false
+
+      - name: Build main
+        run: npm run build
+        env:
+          FIRECRAWL_API_KEY: build-time-stub
+          OPENAI_API_KEY: build-time-stub
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-stub
+          SUPABASE_SERVICE_ROLE_KEY: build-time-stub
+        continue-on-error: false
+
+      - name: Run tests on main
+        run: npm test
+        continue-on-error: false
+
+      - name: Run E2E smoke tests on main
+        run: npm run test:e2e
+        continue-on-error: false
+
+      - name: 🚨 Alert on main branch failure
+        if: failure()
+        run: |
+          echo "❌ CRITICAL: Main branch verification failed"
+          echo "Commit: $(git rev-parse HEAD)"
+          echo "Author: $(git log -1 --format='%an <%ae>')"
+          echo "Message: $(git log -1 --format='%s')"
+          echo ""
+          echo "This indicates a broken main branch. Immediate action required:"
+          echo "1. Identify the failing commit"
+          echo "2. Review CI logs above for error details"
+          echo "3. Either fix and push OR revert the commit"
+          echo ""
+          exit 1
+
+  detect-direct-push:
+    name: Detect and alert on direct pushes to main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Check if merge commit or direct push
+        run: |
+          COMMIT_MESSAGE=$(git log -1 --format='%s')
+          PARENTS=$(git log -1 --format='%P' | wc -w)
+
+          if [ "$PARENTS" -eq 2 ]; then
+            echo "✅ Normal merge commit detected"
+          else
+            echo "⚠️  Direct push to main detected"
+            echo "Commit: $(git rev-parse HEAD)"
+            echo "Author: $(git log -1 --format='%an')"
+            echo "Message: $COMMIT_MESSAGE"
+            echo ""
+            echo "Direct pushes bypass the PR review and CI on the merge commit."
+            echo "Future pushes should use: git push -u origin feature-branch && gh pr create"
+          fi
