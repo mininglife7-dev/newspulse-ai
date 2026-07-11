@@ -3,7 +3,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 async function getHealth() {
   vi.resetModules();
   const { GET } = await import('@/app/api/health/route');
-  const res = await GET();
+  const url = new URL('http://localhost/api/health');
+  const req = new Request(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  // Mock NextRequest properties
+  (req as any).nextUrl = url;
+  const res = await GET(req as any);
   return { status: res.status, body: await res.json() };
 }
 
