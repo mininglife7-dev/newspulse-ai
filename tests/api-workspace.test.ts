@@ -45,12 +45,16 @@ vi.mock('@/lib/supabase-server', () => ({
 
 import { POST } from '@/app/api/workspace/route';
 
-function request(body: unknown): Request {
-  return new Request('http://localhost/api/workspace', {
+function request(body: unknown) {
+  const url = new URL('http://localhost/api/workspace');
+  const req = new Request(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+  // Mock NextRequest properties
+  (req as any).nextUrl = url;
+  return req as any;
 }
 
 const validBody = {
@@ -70,12 +74,13 @@ beforeEach(() => {
 
 describe('POST /api/workspace', () => {
   it('rejects invalid JSON', async () => {
-    const res = await POST(
-      new Request('http://localhost/api/workspace', {
-        method: 'POST',
-        body: 'not-json',
-      })
-    );
+    const url = new URL('http://localhost/api/workspace');
+    const req = new Request(url, {
+      method: 'POST',
+      body: 'not-json',
+    });
+    (req as any).nextUrl = url;
+    const res = await POST(req as any);
     expect(res.status).toBe(400);
   });
 
