@@ -107,161 +107,221 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/evidence — upload evidence metadata (file storage handled separately) */
 export async function POST(request: NextRequest) {
-  let body: CreateEvidenceRequest;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid JSON' },
-      { status: 400 }
-    );
-  }
-
-  if (!body.title?.trim()) {
-    return NextResponse.json(
-      { ok: false, error: 'title is required' },
-      { status: 400 }
-    );
-  }
-
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+
+  let userId: string | undefined;
+  let workspaceId: string | undefined;
+
+  if (ctx.status === 200) {
+    userId = ctx.userId;
+    workspaceId = ctx.workspaceId;
   }
 
-  // Get company_id from workspace
-  const { data: company } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('workspace_id', ctx.workspaceId)
-    .limit(1)
-    .maybeSingle();
+  return withLogging(
+    request,
+    async () => {
+      let body: CreateEvidenceRequest;
+      try {
+        body = await request.json();
+      } catch {
+        return NextResponse.json(
+          { ok: false, error: 'Invalid JSON' },
+          { status: 400 }
+        );
+      }
 
-  if (!company) {
-    return NextResponse.json(
-      { ok: false, error: 'No company found in workspace' },
-      { status: 409 }
-    );
-  }
+      if (!body.title?.trim()) {
+        return NextResponse.json(
+          { ok: false, error: 'title is required' },
+          { status: 400 }
+        );
+      }
 
-  const { data, error } = await supabase
-    .from('evidence')
-    .insert({
-      company_id: company.id,
-      workspace_id: ctx.workspaceId,
-      obligation_id: body.obligationId || null,
-      title: body.title.trim(),
-      description: body.description?.trim() || null,
-      uploaded_by: ctx.userId,
-      status: 'submitted',
-    })
-    .select('*')
-    .single();
+      if (ctx.status !== 200) {
+        return NextResponse.json(
+          { ok: false, error: ctx.error },
+          { status: ctx.status }
+        );
+      }
 
-  if (error || !data) {
-    console.error('[api/evidence] insert failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to create evidence record' },
-      { status: 500 }
-    );
-  }
+      // Get company_id from workspace
+      const { data: company } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('workspace_id', ctx.workspaceId)
+        .limit(1)
+        .maybeSingle();
 
-  return NextResponse.json({ ok: true, evidence: data });
+      if (!company) {
+        return NextResponse.json(
+          { ok: false, error: 'No company found in workspace' },
+          { status: 409 }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('evidence')
+        .insert({
+          company_id: company.id,
+          workspace_id: ctx.workspaceId,
+          obligation_id: body.obligationId || null,
+          title: body.title.trim(),
+          description: body.description?.trim() || null,
+          uploaded_by: ctx.userId,
+          status: 'submitted',
+        })
+        .select('*')
+        .single();
+
+      if (error || !data) {
+        console.error('[api/evidence] insert failed:', error);
+        return NextResponse.json(
+          { ok: false, error: 'Failed to create evidence record' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ ok: true, evidence: data });
+    },
+    {
+      endpoint: '/api/evidence',
+      method: 'POST',
+      userId,
+      workspaceId,
+    }
+  );
 }
 
 /** PUT /api/evidence/:id — update evidence status or details */
 export async function PUT(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const evidenceId = pathname.split('/').pop();
-
-  if (!evidenceId) {
-    return NextResponse.json(
-      { ok: false, error: 'Evidence ID required' },
-      { status: 400 }
-    );
-  }
-
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid JSON' },
-      { status: 400 }
-    );
-  }
-
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+
+  let userId: string | undefined;
+  let workspaceId: string | undefined;
+
+  if (ctx.status === 200) {
+    userId = ctx.userId;
+    workspaceId = ctx.workspaceId;
   }
 
-  const updateData: any = {};
-  if (body.title) updateData.title = body.title.trim();
-  if (body.description) updateData.description = body.description.trim();
-  if (body.status) updateData.status = body.status;
+  return withLogging(
+    request,
+    async () => {
+      const pathname = request.nextUrl.pathname;
+      const evidenceId = pathname.split('/').pop();
 
-  const { data, error } = await supabase
-    .from('evidence')
-    .update(updateData)
-    .eq('id', evidenceId)
-    .eq('workspace_id', ctx.workspaceId)
-    .select('*')
-    .single();
+      if (!evidenceId) {
+        return NextResponse.json(
+          { ok: false, error: 'Evidence ID required' },
+          { status: 400 }
+        );
+      }
 
-  if (error) {
-    console.error('[api/evidence] PUT failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to update evidence' },
-      { status: 500 }
-    );
-  }
+      let body: any;
+      try {
+        body = await request.json();
+      } catch {
+        return NextResponse.json(
+          { ok: false, error: 'Invalid JSON' },
+          { status: 400 }
+        );
+      }
 
-  return NextResponse.json({ ok: true, evidence: data });
+      if (ctx.status !== 200) {
+        return NextResponse.json(
+          { ok: false, error: ctx.error },
+          { status: ctx.status }
+        );
+      }
+
+      const updateData: any = {};
+      if (body.title) updateData.title = body.title.trim();
+      if (body.description) updateData.description = body.description.trim();
+      if (body.status) updateData.status = body.status;
+
+      const { data, error } = await supabase
+        .from('evidence')
+        .update(updateData)
+        .eq('id', evidenceId)
+        .eq('workspace_id', ctx.workspaceId)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('[api/evidence] PUT failed:', error);
+        return NextResponse.json(
+          { ok: false, error: 'Failed to update evidence' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ ok: true, evidence: data });
+    },
+    {
+      endpoint: '/api/evidence',
+      method: 'PUT',
+      userId,
+      workspaceId,
+    }
+  );
 }
 
 /** DELETE /api/evidence/:id — delete evidence record */
 export async function DELETE(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const evidenceId = pathname.split('/').pop();
-
-  if (!evidenceId) {
-    return NextResponse.json(
-      { ok: false, error: 'Evidence ID required' },
-      { status: 400 }
-    );
-  }
-
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+
+  let userId: string | undefined;
+  let workspaceId: string | undefined;
+
+  if (ctx.status === 200) {
+    userId = ctx.userId;
+    workspaceId = ctx.workspaceId;
   }
 
-  const { error } = await supabase
-    .from('evidence')
-    .delete()
-    .eq('id', evidenceId)
-    .eq('workspace_id', ctx.workspaceId);
+  return withLogging(
+    request,
+    async () => {
+      const pathname = request.nextUrl.pathname;
+      const evidenceId = pathname.split('/').pop();
 
-  if (error) {
-    console.error('[api/evidence] DELETE failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to delete evidence' },
-      { status: 500 }
-    );
-  }
+      if (!evidenceId) {
+        return NextResponse.json(
+          { ok: false, error: 'Evidence ID required' },
+          { status: 400 }
+        );
+      }
 
-  return NextResponse.json({ ok: true });
+      if (ctx.status !== 200) {
+        return NextResponse.json(
+          { ok: false, error: ctx.error },
+          { status: ctx.status }
+        );
+      }
+
+      const { error } = await supabase
+        .from('evidence')
+        .delete()
+        .eq('id', evidenceId)
+        .eq('workspace_id', ctx.workspaceId);
+
+      if (error) {
+        console.error('[api/evidence] DELETE failed:', error);
+        return NextResponse.json(
+          { ok: false, error: 'Failed to delete evidence' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ ok: true });
+    },
+    {
+      endpoint: '/api/evidence',
+      method: 'DELETE',
+      userId,
+      workspaceId,
+    }
+  );
 }
