@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-11 (Evolution Phase 2: DNA-GOV-009/010/011 complete; Supabase deployment guide ready)
-**State:** Executing (DNA-001/002/008 live; DNS-GOV-009/010/011 merged; Priority 1 Supabase deployment awaiting Founder access)
+**Last updated:** 2026-07-11 (Evolution Phase 2: DNA-GOV-009/010/011/014 complete; Cost & incident monitoring live)
+**State:** Executing (DNA-001/002/008 live; DNS-GOV-009/010/011/014 merged; Priority 1 Supabase deployment awaiting Founder access)
 
 ---
 
@@ -147,17 +147,26 @@ with a timer.
   - 90-day cost history with automatic filesystem persistence
   - **Enables:** Catch spending spikes before they become budget-breaking surprises
 
+- ✅ DNA-GOV-014: Incident Commander (12/12 tests) — Merged commit c62efda
+  - Autonomous incident response with conservative auto-rollback logic
+  - Evaluates error_rate, latency, availability, and cost_spike incidents
+  - Only auto-rolls back when CRITICAL severity + low-impact candidate exists
+  - Estimates rollback safety: schema changes = high impact, recent commits = low impact
+  - Critical thresholds: error >15%, latency >5s, uptime <95%, cost >4x
+  - Integrates with DNA-005 (unified alert hub) for incident tracking
+  - **Enables:** Reduce MTTR (mean time to recovery) with automated remediation
+
 **Critical Infrastructure Decision (Resolved):**
 - **Vercel Hobby Cron Limitation:** Hobby accounts limited to 1 cron/day; DNA required 4 frequent monitors
 - **Resolution:** Migrated to GitHub Actions (free tier, unlimited frequency, superior reliability)
 - **Impact:** Full monitoring restored with $0 cost increase; improved deployment consistency
 
-**Test Suite Status:** 283/283 passing (22 test files) — up from 271 with DNS-GOV-011 addition
+**Test Suite Status:** 295/295 passing (23 test files) — up from 283 with DNS-GOV-014 addition
 
 **Next DNA Candidates (Priority Order):**
 1. DNS-GOV-012: Schema Migration Validator (zero-downtime DB updates)
 2. DNS-GOV-013: Feature Flag Controller (A/B testing, gradual rollouts)
-3. DNS-GOV-014: Incident Commander (auto-remediation, rollback triggers)
+3. DNS-GOV-015: Deployment Canary (gradual rollout with automatic abort)
 
 ---
 
