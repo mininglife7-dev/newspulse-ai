@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -100,6 +101,15 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/ai-systems — add a system to the workspace inventory. */
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const allowed = checkRateLimit(`ai-systems:${ip}`, 30, 60000);
+  if (!allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'Rate limit exceeded. Max 30 requests per minute.' },
+      { status: 429 }
+    );
+  }
+
   let body: CreateAiSystemBody;
   try {
     body = await req.json();

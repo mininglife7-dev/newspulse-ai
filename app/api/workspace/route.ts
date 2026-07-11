@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,6 +33,15 @@ function slugify(name: string): string {
  * write is checked by Row Level Security.
  */
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const allowed = checkRateLimit(`workspace:${ip}`, 10, 60000);
+  if (!allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'Rate limit exceeded. Max 10 requests per minute.' },
+      { status: 429 }
+    );
+  }
+
   let body: WorkspaceSetupBody;
   try {
     body = await req.json();
