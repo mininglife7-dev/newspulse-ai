@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { checkRateLimit } from '@/lib/rate-limiter';
+import { withLogging } from '@/lib/middleware-logging';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,126 +58,164 @@ async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteCli
 
 /** GET /api/ai-systems — list the caller's workspace AI-system inventory or fetch a single system. */
 export async function GET(request: NextRequest) {
-  const systemId = request.nextUrl.searchParams.get('id');
-
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+
+  let userId: string | undefined;
+  let workspaceId: string | undefined;
+
+  if (ctx.status === 200) {
+    workspaceId = ctx.workspaceId;
   }
 
-  let query = supabase
-    .from('ai_systems')
-    .select('id, name, description, system_type, vendor, purpose, status, created_at')
-    .eq('workspace_id', ctx.workspaceId);
+  return withLogging(
+    request,
+    async () => {
+      const systemId = request.nextUrl.searchParams.get('id');
 
-  if (systemId) {
-    query = query.eq('id', systemId).limit(1);
-  } else {
-    query = query.order('created_at', { ascending: false });
-  }
+      if (ctx.status !== 200) {
+        return NextResponse.json(
+          { ok: false, error: ctx.error },
+          { status: ctx.status }
+        );
+      }
 
-  const { data, error } = await query;
+      let query = supabase
+        .from('ai_systems')
+        .select('id, name, description, system_type, vendor, purpose, status, created_at')
+        .eq('workspace_id', ctx.workspaceId);
 
-  if (error) {
-    console.error('[api/ai-systems] query failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Could not load AI systems' },
-      { status: 500 }
-    );
-  }
+      if (systemId) {
+        query = query.eq('id', systemId).limit(1);
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
 
-  if (systemId && (!data || data.length === 0)) {
-    return NextResponse.json(
-      { ok: false, error: 'System not found' },
-      { status: 404 }
-    );
-  }
+      const { data, error } = await query;
 
-  return NextResponse.json({ ok: true, systems: data ?? [] });
+      if (error) {
+        console.error('[api/ai-systems] query failed:', error);
+        return NextResponse.json(
+          { ok: false, error: 'Could not load AI systems' },
+          { status: 500 }
+        );
+      }
+
+      if (systemId && (!data || data.length === 0)) {
+        return NextResponse.json(
+          { ok: false, error: 'System not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({ ok: true, systems: data ?? [] });
+    },
+    {
+      endpoint: '/api/ai-systems',
+      method: 'GET',
+      userId,
+      workspaceId,
+    }
+  );
 }
 
 /** POST /api/ai-systems — add a system to the workspace inventory. */
-export async function POST(req: Request) {
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-  const allowed = checkRateLimit(`ai-systems:${ip}`, 30, 60000);
-  if (!allowed) {
-    return NextResponse.json(
-      { ok: false, error: 'Rate limit exceeded. Max 30 requests per minute.' },
-      { status: 429 }
-    );
-  }
-
-  let body: CreateAiSystemBody;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid JSON body' },
-      { status: 400 }
-    );
-  }
-
-  const name = body.name?.trim();
-  if (!name) {
-    return NextResponse.json(
-      { ok: false, error: 'name is required' },
-      { status: 400 }
-    );
-  }
-  if (body.systemType && !SYSTEM_TYPES.includes(body.systemType as any)) {
-    return NextResponse.json(
-      { ok: false, error: `systemType must be one of: ${SYSTEM_TYPES.join(', ')}` },
-      { status: 400 }
-    );
-  }
-  const status = body.status ?? 'active';
-  if (!SYSTEM_STATUSES.includes(status as any)) {
-    return NextResponse.json(
-      { ok: false, error: 'status must be active, pilot or deprecated' },
-      { status: 400 }
-    );
-  }
-
+export async function POST(request: NextRequest) {
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
-  }
-  if (!ctx.companyId) {
-    return NextResponse.json(
-      { ok: false, error: 'No company profile — complete company setup first' },
-      { status: 409 }
-    );
+
+  let userId: string | undefined;
+  let workspaceId: string | undefined;
+
+  if (ctx.status === 200) {
+    workspaceId = ctx.workspaceId;
   }
 
-  const { data, error } = await supabase
-    .from('ai_systems')
-    .insert({
-      workspace_id: ctx.workspaceId,
-      company_id: ctx.companyId,
-      name,
-      description: body.description?.trim() || null,
-      system_type: body.systemType || null,
-      vendor: body.vendor?.trim() || null,
-      purpose: body.purpose?.trim() || null,
-      status,
-    })
-    .select('id, name, system_type, vendor, purpose, status, created_at')
-    .single();
+  return withLogging(
+    request,
+    async () => {
+      const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+      const allowed = checkRateLimit(`ai-systems:${ip}`, 30, 60000);
+      if (!allowed) {
+        return NextResponse.json(
+          { ok: false, error: 'Rate limit exceeded. Max 30 requests per minute.' },
+          { status: 429 }
+        );
+      }
 
-  if (error || !data) {
-    console.error('[api/ai-systems] insert failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Could not save the AI system' },
-      { status: 500 }
-    );
-  }
-  return NextResponse.json({ ok: true, system: data });
+      let body: CreateAiSystemBody;
+      try {
+        body = await request.json();
+      } catch {
+        return NextResponse.json(
+          { ok: false, error: 'Invalid JSON body' },
+          { status: 400 }
+        );
+      }
+
+      const name = body.name?.trim();
+      if (!name) {
+        return NextResponse.json(
+          { ok: false, error: 'name is required' },
+          { status: 400 }
+        );
+      }
+      if (body.systemType && !SYSTEM_TYPES.includes(body.systemType as any)) {
+        return NextResponse.json(
+          { ok: false, error: `systemType must be one of: ${SYSTEM_TYPES.join(', ')}` },
+          { status: 400 }
+        );
+      }
+      const status = body.status ?? 'active';
+      if (!SYSTEM_STATUSES.includes(status as any)) {
+        return NextResponse.json(
+          { ok: false, error: 'status must be active, pilot or deprecated' },
+          { status: 400 }
+        );
+      }
+
+      if (ctx.status !== 200) {
+        return NextResponse.json(
+          { ok: false, error: ctx.error },
+          { status: ctx.status }
+        );
+      }
+      if (!ctx.companyId) {
+        return NextResponse.json(
+          { ok: false, error: 'No company profile — complete company setup first' },
+          { status: 409 }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('ai_systems')
+        .insert({
+          workspace_id: ctx.workspaceId,
+          company_id: ctx.companyId,
+          name,
+          description: body.description?.trim() || null,
+          system_type: body.systemType || null,
+          vendor: body.vendor?.trim() || null,
+          purpose: body.purpose?.trim() || null,
+          status,
+        })
+        .select('id, name, system_type, vendor, purpose, status, created_at')
+        .single();
+
+      if (error || !data) {
+        console.error('[api/ai-systems] insert failed:', error);
+        return NextResponse.json(
+          { ok: false, error: 'Could not save the AI system' },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({ ok: true, system: data });
+    },
+    {
+      endpoint: '/api/ai-systems',
+      method: 'POST',
+      userId,
+      workspaceId,
+    }
+  );
 }

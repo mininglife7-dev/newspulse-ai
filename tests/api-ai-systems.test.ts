@@ -67,13 +67,15 @@ function get(params?: Record<string, string>) {
 }
 
 function post(body: unknown) {
-  return POST(
-    new Request('http://localhost/api/ai-systems', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-  );
+  const url = new URL('http://localhost/api/ai-systems');
+  const req = new Request(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  // Mock NextRequest properties
+  (req as any).nextUrl = url;
+  return POST(req as any);
 }
 
 beforeEach(() => {
