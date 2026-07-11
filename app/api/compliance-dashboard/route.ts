@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { withLogging } from '@/lib/middleware-logging';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,122 +65,142 @@ async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteCli
 export async function GET(request: NextRequest) {
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+
+  let userId: string | undefined;
+  let workspaceId: string | undefined;
+
+  if (ctx.status === 200) {
+    userId = ctx.userId;
+    workspaceId = ctx.workspaceId;
   }
 
-  try {
-    // Fetch all AI systems
-    const { data: systems } = await supabase
-      .from('ai_systems')
-      .select('id')
-      .eq('workspace_id', ctx.workspaceId);
+  return withLogging(
+    request,
+    async () => {
+      if (ctx.status !== 200) {
+        return NextResponse.json(
+          { ok: false, error: ctx.error },
+          { status: ctx.status }
+        );
+      }
 
-    const totalSystems = systems?.length ?? 0;
+      try {
+        // Fetch all AI systems
+        const { data: systems } = await supabase
+          .from('ai_systems')
+          .select('id')
+          .eq('workspace_id', ctx.workspaceId);
 
-    // Fetch all assessments
-    const { data: assessments } = await supabase
-      .from('risk_assessments')
-      .select('id, risk_level, status')
-      .eq('workspace_id', ctx.workspaceId);
+        const totalSystems = systems?.length ?? 0;
 
-    const assessedSystems = assessments?.length ?? 0;
-    const unassessedSystems = Math.max(0, totalSystems - assessedSystems);
+        // Fetch all assessments
+        const { data: assessments } = await supabase
+          .from('risk_assessments')
+          .select('id, risk_level, status')
+          .eq('workspace_id', ctx.workspaceId);
 
-    // Calculate risk distribution
-    const riskDistribution = {
-      unacceptable: assessments?.filter((a) => a.risk_level === 'unacceptable').length ?? 0,
-      high: assessments?.filter((a) => a.risk_level === 'high').length ?? 0,
-      medium: assessments?.filter((a) => a.risk_level === 'medium').length ?? 0,
-      low: assessments?.filter((a) => a.risk_level === 'low').length ?? 0,
-    };
+        const assessedSystems = assessments?.length ?? 0;
+        const unassessedSystems = Math.max(0, totalSystems - assessedSystems);
 
-    // Calculate assessment status
-    const assessmentStatus = {
-      draft: assessments?.filter((a) => a.status === 'draft').length ?? 0,
-      in_review: assessments?.filter((a) => a.status === 'in_review').length ?? 0,
-      finalized: assessments?.filter((a) => a.status === 'finalized').length ?? 0,
-    };
+        // Calculate risk distribution
+        const riskDistribution = {
+          unacceptable: assessments?.filter((a) => a.risk_level === 'unacceptable').length ?? 0,
+          high: assessments?.filter((a) => a.risk_level === 'high').length ?? 0,
+          medium: assessments?.filter((a) => a.risk_level === 'medium').length ?? 0,
+          low: assessments?.filter((a) => a.risk_level === 'low').length ?? 0,
+        };
 
-    // Fetch evidence metrics
-    const { data: evidence } = await supabase
-      .from('evidence')
-      .select('status')
-      .eq('workspace_id', ctx.workspaceId);
+        // Calculate assessment status
+        const assessmentStatus = {
+          draft: assessments?.filter((a) => a.status === 'draft').length ?? 0,
+          in_review: assessments?.filter((a) => a.status === 'in_review').length ?? 0,
+          finalized: assessments?.filter((a) => a.status === 'finalized').length ?? 0,
+        };
 
-    const evidenceMetrics = {
-      submitted: evidence?.filter((e) => e.status === 'submitted').length ?? 0,
-      under_review: evidence?.filter((e) => e.status === 'under_review').length ?? 0,
-      approved: evidence?.filter((e) => e.status === 'approved').length ?? 0,
-      rejected: evidence?.filter((e) => e.status === 'rejected').length ?? 0,
-    };
+        // Fetch evidence metrics
+        const { data: evidence } = await supabase
+          .from('evidence')
+          .select('status')
+          .eq('workspace_id', ctx.workspaceId);
 
-    // Fetch obligation metrics
-    const { data: obligations } = await supabase
-      .from('obligations')
-      .select('status, priority')
-      .eq('workspace_id', ctx.workspaceId);
+        const evidenceMetrics = {
+          submitted: evidence?.filter((e) => e.status === 'submitted').length ?? 0,
+          under_review: evidence?.filter((e) => e.status === 'under_review').length ?? 0,
+          approved: evidence?.filter((e) => e.status === 'approved').length ?? 0,
+          rejected: evidence?.filter((e) => e.status === 'rejected').length ?? 0,
+        };
 
-    const obligationMetrics = {
-      total: obligations?.length ?? 0,
-      identified: obligations?.filter((o) => o.status === 'identified').length ?? 0,
-      in_progress: obligations?.filter((o) => o.status === 'in_progress').length ?? 0,
-      completed: obligations?.filter((o) => o.status === 'completed').length ?? 0,
-      not_applicable: obligations?.filter((o) => o.status === 'not_applicable').length ?? 0,
-      high_priority: obligations?.filter((o) => o.priority === 'high').length ?? 0,
-      critical_priority: obligations?.filter((o) => o.priority === 'critical').length ?? 0,
-    };
+        // Fetch obligation metrics
+        const { data: obligations } = await supabase
+          .from('obligations')
+          .select('status, priority')
+          .eq('workspace_id', ctx.workspaceId);
 
-    // Calculate compliance health (incorporates risk, evidence, and obligations)
-    let complianceHealth: 'critical' | 'warning' | 'good' | 'excellent';
-    if (riskDistribution.unacceptable > 0 || obligationMetrics.critical_priority > 0) {
-      // Critical if unacceptable risk or critical obligations exist
-      complianceHealth = 'critical';
-    } else if (
-      (riskDistribution.high > 0 && (unassessedSystems > 0 || evidenceMetrics.submitted > 0)) ||
-      (obligationMetrics.high_priority > 0 && (obligationMetrics.identified > 0 || obligationMetrics.in_progress > 0))
-    ) {
-      // Warning if high risk + incomplete work, or high-priority obligations not fully completed
-      complianceHealth = 'warning';
-    } else if (
-      assessedSystems === totalSystems &&
-      evidenceMetrics.under_review === 0 &&
-      evidenceMetrics.submitted === 0 &&
-      (obligationMetrics.total === 0 || (obligationMetrics.completed + obligationMetrics.not_applicable === obligationMetrics.total))
-    ) {
-      // Excellent if all systems assessed, evidence approved, and obligations completed
-      complianceHealth = 'excellent';
-    } else {
-      complianceHealth = 'good';
+        const obligationMetrics = {
+          total: obligations?.length ?? 0,
+          identified: obligations?.filter((o) => o.status === 'identified').length ?? 0,
+          in_progress: obligations?.filter((o) => o.status === 'in_progress').length ?? 0,
+          completed: obligations?.filter((o) => o.status === 'completed').length ?? 0,
+          not_applicable: obligations?.filter((o) => o.status === 'not_applicable').length ?? 0,
+          high_priority: obligations?.filter((o) => o.priority === 'high').length ?? 0,
+          critical_priority: obligations?.filter((o) => o.priority === 'critical').length ?? 0,
+        };
+
+        // Calculate compliance health (incorporates risk, evidence, and obligations)
+        let complianceHealth: 'critical' | 'warning' | 'good' | 'excellent';
+        if (riskDistribution.unacceptable > 0 || obligationMetrics.critical_priority > 0) {
+          // Critical if unacceptable risk or critical obligations exist
+          complianceHealth = 'critical';
+        } else if (
+          (riskDistribution.high > 0 && (unassessedSystems > 0 || evidenceMetrics.submitted > 0)) ||
+          (obligationMetrics.high_priority > 0 && (obligationMetrics.identified > 0 || obligationMetrics.in_progress > 0))
+        ) {
+          // Warning if high risk + incomplete work, or high-priority obligations not fully completed
+          complianceHealth = 'warning';
+        } else if (
+          assessedSystems === totalSystems &&
+          evidenceMetrics.under_review === 0 &&
+          evidenceMetrics.submitted === 0 &&
+          (obligationMetrics.total === 0 || (obligationMetrics.completed + obligationMetrics.not_applicable === obligationMetrics.total))
+        ) {
+          // Excellent if all systems assessed, evidence approved, and obligations completed
+          complianceHealth = 'excellent';
+        } else {
+          complianceHealth = 'good';
+        }
+
+        // Calculate readiness percentage
+        const assessmentReadiness = totalSystems > 0 ? (assessedSystems / totalSystems) * 100 : 0;
+        const evidenceReadiness = assessedSystems > 0 ? ((evidenceMetrics.approved + assessedSystems - unassessedSystems) / assessedSystems) * 100 : 0;
+        const finalizationReadiness = assessedSystems > 0 ? (assessmentStatus.finalized / assessedSystems) * 100 : 0;
+        const readinessPercentage = (assessmentReadiness + Math.min(evidenceReadiness, 100) + finalizationReadiness) / 3;
+
+        const summary: ComplianceSummary = {
+          totalSystems,
+          assessedSystems,
+          unassessedSystems,
+          riskDistribution,
+          assessmentStatus,
+          evidenceMetrics,
+          obligationMetrics,
+          complianceHealth,
+          readinessPercentage: Math.round(readinessPercentage),
+        };
+
+        return NextResponse.json({ ok: true, summary });
+      } catch (err: any) {
+        console.error('[api/compliance-dashboard] GET failed:', err);
+        return NextResponse.json(
+          { ok: false, error: 'Failed to fetch compliance dashboard' },
+          { status: 500 }
+        );
+      }
+    },
+    {
+      endpoint: '/api/compliance-dashboard',
+      method: 'GET',
+      userId,
+      workspaceId,
     }
-
-    // Calculate readiness percentage
-    const assessmentReadiness = totalSystems > 0 ? (assessedSystems / totalSystems) * 100 : 0;
-    const evidenceReadiness = assessedSystems > 0 ? ((evidenceMetrics.approved + assessedSystems - unassessedSystems) / assessedSystems) * 100 : 0;
-    const finalizationReadiness = assessedSystems > 0 ? (assessmentStatus.finalized / assessedSystems) * 100 : 0;
-    const readinessPercentage = (assessmentReadiness + Math.min(evidenceReadiness, 100) + finalizationReadiness) / 3;
-
-    const summary: ComplianceSummary = {
-      totalSystems,
-      assessedSystems,
-      unassessedSystems,
-      riskDistribution,
-      assessmentStatus,
-      evidenceMetrics,
-      obligationMetrics,
-      complianceHealth,
-      readinessPercentage: Math.round(readinessPercentage),
-    };
-
-    return NextResponse.json({ ok: true, summary });
-  } catch (err: any) {
-    console.error('[api/compliance-dashboard] GET failed:', err);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to fetch compliance dashboard' },
-      { status: 500 }
-    );
-  }
+  );
 }
