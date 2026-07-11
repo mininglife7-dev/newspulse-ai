@@ -1,0 +1,407 @@
+openapi: 3.0.0
+info:
+  title: EURO AI API
+  version: 1.0.0
+  description: AI Governance Platform API for EU AI Act compliance management
+  contact:
+    name: EURO AI Support
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://app.euroai.com
+    description: Production
+  - url: http://localhost:3000
+    description: Development
+
+paths:
+  /api/health:
+    get:
+      summary: System health check
+      description: Verify that all critical integrations are configured and responsive
+      tags:
+        - Health
+      responses:
+        '200':
+          description: All systems healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  status:
+                    type: string
+                    enum: ['healthy', 'degraded']
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime_s:
+                    type: integer
+                  checks:
+                    type: object
+                    properties:
+                      supabase_url:
+                        type: boolean
+                      supabase_anon:
+                        type: boolean
+                      supabase_service:
+                        type: boolean
+        '503':
+          description: One or more integrations misconfigured
+
+  /api/workspace:
+    post:
+      summary: Create workspace and company profile
+      description: |
+        Set up a new workspace (tenant), company profile, and owner membership.
+        Runs as authenticated user, all writes checked by Row Level Security.
+        Returns 429 if rate limited (max 10 req/min per IP).
+      tags:
+        - Workspace
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - companyName
+                - country
+                - industry
+              properties:
+                companyName:
+                  type: string
+                  minLength: 1
+                  description: Legal company name
+                legalName:
+                  type: string
+                  description: Formal legal entity name
+                country:
+                  type: string
+                  description: Country code or name (e.g., Germany, DE)
+                industry:
+                  type: string
+                  description: Industry classification
+                employees:
+                  type: string
+                  description: Employee range (e.g., '1-10', '11-50')
+                website:
+                  type: string
+                  format: uri
+                description:
+                  type: string
+                  description: Governance priorities or company description
+      responses:
+        '200':
+          description: Workspace created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  workspace:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      slug:
+                        type: string
+                      name:
+                        type: string
+                  companyId:
+                    type: string
+                    format: uuid
+        '400':
+          description: Validation error (missing required fields)
+        '401':
+          description: Authentication required
+        '429':
+          description: Rate limit exceeded (max 10 req/min)
+        '500':
+          description: Server error
+
+  /api/ai-systems:
+    get:
+      summary: List AI systems in workspace
+      description: |
+        Retrieve all AI systems in the authenticated user's workspace.
+        Results isolated by Row Level Security (workspace boundary).
+      tags:
+        - AI Systems
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          description: Fetch single system by ID (if provided)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of AI systems
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  systems:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AISystem'
+        '401':
+          description: Authentication required
+        '409':
+          description: No workspace found (complete setup first)
+
+    post:
+      summary: Add AI system to inventory
+      description: |
+        Create a new AI system in the workspace inventory.
+        Returns 429 if rate limited (max 30 req/min per IP).
+      tags:
+        - AI Systems
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  description: System name
+                description:
+                  type: string
+                systemType:
+                  type: string
+                  enum:
+                    - large_language_model
+                    - generative_ai
+                    - classification_system
+                    - recommendation_system
+                    - computer_vision
+                    - nlp_analysis
+                    - predictive_model
+                    - other
+                vendor:
+                  type: string
+                purpose:
+                  type: string
+                status:
+                  type: string
+                  enum: ['active', 'pilot', 'deprecated']
+                  default: active
+      responses:
+        '200':
+          description: AI system created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  system:
+                    $ref: '#/components/schemas/AISystem'
+        '400':
+          description: Validation error
+        '401':
+          description: Authentication required
+        '409':
+          description: No company profile (complete setup first)
+        '429':
+          description: Rate limit exceeded (max 30 req/min)
+
+  /api/assessments:
+    get:
+      summary: Get risk assessment
+      description: Retrieve assessment for an AI system
+      tags:
+        - Assessments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: systemId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: assessmentId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Assessment data
+        '400':
+          description: systemId or assessmentId required
+        '404':
+          description: Assessment not found
+
+    post:
+      summary: Submit assessment responses
+      description: |
+        Submit answers to compliance questionnaire for an AI system.
+        Calculates risk classification and obligations.
+      tags:
+        - Assessments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - aiSystemId
+                - answers
+              properties:
+                aiSystemId:
+                  type: string
+                  format: uuid
+                answers:
+                  type: object
+                  description: Question ID -> answer mapping
+                  additionalProperties: true
+                status:
+                  type: string
+                  enum: ['draft', 'in_review', 'finalized']
+      responses:
+        '200':
+          description: Assessment created/updated
+        '400':
+          description: Validation error
+        '401':
+          description: Authentication required
+
+  /api/obligations:
+    get:
+      summary: Get obligations for workspace
+      description: Retrieve compliance obligations based on assessed AI systems
+      tags:
+        - Obligations
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of obligations
+        '401':
+          description: Authentication required
+
+  /api/compliance-dashboard:
+    get:
+      summary: Get compliance dashboard metrics
+      description: |
+        Retrieve aggregated compliance status:
+        - Overall risk score (0-100)
+        - Obligation progress
+        - Assessment completion status
+        - Critical gaps
+      tags:
+        - Dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  dashboard:
+                    type: object
+                    properties:
+                      overallRiskScore:
+                        type: number
+                        description: 0-100, higher is riskier
+                      completionRate:
+                        type: number
+                        description: 0-1 (percentage of assessments complete)
+                      obligations:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                          completed:
+                            type: integer
+                          inProgress:
+                            type: integer
+                      criticality:
+                        type: string
+                        enum: ['green', 'yellow', 'red']
+        '401':
+          description: Authentication required
+
+components:
+  schemas:
+    AISystem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        system_type:
+          type: string
+        vendor:
+          type: string
+        purpose:
+          type: string
+        status:
+          type: string
+          enum: ['active', 'pilot', 'deprecated']
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        error:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Auth token
+
+tags:
+  - name: Health
+    description: System health and readiness
+  - name: Workspace
+    description: Workspace and organization management
+  - name: AI Systems
+    description: AI system inventory
+  - name: Assessments
+    description: Risk assessments and compliance questionnaires
+  - name: Obligations
+    description: EU AI Act compliance obligations
+  - name: Dashboard
+    description: Compliance dashboard and metrics
