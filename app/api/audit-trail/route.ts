@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   getAuditEntries,
   generateAuditReport,
@@ -8,6 +8,7 @@ import {
   type AuditAction,
   type AuditSeverity,
 } from '@/lib/audit-trail';
+import { withLogging } from '@/lib/middleware-logging';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,133 +36,142 @@ export const dynamic = 'force-dynamic';
  *
  * Used by: Founder's compliance dashboard, incident investigation, governance audits
  */
-export async function GET(req: Request) {
-  try {
-    const url = new URL(req.url);
-    const format = url.searchParams.get('format') || 'report';
-    const exportFormat = url.searchParams.get('exportFormat') || 'json';
+export async function GET(request: NextRequest) {
+  return withLogging(
+    request,
+    async () => {
+      try {
+        const url = request.nextUrl;
+        const format = url.searchParams.get('format') || 'report';
+        const exportFormat = url.searchParams.get('exportFormat') || 'json';
 
-    // Parse optional filters
-    const startTimeStr = url.searchParams.get('startTime');
-    const endTimeStr = url.searchParams.get('endTime');
-    const action = (url.searchParams.get('action') || undefined) as AuditAction | undefined;
-    const severity = (url.searchParams.get('severity') || undefined) as AuditSeverity | undefined;
-    const actor = url.searchParams.get('actor') || undefined;
-    const resource = url.searchParams.get('resource') || undefined;
-    const limit = url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!, 10) : 100;
+        // Parse optional filters
+        const startTimeStr = url.searchParams.get('startTime');
+        const endTimeStr = url.searchParams.get('endTime');
+        const action = (url.searchParams.get('action') || undefined) as AuditAction | undefined;
+        const severity = (url.searchParams.get('severity') || undefined) as AuditSeverity | undefined;
+        const actor = url.searchParams.get('actor') || undefined;
+        const resource = url.searchParams.get('resource') || undefined;
+        const limit = url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!, 10) : 100;
 
-    // Validate limit
-    if (isNaN(limit) || limit < 1 || limit > 10000) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Invalid limit parameter',
-          message: 'Limit must be between 1 and 10000',
-        },
-        { status: 400 }
-      );
-    }
+        // Validate limit
+        if (isNaN(limit) || limit < 1 || limit > 10000) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: 'Invalid limit parameter',
+              message: 'Limit must be between 1 and 10000',
+            },
+            { status: 400 }
+          );
+        }
 
-    // Parse dates if provided
-    const startTime = startTimeStr ? new Date(startTimeStr) : undefined;
-    const endTime = endTimeStr ? new Date(endTimeStr) : undefined;
+        // Parse dates if provided
+        const startTime = startTimeStr ? new Date(startTimeStr) : undefined;
+        const endTime = endTimeStr ? new Date(endTimeStr) : undefined;
 
-    if ((startTime && isNaN(startTime.getTime())) || (endTime && isNaN(endTime.getTime()))) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Invalid date parameters',
-          message: 'startTime and endTime must be valid ISO timestamps',
-        },
-        { status: 400 }
-      );
-    }
+        if ((startTime && isNaN(startTime.getTime())) || (endTime && isNaN(endTime.getTime()))) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: 'Invalid date parameters',
+              message: 'startTime and endTime must be valid ISO timestamps',
+            },
+            { status: 400 }
+          );
+        }
 
-    if (format === 'export') {
-      // Export audit log as JSON or CSV
-      const exportData = exportAuditLog(exportFormat as 'json' | 'csv');
+        if (format === 'export') {
+          // Export audit log as JSON or CSV
+          const exportData = exportAuditLog(exportFormat as 'json' | 'csv');
 
-      return new NextResponse(exportData, {
-        status: 200,
-        headers: {
-          'Content-Type': exportFormat === 'csv' ? 'text/csv' : 'application/json',
-          'Content-Disposition': `attachment; filename="audit-trail-export-${new Date().toISOString().split('T')[0]}.${exportFormat === 'csv' ? 'csv' : 'json'}"`,
-        },
-      });
-    }
+          return new NextResponse(exportData, {
+            status: 200,
+            headers: {
+              'Content-Type': exportFormat === 'csv' ? 'text/csv' : 'application/json',
+              'Content-Disposition': `attachment; filename="audit-trail-export-${new Date().toISOString().split('T')[0]}.${exportFormat === 'csv' ? 'csv' : 'json'}"`,
+            },
+          });
+        }
 
-    if (format === 'entries') {
-      // Return raw audit entries with filters
-      const entries = getAuditEntries({
-        startTime,
-        endTime,
-        action,
-        severity,
-        actor,
-        resource,
-        limit,
-      });
+        if (format === 'entries') {
+          // Return raw audit entries with filters
+          const entries = getAuditEntries({
+            startTime,
+            endTime,
+            action,
+            severity,
+            actor,
+            resource,
+            limit,
+          });
 
-      return NextResponse.json(
-        {
-          ok: true,
-          timestamp: new Date().toISOString(),
-          count: entries.length,
-          entries,
-        },
-        { status: 200 }
-      );
-    }
+          return NextResponse.json(
+            {
+              ok: true,
+              timestamp: new Date().toISOString(),
+              count: entries.length,
+              entries,
+            },
+            { status: 200 }
+          );
+        }
 
-    // Default: return formatted compliance report
-    const report = generateAuditReport({
-      startTime,
-      endTime,
-    });
+        // Default: return formatted compliance report
+        const report = generateAuditReport({
+          startTime,
+          endTime,
+        });
 
-    const formatted = formatAuditReport(report);
+        const formatted = formatAuditReport(report);
 
-    // Log for Founder visibility
-    if (report.totalEntries > 0) {
-      if (report.criticalActions.length > 0) {
-        console.error('[audit-trail] REPORT:\n', formatted);
-      } else {
-        console.log('[audit-trail] REPORT:\n', formatted);
+        // Log for Founder visibility
+        if (report.totalEntries > 0) {
+          if (report.criticalActions.length > 0) {
+            console.error('[audit-trail] REPORT:\n', formatted);
+          } else {
+            console.log('[audit-trail] REPORT:\n', formatted);
+          }
+        }
+
+        return NextResponse.json(
+          {
+            ok: true,
+            timestamp: report.timestamp,
+            periodStart: report.periodStart,
+            periodEnd: report.periodEnd,
+            totalEntries: report.totalEntries,
+            criticalCount: report.criticalActions.length,
+            summary: {
+              byAction: report.byAction,
+              bySeverity: report.bySeverity,
+            },
+            criticalActions: report.criticalActions,
+            recentEntries: report.entries,
+            formatted,
+          },
+          { status: 200 }
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[audit-trail] Failed:', message);
+
+        return NextResponse.json(
+          {
+            ok: false,
+            error: 'Audit trail query failed',
+            message,
+            timestamp: new Date().toISOString(),
+          },
+          { status: 503 }
+        );
       }
+    },
+    {
+      endpoint: '/api/audit-trail',
+      method: 'GET',
     }
-
-    return NextResponse.json(
-      {
-        ok: true,
-        timestamp: report.timestamp,
-        periodStart: report.periodStart,
-        periodEnd: report.periodEnd,
-        totalEntries: report.totalEntries,
-        criticalCount: report.criticalActions.length,
-        summary: {
-          byAction: report.byAction,
-          bySeverity: report.bySeverity,
-        },
-        criticalActions: report.criticalActions,
-        recentEntries: report.entries,
-        formatted,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[audit-trail] Failed:', message);
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error: 'Audit trail query failed',
-        message,
-        timestamp: new Date().toISOString(),
-      },
-      { status: 503 }
-    );
-  }
+  );
 }
 
 /**
@@ -178,49 +188,58 @@ export async function GET(req: Request) {
  *
  * Called by: dna-audit-trail.yml workflow daily
  */
-export async function POST(req: Request) {
-  try {
-    let keepDays = 90;
-
-    // Parse optional body
-    if (req.method === 'POST' && req.headers.get('content-type')?.includes('application/json')) {
+export async function POST(request: NextRequest) {
+  return withLogging(
+    request,
+    async () => {
       try {
-        const body = await req.json();
-        if (typeof body.keepDays === 'number') {
-          keepDays = body.keepDays;
+        let keepDays = 90;
+
+        // Parse optional body
+        if (request.headers.get('content-type')?.includes('application/json')) {
+          try {
+            const body = await request.json();
+            if (typeof body.keepDays === 'number') {
+              keepDays = body.keepDays;
+            }
+          } catch {
+            // Continue with default
+          }
         }
-      } catch {
-        // Continue with default
+
+        // Rotate audit log
+        const archived = rotateAuditLog(keepDays);
+
+        console.log(`[audit-trail] Rotated: ${archived} entries archived (keeping ${keepDays} days)`);
+
+        return NextResponse.json(
+          {
+            ok: true,
+            timestamp: new Date().toISOString(),
+            archived,
+            keepDays,
+            message: `Audit log rotated: ${archived} entries archived`,
+          },
+          { status: 200 }
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[audit-trail] Rotation failed:', message);
+
+        return NextResponse.json(
+          {
+            ok: false,
+            error: 'Audit log rotation failed',
+            message,
+            timestamp: new Date().toISOString(),
+          },
+          { status: 503 }
+        );
       }
+    },
+    {
+      endpoint: '/api/audit-trail',
+      method: 'POST',
     }
-
-    // Rotate audit log
-    const archived = rotateAuditLog(keepDays);
-
-    console.log(`[audit-trail] Rotated: ${archived} entries archived (keeping ${keepDays} days)`);
-
-    return NextResponse.json(
-      {
-        ok: true,
-        timestamp: new Date().toISOString(),
-        archived,
-        keepDays,
-        message: `Audit log rotated: ${archived} entries archived`,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[audit-trail] Rotation failed:', message);
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error: 'Audit log rotation failed',
-        message,
-        timestamp: new Date().toISOString(),
-      },
-      { status: 503 }
-    );
-  }
+  );
 }
