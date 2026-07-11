@@ -1,0 +1,174 @@
+// tests/api/[feature].test.ts.template
+//
+// INSTRUCTIONS:
+// 1. Copy to: tests/api/[feature].test.ts
+// 2. Replace [feature] with your feature name
+// 3. Update endpoints to match your API routes
+// 4. Add/remove test cases based on your feature
+// 5. Run: npm test
+
+import { describe, it, expect } from 'vitest';
+import { NextRequest } from 'next/server';
+
+// Note: In a real test, you would import your route handler
+// import { POST, GET } from '@/app/api/[feature]/route';
+
+describe('[Feature] API Routes', () => {
+  describe('POST /api/[feature]', () => {
+    it('should create with valid data', async () => {
+      // Setup: Prepare request with valid data
+      const validRequest = new NextRequest(
+        'http://localhost:3000/api/[feature]',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            workspaceId: 'workspace-123',
+            name: 'Test Feature',
+            description: 'Test description',
+          }),
+        }
+      );
+
+      // TODO: Mock Supabase auth and database
+      // const response = await POST(validRequest);
+      // expect(response.status).toBe(201);
+
+      // const data = await response.json();
+      // expect(data.ok).toBe(true);
+      // expect(data.data.id).toBeDefined();
+      // expect(data.data.name).toBe('Test Feature');
+    });
+
+    it('should validate required fields', async () => {
+      // Setup: Missing required 'name' field
+      const invalidRequest = new NextRequest(
+        'http://localhost:3000/api/[feature]',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            workspaceId: 'workspace-123',
+            // Missing 'name'
+          }),
+        }
+      );
+
+      // TODO: Mock Supabase
+      // const response = await POST(invalidRequest);
+      // expect(response.status).toBe(400);
+
+      // const data = await response.json();
+      // expect(data.ok).toBe(false);
+      // expect(data.error).toContain('required');
+    });
+
+    it('should reject unauthenticated requests', async () => {
+      // Setup: No auth token
+      const request = new NextRequest(
+        'http://localhost:3000/api/[feature]',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            workspaceId: 'workspace-123',
+            name: 'Test',
+          }),
+        }
+      );
+
+      // TODO: Mock Supabase to return no user
+      // const response = await POST(request);
+      // expect(response.status).toBe(401);
+    });
+
+    it('should reject if user not in workspace', async () => {
+      // Setup: User not a member of workspace
+      const request = new NextRequest(
+        'http://localhost:3000/api/[feature]',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            workspaceId: 'workspace-999', // User not a member
+            name: 'Test',
+          }),
+        }
+      );
+
+      // TODO: Mock Supabase - user exists but not in workspace
+      // const response = await POST(request);
+      // expect(response.status).toBe(403);
+    });
+  });
+
+  describe('GET /api/[feature]', () => {
+    it('should list features for workspace', async () => {
+      // Setup: Request with workspaceId
+      const request = new NextRequest(
+        'http://localhost:3000/api/[feature]?workspaceId=workspace-123'
+      );
+
+      // TODO: Mock Supabase to return features
+      // const response = await GET(request);
+      // expect(response.status).toBe(200);
+
+      // const data = await response.json();
+      // expect(data.ok).toBe(true);
+      // expect(Array.isArray(data.data)).toBe(true);
+    });
+
+    it('should require workspaceId parameter', async () => {
+      // Setup: Missing workspaceId
+      const request = new NextRequest(
+        'http://localhost:3000/api/[feature]' // No query param
+      );
+
+      // TODO: Mock Supabase
+      // const response = await GET(request);
+      // expect(response.status).toBe(400);
+    });
+
+    it('should reject unauthenticated requests', async () => {
+      // Setup: No auth
+      const request = new NextRequest(
+        'http://localhost:3000/api/[feature]?workspaceId=workspace-123'
+      );
+
+      // TODO: Mock Supabase - no user
+      // const response = await GET(request);
+      // expect(response.status).toBe(401);
+    });
+
+    it('should enforce workspace isolation via RLS', async () => {
+      // Setup: Authenticated in workspace-123, request workspace-456
+      const request = new NextRequest(
+        'http://localhost:3000/api/[feature]?workspaceId=workspace-456'
+      );
+
+      // TODO: Mock Supabase - user not in workspace-456
+      // const response = await GET(request);
+      // expect(response.status).toBe(403);
+    });
+  });
+});
+
+describe('[Feature] Integration Tests', () => {
+  it('should create and then list feature', async () => {
+    // 1. Create a feature
+    // 2. List features
+    // 3. Verify created feature appears in list
+
+    // TODO: Implement full integration test
+  });
+
+  it('should not allow cross-workspace access', async () => {
+    // 1. User in workspace-A creates feature
+    // 2. User in workspace-B tries to access it
+    // 3. Should be rejected
+
+    // TODO: Implement cross-workspace test
+  });
+});

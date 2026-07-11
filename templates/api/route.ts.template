@@ -1,0 +1,210 @@
+// app/api/[feature]/route.ts.template
+//
+// INSTRUCTIONS:
+// 1. Copy this file to: app/api/[feature]/route.ts
+// 2. Replace [feature] with your feature name (e.g., 'evidence-files', 'audit-logs')
+// 3. Replace [Table] with your table name (e.g., 'EvidenceFile')
+// 4. Replace [table] with your table name in lowercase (e.g., 'evidence_files')
+// 5. Add fields to CreateRequestSchema based on your architecture
+// 6. Update error messages to be specific to your feature
+// 7. Run: npm run dev and test with curl or Postman
+// 8. Add tests in: tests/api/[feature].test.ts
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { z } from 'zod';
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+// Validation schema for request body
+const CreateRequestSchema = z.object({
+  workspaceId: z.string().uuid('Invalid workspace ID'),
+  name: z.string().min(1, 'Name required').max(255),
+  description: z.string().optional(),
+  // Add more fields here based on your table schema
+});
+
+type CreateRequest = z.infer<typeof CreateRequestSchema>;
+
+// Response type
+interface FeatureItemResponse {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+// ============================================================================
+// HELPER: Error Response
+// ============================================================================
+
+function errorResponse(
+  status: number,
+  message: string,
+  details?: Record<string, any>
+) {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: message,
+      ...(details && { details }),
+    },
+    { status }
+  );
+}
+
+// ============================================================================
+// POST: CREATE NEW [Feature]
+// ============================================================================
+
+export async function POST(req: NextRequest) {
+  try {
+    // 1. Parse and validate request
+    const body = await req.json();
+    const validatedData = CreateRequestSchema.parse(body);
+
+    // 2. Initialize Supabase client with user's auth context
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => req.cookies.getAll(),
+          setAll: () => {
+            // Read-only in API routes
+          },
+        },
+      }
+    );
+
+    // 3. Get authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return errorResponse(401, 'Authentication required');
+    }
+
+    // 4. Verify user is member of workspace
+    const { data: membership, error: membershipError } = await supabase
+      .from('workspace_members')
+      .select('role')
+      .eq('workspace_id', validatedData.workspaceId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (membershipError || !membership) {
+      return errorResponse(403, 'Not a member of this workspace');
+    }
+
+    // 5. Insert record (RLS policies will enforce workspace isolation)
+    const { data, error: insertError } = await supabase
+      .from('[table]')
+      .insert({
+        workspace_id: validatedData.workspaceId,
+        name: validatedData.name,
+        description: validatedData.description || null,
+        created_by_id: user.id,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      return errorResponse(500, 'Failed to create record', {
+        code: insertError.code,
+      });
+    }
+
+    // 6. Return created record
+    const response: FeatureItemResponse = {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      name: data.name,
+      description: data.description,
+      createdAt: data.created_at,
+      createdBy: data.created_by_id,
+    };
+
+    return NextResponse.json({ ok: true, data: response }, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return errorResponse(400, 'Invalid request data', {
+        errors: error.errors,
+      });
+    }
+
+    console.error('Unexpected error in POST:', error);
+    return errorResponse(500, 'Internal server error');
+  }
+}
+
+// ============================================================================
+// GET: LIST [Features]
+// ============================================================================
+
+export async function GET(req: NextRequest) {
+  try {
+    // 1. Get authenticated user
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => req.cookies.getAll(),
+          setAll: () => {},
+        },
+      }
+    );
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return errorResponse(401, 'Authentication required');
+    }
+
+    // 2. Get workspace ID from query params
+    const workspaceId = req.nextUrl.searchParams.get('workspaceId');
+    if (!workspaceId) {
+      return errorResponse(400, 'workspaceId query parameter required');
+    }
+
+    // 3. Verify workspace membership
+    const { data: membership, error: membershipError } = await supabase
+      .from('workspace_members')
+      .select('id')
+      .eq('workspace_id', workspaceId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (membershipError || !membership) {
+      return errorResponse(403, 'Not a member of this workspace');
+    }
+
+    // 4. Fetch records (RLS enforces workspace isolation)
+    const { data, error: selectError } = await supabase
+      .from('[table]')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false });
+
+    if (selectError) {
+      console.error('Select error:', selectError);
+      return errorResponse(500, 'Failed to fetch records');
+    }
+
+    return NextResponse.json({ ok: true, data: data || [] }, { status: 200 });
+  } catch (error) {
+    console.error('Unexpected error in GET:', error);
+    return errorResponse(500, 'Internal server error');
+  }
+}

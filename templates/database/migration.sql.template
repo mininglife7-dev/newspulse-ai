@@ -1,0 +1,97 @@
+-- Migration: PHASE-3-[CANDIDATE]-TABLES
+-- Purpose: Create tables for [Candidate] feature
+-- Date: [DATE]
+-- Author: Governor
+--
+-- INSTRUCTIONS:
+-- 1. Replace [CANDIDATE] with feature name (e.g., EVIDENCE_LINKING, AUDIT_LOGGING)
+-- 2. Replace [DATE] with today's date (e.g., 2026_07_18)
+-- 3. Replace [TABLE_NAME] with your table name
+-- 4. Add table fields from PHASE-3-ARCHITECTURE-OPTIONS.md for your candidate
+-- 5. Create indexes for common queries and foreign keys
+-- 6. Enable RLS and define policies for workspace isolation
+-- 7. Run: supabase migration up
+-- 8. Verify: Check tables exist in Supabase dashboard
+
+-- ============================================================================
+-- CREATE TABLE [TABLE_NAME]
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS [TABLE_NAME] (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+
+  -- Add your fields here based on architecture
+  -- Example:
+  -- name TEXT NOT NULL,
+  -- description TEXT,
+  -- status TEXT NOT NULL DEFAULT 'draft',
+
+  -- Metadata
+  created_by_id UUID NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- ============================================================================
+-- CREATE INDEXES
+-- ============================================================================
+
+-- Always index workspace_id (for filtering)
+CREATE INDEX idx_[TABLE_NAME]_workspace_id ON [TABLE_NAME](workspace_id);
+
+-- Index created_by_id (for user-generated data tracking)
+CREATE INDEX idx_[TABLE_NAME]_created_by_id ON [TABLE_NAME](created_by_id);
+
+-- Index created_at (for sorting/filtering by date)
+CREATE INDEX idx_[TABLE_NAME]_created_at ON [TABLE_NAME](workspace_id, created_at DESC);
+
+-- Add indexes for frequently filtered fields
+-- CREATE INDEX idx_[TABLE_NAME]_status ON [TABLE_NAME](status);
+
+-- ============================================================================
+-- ENABLE ROW-LEVEL SECURITY
+-- ============================================================================
+
+ALTER TABLE [TABLE_NAME] ENABLE ROW LEVEL SECURITY;
+
+-- Users can only see records from their workspace
+CREATE POLICY [TABLE_NAME]_select_workspace ON [TABLE_NAME]
+  FOR SELECT
+  USING (
+    workspace_id IN (
+      SELECT workspace_id FROM workspace_members
+      WHERE user_id = auth.uid()
+    )
+  );
+
+-- Users can insert into their workspace
+CREATE POLICY [TABLE_NAME]_insert_workspace ON [TABLE_NAME]
+  FOR INSERT
+  WITH CHECK (
+    workspace_id IN (
+      SELECT workspace_id FROM workspace_members
+      WHERE user_id = auth.uid()
+    )
+    AND created_by_id = auth.uid()
+  );
+
+-- Users can update their own records
+CREATE POLICY [TABLE_NAME]_update_own ON [TABLE_NAME]
+  FOR UPDATE
+  USING (created_by_id = auth.uid());
+
+-- Users can delete their own records
+CREATE POLICY [TABLE_NAME]_delete_own ON [TABLE_NAME]
+  FOR DELETE
+  USING (created_by_id = auth.uid());
+
+-- ============================================================================
+-- VERIFICATION
+-- ============================================================================
+
+-- After running this migration:
+-- 1. Test: SELECT * FROM [TABLE_NAME] should be empty initially
+-- 2. Test: Insert a record and verify RLS
+-- 3. Test: Try to read from different workspace (should fail)
+-- 4. Test: Verify indexes exist: \d+ [TABLE_NAME]
