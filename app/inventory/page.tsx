@@ -8,6 +8,7 @@ import {
   Cpu,
   Loader2,
   Plus,
+  Trash2,
 } from 'lucide-react';
 
 interface AiSystem {
@@ -46,6 +47,7 @@ export default function InventoryPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '',
     systemType: '',
@@ -79,6 +81,27 @@ export default function InventoryPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleDelete = async (id: string, name: string) => {
+    if (
+      !confirm(`Remove "${name}" from your inventory? This cannot be undone.`)
+    ) {
+      return;
+    }
+    setDeletingId(id);
+    setLoadError(null);
+    try {
+      const res = await fetch(`/api/ai-systems/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok)
+        throw new Error(data.error || 'Failed to delete');
+      await load();
+    } catch (err: any) {
+      setLoadError(err?.message || 'Could not delete the system');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -291,11 +314,26 @@ export default function InventoryPage() {
                         </span>
                       )}
                     </div>
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_BADGE[s.status] ?? STATUS_BADGE.deprecated}`}
-                    >
-                      {s.status}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_BADGE[s.status] ?? STATUS_BADGE.deprecated}`}
+                      >
+                        {s.status}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(s.id, s.name)}
+                        disabled={deletingId === s.id}
+                        aria-label={`Delete ${s.name}`}
+                        className="inline-flex items-center rounded-md p-1.5 text-slate-500 transition hover:bg-red-950/40 hover:text-red-300 disabled:opacity-50"
+                      >
+                        {deletingId === s.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   {(s.vendor || s.purpose) && (
                     <div className="mt-2 text-sm text-slate-400">

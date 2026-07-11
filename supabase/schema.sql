@@ -357,5 +357,16 @@ create policy "Members can update workspace ai_systems"
         )
     );
 
+create policy "Members can delete workspace ai_systems"
+    on public.ai_systems for delete
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = ai_systems.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
 -- Similar RLS policies for risk_assessments, obligations, evidence, remediation_plans
 -- Follow same pattern: check if user is an active member of the workspace
