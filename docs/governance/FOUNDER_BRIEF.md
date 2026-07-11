@@ -5,8 +5,8 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-10 (Evolution Phase 2 in progress: DNS-GOV-009/010 + Supabase guide deployed to main)
-**State:** Executing (DNA-GOV-001/002/008 live with monitoring; DNS-GOV-009/010 merged to main; awaiting Vercel deployment confirmation)
+**Last updated:** 2026-07-11 (Evolution Phase 2: DNA-GOV-009/010/011/014 complete; Cost & incident monitoring live)
+**State:** Executing (DNA-001/002/008 live; DNS-GOV-009/010/011/014 merged; Priority 1 Supabase deployment awaiting Founder access)
 
 ---
 
@@ -139,17 +139,34 @@ with a timer.
   - Success criteria: 10 checkpoints for launch readiness
   - **Enables:** Founder can deploy production database independently
 
+- ✅ DNA-GOV-011: Cost Anomaly Detection (12/12 tests) — Merged commit 8957b6d
+  - Monitors Vercel ($15/mo baseline) and Supabase ($30/mo baseline) spending patterns
+  - Detects high (1.5x) and critical (3x+) cost anomalies via 30-day rolling average
+  - Integrates with DNA-005 (unified alert hub) for centralized cost alerts
+  - GitHub Actions workflow: Daily 09:00 UTC checks with optional manual trigger
+  - 90-day cost history with automatic filesystem persistence
+  - **Enables:** Catch spending spikes before they become budget-breaking surprises
+
+- ✅ DNA-GOV-014: Incident Commander (12/12 tests) — Merged commit c62efda
+  - Autonomous incident response with conservative auto-rollback logic
+  - Evaluates error_rate, latency, availability, and cost_spike incidents
+  - Only auto-rolls back when CRITICAL severity + low-impact candidate exists
+  - Estimates rollback safety: schema changes = high impact, recent commits = low impact
+  - Critical thresholds: error >15%, latency >5s, uptime <95%, cost >4x
+  - Integrates with DNA-005 (unified alert hub) for incident tracking
+  - **Enables:** Reduce MTTR (mean time to recovery) with automated remediation
+
 **Critical Infrastructure Decision (Resolved):**
 - **Vercel Hobby Cron Limitation:** Hobby accounts limited to 1 cron/day; DNA required 4 frequent monitors
 - **Resolution:** Migrated to GitHub Actions (free tier, unlimited frequency, superior reliability)
 - **Impact:** Full monitoring restored with $0 cost increase; improved deployment consistency
 
-**Test Suite Status:** 271/271 passing (21 test files) — up from 193 with DNS-GOV-009/010/011+ additions
+**Test Suite Status:** 295/295 passing (23 test files) — up from 283 with DNS-GOV-014 addition
 
 **Next DNA Candidates (Priority Order):**
-1. DNS-GOV-011: Cost Anomaly Detection (Vercel/Supabase spend monitoring)
-2. DNS-GOV-012: Schema Migration Validator (zero-downtime DB updates)
-3. DNS-GOV-013: Feature Flag Controller (A/B testing, gradual rollouts)
+1. DNS-GOV-012: Schema Migration Validator (zero-downtime DB updates)
+2. DNS-GOV-013: Feature Flag Controller (A/B testing, gradual rollouts)
+3. DNS-GOV-015: Deployment Canary (gradual rollout with automatic abort)
 
 ---
 
