@@ -12,6 +12,7 @@
 
 import { DetectedIncident } from './incident-detection';
 import { OrchestrationDecision } from './incident-orchestration';
+import { getEmailService } from './email-service';
 
 export interface AlertChannel {
   type: 'email' | 'slack';
@@ -354,23 +355,20 @@ export class FounderAlertingSystem {
   }
 
   /**
-   * Generic email send (requires SMTP configuration)
+   * Send email via configured provider
+   * Supports SendGrid, AWS SES, and console logging (development)
    */
   private async sendEmail(to: string, subject: string, content: any): Promise<boolean> {
-    // In production: integrate with SendGrid, AWS SES, or other SMTP provider
-    // For now: log to console and return true (non-blocking)
+    const emailService = getEmailService();
+    const htmlBody = typeof content === 'string' ? content : content.html;
+    const textBody = typeof content === 'string' ? content : content.text;
 
-    console.log(`[ALERT EMAIL] To: ${to}`);
-    console.log(`[ALERT EMAIL] Subject: ${subject}`);
-    console.log(`[ALERT EMAIL] Content:`, content);
-
-    // TODO: Implement real SMTP when founder approves email provider
-    // Example integration:
-    // const sgMail = require('@sendgrid/mail');
-    // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    // await sgMail.send({ to, subject, html: content.html });
-
-    return true;
+    return await emailService.send({
+      to,
+      subject,
+      html: htmlBody,
+      text: textBody,
+    });
   }
 
   /**

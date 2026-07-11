@@ -213,55 +213,95 @@ private async recordRemediationFeedback(
 
 ### 2.4 Founder Alerting Integration
 
-**File:** `app/api/alert-hub/route.ts` (existing)
+**File:** `lib/founder-alerting.ts` (code-complete, test-verified)
 
-Production setup:
+The `FounderAlertingSystem` sends multi-channel notifications (email + Slack) with automatic deduplication.
+
+#### Email Setup
+
+Three options for email delivery (set `EMAIL_PROVIDER` in Vercel):
+
+**Option A: SendGrid (Recommended)**
+```
+EMAIL_PROVIDER=sendgrid
+SENDGRID_API_KEY=sg_...  (from SendGrid dashboard)
+```
+✓ Production-grade  
+✓ High deliverability  
+✓ $20–35/month  
+
+**Option B: AWS SES**
+```
+EMAIL_PROVIDER=ses
+AWS_SES_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+```
+✓ $0.10 per 1000 emails  
+✓ Requires AWS account  
+
+**Option C: Console Logging (Development)**
+```
+EMAIL_PROVIDER=log  # (default)
+```
+✓ No setup required  
+✓ Emails logged to stdout  
+✗ Production-only: upgrade to SendGrid or SES  
+
+#### Vercel Environment Variables
+
+Add to Vercel Dashboard (`Settings` → `Environment Variables`):
+
+| Variable | Value | Purpose |
+|---|---|---|
+| `EMAIL_PROVIDER` | `sendgrid` or `ses` | Email delivery method |
+| `SENDGRID_API_KEY` | `sg_...` | SendGrid API key (if using SendGrid) |
+| `AWS_SES_REGION` | `us-east-1` | AWS region (if using SES) |
+| `FOUNDER_EMAIL` | `lalit@...` | Recipient for critical alerts |
+| `EMAIL_FROM_ADDRESS` | `noreply@newspulse-ai.com` | Alert sender address |
+| `SLACK_WEBHOOK_URL` | `https://hooks.slack.com/...` | Slack webhook (optional) |
+
+#### Slack Setup (Optional)
+
+If using Slack notifications:
+
+1. Create incoming webhook:
+   - Slack workspace → Apps → Create New App
+   - Enable "Incoming Webhooks"
+   - Create webhook for #incident-alerts channel
+2. Set `SLACK_WEBHOOK_URL` in Vercel
+
+#### Alert Types
+
+Three alerting methods (all multi-channel, non-blocking):
 
 ```typescript
-// lib/founder-alerting.ts (NEW/MODIFY)
-export async function alertFounderOfCriticalIncident(
-  incident: DetectedIncident,
-  decision: OrchestrationDecision
-): Promise<void> {
-  // Email to Founder
-  if (process.env.FOUNDER_EMAIL && incident.severity === 'critical') {
-    await sendEmail({
-      to: process.env.FOUNDER_EMAIL,
-      subject: `🚨 CRITICAL Incident: ${incident.description}`,
-      body: `
-        Incident: ${incident.incidentId}
-        Severity: ${incident.severity}
-        Category: ${incident.category}
-        Decision: ${decision.recommendedAction}
-        Recovery Time: ${decision.estimatedRecoveryTime}s
-        
-        Dashboard: https://newspulse-ai-production.vercel.app/dashboard
-      `,
-    });
-  }
+const alertingSystem = getFounderAlertingSystem();
 
-  // Slack integration (optional)
-  if (process.env.SLACK_WEBHOOK_URL) {
-    await axios.post(process.env.SLACK_WEBHOOK_URL, {
-      text: `[${incident.severity.toUpperCase()}] ${incident.description}`,
-      attachments: [
-        {
-          color: incident.severity === 'critical' ? 'danger' : 'warning',
-          fields: [
-            { title: 'Incident ID', value: incident.incidentId, short: true },
-            { title: 'Category', value: incident.category, short: true },
-            { title: 'Decision', value: decision.recommendedAction, short: false },
-          ],
-        },
-      ],
-    });
-  }
-}
+// 1. Critical incident detection
+await alertingSystem.alertCriticalIncident(incident, decision, dashboardUrl);
+
+// 2. Remediation outcome (success/failure)
+await alertingSystem.alertRemediationOutcome(
+  incidentId,
+  success,
+  recoveryTimeMs,
+  actionTaken,
+  lessonLearned
+);
+
+// 3. Repeated error pattern (learning/prevention)
+await alertingSystem.alertRepeatedPattern(
+  fingerprint,
+  pattern,
+  occurrenceCount,
+  suggestedPrevention
+);
 ```
 
-**Configuration:**
-- `FOUNDER_EMAIL`: Set in Vercel
-- `SLACK_WEBHOOK_URL`: Optional (Slack workspace → Incoming Webhooks)
+#### Deduplication
+
+Alerts are deduplicated by incident ID with a 5-minute window to avoid spam. Same incident within 5 minutes = no duplicate alert sent.
 
 ---
 
