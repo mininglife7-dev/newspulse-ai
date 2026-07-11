@@ -22,6 +22,14 @@ export interface LoggingOptions {
 }
 
 /**
+ * Get request size from Content-Length header
+ */
+function getRequestSize(headers: Headers): number {
+  const contentLength = headers.get('content-length');
+  return contentLength ? parseInt(contentLength, 10) : 0;
+}
+
+/**
  * Wrap handler with automatic request/response logging
  */
 export async function withLogging(
@@ -31,6 +39,7 @@ export async function withLogging(
 ): Promise<Response> {
   const startTime = Date.now();
   const ip = getRequestIp(req.headers);
+  const requestSize = getRequestSize(req.headers);
 
   let response: Response | null = null;
   let error: Error | null = null;
@@ -61,7 +70,7 @@ export async function withLogging(
       ip,
       userId: options.userId,
       workspaceId: options.workspaceId,
-      requestSize: req.contentLength || 0,
+      requestSize,
       responseSize,
       error: error.message,
     });
@@ -77,7 +86,7 @@ export async function withLogging(
         ip,
         userId: options.userId,
         workspaceId: options.workspaceId,
-        requestSize: req.contentLength || 0,
+        requestSize,
         responseSize,
       });
     }
