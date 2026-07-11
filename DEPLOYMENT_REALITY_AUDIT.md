@@ -6,6 +6,10 @@
 **Product audited:** EURO AI — the EU AI Act governance platform on `main` (Next.js 16.2.10 / React 19, Supabase, Vercel). This supersedes an earlier draft that mistakenly audited the original NewsPulse scaffold; that scaffold has been replaced by this product.
 **Method:** Read-only inspection of the real codebase on `main` by four parallel audit passes (deployment, auth/security, database/RLS, monitoring/ops), cross-checked against the team's own docs. Claims are labelled **Verified** (read in code, with file evidence), **Unknown** (only confirmable in the Vercel/Supabase dashboards — not a technical question), or **Estimated** (my judgement).
 
+> **Post-audit verification addendum (2026-07-11).** This audit was taken at `main` commit `31717ae` (Next 16.2.10). `main` is under **very active parallel development** (many concurrent Governor sessions; dozens of `DNA-GOV-*` commits/day) and has since advanced — it is now on **Next.js 15.5.20 LTS**. Two facts re-verified against the *latest* `main`:
+> - **Tests: 295 passing across 23 files** (`npm test`, green). This corrects the stale doc claims of "86" and "178 tests" — the suite is larger and green than the docs say.
+> - **`npm audit`: 7 vulnerabilities (1 critical, 1 high, 5 moderate) — but the critical and high are in the DEV/TEST toolchain, not production runtime.** The "critical" is `vitest`'s UI-server arbitrary-file-read and the "high" is `vite`'s dev-server path traversal — tools that run only when executing tests locally, never in CI-build or the deployed app. The only build-relevant item is a **moderate PostCSS XSS** (unescaped `</style>` in CSS stringify). So the deployed app is **not** exposed to the scary-sounding ones; the fix is a breaking `vitest@4` dev-dependency bump (low urgency), deliberately **not** applied here to avoid conflicting with the heavy parallel work on `package.json`.
+
 ---
 
 ## Executive Summary
