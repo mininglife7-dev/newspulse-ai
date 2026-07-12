@@ -359,3 +359,84 @@ create policy "Members can update workspace ai_systems"
 
 -- Similar RLS policies for risk_assessments, obligations, evidence, remediation_plans
 -- Follow same pattern: check if user is an active member of the workspace
+
+-- =============================================================
+-- HERCULES Multi-Enterprise Persistence
+-- =============================================================
+
+-- Checkpoints: Full kernel state snapshots for recovery
+create table if not exists public.hercules_checkpoints (
+    checkpoint_id text primary key,
+    state jsonb not null,
+    metadata jsonb not null,
+    created_at timestamptz default now(),
+    status text default 'complete' check (status in ('pending', 'complete', 'failed')),
+    failure_reason text
+);
+
+create index if not exists hercules_checkpoints_status_idx on public.hercules_checkpoints(status);
+create index if not exists hercules_checkpoints_created_idx on public.hercules_checkpoints(created_at desc);
+
+-- Enterprise Missions: Per-enterprise mission tracking (future: join to workspaces)
+create table if not exists public.hercules_enterprise_missions (
+    mission_id text primary key,
+    enterprise_id text not null,
+    title text not null,
+    description text,
+    status text not null,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+create index if not exists hercules_missions_enterprise_idx on public.hercules_enterprise_missions(enterprise_id);
+
+-- Enterprise Tasks: Per-enterprise task queue persistence
+create table if not exists public.hercules_enterprise_tasks (
+    task_id text primary key,
+    enterprise_id text not null,
+    title text not null,
+    state text not null,
+    priority int not null,
+    created_at timestamptz default now(),
+    started_at timestamptz,
+    completed_at timestamptz
+);
+
+create index if not exists hercules_tasks_enterprise_idx on public.hercules_enterprise_tasks(enterprise_id);
+create index if not exists hercules_tasks_state_idx on public.hercules_enterprise_tasks(state);
+
+-- Enterprise Events: Per-enterprise event stream
+create table if not exists public.hercules_enterprise_events (
+    event_id text primary key,
+    enterprise_id text not null,
+    correlation_id text not null,
+    type text not null,
+    severity text not null,
+    created_at timestamptz default now()
+);
+
+create index if not exists hercules_events_enterprise_idx on public.hercules_enterprise_events(enterprise_id);
+create index if not exists hercules_events_correlation_idx on public.hercules_enterprise_events(correlation_id);
+
+-- Enterprise Audit: Per-enterprise audit trail
+create table if not exists public.hercules_enterprise_audit (
+    audit_id text primary key,
+    enterprise_id text not null,
+    action text not null,
+    details jsonb,
+    created_at timestamptz default now()
+);
+
+create index if not exists hercules_audit_enterprise_idx on public.hercules_enterprise_audit(enterprise_id);
+
+-- Recovery Log: Track all kernel recovery events
+create table if not exists public.hercules_recovery_log (
+    recovery_id text primary key,
+    checkpoint_id text references public.hercules_checkpoints(checkpoint_id),
+    recovered_at timestamptz default now(),
+    enterprise_count int,
+    task_count int,
+    event_count int
+);
+
+create index if not exists hercules_recovery_checkpoint_idx on public.hercules_recovery_log(checkpoint_id);
