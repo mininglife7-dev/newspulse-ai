@@ -8,8 +8,6 @@
  * process termination.
  */
 
-import type { HerculesKernelState } from './hercules-kernel';
-
 /**
  * Checkpoint metadata for traceability and recovery
  */
