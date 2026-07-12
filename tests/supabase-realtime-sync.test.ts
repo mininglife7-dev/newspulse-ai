@@ -504,7 +504,7 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
         initializeRealtimeSync();
         subscribeToTable('workspace');
 
-        const events: typeof broadcastRealtimeEvent[] = [];
+        const events: ReturnType<typeof broadcastRealtimeEvent>[] = [];
 
         onTableChange('workspace', (event) => {
           events.push(event);

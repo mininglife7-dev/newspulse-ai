@@ -249,7 +249,6 @@ describe('Analytics Pipeline - DNS-GOV-017', () => {
 
       trackEvent('pageview', 'page_load', {
         userId: 'user-1',
-        timestamp: cohortDate.toISOString(),
       });
 
       const metrics = calculateCohortMetrics(cohortDate.toISOString());
@@ -358,7 +357,6 @@ describe('Analytics Pipeline - DNS-GOV-017', () => {
       for (let i = 0; i < 5; i++) {
         trackEvent('pageview', 'page_load', {
           userId: `user-${i}`,
-          timestamp: today.toISOString(),
         });
       }
 
