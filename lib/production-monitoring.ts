@@ -236,3 +236,62 @@ export function getProductionMetrics(): ProductionMetrics {
 export function resetProductionMetrics(): void {
   globalMetrics = new ProductionMetrics();
 }
+
+/**
+ * Production health check report
+ */
+export interface HealthCheckReport {
+  ok: boolean;
+  timestamp: string;
+  checks: Record<string, { status: string; latency: number }>;
+  summary: { healthy: number; degraded: number; critical: number };
+  alerts: string[];
+}
+
+/**
+ * Run production health checks
+ * Validates all critical systems are operational
+ */
+export async function runProductionHealthChecks(baseUrl: string): Promise<HealthCheckReport> {
+  const checks: Record<string, { status: string; latency: number }> = {};
+  const alerts: string[] = [];
+  let healthy = 0;
+  let degraded = 0;
+  let critical = 0;
+
+  const checkEndpoint = async (name: string, url: string) => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const start = Date.now();
+      const response = await fetch(url, { signal: controller.signal });
+      const latency = Date.now() - start;
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        checks[name] = { status: 'healthy', latency };
+        healthy++;
+      } else {
+        checks[name] = { status: 'degraded', latency };
+        degraded++;
+        alerts.push(`${name} endpoint returned non-200 status`);
+      }
+    } catch (error) {
+      checks[name] = { status: 'critical', latency: 5000 };
+      critical++;
+      alerts.push(`${name} check failed: ${String(error)}`);
+    }
+  };
+
+  await checkEndpoint('health', `${baseUrl}/api/health`);
+  await checkEndpoint('metrics', `${baseUrl}/api/metrics`);
+
+  return {
+    ok: critical === 0,
+    timestamp: new Date().toISOString(),
+    checks,
+    summary: { healthy, degraded, critical },
+    alerts,
+  };
+}
