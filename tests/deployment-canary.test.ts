@@ -1,596 +1,640 @@
-/**
- * DNA-015: Deployment Canary Tests
- *
- * Verify gradual production rollout with automatic abort:
- * - Phased deployments (% of traffic)
- * - Health monitoring and error detection
- * - Automatic rollback on threshold breach
- * - Phase management (pause/resume/advance)
- * - Metrics tracking and history
- * - Production safety (edge cases)
- *
- * Total: 20 tests covering safe and unsafe deployment scenarios
- */
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  DeploymentCanaryController,
-  DeploymentCanary,
-  CanaryPhase,
-  HealthMetrics,
-  RollbackThresholds,
+  planCanaryDeployment,
+  getCanaryDeployment,
+  startCanaryDeployment,
+  recordCanaryMetrics,
+  incrementCanaryStage,
+  completeCanaryDeployment,
+  abortCanaryDeployment,
+  getCanaryHealthSnapshots,
+  getLatestCanarySnapshot,
+  getCanarySummary,
+  formatCanaryStatus,
+  resetCanaryHub,
+  type CanaryStageConfig,
 } from '@/lib/deployment-canary';
 
-describe('DNA-015: Deployment Canary', () => {
-  let controller: DeploymentCanaryController;
-
+describe('Deployment Canary Controller - DNA-GOV-015', () => {
   beforeEach(() => {
-    controller = DeploymentCanaryController.getInstance();
+    resetCanaryHub();
   });
 
-  // =========================================================================
-  // Test Suite 1: Canary Deployment Creation & Lifecycle
-  // =========================================================================
-
-  describe('Canary Deployment Lifecycle', () => {
-    it('should create a canary deployment with phases', async () => {
-      const canary = await controller.createCanary({
-        id: 'deploy-v1-0-1',
-        version: '1.0.1',
-        description: 'Release v1.0.1 to production',
-        status: 'pending',
-        phases: [
-          { id: 'phase-1', name: 'Canary 5%', percentage: 5, duration: 300000, healthCheckInterval: 30000, paused: false },
-          { id: 'phase-2', name: 'Stage 25%', percentage: 25, duration: 600000, healthCheckInterval: 60000, paused: false },
-          { id: 'phase-3', name: 'Full 100%', percentage: 100, duration: 300000, healthCheckInterval: 300000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
+  describe('planCanaryDeployment', () => {
+    it('creates a new canary deployment in planning state', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
         },
-      });
+      ];
 
-      expect(canary.id).toBe('deploy-v1-0-1');
-      expect(canary.version).toBe('1.0.1');
-      expect(canary.phases).toHaveLength(3);
-      expect(canary.currentPhaseIndex).toBe(0);
-      expect(canary.status).toBe('pending');
+      const deployment = planCanaryDeployment(
+        'New Checkout Flow',
+        'abc123def456',
+        '2.1.0',
+        'Redesigned checkout with faster processing',
+        stages
+      );
+
+      expect(deployment.name).toBe('New Checkout Flow');
+      expect(deployment.version).toBe('2.1.0');
+      expect(deployment.status).toBe('planning');
+      expect(deployment.currentPercentage).toBe(0);
+      expect(deployment.commit).toBe('abc123def456');
     });
 
-    it('should advance through deployment phases', async () => {
-      const canary = await controller.createCanary({
-        id: 'deploy-phases-test',
-        version: '1.0.2',
-        description: 'Test phase advancement',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-          { id: 'phase-2', name: 'Phase 2', percentage: 50, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
+    it('generates unique deployment ID', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [],
         },
-      });
+      ];
 
-      const advanced = await controller.advancePhase('deploy-phases-test');
-      expect(advanced).toBe(true);
+      const deployment1 = planCanaryDeployment('A', 'c1', 'v1', 'desc', stages);
+      const deployment2 = planCanaryDeployment('B', 'c2', 'v2', 'desc', stages);
 
-      const updated = await controller.getCanary('deploy-phases-test');
-      expect(updated?.currentPhaseIndex).toBe(1);
+      expect(deployment1.id).not.toBe(deployment2.id);
     });
 
-    it('should complete deployment after all phases', async () => {
-      const canary = await controller.createCanary({
-        id: 'deploy-complete-test',
-        version: '1.0.3',
-        description: 'Test deployment completion',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Final Phase', percentage: 100, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
+    it('initializes metrics with baseline values', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', []);
 
-      await controller.advancePhase('deploy-complete-test');
-      const completed = await controller.getCanary('deploy-complete-test');
-
-      expect(completed?.status).toBe('completed');
-      expect(completed?.completedAt).toBeDefined();
+      expect(deployment.metrics.error_rate.status).toBe('ok');
+      expect(deployment.metrics.latency.status).toBe('ok');
+      expect(deployment.metrics.availability.current).toBe(100);
     });
   });
 
-  // =========================================================================
-  // Test Suite 2: Health Monitoring & Threshold Breaches
-  // =========================================================================
-
-  describe('Health Monitoring', () => {
-    it('should record healthy health checks', async () => {
-      await controller.createCanary({
-        id: 'deploy-healthy',
-        version: '1.0.4',
-        description: 'Test healthy deployment',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const healthCheck = await controller.recordHealthCheck('deploy-healthy', {
-        errorRate: 0.5,
-        p95Latency: 500,
-        availabilityPercentage: 99.9,
-        deploymentSuccessRate: 100,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      });
-
-      expect(healthCheck?.status).toBe('healthy');
-      expect(healthCheck?.issues).toHaveLength(0);
+  describe('getCanaryDeployment', () => {
+    it('returns undefined for non-existent deployment', () => {
+      const deployment = getCanaryDeployment('nonexistent');
+      expect(deployment).toBeUndefined();
     });
 
-    it('should detect critical error rate threshold breach', async () => {
-      await controller.createCanary({
-        id: 'deploy-error-breach',
-        version: '1.0.5',
-        description: 'Test error rate detection',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
+    it('retrieves planned deployment by ID', () => {
+      const created = planCanaryDeployment('Test', 'abc', 'v1', '', []);
+      const retrieved = getCanaryDeployment(created.id);
 
-      const healthCheck = await controller.recordHealthCheck('deploy-error-breach', {
-        errorRate: 10,
-        p95Latency: 500,
-        availabilityPercentage: 99.9,
-        deploymentSuccessRate: 90,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      });
-
-      expect(healthCheck?.status).toBe('critical');
-      expect(healthCheck?.issues.some(i => i.type === 'error_rate')).toBe(true);
-    });
-
-    it('should detect latency threshold breach', async () => {
-      await controller.createCanary({
-        id: 'deploy-latency-breach',
-        version: '1.0.6',
-        description: 'Test latency detection',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const healthCheck = await controller.recordHealthCheck('deploy-latency-breach', {
-        errorRate: 0.5,
-        p95Latency: 3000,
-        availabilityPercentage: 99.9,
-        deploymentSuccessRate: 100,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      });
-
-      expect(healthCheck?.status).toBe('degraded');
-      expect(healthCheck?.issues.some(i => i.type === 'latency')).toBe(true);
-    });
-
-    it('should detect availability threshold breach', async () => {
-      await controller.createCanary({
-        id: 'deploy-availability-breach',
-        version: '1.0.7',
-        description: 'Test availability detection',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const healthCheck = await controller.recordHealthCheck('deploy-availability-breach', {
-        errorRate: 0.5,
-        p95Latency: 500,
-        availabilityPercentage: 90,
-        deploymentSuccessRate: 90,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      });
-
-      expect(healthCheck?.status).toBe('critical');
-      expect(healthCheck?.issues.some(i => i.type === 'availability')).toBe(true);
+      expect(retrieved?.id).toBe(created.id);
+      expect(retrieved?.name).toBe('Test');
     });
   });
 
-  // =========================================================================
-  // Test Suite 3: Automatic Rollback on Consecutive Failures
-  // =========================================================================
-
-  describe('Automatic Rollback', () => {
-    it('should rollback after consecutive critical checks', async () => {
-      await controller.createCanary({
-        id: 'deploy-auto-rollback',
-        version: '1.0.8',
-        description: 'Test auto rollback',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
+  describe('startCanaryDeployment', () => {
+    it('transitions deployment from planning to staged', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [],
         },
-      });
+      ];
 
-      const badMetrics: HealthMetrics = {
-        errorRate: 15,
-        p95Latency: 500,
-        availabilityPercentage: 85,
-        deploymentSuccessRate: 85,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      };
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      const started = startCanaryDeployment(deployment.id);
 
-      await controller.recordHealthCheck('deploy-auto-rollback', badMetrics);
-      await controller.recordHealthCheck('deploy-auto-rollback', badMetrics);
-
-      const canary = await controller.getCanary('deploy-auto-rollback');
-      expect(canary?.status).toBe('rolled_back');
-      expect(canary?.rollbackReason).toContain('Consecutive critical checks');
+      expect(started?.status).toBe('staged');
+      expect(started?.currentStage).toBe(1);
+      expect(started?.currentPercentage).toBe(10);
     });
 
-    it('should reset failure counter on healthy check', async () => {
-      await controller.createCanary({
-        id: 'deploy-reset-counter',
-        version: '1.0.9',
-        description: 'Test failure counter reset',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
+    it('records stage in history', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [],
         },
-      });
+      ];
 
-      const badMetrics: HealthMetrics = {
-        errorRate: 15,
-        p95Latency: 500,
-        availabilityPercentage: 85,
-        deploymentSuccessRate: 85,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      };
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
 
-      const goodMetrics: HealthMetrics = {
-        errorRate: 0.5,
-        p95Latency: 500,
-        availabilityPercentage: 99.9,
-        deploymentSuccessRate: 100,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      };
-
-      await controller.recordHealthCheck('deploy-reset-counter', badMetrics);
-      await controller.recordHealthCheck('deploy-reset-counter', goodMetrics);
-      await controller.recordHealthCheck('deploy-reset-counter', badMetrics);
-
-      const canary = await controller.getCanary('deploy-reset-counter');
-      expect(canary?.status).not.toBe('rolled_back');
+      const updated = getCanaryDeployment(deployment.id)!;
+      expect(updated.stageHistory.length).toBe(1);
+      expect(updated.stageHistory[0].stage).toBe(1);
+      expect(updated.stageHistory[0].status).toBe('running');
     });
 
-    it('should allow manual rollback', async () => {
-      await controller.createCanary({
-        id: 'deploy-manual-rollback',
-        version: '1.0.10',
-        description: 'Test manual rollback',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
+    it('throws error if already started', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+      ]);
 
-      const rolled = await controller.rollback('deploy-manual-rollback', 'Manual override by operator');
-      expect(rolled).toBe(true);
+      startCanaryDeployment(deployment.id);
 
-      const canary = await controller.getCanary('deploy-manual-rollback');
-      expect(canary?.status).toBe('rolled_back');
-      expect(canary?.rollbackReason).toBe('Manual override by operator');
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 4: Phase Management (Pause/Resume)
-  // =========================================================================
-
-  describe('Phase Management', () => {
-    it('should pause current phase', async () => {
-      await controller.createCanary({
-        id: 'deploy-pause',
-        version: '1.0.11',
-        description: 'Test pause',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const paused = await controller.pausePhase('deploy-pause');
-      expect(paused).toBe(true);
-
-      const canary = await controller.getCanary('deploy-pause');
-      expect(canary?.status).toBe('paused');
-      expect(canary?.phases[0].paused).toBe(true);
+      expect(() => startCanaryDeployment(deployment.id)).toThrow();
     });
 
-    it('should resume paused phase', async () => {
-      await controller.createCanary({
-        id: 'deploy-resume',
-        version: '1.0.12',
-        description: 'Test resume',
-        status: 'paused',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: true },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const resumed = await controller.resumePhase('deploy-resume');
-      expect(resumed).toBe(true);
-
-      const canary = await controller.getCanary('deploy-resume');
-      expect(canary?.status).toBe('in_progress');
-      expect(canary?.phases[0].paused).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 5: Metrics Tracking & History
-  // =========================================================================
-
-  describe('Metrics & History', () => {
-    it('should record deployment metrics', async () => {
-      await controller.createCanary({
-        id: 'deploy-metrics',
-        version: '1.0.13',
-        description: 'Test metrics',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const metrics = await controller.recordMetrics('deploy-metrics', {
-        exposedSessions: 1000,
-        errorCount: 5,
-        errorRate: 0.5,
-        p50Latency: 200,
-        p95Latency: 600,
-        p99Latency: 1200,
-        availability: 99.5,
-      });
-
-      expect(metrics.exposedSessions).toBe(1000);
-      expect(metrics.errorRate).toBe(0.5);
-      expect(metrics.p95Latency).toBe(600);
-    });
-
-    it('should retrieve health check history', async () => {
-      await controller.createCanary({
-        id: 'deploy-history',
-        version: '1.0.14',
-        description: 'Test history',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const goodMetrics: HealthMetrics = {
-        errorRate: 0.5,
-        p95Latency: 500,
-        availabilityPercentage: 99.9,
-        deploymentSuccessRate: 100,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      };
-
-      await controller.recordHealthCheck('deploy-history', goodMetrics);
-      await controller.recordHealthCheck('deploy-history', goodMetrics);
-      await controller.recordHealthCheck('deploy-history', goodMetrics);
-
-      const history = await controller.getHealthHistory('deploy-history');
-      expect(history.length).toBe(3);
-      expect(history[0].status).toBe('healthy');
-    });
-
-    it('should get current deployment status', async () => {
-      await controller.createCanary({
-        id: 'deploy-status',
-        version: '1.0.15',
-        description: 'Test status',
-        status: 'in_progress',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
-        },
-      });
-
-      const status = await controller.getDeploymentStatus('deploy-status');
-      expect(status.canary?.id).toBe('deploy-status');
-      expect(status.currentPhase?.id).toBe('phase-1');
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 6: Production Safety (Edge Cases)
-  // =========================================================================
-
-  describe('Production Safety', () => {
-    it('should handle non-existent canary gracefully', async () => {
-      const result = await controller.getCanary('non-existent');
+    it('returns undefined for non-existent deployment', () => {
+      const result = startCanaryDeployment('nonexistent');
       expect(result).toBeUndefined();
     });
+  });
 
-    it('should handle health check for completed deployment', async () => {
-      await controller.createCanary({
-        id: 'deploy-completed',
-        version: '1.0.16',
-        description: 'Test completed',
-        status: 'completed',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 100, duration: 60000, healthCheckInterval: 10000, paused: false, completedAt: new Date().toISOString() },
-        ],
-        currentPhaseIndex: 1,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
+  describe('recordCanaryMetrics', () => {
+    it('records metrics snapshot with all metrics', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
         },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      const snapshot = recordCanaryMetrics(deployment.id, {
+        error_rate: 2,
+        latency: 1500,
+        availability: 99.8,
+        memory: 512,
+        cpu: 25,
       });
 
-      const healthCheck = await controller.recordHealthCheck('deploy-completed', {
-        errorRate: 0.5,
-        p95Latency: 500,
-        availabilityPercentage: 99.9,
-        deploymentSuccessRate: 100,
-        cpuUsage: 45,
-        memoryUsage: 60,
-      });
-
-      expect(healthCheck).toBeNull();
+      expect(snapshot.metrics.error_rate).toBe(2);
+      expect(snapshot.metrics.latency).toBe(1500);
+      expect(snapshot.allHealthy).toBe(true);
     });
 
-    it('should handle pause on non-existent canary', async () => {
-      const result = await controller.pausePhase('non-existent');
-      expect(result).toBe(false);
-    });
-
-    it('should list all canaries', async () => {
-      await controller.createCanary({
-        id: 'deploy-list-1',
-        version: '1.0.17',
-        description: 'Test list 1',
-        status: 'pending',
-        phases: [
-          { id: 'phase-1', name: 'Phase 1', percentage: 10, duration: 60000, healthCheckInterval: 10000, paused: false },
-        ],
-        currentPhaseIndex: 0,
-        healthChecks: [],
-        rollbackThresholds: {
-          maxErrorRate: 5,
-          maxP95Latency: 2000,
-          minAvailability: 95,
-          maxConsecutiveFailedChecks: 2,
+    it('detects warning-level metrics', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
         },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      const snapshot = recordCanaryMetrics(deployment.id, {
+        error_rate: 7, // Above warning (5) but below critical (15)
+        latency: 1500,
+        availability: 99.8,
+        memory: 512,
+        cpu: 25,
       });
 
-      const canaries = await controller.getAllCanaries();
-      expect(canaries.length).toBeGreaterThanOrEqual(1);
+      expect(snapshot.warnings.length).toBeGreaterThan(0);
+      expect(snapshot.warnings[0]).toContain('error_rate');
+    });
+
+    it('detects critical metrics and auto-aborts', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
+        },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 20, // Above critical
+        latency: 1500,
+        availability: 99.8,
+        memory: 512,
+        cpu: 25,
+      });
+
+      const updated = getCanaryDeployment(deployment.id)!;
+      expect(updated.status).toBe('aborted');
+      expect(updated.abortReason).toContain('Critical metrics exceeded');
+    });
+
+    it('throws error for non-existent deployment', () => {
+      expect(() => recordCanaryMetrics('nonexistent', {})).toThrow();
+    });
+
+    it('tracks metric history in snapshots', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [],
+        },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 2,
+        latency: 1500,
+        availability: 99.8,
+        memory: 512,
+        cpu: 25,
+      });
+
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 3,
+        latency: 1600,
+        availability: 99.7,
+        memory: 520,
+        cpu: 26,
+      });
+
+      const snapshots = getCanaryHealthSnapshots(deployment.id);
+      expect(snapshots.length).toBe(2);
+      expect(snapshots[0].metrics.error_rate).toBe(2);
+      expect(snapshots[1].metrics.error_rate).toBe(3);
+    });
+  });
+
+  describe('incrementCanaryStage', () => {
+    it('increments to next stage', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+        { stage: 2, percentage: 25, duration: 15, thresholds: [] },
+        { stage: 3, percentage: 50, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      const incremented = incrementCanaryStage(deployment.id);
+
+      expect(incremented?.currentStage).toBe(2);
+      expect(incremented?.currentPercentage).toBe(25);
+      expect(incremented?.status).toBe('active');
+    });
+
+    it('marks previous stage as completed', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+        { stage: 2, percentage: 25, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+      incrementCanaryStage(deployment.id);
+
+      const updated = getCanaryDeployment(deployment.id)!;
+      expect(updated.stageHistory[0].status).toBe('completed');
+      expect(updated.stageHistory[0].completedAt).toBeDefined();
+    });
+
+    it('auto-completes when reaching 100%', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+        { stage: 2, percentage: 100, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+      incrementCanaryStage(deployment.id);
+
+      const updated = getCanaryDeployment(deployment.id)!;
+      expect(updated.status).toBe('complete');
+      expect(updated.completedAt).toBeDefined();
+    });
+
+    it('throws error if already complete', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 100, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+      completeCanaryDeployment(deployment.id);
+
+      expect(() => incrementCanaryStage(deployment.id)).toThrow();
+    });
+  });
+
+  describe('completeCanaryDeployment', () => {
+    it('marks deployment as complete', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', [
+        { stage: 1, percentage: 100, duration: 15, thresholds: [] },
+      ]);
+
+      startCanaryDeployment(deployment.id);
+      const completed = completeCanaryDeployment(deployment.id);
+
+      expect(completed?.status).toBe('complete');
+      expect(completed?.completedAt).toBeDefined();
+    });
+
+    it('returns undefined for non-existent deployment', () => {
+      const result = completeCanaryDeployment('nonexistent');
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('abortCanaryDeployment', () => {
+    it('aborts active deployment with reason', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+      ]);
+
+      startCanaryDeployment(deployment.id);
+      const aborted = abortCanaryDeployment(deployment.id, 'Customer reports critical bug');
+
+      expect(aborted?.status).toBe('aborted');
+      expect(aborted?.abortReason).toBe('Customer reports critical bug');
+      expect(aborted?.abortedAt).toBeDefined();
+    });
+
+    it('throws error if already complete', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', [
+        { stage: 1, percentage: 100, duration: 15, thresholds: [] },
+      ]);
+
+      startCanaryDeployment(deployment.id);
+      completeCanaryDeployment(deployment.id);
+
+      expect(() => abortCanaryDeployment(deployment.id, 'Too late')).toThrow();
+    });
+  });
+
+  describe('getCanaryHealthSnapshots', () => {
+    it('returns empty array for new deployment', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', []);
+      const snapshots = getCanaryHealthSnapshots(deployment.id);
+
+      expect(Array.isArray(snapshots)).toBe(true);
+      expect(snapshots.length).toBe(0);
+    });
+
+    it('returns all recorded snapshots', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      for (let i = 0; i < 5; i++) {
+        recordCanaryMetrics(deployment.id, {
+          error_rate: i,
+          latency: 1000 + i * 100,
+          availability: 100 - i,
+          memory: 512 + i * 10,
+          cpu: 25 + i,
+        });
+      }
+
+      const snapshots = getCanaryHealthSnapshots(deployment.id);
+      expect(snapshots.length).toBe(5);
+    });
+  });
+
+  describe('getLatestCanarySnapshot', () => {
+    it('returns undefined for new deployment', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', []);
+      const snapshot = getLatestCanarySnapshot(deployment.id);
+
+      expect(snapshot).toBeUndefined();
+    });
+
+    it('returns most recent snapshot', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      recordCanaryMetrics(deployment.id, { error_rate: 1, latency: 1000, availability: 100, memory: 512, cpu: 25 });
+      recordCanaryMetrics(deployment.id, { error_rate: 2, latency: 1100, availability: 99.9, memory: 522, cpu: 26 });
+      recordCanaryMetrics(deployment.id, { error_rate: 3, latency: 1200, availability: 99.8, memory: 532, cpu: 27 });
+
+      const latest = getLatestCanarySnapshot(deployment.id);
+      expect(latest?.metrics.error_rate).toBe(3);
+      expect(latest?.metrics.latency).toBe(1200);
+    });
+  });
+
+  describe('getCanarySummary', () => {
+    it('returns undefined for non-existent deployment', () => {
+      const summary = getCanarySummary('nonexistent');
+      expect(summary).toBeUndefined();
+    });
+
+    it('provides deployment summary with progress', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+        { stage: 2, percentage: 25, duration: 15, thresholds: [] },
+        { stage: 3, percentage: 100, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test Deploy', 'abc123', 'v2.0', 'New feature', stages);
+      startCanaryDeployment(deployment.id);
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 1,
+        latency: 1000,
+        availability: 99.9,
+        memory: 512,
+        cpu: 25,
+      });
+
+      const summary = getCanarySummary(deployment.id)!;
+
+      expect(summary.name).toBe('Test Deploy');
+      expect(summary.version).toBe('v2.0');
+      expect(summary.status).toBe('staged');
+      expect(summary.progress).toContain('Stage 1 of 3');
+      expect(summary.progress).toContain('10%');
+      expect(summary.health).toContain('Healthy');
+      expect(summary.lastMetrics.error_rate).toBe(1);
+    });
+  });
+
+  describe('formatCanaryStatus', () => {
+    it('displays planning status', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', []);
+      const status = formatCanaryStatus(deployment);
+
+      expect(status).toContain('📋');
+      expect(status).toContain('planning');
+      expect(status).toContain('Test');
+    });
+
+    it('displays active status with progress', () => {
+      const stages: CanaryStageConfig[] = [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+      ];
+
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      const status = formatCanaryStatus(deployment);
+      expect(status).toContain('🚀');
+      expect(status).toContain('staged');
+      expect(status).toContain('10%');
+    });
+
+    it('displays abort status with reason', () => {
+      const deployment = planCanaryDeployment('Test', 'c', 'v1', '', [
+        { stage: 1, percentage: 10, duration: 15, thresholds: [] },
+      ]);
+
+      startCanaryDeployment(deployment.id);
+      abortCanaryDeployment(deployment.id, 'Critical bug detected');
+
+      const status = formatCanaryStatus(deployment);
+      expect(status).toContain('⛔');
+      expect(status).toContain('aborted');
+      expect(status).toContain('Critical bug detected');
+    });
+  });
+
+  describe('Integration: Gradual Deployment Workflow', () => {
+    it('simulates complete gradual deployment', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 10,
+          duration: 15,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
+        },
+        {
+          stage: 2,
+          percentage: 25,
+          duration: 15,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
+        },
+        {
+          stage: 3,
+          percentage: 50,
+          duration: 15,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
+        },
+        {
+          stage: 4,
+          percentage: 100,
+          duration: 0,
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 15, warningMax: 5 },
+            { metric: 'latency', criticalMax: 5000, warningMax: 2000 },
+          ],
+        },
+      ];
+
+      const deployment = planCanaryDeployment('Checkout v3', 'commit-abc', 'v3.0', 'New checkout flow', stages);
+
+      // Stage 1: 10%
+      startCanaryDeployment(deployment.id);
+      expect(getCanaryDeployment(deployment.id)?.currentPercentage).toBe(10);
+
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 2,
+        latency: 1800,
+        availability: 99.95,
+        memory: 512,
+        cpu: 28,
+      });
+
+      // Stage 2: 25%
+      incrementCanaryStage(deployment.id);
+      expect(getCanaryDeployment(deployment.id)?.currentPercentage).toBe(25);
+
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 3,
+        latency: 1900,
+        availability: 99.9,
+        memory: 520,
+        cpu: 29,
+      });
+
+      // Stage 3: 50%
+      incrementCanaryStage(deployment.id);
+      expect(getCanaryDeployment(deployment.id)?.currentPercentage).toBe(50);
+
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 4,
+        latency: 2000,
+        availability: 99.85,
+        memory: 530,
+        cpu: 30,
+      });
+
+      // Stage 4: 100% (auto-completes)
+      incrementCanaryStage(deployment.id);
+      const final = getCanaryDeployment(deployment.id)!;
+      expect(final.currentPercentage).toBe(100);
+      expect(final.status).toBe('complete');
+
+      const summary = getCanarySummary(deployment.id)!;
+      expect(summary.status).toBe('complete');
+      expect(summary.progress).toContain('Stage 4 of 4');
+    });
+  });
+
+  describe('Integration: Auto-Abort on Critical Metrics', () => {
+    it('aborts deployment when error rate exceeds critical threshold', () => {
+      const stages: CanaryStageConfig[] = [
+        {
+          stage: 1,
+          percentage: 25,
+          duration: 15,
+          thresholds: [{ metric: 'error_rate', criticalMax: 10, warningMax: 5 }],
+        },
+      ];
+
+      const deployment = planCanaryDeployment('Risky Feature', 'c', 'v1', '', stages);
+      startCanaryDeployment(deployment.id);
+
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 3,
+        latency: 1500,
+        availability: 99.9,
+        memory: 512,
+        cpu: 25,
+      });
+
+      expect(getCanaryDeployment(deployment.id)?.status).toBe('staged');
+
+      // Record critical metric
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 18, // Exceeds critical
+        latency: 1500,
+        availability: 98,
+        memory: 512,
+        cpu: 25,
+      });
+
+      const aborted = getCanaryDeployment(deployment.id)!;
+      expect(aborted.status).toBe('aborted');
+      expect(aborted.abortReason).toContain('Critical metrics exceeded');
     });
   });
 });
