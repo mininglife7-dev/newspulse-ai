@@ -22,6 +22,13 @@ export async function GET(request: NextRequest) {
   const action = searchParams.get('action');
 
   try {
+    if (!action) {
+      return NextResponse.json({
+        status: 'operational',
+        kernel: kernel.getSystemStatus(),
+      });
+    }
+
     if (action === 'status') {
       return NextResponse.json({
         status: 'operational',
@@ -36,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'health') {
-      const enterpriseId = searchParams.get('enterpriseId');
+      const enterpriseId = searchParams.get('enterpriseId') || '';
       if (!enterpriseId) {
         return NextResponse.json(
           { error: 'enterpriseId query parameter required' },
@@ -52,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'audit') {
-      const enterpriseId = searchParams.get('enterpriseId');
+      const enterpriseId = searchParams.get('enterpriseId') || undefined;
       const limit = parseInt(searchParams.get('limit') || '100');
 
       return NextResponse.json({

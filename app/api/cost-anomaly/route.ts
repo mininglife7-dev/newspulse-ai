@@ -34,7 +34,13 @@ export async function GET(req: Request) {
     // Convert anomalies to alert hub format and record
     const alerts = anomaliesToAlerts(report);
     for (const alert of alerts) {
-      recordAlert(alert);
+      recordAlert(
+        'security', // Using 'security' as closest source type for cost anomalies
+        alert.severity as 'critical' | 'warning' | 'info',
+        alert.title,
+        alert.message,
+        'Monitor cost trends and adjust resource allocation if anomaly persists'
+      );
     }
 
     // Determine response status based on severity

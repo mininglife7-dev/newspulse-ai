@@ -221,7 +221,7 @@ export class HerculesKernel {
       result: 'SUCCESS',
       evidence: [`Registered enterprise: ${enterprise.id}`],
       metadata: { enterprise: enterprise.name },
-    });
+    } as any);
 
     return registeredEnterprise;
   }
@@ -613,13 +613,18 @@ export class HerculesKernel {
   // ========================================================================
 
   private recordAudit(
-    partial: Omit<AuditEntry, 'id' | 'timestamp' | 'enterpriseId'>
+    partial: Partial<Omit<AuditEntry, 'id' | 'timestamp' | 'enterpriseId'>>
   ): AuditEntry {
     const entry: AuditEntry = {
       id: `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       enterpriseId: 'SYSTEM', // TODO: pull from context
-      ...partial,
+      action: partial.action || 'unknown',
+      actor: partial.actor || 'SYSTEM',
+      authorityClass: partial.authorityClass || 'A_AUTONOMOUS',
+      result: partial.result || 'SUCCESS',
+      evidence: partial.evidence || [],
+      metadata: partial.metadata || {},
     };
 
     this.auditLog.push(entry);

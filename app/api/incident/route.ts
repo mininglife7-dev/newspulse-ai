@@ -64,7 +64,13 @@ export async function POST(req: Request) {
 
     // Convert to alert and record
     const alert = commandToAlert(command);
-    recordAlert(alert);
+    recordAlert(
+      'security', // Using 'security' as source for incidents
+      alert.severity as 'critical' | 'warning' | 'info',
+      alert.title,
+      alert.message,
+      command.decision === 'autorollback' ? 'Auto-rollback completed' : 'Escalate to manual incident review'
+    );
 
     const status = command.decision === 'autorollback' ? 200 : 202; // 200 for executed, 202 for pending
     const statusText =
