@@ -149,10 +149,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const validated = validationResult.value as any;
+    const validated = validationResult.value as Record<string, unknown>;
 
     // Check for duplicates
-    const existing = await knowledgeExists(validated.title);
+    const existing = await knowledgeExists(validated.title as string);
     if (existing) {
       return NextResponse.json(
         {
@@ -169,13 +169,13 @@ export async function POST(req: Request) {
       timestamp: new Date().toISOString(),
       sessionId: req.headers.get('x-session-id') ?? 'unknown-session',
       type: validated.type as KnowledgeEntry['type'],
-      title: validated.title,
-      description: validated.description,
-      evidence: validated.evidence,
+      title: validated.title as string,
+      description: validated.description as string,
+      evidence: validated.evidence as string[],
       impact: validated.impact as 'high' | 'medium' | 'low',
-      tags: validated.tags,
-      relatedDNA: validated.relatedDNA,
-      resolved: validated.resolved ?? false,
+      tags: validated.tags as string[],
+      relatedDNA: validated.relatedDNA as string | undefined,
+      resolved: (validated.resolved as boolean | undefined) ?? false,
     };
 
     // Write to persistent storage

@@ -99,10 +99,10 @@ export async function POST(req: Request) {
   const validationResult = validate(body, {
     name: validators.string({ minLength: 1, maxLength: 255 }),
     description: validators.optional(validators.string({ maxLength: 2000 })),
-    systemType: validators.optional(validators.enum(SYSTEM_TYPES as any)),
+    systemType: validators.optional(validators.enum(SYSTEM_TYPES)),
     vendor: validators.optional(validators.string({ maxLength: 255 })),
     purpose: validators.optional(validators.string({ maxLength: 1000 })),
-    status: validators.optional(validators.enum(SYSTEM_STATUSES as any)),
+    status: validators.optional(validators.enum(SYSTEM_STATUSES)),
   });
 
   if (!validationResult.ok) {
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const validated = validationResult.value as CreateAiSystemBody;
+  const validated = validationResult.value as Record<string, unknown>;
   const name = validated.name;
   const status = validated.status ?? 'active';
 
