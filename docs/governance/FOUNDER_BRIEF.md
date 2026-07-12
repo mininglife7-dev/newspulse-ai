@@ -10,13 +10,13 @@ Updated continuously; read this instead of being interrupted.
 
 ---
 
-## 🚀 HERCULES v1.0 Phase 1 — NOW OPERATIONAL
+## 🚀 HERCULES v1.0 Phases 1-2 — NOW OPERATIONAL
 
-**Date:** 2026-07-12 | **Status:** ⚡ VERIFIED & LIVE
+**Date:** 2026-07-12 | **Status:** ⚡ VERIFIED & LIVE | **Tests:** 337/337 passing
 
-The HERCULES Living Enterprise Operating System kernel is now active and operational. This is a fundamental shift in how we manage Cathedral/EURO AI and scale to future enterprises.
+The HERCULES Living Enterprise Operating System kernel is now active and operational. Cathedral is now managed as Enterprise 001 by the HERCULES nervous system. This is a fundamental shift in how we manage Cathedral/EURO AI and scale to future enterprises.
 
-### What's New This Session
+### PHASE 1 & 2 Completion Summary
 
 **HERCULES Kernel (26 tests, all passing):**
 - Unified enterprise registry, mission management, task queue
@@ -40,19 +40,59 @@ The HERCULES Living Enterprise Operating System kernel is now active and operati
 - Provides blocking issues and remediation recommendations
 - Available at `/api/hercules/health`
 
+**Cathedral Enterprise 001 Registration (PHASE 2):**
+- Registered Cathedral/EURO AI as Enterprise 001 in HERCULES
+- Imported mission: "First AI news intelligence platform for EU AI Act compliance"
+- Defined 5 key objectives:
+  - Production Launch (P1) — 2026-08-15 target
+  - Customer Pilot (P1) — German enterprise, 2026-09-01 target
+  - Operational Reliability (P2) — 99.5% uptime, sub-2s response
+  - Security & Compliance (P1) — Zero CRITICAL CVEs, EU AI Act audit
+  - Scale to 10K Monthly Users (P2) — 2026-12-31 target
+- Tracked 5 launch gates (status: 1 complete, 4 pending Founder action)
+- Documented 4 critical risks with mitigations:
+  - Supabase schema not deployed (Founder action: follow deployment guide)
+  - GitHub Actions CI offline (Founder action: increase spending limit)
+  - AI Act compliance (Founder action: legal team audit)
+  - Performance at scale (Mitigation: load testing + monitoring)
+- Cathedral health now calculated via unified HERCULES health endpoint
+
 **Integration & Quality:**
-- ✅ All 321 tests passing (26 new kernel tests + 295 existing)
+- ✅ All 337 tests passing (26 kernel + 16 Cathedral + 295 existing)
 - ✅ Production build successful
 - ✅ Full type checking with TypeScript strict mode
 - ✅ Cost-anomaly & incident alert recording bugs fixed
 - ✅ Governor autonomous execution constitution still active
 
-### Next Actions (Autonomous)
+### Founder Interrupt: Critical Launch Gates
 
-- Register Cathedral as Enterprise 001 (import mission + repos)
-- Create Enterprise 002 (sandbox) to prove reusability
-- Implement survival testing suite (chaos + fault injection)
-- Complete HERCULES certification (all 15 alive criteria verified)
+**Cathedral readiness depends on these Founder actions:**
+
+1. **CRITICAL: Deploy Supabase Production Schema** (15-30 minutes)
+   - Guide: `docs/infra/SUPABASE-PRODUCTION-SETUP.md`
+   - Action: Copy-paste schema, enable Email auth, set env vars, test
+   - Risk if delayed: Customer signup will silently fail
+
+2. **CRITICAL: Increase GitHub Actions Spending Limit** (5 minutes)
+   - Action: GitHub → Settings → Billing → Actions → Set to $50+/month
+   - Risk if delayed: CI currently offline; all PRs merge unverified
+
+3. **HIGH: Schedule Security Compliance Audit** (1-2 weeks)
+   - Action: Legal team reviews EU AI Act compliance
+   - Risk if delayed: Cannot onboard German customer
+
+### Autonomous Next Actions (PHASES 3-5)
+
+- **PHASE 3:** Create Enterprise 002 (sandbox) to prove HERCULES reusability without Cathedral hardcoding
+- **PHASE 4:** Implement survival testing suite (chaos + fault injection)
+  - Restart during task execution
+  - Invalid events, stale memory
+  - Conflicting objectives
+  - Unavailable agent/database
+  - Permission violations
+  - Repeated retry storms
+  - Audit-log integrity
+- **PHASE 5:** Complete HERCULES certification (all 15 alive criteria verified)
 
 ### Access Points
 
