@@ -10,6 +10,7 @@ import {
   getCathedralState,
 } from '@/lib/cathedral-enterprise-init';
 import { HerculesKernel } from '@/lib/hercules-kernel';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,9 +84,9 @@ export async function GET(request: NextRequest) {
       risks: state.risks,
     });
   } catch (error) {
-    console.error('[HERCULES/cathedral] Error:', error);
+    logger.error('Cathedral endpoint error', 'CATHEDRAL_ERROR', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: String(error) },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

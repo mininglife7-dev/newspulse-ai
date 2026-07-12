@@ -10,6 +10,7 @@ import {
   knowledgeExists,
   KnowledgeEntry,
 } from '@/lib/knowledge-memory';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -89,14 +90,12 @@ export async function GET(req: Request) {
       checkedAt: new Date().toISOString(),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[knowledge] GET failed:', message);
+    logger.error('Knowledge query failed', 'KNOWLEDGE_QUERY_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Failed to query knowledge',
-        message,
       },
       { status: 500 }
     );
@@ -212,14 +211,12 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[knowledge] POST failed:', message);
+    logger.error('Knowledge write failed', 'KNOWLEDGE_WRITE_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Failed to write knowledge',
-        message,
       },
       { status: 500 }
     );

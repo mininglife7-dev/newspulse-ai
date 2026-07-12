@@ -136,7 +136,9 @@ export async function POST(req: Request) {
     current_workspace_id: workspace.id,
   });
   if (profileError) {
-    logger.warn('Profile update failed (non-blocking)', 'WORKSPACE_PROFILE_WARN', profileError);
+    logger.warn('Profile update failed (non-blocking)', 'WORKSPACE_PROFILE_WARN', {
+      message: profileError.message,
+    });
   }
 
   return NextResponse.json({

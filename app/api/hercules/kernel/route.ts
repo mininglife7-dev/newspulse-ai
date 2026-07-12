@@ -12,6 +12,7 @@ import {
   type Mission,
   type Task,
 } from '@/lib/hercules-kernel';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       kernel: kernel.getSystemStatus(),
     });
   } catch (error) {
-    console.error('[HERCULES/kernel] GET error:', error);
+    logger.error('HERCULES kernel GET request failed', 'KERNEL_GET_ERROR', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -229,9 +230,9 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('[HERCULES/kernel] POST error:', error);
+    logger.error('HERCULES kernel POST request failed', 'KERNEL_POST_ERROR', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: String(error) },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

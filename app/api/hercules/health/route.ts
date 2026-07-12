@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HerculesKernel } from '@/lib/hercules-kernel';
 import type { HealthScore, HealthFactor, HealthStatus } from '@/lib/hercules-kernel';
 import { getRequiredAppUrl } from '@/lib/config-validation';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ async function checkProductionHealth(): Promise<OrganHealth> {
 async function checkErrorRates(): Promise<OrganHealth> {
   try {
     const response = await fetch(
-      new URL('/api/error-rate', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString(),
+      new URL('/api/error-rate', getRequiredAppUrl()).toString(),
       { cache: 'no-store' }
     );
 
@@ -127,7 +128,7 @@ async function checkErrorRates(): Promise<OrganHealth> {
 async function checkSecurityStatus(): Promise<OrganHealth> {
   try {
     const response = await fetch(
-      new URL('/api/security-scan', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString(),
+      new URL('/api/security-scan', getRequiredAppUrl()).toString(),
       { cache: 'no-store' }
     );
 
@@ -181,7 +182,7 @@ async function checkSecurityStatus(): Promise<OrganHealth> {
 async function checkCostHealth(): Promise<OrganHealth> {
   try {
     const response = await fetch(
-      new URL('/api/cost-anomaly', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString(),
+      new URL('/api/cost-anomaly', getRequiredAppUrl()).toString(),
       { cache: 'no-store' }
     );
 
@@ -236,7 +237,7 @@ async function checkCostHealth(): Promise<OrganHealth> {
 async function checkPerformanceHealth(): Promise<OrganHealth> {
   try {
     const response = await fetch(
-      new URL('/api/performance-baseline', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString(),
+      new URL('/api/performance-baseline', getRequiredAppUrl()).toString(),
       { cache: 'no-store' }
     );
 
@@ -391,14 +392,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(health);
   } catch (error) {
-    console.error('[HERCULES/health] Error calculating health:', error);
+    logger.error('HERCULES health calculation failed', 'HERCULES_HEALTH_ERROR', error);
     return NextResponse.json(
       {
         timestamp: new Date().toISOString(),
         overallStatus: 'UNKNOWN',
         overallPercentage: 0,
         organs: [],
-        blockingIssues: [String(error)],
+        blockingIssues: [],
         recommendations: ['Unable to calculate health. Check logs for details.'],
       },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { commandIncident, commandToAlert, type IncidentTrigger } from '@/lib/incident-commander';
 import { recordAlert } from '@/lib/alert-hub';
 import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -109,14 +110,12 @@ export async function POST(req: NextRequest) {
       { status }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[incident] POST failed:', message);
+    logger.error('Incident processing failed', 'INCIDENT_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Incident processing failed',
-        message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

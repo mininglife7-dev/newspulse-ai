@@ -42,7 +42,7 @@ export async function GET(req: Request) {
     // Log deployment status (safe for production)
     if (result.status === 'critical') {
       logger.error('Deployment verification: critical mismatch detected', 'DEPLOYMENT_CRITICAL', {
-        currentDeployment: result.currentDeployment?.url,
+        hasDeployment: !!result.currentDeployment,
         latestCommit: result.latestCommit?.sha?.substring(0, 7),
       });
     } else if (result.status === 'warning') {

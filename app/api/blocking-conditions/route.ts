@@ -3,6 +3,7 @@ import {
   detectAllBlockingConditions,
   formatBlockingConditionAlert,
 } from '@/lib/blocking-condition-detector';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -51,17 +52,16 @@ export async function GET(req: Request) {
     // Blockers found — format for Founder
     const alerts = blockers.map(formatBlockingConditionAlert);
 
-    // Log critical blockers
+    // Log blocking conditions (safe for production)
     if (blockers.some((b) => b.severity === 'critical')) {
-      console.error(
-        '[blocking-conditions] CRITICAL blockers detected:\n',
-        alerts.join('\n\n')
-      );
+      logger.error('Blocking conditions detected: critical', 'BLOCKER_CRITICAL', {
+        totalBlockers: blockers.length,
+        criticalCount: blockers.filter((b) => b.severity === 'critical').length,
+      });
     } else {
-      console.warn(
-        '[blocking-conditions] High-severity blockers detected:\n',
-        alerts.join('\n\n')
-      );
+      logger.warn('Blocking conditions detected: high severity', 'BLOCKER_WARNING', {
+        totalBlockers: blockers.length,
+      });
     }
 
     return NextResponse.json(
@@ -83,14 +83,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[blocking-conditions] Detection failed:', message);
+    logger.error('Blocking condition detection failed', 'BLOCKER_DETECTION_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Detection failed',
-        message,
         blockers: [],
       },
       { status: 503 }

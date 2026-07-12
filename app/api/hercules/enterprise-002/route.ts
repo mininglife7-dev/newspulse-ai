@@ -12,6 +12,7 @@ import {
   getEnterprise002State,
 } from '@/lib/enterprise-002-init';
 import { HerculesKernel } from '@/lib/hercules-kernel';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -134,9 +135,9 @@ export async function GET(request: NextRequest) {
       isolationVerified: state.isolationVerified,
     });
   } catch (error) {
-    console.error('[HERCULES/enterprise-002] Error:', error);
+    logger.error('Enterprise 002 endpoint error', 'ENTERPRISE_002_ERROR', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: String(error) },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

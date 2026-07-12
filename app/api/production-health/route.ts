@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { runProductionHealthChecks } from '@/lib/production-monitoring';
 import { getRequiredAppUrl } from '@/lib/config-validation';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,12 +46,17 @@ export async function GET(req: Request) {
   try {
     const report = await runProductionHealthChecks(baseUrl);
 
-    // Log alerts for Founder visibility
+    // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.critical > 0) {
-        console.error('[production-health] CRITICAL alerts:\n', report.alerts.join('\n'));
+        logger.error('Production health: critical issues detected', 'HEALTH_CRITICAL', {
+          critical: report.summary.critical,
+          degraded: report.summary.degraded,
+        });
       } else {
-        console.warn('[production-health] Warnings:\n', report.alerts.join('\n'));
+        logger.warn('Production health: warnings detected', 'HEALTH_WARNING', {
+          degraded: report.summary.degraded,
+        });
       }
     }
 
@@ -72,14 +78,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[production-health] Monitoring failed:', message);
+    logger.error('Production health check failed', 'HEALTH_CHECK_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Production health check failed',
-        message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

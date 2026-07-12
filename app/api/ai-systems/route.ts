@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,7 +73,7 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[api/ai-systems] list failed:', error);
+    logger.error('AI systems list failed', 'AI_SYSTEMS_LIST_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Could not load AI systems' },
       { status: 500 }
@@ -145,7 +146,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error || !data) {
-    console.error('[api/ai-systems] insert failed:', error);
+    logger.error('AI system creation failed', 'AI_SYSTEMS_CREATE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Could not save the AI system' },
       { status: 500 }
