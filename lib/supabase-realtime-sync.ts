@@ -52,6 +52,7 @@ export interface RealtimeConflict {
   remoteValue?: Record<string, unknown>;
   resolvedAt?: string;
   resolvedBy?: 'local' | 'remote' | 'merge';
+  after?: Record<string, unknown>;
 }
 
 // In-memory sync state (would integrate with actual Supabase client in production)
