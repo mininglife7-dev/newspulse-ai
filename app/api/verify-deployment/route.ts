@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyDeployment, formatDeploymentAlert } from '@/lib/deployment-verifier';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,13 +39,18 @@ export async function GET(req: Request) {
     const result = await verifyDeployment(owner, repo, token);
     const alert = formatDeploymentAlert(result);
 
-    // Log alerts for Founder visibility
+    // Log deployment status (safe for production)
     if (result.status === 'critical') {
-      console.error('[verify-deployment] CRITICAL:\n', alert);
+      logger.error('Deployment verification: critical mismatch detected', 'DEPLOYMENT_CRITICAL', {
+        currentDeployment: result.currentDeployment?.url,
+        latestCommit: result.latestCommit?.sha?.substring(0, 7),
+      });
     } else if (result.status === 'warning') {
-      console.warn('[verify-deployment] WARNING:\n', alert);
+      logger.warn('Deployment verification: warning detected', 'DEPLOYMENT_WARNING', {
+        mismatch: result.mismatch,
+      });
     } else {
-      console.log('[verify-deployment] OK:\n', alert);
+      logger.info('Deployment verification: healthy', 'DEPLOYMENT_OK');
     }
 
     return NextResponse.json(
@@ -66,14 +72,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[verify-deployment] Check failed:', message);
+    logger.error('Deployment verification check failed', 'DEPLOYMENT_CHECK_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Deployment verification failed',
-        message,
         status: 'error',
       },
       { status: 503 }

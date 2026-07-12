@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     .single();
 
   if (wsError || !workspace) {
-    console.error('[api/workspace] workspace insert failed:', wsError);
+    logger.error('Workspace creation failed', 'WORKSPACE_INSERT_ERROR', wsError);
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace' },
       { status: 500 }
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
     });
 
   if (memberError) {
-    console.error('[api/workspace] member insert failed:', memberError);
+    logger.error('Workspace membership creation failed', 'WORKSPACE_MEMBER_ERROR', memberError);
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace membership' },
       { status: 500 }
@@ -120,7 +121,7 @@ export async function POST(req: Request) {
     .single();
 
   if (companyError || !company) {
-    console.error('[api/workspace] company insert failed:', companyError);
+    logger.error('Company profile creation failed', 'WORKSPACE_COMPANY_ERROR', companyError);
     return NextResponse.json(
       { ok: false, error: 'Could not create company profile' },
       { status: 500 }
@@ -135,7 +136,7 @@ export async function POST(req: Request) {
     current_workspace_id: workspace.id,
   });
   if (profileError) {
-    console.warn('[api/workspace] profile upsert failed:', profileError);
+    logger.warn('Profile update failed (non-blocking)', 'WORKSPACE_PROFILE_WARN', profileError);
   }
 
   return NextResponse.json({
