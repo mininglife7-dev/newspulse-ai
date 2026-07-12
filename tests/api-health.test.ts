@@ -2,6 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 async function getHealth() {
   vi.resetModules();
+  // Mock Supabase client before importing route
+  vi.doMock('@/lib/supabase', () => ({
+    getSupabaseAdmin: () => ({
+      from: () => ({
+        select: () => ({
+          limit: async () => ({ data: [], error: null }),
+        }),
+      }),
+    }),
+  }), { esmock: true });
+
   const { GET } = await import('@/app/api/health/route');
   const res = await GET();
   return { status: res.status, body: await res.json() };
@@ -10,6 +21,7 @@ async function getHealth() {
 describe('GET /api/health', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
+    vi.clearAllMocks();
   });
 
   it('reports healthy when all Supabase env vars are present', async () => {
@@ -26,6 +38,7 @@ describe('GET /api/health', () => {
       supabase_anon: true,
       supabase_service: true,
     });
+    expect(body.db).toBe('ok');
   });
 
   it('reports degraded with 503 when configuration is missing', async () => {
