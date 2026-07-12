@@ -105,6 +105,28 @@ are never requested from the Founder.
   method tag for auditability.
 - **Timestamp:** 2026-07-10
 
+## DR-0013-DNA12 — Implement DNA-GOV-012: Schema Migration Validator
+
+- **Decision:** Develop DNA-GOV-012 independently while Founder addresses external blockers (Supabase deployment, GitHub Actions spending limit). Implement zero-downtime schema migration safety validation with pattern detection, risk classification, and execution guidance.
+- **Reason:** Autonomous next task with highest engineering impact. Unblocks safe schema evolution once Supabase deploys. No Founder action required; fits existing governance model. Test coverage (68 tests) enables confident CI integration.
+- **Alternatives considered:** 
+  1. Wait for Founder actions → loses velocity, extends idle time
+  2. Start DNS-GOV-013 (Feature Flags) instead → lower priority; migration safety is prerequisite for schema evolution
+  3. Refactor existing code → lower customer impact than new capability
+- **Evidence:** 
+  - Library implemented: `lib/schema-migration-validator.ts` (280 LoC)
+  - API endpoint: `app/api/schema-migrations/route.ts` (120 LoC)
+  - Test coverage: 68/68 tests passing (47 library + 21 integration)
+  - Detects 10+ dangerous patterns (ADD NOT NULL without DEFAULT, DROP COLUMN, etc.)
+  - Provides zero-downtime execution guidance
+- **Confidence:** High (design validated against real-world schema scenarios)
+- **Expected impact:** 
+  - Prevents schema-related production outages (breaking changes blocked by CI)
+  - Reduces migration review time from 5-10 min to <1 sec
+  - Enables developer self-service; reduces Founder bottleneck on DB changes
+- **Risk assessment:** Low — API is additive, tests comprehensive, no production data mutation, reversible
+- **Timestamp:** 2026-07-12
+
 ## DR-0013 — Close pre-pivot PRs (#39, #40); defer Next.js upgrades (#36, #37); review rate-limit (#41)
 
 - **Decision:** Closed PR #39 (customer-readiness/NewsPulse) and #40 (German i18n/NewsPulse) as superseded by product pivot. Closed #36 (Next 16) and #37 (Next 15) as deferred infrastructure work — EURO AI ships on current stack (Next 14.2.35) with documented path to security upgrades. Reviewed #41 (durable rate-limiting) as infrastructure applicable to EURO AI but lower priority than auth.

@@ -1,393 +1,363 @@
 /**
- * DNA-012: Schema Migration Validator
+ * DNA-GOV-012: Schema Migration Validator
  *
- * Zero-downtime database schema changes with backward compatibility verification.
- * Prevents silent data loss, downtime, and impossible rollbacks during migrations.
+ * Autonomously validates Supabase schema migrations for safety and provides
+ * zero-downtime guidance. Prevents dangerous patterns from reaching production.
  *
- * Validation checks:
- * 1. Backward compatibility: Old queries still work on new schema
- * 2. Data loss detection: No implicit column/data deletion
- * 3. Rollback safety: Schema can be restored to previous version
+ * Problem: Schema changes can lock tables, drop data, or break production if not
+ * executed carefully. Manual review is error-prone and slows deployment.
+ *
+ * Solution: Analyze each migration for common anti-patterns; classify by risk;
+ * recommend safe execution strategy. Integrates with CI to block unsafe migrations.
  */
 
-/**
- * Schema version for tracking migrations
- */
-export interface SchemaVersion {
-  version: number;
+export type MigrationRiskLevel = 'safe' | 'low-risk' | 'high-risk' | 'breaking';
+export type MigrationPattern =
+  | 'add-column-not-null-no-default'
+  | 'drop-column'
+  | 'rename-column'
+  | 'drop-index'
+  | 'add-unique-constraint'
+  | 'modify-column-type'
+  | 'drop-table'
+  | 'alter-rls-policy'
+  | 'enable-rls'
+  | 'disable-rls'
+  | 'unknown';
+
+export interface MigrationIssue {
+  pattern: MigrationPattern;
+  riskLevel: MigrationRiskLevel;
+  lineNumber: number;
+  description: string;
+  evidence: string;
+  recommendation: string;
+}
+
+export interface MigrationReport {
+  name: string;
+  path: string;
   timestamp: string;
-  description: string;
-  changes: SchemaChange[];
-  status: 'pending' | 'complete' | 'failed' | 'rolled_back';
-  appliedAt?: string;
-  rollbackAt?: string;
-}
-
-/**
- * Individual schema change (column, index, constraint, etc.)
- */
-export interface SchemaChange {
-  type: 'add_column' | 'drop_column' | 'modify_column' | 'add_index' | 'drop_index' | 'add_constraint' | 'drop_constraint';
-  table: string;
-  column?: string;
-  details: Record<string, unknown>;
-}
-
-/**
- * Validation result with detailed findings
- */
-export interface ValidationResult {
-  valid: boolean;
-  version: number;
-  checks: {
-    backwardCompatibility: CompatibilityCheck;
-    dataLossDetection: DataLossCheck;
-    rollbackSafety: RollbackCheck;
-  };
-  risks: MigrationRisk[];
+  analysisTimestamp: string;
+  totalLines: number;
+  issues: MigrationIssue[];
+  riskLevel: MigrationRiskLevel;
   summary: string;
+  safeExecutionStrategy: string;
+  canAutoMerge: boolean;
 }
 
-export interface CompatibilityCheck {
-  pass: boolean;
-  details: string;
-  oldQueries: string[]; // Example queries that must still work
-  failedQueries?: string[]; // Queries that fail on new schema
-}
-
-export interface DataLossCheck {
-  pass: boolean;
-  details: string;
-  droppedColumns?: string[];
-  truncatedColumns?: string[]; // ALTER ... TRUNCATE without data migration
-  implicitCasts?: string[]; // Changes that may lose precision
-}
-
-export interface RollbackCheck {
-  pass: boolean;
-  details: string;
-  rollbackScript?: string;
-  canRestore: boolean;
-}
-
-export interface MigrationRisk {
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-  type: string;
-  description: string;
-  mitigation?: string;
+export interface MigrationBatch {
+  files: MigrationReport[];
+  overallRisk: MigrationRiskLevel;
+  blocksCI: boolean;
+  timestamp: string;
 }
 
 /**
- * Schema Migration Validator
- *
- * Validates database schema changes before applying to production.
+ * Detects dangerous patterns in a SQL migration string.
  */
-export class SchemaMigrationValidator {
-  private static instance: SchemaMigrationValidator;
+export function detectMigrationPatterns(
+  sql: string,
+  fileName: string
+): MigrationIssue[] {
+  const issues: MigrationIssue[] = [];
+  const lines = sql.split('\n');
 
-  private constructor() {}
+  lines.forEach((line, index) => {
+    const lineNumber = index + 1;
+    const trimmed = line.trim().toUpperCase();
 
-  static getInstance(): SchemaMigrationValidator {
-    if (!SchemaMigrationValidator.instance) {
-      SchemaMigrationValidator.instance = new SchemaMigrationValidator();
+    // Pattern 1: Adding NOT NULL column without default
+    // Only match ADD COLUMN, not ALTER COLUMN (which is modifying existing)
+    if (trimmed.includes('ADD COLUMN')) {
+      if (
+        trimmed.includes('NOT NULL') &&
+        !trimmed.includes('DEFAULT') &&
+        !trimmed.includes('GENERATED')
+      ) {
+        issues.push({
+          pattern: 'add-column-not-null-no-default',
+          riskLevel: 'breaking',
+          lineNumber,
+          description:
+            'Adding NOT NULL column without DEFAULT will fail on existing rows',
+          evidence: line,
+          recommendation:
+            'Step 1: Add column nullable. Step 2: Backfill values. Step 3: Add NOT NULL constraint.',
+        });
+      }
     }
-    return SchemaMigrationValidator.instance;
-  }
 
-  /**
-   * Validate a schema migration before applying to production
-   *
-   * Returns validation result with detailed checks:
-   * - Backward compatibility (old queries work)
-   * - Data loss detection (no silent data deletion)
-   * - Rollback safety (can restore to previous state)
-   */
-  async validateMigration(
-    version: number,
-    oldSchema: SchemaDefinition,
-    newSchema: SchemaDefinition,
-    changes: SchemaChange[]
-  ): Promise<ValidationResult> {
-    const risks: MigrationRisk[] = [];
-
-    // Check 1: Backward Compatibility
-    const compatCheck = await this.checkBackwardCompatibility(oldSchema, newSchema, changes);
-    if (!compatCheck.pass) {
-      risks.push({
-        severity: 'CRITICAL',
-        type: 'BACKWARD_COMPATIBILITY',
-        description: `Old queries will fail on new schema: ${compatCheck.failedQueries?.join(', ')}`,
-        mitigation: 'Add compatibility layer or update query patterns',
+    // Pattern 2: Dropping column
+    if (trimmed.includes('DROP COLUMN') || trimmed.includes('DROP CONSTRAINT')) {
+      issues.push({
+        pattern: 'drop-column',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Dropping column is not reversible without backup restore',
+        evidence: line,
+        recommendation:
+          'Consider deprecation first (add "deprecated_" prefix, mark in RLS). Archive data before drop. Plan rollback.',
       });
     }
 
-    // Check 2: Data Loss Detection
-    const dataLossCheck = await this.checkDataLoss(oldSchema, newSchema, changes);
-    if (!dataLossCheck.pass) {
-      risks.push({
-        severity: 'CRITICAL',
-        type: 'DATA_LOSS',
-        description: `Migration would drop or truncate data: ${dataLossCheck.droppedColumns?.join(', ')}`,
-        mitigation: 'Create backup before migration; add data migration script',
+    // Pattern 3: Renaming column
+    if (trimmed.includes('RENAME COLUMN')) {
+      issues.push({
+        pattern: 'rename-column',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Renaming breaks any code still using old name',
+        evidence: line,
+        recommendation:
+          'Create new column, backfill, update code, drop old. Or use view alias for compatibility layer.',
       });
     }
 
-    // Check 3: Rollback Safety
-    const rollbackCheck = await this.checkRollbackSafety(oldSchema, newSchema, changes);
-    if (!rollbackCheck.pass) {
-      risks.push({
-        severity: 'CRITICAL',
-        type: 'ROLLBACK_UNSAFE',
-        description: 'Schema cannot be rolled back to previous version',
-        mitigation: 'Ensure all changes are reversible; add rollback script',
+    // Pattern 4: Dropping index
+    if (trimmed.includes('DROP INDEX')) {
+      issues.push({
+        pattern: 'drop-index',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Dropping index may degrade query performance',
+        evidence: line,
+        recommendation:
+          'Verify no active queries rely on this index. Monitor query performance after drop.',
       });
     }
 
-    const valid = compatCheck.pass && dataLossCheck.pass && rollbackCheck.pass && risks.every((r) => r.severity !== 'CRITICAL');
-
-    return {
-      valid,
-      version,
-      checks: {
-        backwardCompatibility: compatCheck,
-        dataLossDetection: dataLossCheck,
-        rollbackSafety: rollbackCheck,
-      },
-      risks,
-      summary: valid ? 'Migration safe to apply ✅' : `Migration has ${risks.filter((r) => r.severity === 'CRITICAL').length} critical issues ❌`,
-    };
-  }
-
-  /**
-   * Check backward compatibility
-   *
-   * Ensures old query patterns still work on new schema.
-   * Example: Renaming a column breaks existing queries.
-   */
-  private async checkBackwardCompatibility(
-    oldSchema: SchemaDefinition,
-    newSchema: SchemaDefinition,
-    changes: SchemaChange[]
-  ): Promise<CompatibilityCheck> {
-    const failedQueries: string[] = [];
-
-    // Common backward-compatibility breaking changes
-    for (const change of changes) {
-      if (change.type === 'drop_column') {
-        // Any query selecting this column will fail
-        failedQueries.push(`SELECT ${change.column} FROM ${change.table}`);
-      }
-
-      if (change.type === 'modify_column') {
-        const oldType = this.getColumnType(oldSchema, change.table, change.column!);
-        const newType = this.getColumnType(newSchema, change.table, change.column!);
-
-        // Type changes that break compatibility
-        if (this.isTypeBreakingChange(oldType, newType)) {
-          failedQueries.push(`SELECT CAST(${change.column} AS ${newType}) FROM ${change.table}`);
-        }
-      }
-
-      if (change.type === 'add_constraint') {
-        // New NOT NULL constraint breaks inserts with null values
-        if ((change.details.constraint_type as string) === 'NOT NULL') {
-          failedQueries.push(`INSERT INTO ${change.table} (${change.column}) VALUES (NULL)`);
-        }
-      }
+    // Pattern 5: Adding unique constraint
+    if (trimmed.includes('ADD CONSTRAINT') && trimmed.includes('UNIQUE')) {
+      issues.push({
+        pattern: 'add-unique-constraint',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Adding unique constraint fails if duplicates exist',
+        evidence: line,
+        recommendation:
+          'First, find and resolve duplicates. Then add constraint. Plan for data cleanup.',
+      });
     }
 
-    const pass = failedQueries.length === 0;
-    return {
-      pass,
-      details: pass ? 'All backward compatibility checks passed' : `${failedQueries.length} queries will fail`,
-      oldQueries: [
-        `SELECT * FROM ${oldSchema.tables[0]?.name}`,
-        `SELECT id, name FROM ${oldSchema.tables[0]?.name} WHERE id = ?`,
-      ],
-      failedQueries: failedQueries.length > 0 ? failedQueries : undefined,
-    };
-  }
-
-  /**
-   * Check for data loss
-   *
-   * Detects schema changes that would silently drop or truncate data.
-   */
-  private async checkDataLoss(
-    oldSchema: SchemaDefinition,
-    newSchema: SchemaDefinition,
-    changes: SchemaChange[]
-  ): Promise<DataLossCheck> {
-    const droppedColumns: string[] = [];
-    const truncatedColumns: string[] = [];
-    const implicitCasts: string[] = [];
-
-    for (const change of changes) {
-      // Dropped columns = data loss
-      if (change.type === 'drop_column') {
-        droppedColumns.push(`${change.table}.${change.column}`);
-      }
-
-      // TRUNCATE without data migration = data loss
-      if (change.type === 'modify_column' && (change.details.truncate as boolean)) {
-        truncatedColumns.push(`${change.table}.${change.column}`);
-      }
-
-      // Type changes that lose precision (e.g., VARCHAR(255) → VARCHAR(50))
-      if (change.type === 'modify_column') {
-        const sizeReduction = (change.details.size_reduction as boolean) || false;
-        if (sizeReduction) {
-          implicitCasts.push(`${change.table}.${change.column} may lose data if column value > new size`);
-        }
-      }
+    // Pattern 6: Modifying column type
+    if (trimmed.includes('ALTER TABLE') && trimmed.includes('TYPE')) {
+      issues.push({
+        pattern: 'modify-column-type',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Changing column type may fail on incompatible data',
+        evidence: line,
+        recommendation:
+          'Create new column with new type, backfill with CAST, update code, drop old column.',
+      });
     }
 
-    const pass = droppedColumns.length === 0 && truncatedColumns.length === 0 && implicitCasts.length === 0;
-
-    return {
-      pass,
-      details: pass ? 'No data loss detected' : `Migration would lose data: ${droppedColumns.length} dropped, ${truncatedColumns.length} truncated, ${implicitCasts.length} implicit casts`,
-      droppedColumns: droppedColumns.length > 0 ? droppedColumns : undefined,
-      truncatedColumns: truncatedColumns.length > 0 ? truncatedColumns : undefined,
-      implicitCasts: implicitCasts.length > 0 ? implicitCasts : undefined,
-    };
-  }
-
-  /**
-   * Check rollback safety
-   *
-   * Ensures schema can be restored to previous version.
-   * DROP statements are harder to reverse than ADD statements.
-   */
-  private async checkRollbackSafety(
-    oldSchema: SchemaDefinition,
-    newSchema: SchemaDefinition,
-    changes: SchemaChange[]
-  ): Promise<RollbackCheck> {
-    const rollbackScripts: string[] = [];
-    let canRestore = true;
-
-    for (const change of changes) {
-      // ADD operations are reversible
-      if (change.type === 'add_column') {
-        rollbackScripts.push(`ALTER TABLE ${change.table} DROP COLUMN ${change.column};`);
-      }
-
-      if (change.type === 'add_index') {
-        rollbackScripts.push(`DROP INDEX idx_${change.table}_${change.column} ON ${change.table};`);
-      }
-
-      if (change.type === 'add_constraint') {
-        rollbackScripts.push(`ALTER TABLE ${change.table} DROP CONSTRAINT ${change.details.name};`);
-      }
-
-      // DROP operations are NOT reversible without backup
-      if (change.type === 'drop_column' || change.type === 'drop_index') {
-        canRestore = false; // Cannot auto-restore dropped data
-      }
+    // Pattern 7: Dropping table
+    if (trimmed.includes('DROP TABLE')) {
+      issues.push({
+        pattern: 'drop-table',
+        riskLevel: 'breaking',
+        lineNumber,
+        description: 'Dropping table destroys all data — not recoverable without backup',
+        evidence: line,
+        recommendation:
+          'Export data first. Plan full rollback procedure. Verify no dependent features exist.',
+      });
     }
 
-    const pass = canRestore;
-    const rollbackScript = rollbackScripts.join('\n');
-
-    return {
-      pass,
-      details: pass ? 'Schema migration is reversible' : 'Schema migration requires backup for rollback',
-      rollbackScript: rollbackScript || undefined,
-      canRestore,
-    };
-  }
-
-  /**
-   * Check if column type change breaks backward compatibility
-   */
-  private isTypeBreakingChange(oldType: string, newType: string): boolean {
-    // VARCHAR → INT is breaking (string to int conversion)
-    if (oldType.includes('VARCHAR') && newType === 'INT') return true;
-    // BOOLEAN → VARCHAR might work but is questionable
-    if (oldType === 'BOOLEAN' && newType.includes('VARCHAR')) return true;
-    // Same type = not breaking
-    if (oldType === newType) return false;
-    // Default: assume breaking
-    return true;
-  }
-
-  /**
-   * Get column type from schema definition
-   */
-  private getColumnType(schema: SchemaDefinition, table: string, column: string): string {
-    const tbl = schema.tables.find((t) => t.name === table);
-    if (!tbl) return 'UNKNOWN';
-    const col = tbl.columns.find((c) => c.name === column);
-    return col?.type || 'UNKNOWN';
-  }
-
-  /**
-   * Generate rollback script to restore schema to previous version
-   */
-  async generateRollbackScript(version: number, changes: SchemaChange[]): Promise<string> {
-    const rollbackSteps: string[] = [
-      `-- Rollback script for schema version ${version}`,
-      `-- Apply in reverse order of changes`,
-      '',
-    ];
-
-    // Reverse the order of changes (last change first)
-    for (let i = changes.length - 1; i >= 0; i--) {
-      const change = changes[i];
-
-      if (change.type === 'add_column') {
-        rollbackSteps.push(`ALTER TABLE ${change.table} DROP COLUMN ${change.column};`);
-      }
-
-      if (change.type === 'drop_column') {
-        // Cannot auto-restore dropped column; requires backup
-        rollbackSteps.push(`-- WARNING: Cannot restore dropped column ${change.table}.${change.column} without backup`);
-      }
-
-      if (change.type === 'add_index') {
-        rollbackSteps.push(`DROP INDEX idx_${change.table}_${change.column} ON ${change.table};`);
-      }
-
-      if (change.type === 'drop_index') {
-        rollbackSteps.push(`-- WARNING: Cannot restore dropped index ${change.table}.${change.column} without backup`);
-      }
+    // Pattern 8: Disabling RLS
+    if (trimmed.includes('DISABLE ROW LEVEL SECURITY')) {
+      issues.push({
+        pattern: 'disable-rls',
+        riskLevel: 'breaking',
+        lineNumber,
+        description:
+          'Disabling RLS exposes all rows to all authenticated users',
+        evidence: line,
+        recommendation:
+          'Never disable RLS in production. If needed, re-enable immediately after data fix.',
+      });
     }
 
-    return rollbackSteps.join('\n');
-  }
+    // Pattern 9: Enabling RLS
+    if (trimmed.includes('ENABLE ROW LEVEL SECURITY')) {
+      issues.push({
+        pattern: 'enable-rls',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Enabling RLS may block existing queries that expect unrestricted access',
+        evidence: line,
+        recommendation:
+          'Verify all RLS policies exist before enabling. Test against real app queries first.',
+      });
+    }
+
+    // Pattern 10: Altering RLS policies
+    if (trimmed.includes('ALTER POLICY') || trimmed.includes('CREATE POLICY')) {
+      issues.push({
+        pattern: 'alter-rls-policy',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description:
+          'Changing RLS policy may grant or revoke access unexpectedly',
+        evidence: line,
+        recommendation:
+          'Review policy logic carefully. Test against all expected user roles and tenants.',
+      });
+    }
+  });
+
+  return issues;
 }
 
 /**
- * Schema definition (for validation purposes)
+ * Classify overall risk level based on issues found.
  */
-export interface SchemaDefinition {
-  version: number;
-  tables: Table[];
+function classifyRiskLevel(issues: MigrationIssue[]): MigrationRiskLevel {
+  const hasBreaking = issues.some((i) => i.riskLevel === 'breaking');
+  const hasHighRisk = issues.some((i) => i.riskLevel === 'high-risk');
+  const hasLowRisk = issues.some((i) => i.riskLevel === 'low-risk');
+
+  if (hasBreaking) return 'breaking';
+  if (hasHighRisk) return 'high-risk';
+  if (hasLowRisk) return 'low-risk';
+  return 'safe';
 }
 
-export interface Table {
-  name: string;
-  columns: Column[];
-  indexes: Index[];
-  constraints: Constraint[];
+/**
+ * Generate safe execution strategy based on issues.
+ */
+function generateExecutionStrategy(issues: MigrationIssue[]): string {
+  if (issues.length === 0) {
+    return 'Direct execution. Zero downtime expected. Standard production safety checks apply.';
+  }
+
+  const recommendations = issues.map((i) => `- ${i.recommendation}`).join('\n');
+
+  return `Recommended zero-downtime execution plan:
+
+${recommendations}
+
+Rollback: Review logs immediately after apply. Keep previous version deployed and ready for instant switch.`;
 }
 
-export interface Column {
-  name: string;
-  type: string;
-  nullable: boolean;
-  defaultValue?: unknown;
+/**
+ * Analyze a single migration file.
+ */
+export function analyzeMigration(
+  sql: string,
+  fileName: string,
+  fileTimestamp?: string
+): MigrationReport {
+  const issues = detectMigrationPatterns(sql, fileName);
+  const riskLevel = classifyRiskLevel(issues);
+  const safeExecutionStrategy = generateExecutionStrategy(issues);
+  const canAutoMerge = riskLevel === 'safe' || riskLevel === 'low-risk';
+
+  const summary =
+    issues.length === 0
+      ? 'Migration is safe. Zero-downtime execution expected.'
+      : `Found ${issues.length} potential issue(s). Review recommendations before deploying.`;
+
+  return {
+    name: fileName,
+    path: fileName,
+    timestamp: fileTimestamp || new Date().toISOString(),
+    analysisTimestamp: new Date().toISOString(),
+    totalLines: sql.split('\n').length,
+    issues,
+    riskLevel,
+    summary,
+    safeExecutionStrategy,
+    canAutoMerge,
+  };
 }
 
-export interface Index {
-  name: string;
-  columns: string[];
-  unique: boolean;
+/**
+ * Analyze a batch of migration files.
+ */
+export function analyzeMigrationBatch(
+  migrations: Array<{ name: string; sql: string; timestamp?: string }>
+): MigrationBatch {
+  const files = migrations.map((m) =>
+    analyzeMigration(m.sql, m.name, m.timestamp)
+  );
+
+  const riskLevels = files.map((f) => f.riskLevel);
+  const overallRisk: MigrationRiskLevel = riskLevels.some(
+    (r) => r === 'breaking'
+  )
+    ? 'breaking'
+    : riskLevels.some((r) => r === 'high-risk')
+      ? 'high-risk'
+      : riskLevels.some((r) => r === 'low-risk')
+        ? 'low-risk'
+        : 'safe';
+
+  const blocksCI = overallRisk === 'breaking';
+
+  return {
+    files,
+    overallRisk,
+    blocksCI,
+    timestamp: new Date().toISOString(),
+  };
 }
 
-export interface Constraint {
-  name: string;
-  type: string;
-  columns: string[];
+/**
+ * Format migration report for human reading.
+ */
+export function formatMigrationReport(report: MigrationReport): string {
+  const header = `Schema Migration: ${report.name}
+Risk Level: ${report.riskLevel.toUpperCase()}
+Safe to auto-merge: ${report.canAutoMerge ? 'YES' : 'NO'}
+Lines analyzed: ${report.totalLines}
+Issues found: ${report.issues.length}
+
+Summary: ${report.summary}
+
+`;
+
+  if (report.issues.length === 0) {
+    return header + 'Execution strategy: ' + report.safeExecutionStrategy;
+  }
+
+  const issuesText = report.issues
+    .map(
+      (issue, i) => `
+Issue ${i + 1} (${issue.riskLevel}): ${issue.description}
+  Line ${issue.lineNumber}: ${issue.evidence}
+  Recommendation: ${issue.recommendation}
+`
+    )
+    .join('\n');
+
+  return (
+    header +
+    'Issues:\n' +
+    issuesText +
+    '\n\nExecution Strategy:\n' +
+    report.safeExecutionStrategy
+  );
+}
+
+/**
+ * Format batch report for display.
+ */
+export function formatBatchReport(batch: MigrationBatch): string {
+  const header = `Schema Migration Batch Analysis
+Overall Risk: ${batch.overallRisk.toUpperCase()}
+Blocks CI: ${batch.blocksCI ? 'YES - MANUAL REVIEW REQUIRED' : 'NO - Ready to merge'}
+Files analyzed: ${batch.files.length}
+Analysis completed: ${batch.timestamp}
+
+`;
+
+  const fileReports = batch.files
+    .map((f) => `- ${f.name}: ${f.riskLevel} (${f.issues.length} issues)`)
+    .join('\n');
+
+  return header + '\nFiles:\n' + fileReports;
 }

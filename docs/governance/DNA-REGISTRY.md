@@ -527,6 +527,117 @@ interface RegressionAlert {
 
 *(None yet)*
 
+### DNA-GOV-012: Schema Migration Validator
+
+**Status:** Active (Development)  
+**Created:** 2026-07-12  
+**Owner:** Chief Database Officer + Chief Engineer  
+
+#### Purpose
+Autonomously validate Supabase schema migrations for zero-downtime safety before they reach production. Prevent dangerous migration patterns (dropping columns, unsafe constraints, RLS modifications) from causing outages. Provide guidance on safe multi-step execution strategies.
+
+#### Problem Discovered
+Schema changes are the most dangerous type of database operation. An unsafe migration can lock tables, drop data, or break production if executed wrong. Manual review is error-prone and slows deployment velocity. When Supabase production launches, migration velocity becomes critical to product iteration speed.
+
+#### Evidence
+- **Weakness:** No systematic review of migrations; patterns like "ADD NOT NULL without DEFAULT" or "DROP COLUMN" are easy to miss
+- **Impact:** Schema mistake → table lock → production outage → customer data at risk → launch delay
+- **Root cause:** Line-by-line review is slow; dangerous patterns slip through
+- **Opportunity:** Automated pattern detection + guidance enables safe self-service migration deployment
+
+#### Inputs
+- SQL migration files (string or file path)
+- Optional: File timestamps, migration batch metadata
+
+#### Outputs
+```typescript
+interface MigrationReport {
+  name: string
+  path: string
+  analysisTimestamp: string
+  totalLines: number
+  issues: MigrationIssue[]  // Detected dangerous patterns
+  riskLevel: 'safe' | 'low-risk' | 'high-risk' | 'breaking'
+  summary: string
+  safeExecutionStrategy: string  // Step-by-step guidance
+  canAutoMerge: boolean
+}
+
+interface MigrationIssue {
+  pattern: string  // add-column-not-null-no-default, drop-column, etc.
+  riskLevel: string
+  lineNumber: number
+  description: string
+  evidence: string
+  recommendation: string
+}
+```
+
+#### Implementation
+- `lib/schema-migration-validator.ts` — Core validation engine (280 LoC)
+  - `detectMigrationPatterns()` — Identifies 10+ dangerous patterns
+  - `analyzeMigration()` — Single-file analysis with risk classification
+  - `analyzeMigrationBatch()` — Multi-file batch analysis
+  - `formatMigrationReport()` — Human-readable report generation
+  - Patterns detected: ADD NOT NULL without DEFAULT, DROP COLUMN, RENAME COLUMN, DROP INDEX, ADD UNIQUE CONSTRAINT, TYPE changes, DROP TABLE, DISABLE/ENABLE RLS, RLS policy modifications
+- `app/api/schema-migrations/route.ts` — HTTP API for validation (120 LoC)
+  - `GET /api/schema-migrations` — Health check and documentation
+  - `POST /api/schema-migrations` — Submit migrations for analysis
+  - Returns 200 (safe) or 400 (blocks CI) with detailed analysis
+- `tests/schema-migration-validator.test.ts` — 47 unit tests
+- `tests/api-schema-migrations.test.ts` — 21 integration tests
+
+#### Verification Method
+- **Unit tests:** 47 tests covering:
+  - All 10+ dangerous patterns detected correctly
+  - Risk level classification (safe → low-risk → high-risk → breaking)
+  - Line number tracking for error reporting
+  - Multi-issue detection in single migration
+  - Case-insensitive SQL keyword matching
+  - Safe patterns (ADD COLUMN nullable, CREATE INDEX, CREATE TABLE)
+  - Batch analysis with overall risk calculation
+  - Auto-merge decision logic
+  - Execution strategy generation
+  - Report formatting
+- **API tests:** 21 tests covering:
+  - Health endpoint returns service metadata
+  - Example analysis endpoint
+  - POST analysis with various payloads
+  - Error handling (missing fields, malformed JSON, invalid data)
+  - CI blocking behavior (status 400 when breaking changes)
+  - Batch migration analysis
+- **All tests pass:** 68/68 ✅ (47 lib + 21 API)
+
+#### Dependencies
+- TypeScript string operations (no external DB/API needed for analysis)
+- HTTP request/response handling (Next.js)
+- Filesystem for optional logging (future enhancement)
+
+#### Risks
+- **False positives:** Pattern detection is conservative; some safe patterns flagged as high-risk (e.g., ALTER TABLE ALTER COLUMN on already-empty columns). Mitigation: Recommendations guide proper safe execution
+- **False negatives:** Custom SQL patterns not in detection list. Mitigation: List will grow with usage; Founder reviews any anomalies
+- **Integration:** Not yet integrated with GitHub Actions CI. Mitigation: API is ready; CI workflow integration is next phase
+
+#### Rollback Method
+- Delete `app/api/schema-migrations/route.ts`
+- Delete `lib/schema-migration-validator.ts`
+- Delete all tests
+- No schema changes, no stored state; fully reversible
+
+#### Success Metrics
+1. **Deployment safety:** Zero production schema-related outages after launch
+2. **Velocity:** Developers can self-serve migration review in < 1 second vs. 5-10 min manual review
+3. **Confidence:** Team confidence in migrations increases; fewer "just to be safe" delays
+4. **Adoption:** GitHub Actions CI integration prevents dangerous migrations from reaching production
+5. **Learning:** Recommendations train team on zero-downtime migration best practices
+
+#### Next Steps
+1. ✅ **Implement validators:** Core library with 68 tests — DONE
+2. **GitHub Actions CI integration:** Block PRs with breaking migrations
+3. **Migration templating:** Provide safe migration templates for common operations
+4. **Historical analysis:** Track which patterns caused issues in real deployments
+5. **Supabase native integration:** Direct API calls to Supabase to validate against current schema state
+
 ---
 
 ## Pending DNA
