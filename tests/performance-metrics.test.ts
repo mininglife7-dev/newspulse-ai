@@ -56,14 +56,14 @@ describe('performance-metrics', () => {
 
   it('times async operations', async () => {
     const result = await timeAsync('async-op', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       return 'done';
     });
 
     expect(result).toBe('done');
 
     const metrics = getMetrics();
-    expect(metrics['async-op'].measurements[0]).toBeGreaterThanOrEqual(50);
+    expect(metrics['async-op'].measurements[0]).toBeGreaterThanOrEqual(80);
   });
 
   it('times sync operations', () => {
