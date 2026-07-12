@@ -199,16 +199,8 @@ describe('Cathedral Enterprise Initialization', () => {
     it('should create launch pilot mission', () => {
       initializeCathedralEnterprise();
 
-      const mission = kernel.getMission(
-        // Find any mission for cathedral-001
-        ...Array.from({ length: 1 }).flatMap(() => {
-          // This is a simplified check since we don't expose mission list
-          return [];
-        })
-      );
-
-      // At least verify that we can retrieve the enterprise
       const enterprise = kernel.getEnterprise('cathedral-001');
+
       expect(enterprise).toBeDefined();
       expect(enterprise?.objectives.length).toBeGreaterThan(0);
     });
