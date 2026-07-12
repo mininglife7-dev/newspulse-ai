@@ -1114,6 +1114,136 @@ interface RealtimeConflict {
 
 ---
 
+### DNS-GOV-017: Analytics Pipeline
+
+**Status:** Active  
+**Created:** 2026-07-12  
+**Owner:** Chief Product Officer + Chief Analytics Officer  
+
+#### Purpose
+Enable product telemetry and usage insights: track user behavior (pageviews, clicks, conversions), monitor feature adoption, measure retention cohorts, and identify drop-off points. Enable data-driven product decisions about feature prioritization, user experience improvements, and customer retention strategies.
+
+#### Problem Discovered
+No visibility into how users interact with the product. Cannot measure feature adoption, identify usage trends, or detect drop-off points. Product decisions based on guesses, not data. Need: event tracking, aggregation, retention metrics, feature adoption monitoring.
+
+#### Evidence
+- **Weakness:** No analytics infrastructure for behavior tracking
+- **Impact:** Cannot measure product impact; feature prioritization guesswork; retention analysis impossible
+- **Root cause:** No telemetry system or usage dashboard
+- **Discovery method:** Product roadmap planning identified need for usage-driven decisions
+
+#### Inputs
+- Event category: pageview, click, conversion, error, performance
+- Event action: signup, login, logout, workspace_create, search_perform, etc.
+- User ID, session ID, timestamp
+- Optional: event label, value, custom properties, user agent, referrer
+
+#### Outputs
+```typescript
+interface AnalyticsEvent {
+  id: string; timestamp: string; userId?: string; category: EventCategory
+  action: EventAction; label?: string; value?: number; properties?: Record<string, unknown>
+  sessionId: string; userAgent?: string; referrer?: string
+}
+
+interface UsageMetrics {
+  timestamp: string; activeUsers: number; sessions: number; avgSessionDuration: number
+  pageViews: number; bounceRate: number; conversions: number
+}
+
+interface FeatureAdoption {
+  feature: string; totalUsers: number; adoptedUsers: number; adoptionRate: number
+  lastUpdated: string; adoptedUserIds: Set<string>
+}
+
+interface CohortMetrics {
+  cohortDate: string; cohortSize: number; retention: Record<number, number>
+  churnRate: number; ltv?: number
+}
+```
+
+#### Implementation
+- `lib/analytics-pipeline.ts` — Core analytics engine (380 LoC)
+  - `trackEvent()` — Log user interactions with custom properties
+  - `trackFeatureAdoption()` — Track feature usage by user
+  - `getUsageMetrics()` — Calculate daily/hourly usage stats (DAU, sessions, conversions, bounce rate)
+  - `getUserEvents()` — Retrieve event history for a specific user
+  - `getEventsByCategory/Action()` — Filter events by type
+  - `getFeatureAdoptionStats()` — Get adoption rates for all tracked features
+  - `getSessionInfo()` — Get session details (duration, events, user)
+  - `calculateCohortMetrics()` — Calculate retention and churn by user cohort
+  - `getCohortRetention()` — Retrieve stored cohort analysis
+  - `getAnalyticsSummary()` — Summary statistics (event count, unique users, features)
+  - `formatAnalyticsStatus()` — Format analytics status for display
+  - `resetAnalyticsPipeline()` — Reset state (testing)
+- `app/api/analytics/route.ts` — HTTP API for analytics (260 LoC)
+  - `GET /api/analytics?action=health|metrics|user-events|features|session|cohort`
+  - `POST /api/analytics` — Commands: track-event, track-adoption, calculate-cohort
+- `tests/analytics-pipeline.test.ts` — 31 comprehensive tests covering:
+  - Event tracking with properties and timestamps
+  - Feature adoption tracking and deduplication
+  - Usage metrics calculation (DAU, bounce rate, conversions, session duration)
+  - Event filtering by user, category, action
+  - Session tracking with event association
+  - Cohort retention analysis (0-30 days)
+  - Status formatting
+  - Complete user journey integration test
+  - Multi-user adoption tracking
+  - Cohort churn and retention
+
+#### Verification Method
+- **Unit tests:** 31 tests covering:
+  - Event creation, uniqueness, properties tracking
+  - Feature adoption with deduplication and rate calculation
+  - Usage metrics: DAU, sessions, bounce rate, session duration, conversions
+  - Event filtering and categorization
+  - Session tracking and retrieval
+  - Cohort retention calculation
+  - Status formatting and summaries
+- **All tests pass:** 31/31 ✅
+- **Integration:** Complete user journey tracking, multi-user adoption, cohort analysis verified
+- **Type safety:** TypeScript strict mode verified
+
+#### Dependencies
+- In-memory event store (Map-based storage for events, sessions, cohorts)
+- JavaScript Set for deduplication (feature adoption, unique users)
+- Timestamp-based filtering and aggregation
+- No database schema changes required for initial implementation
+- Future: Migrate to Supabase analytics tables for persistence and distributed queries
+
+#### Risks
+- **In-memory storage:** Events reset on server restart. Mitigation: Persist to database after aggregation
+- **No sampling:** Could track every event if high traffic. Mitigation: Implement sampling for high-volume events
+- **Privacy:** Stores user behavior data. Mitigation: Implement data retention policies, PII redaction, GDPR compliance
+- **Performance:** Large event histories could slow queries. Mitigation: Pre-aggregate metrics, rotate old events
+- **Cohort accuracy:** Requires accurate timestamps. Mitigation: Validate client clocks, use server-side time
+
+#### Rollback Method
+- Delete `app/api/analytics/route.ts`
+- Delete `lib/analytics-pipeline.ts`
+- Delete `tests/analytics-pipeline.test.ts`
+- Remove analytics tracking calls from application
+- No data stored in database; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Event volume:** Track 10,000+ events daily without performance impact
+2. **Adoption accuracy:** Feature adoption tracking within 1% of ground truth
+3. **Retention insight:** Identify cohort churn within 3 days of trend change
+4. **Query latency:** Return metrics within 100ms for last 30 days of data
+5. **Crash prevention:** Analytics events never block critical paths
+6. **Data insights:** Enable product decisions based on quantified usage (not guesses)
+
+#### Next Steps
+1. ✅ **Core implementation:** Full library + 31 tests + HTTP API — DONE
+2. **Dashboard:** Build analytics dashboard for visualizing metrics and trends
+3. **Persistence:** Store events and metrics in Supabase for historical analysis
+4. **Real-time alerts:** Alert on anomalies (conversion spike/drop, feature adoption plateau)
+5. **Cohort segmentation:** Enable filtering by properties (user properties, event properties, regions)
+6. **Attribution:** Track referrer sources and campaign attribution
+7. **Funnels:** Build multi-step conversion funnel analysis
+
+---
+
 ## Notes
 
 - All DNA must pass 8-test survival rule before integration
