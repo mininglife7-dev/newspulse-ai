@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runProductionHealthChecks } from '@/lib/production-monitoring';
+import { getRequiredAppUrl } from '@/lib/config-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,9 +19,28 @@ export const dynamic = 'force-dynamic';
  * Success criteria: All health checks must pass; latency must be <2s average.
  */
 export async function GET(req: Request) {
-  const protocol = req.headers.get('x-forwarded-proto') || 'https';
-  const host = req.headers.get('x-forwarded-host') || 'localhost:3000';
-  const baseUrl = `${protocol}://${host}`;
+  let baseUrl: string;
+
+  try {
+    baseUrl = getRequiredAppUrl();
+  } catch (e) {
+    // Fallback: Try to construct from headers
+    const protocol = req.headers.get('x-forwarded-proto') || 'https';
+    const host = req.headers.get('x-forwarded-host');
+
+    if (!host) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Configuration error',
+          message: 'NEXT_PUBLIC_APP_URL environment variable must be set',
+        },
+        { status: 503 }
+      );
+    }
+
+    baseUrl = `${protocol}://${host}`;
+  }
 
   try {
     const report = await runProductionHealthChecks(baseUrl);

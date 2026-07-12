@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HerculesKernel } from '@/lib/hercules-kernel';
 import type { HealthScore, HealthFactor, HealthStatus } from '@/lib/hercules-kernel';
+import { getRequiredAppUrl } from '@/lib/config-validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,7 @@ interface UnifiedHealth {
 async function checkProductionHealth(): Promise<OrganHealth> {
   try {
     const response = await fetch(
-      new URL('/api/production-health', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString(),
+      new URL('/api/production-health', getRequiredAppUrl()).toString(),
       { cache: 'no-store' }
     );
 
@@ -290,7 +291,7 @@ async function checkPerformanceHealth(): Promise<OrganHealth> {
 async function checkCustomerJourney(): Promise<OrganHealth> {
   try {
     const response = await fetch(
-      new URL('/api/production-health', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString(),
+      new URL('/api/production-health', getRequiredAppUrl()).toString(),
       { cache: 'no-store' }
     );
 
