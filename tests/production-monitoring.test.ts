@@ -1,245 +1,300 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  checkLandingPage,
-  checkSignupPage,
-  checkApiHealth,
-  checkSupabaseConnection,
-  runProductionHealthChecks,
-} from '@/lib/production-monitoring';
+  getProductionMetrics,
+  resetProductionMetrics,
+  ProductionMetrics,
+  type IncidentMetrics,
+  type MetricsSnapshot,
+} from '../lib/production-monitoring';
 
-describe('Production Monitoring (DNA-GOV-002)', () => {
-  const testBaseUrl = 'http://localhost:3000';
-
+describe('Production Monitoring Module', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetProductionMetrics();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
+  describe('Incident Detection Recording', () => {
+    it('should record incident detection', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
 
-  describe('checkLandingPage', () => {
-    it('reports healthy when landing page responds 200', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
+      metrics.recordDetection('incident-001', now);
 
-      const result = await checkLandingPage(testBaseUrl);
-
-      expect(result.name).toBe('landing-page');
-      expect(result.status).toBe('healthy');
-      expect(result.latencyMs).toBeGreaterThanOrEqual(0);
-      expect(result.error).toBeUndefined();
+      const incident = metrics.getIncident('incident-001');
+      expect(incident).toBeDefined();
+      expect(incident?.incidentId).toBe('incident-001');
+      expect(incident?.detectedAt).toBe(now);
+      expect(incident?.detectionDurationMs).toBeGreaterThanOrEqual(0);
     });
 
-    it('reports degraded when landing page responds 500', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-      });
+    it('should track multiple incidents', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
 
-      const result = await checkLandingPage(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordDetection('incident-002', now);
+      metrics.recordDetection('incident-003', now);
 
-      expect(result.status).toBe('degraded');
-      expect(result.error).toContain('500');
-    });
-
-    it('reports critical on network error', async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error('Network timeout'));
-
-      const result = await checkLandingPage(testBaseUrl);
-
-      expect(result.status).toBe('critical');
-      expect(result.error).toContain('Network timeout');
+      expect(metrics.getAllIncidents().length).toBe(3);
     });
   });
 
-  describe('checkSignupPage', () => {
-    it('reports healthy when signup page loads', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
+  describe('Incident Lifecycle', () => {
+    it('should track full incident lifecycle', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+      const later = new Date(Date.now() + 5000).toISOString();
+      const resolved = new Date(Date.now() + 30000).toISOString();
 
-      const result = await checkSignupPage(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordOrchestration('incident-001', later);
+      metrics.recordRemediation('incident-001', later);
+      metrics.recordRecovery('incident-001', resolved);
 
-      expect(result.name).toBe('signup-page');
-      expect(result.status).toBe('healthy');
+      const incident = metrics.getIncident('incident-001');
+      expect(incident?.success).toBe(true);
+      expect(incident?.recoveryDurationMs).toBeGreaterThan(0);
     });
 
-    it('reports critical on network error', async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error('Connection refused'));
+    it('should mark failed recoveries', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
 
-      const result = await checkSignupPage(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordRecoveryFailure('incident-001');
 
-      expect(result.status).toBe('critical');
-    });
-  });
-
-  describe('checkApiHealth', () => {
-    it('reports healthy when /api/health returns ok:true', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ ok: true }),
-      });
-
-      const result = await checkApiHealth(testBaseUrl);
-
-      expect(result.name).toBe('api-health');
-      expect(result.status).toBe('healthy');
-      expect(result.error).toBeUndefined();
-    });
-
-    it('reports degraded when /api/health returns ok:false', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ ok: false }),
-      });
-
-      const result = await checkApiHealth(testBaseUrl);
-
-      expect(result.status).toBe('degraded');
-      expect(result.error).toContain('ok:false');
-    });
-
-    it('reports critical on network error', async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error('Timeout'));
-
-      const result = await checkApiHealth(testBaseUrl);
-
-      expect(result.status).toBe('critical');
+      const incident = metrics.getIncident('incident-001');
+      expect(incident?.success).toBe(false);
     });
   });
 
-  describe('checkSupabaseConnection', () => {
-    it('reports healthy when API returns 401 (auth required)', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        status: 401,
-      });
+  describe('Alert Tracking', () => {
+    it('should count alert deliveries', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
 
-      const result = await checkSupabaseConnection(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordAlertDelivery('incident-001');
+      metrics.recordAlertDelivery('incident-001');
 
-      expect(result.name).toBe('supabase-connection');
-      expect(result.status).toBe('healthy');
-    });
-
-    it('reports healthy when API returns 400 (validation error)', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        status: 400,
-      });
-
-      const result = await checkSupabaseConnection(testBaseUrl);
-
-      expect(result.status).toBe('healthy');
-    });
-
-    it('reports healthy when API returns 500 (DB error)', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        status: 500,
-      });
-
-      const result = await checkSupabaseConnection(testBaseUrl);
-
-      expect(result.status).toBe('healthy');
-    });
-
-    it('reports degraded on unexpected status', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        status: 503,
-      });
-
-      const result = await checkSupabaseConnection(testBaseUrl);
-
-      expect(result.status).toBe('degraded');
-    });
-
-    it('reports critical on network error', async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error('Connection error'));
-
-      const result = await checkSupabaseConnection(testBaseUrl);
-
-      expect(result.status).toBe('critical');
+      const incident = metrics.getIncident('incident-001');
+      expect(incident?.alertsSent).toBe(2);
     });
   });
 
-  describe('runProductionHealthChecks', () => {
-    it('returns healthy report when all checks pass', async () => {
-      global.fetch = vi.fn().mockImplementation((url) => {
-        // checkSupabaseConnection expects 401/400/500 to be healthy
-        if (url.includes('/api/workspace')) {
-          return Promise.resolve({ status: 401 });
-        }
-        // All other checks expect 200 with ok:true
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: async () => ({ ok: true }),
-        });
-      });
+  describe('GitHub Issue Tracking', () => {
+    it('should record GitHub issue creation', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
 
-      const report = await runProductionHealthChecks(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordGitHubIssue('incident-001');
 
-      expect(report.ok).toBe(true);
-      expect(report.summary.healthy).toBe(4);
-      expect(report.summary.critical).toBe(0);
-      expect(report.summary.degraded).toBe(0);
-      expect(report.alerts).toHaveLength(0);
+      const incident = metrics.getIncident('incident-001');
+      expect(incident?.gitHubIssueCreated).toBe(true);
+    });
+  });
+
+  describe('False Positive Tracking', () => {
+    it('should mark false positives', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordFalsePositive('incident-001');
+
+      const incident = metrics.getIncident('incident-001');
+      expect(incident?.falsePositive).toBe(true);
+    });
+  });
+
+  describe('Metrics Snapshot', () => {
+    it('should calculate average MTTD', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordDetection('incident-002', now);
+
+      const snapshot = metrics.getSnapshot();
+      expect(snapshot.incidentCount).toBe(2);
+      expect(snapshot.avgMTTD).toBeGreaterThanOrEqual(0);
     });
 
-    it('returns alerts when critical checks fail', async () => {
-      global.fetch = vi
-        .fn()
-        .mockRejectedValue(new Error('Network error'));
+    it('should calculate average MTTR', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+      const resolved = new Date(Date.now() + 50000).toISOString();
 
-      const report = await runProductionHealthChecks(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordRemediation('incident-001', now);
+      metrics.recordRecovery('incident-001', resolved);
 
-      expect(report.ok).toBe(false);
-      expect(report.summary.critical).toBe(4);
-      expect(report.alerts.length).toBeGreaterThan(0);
-      expect(report.alerts[0]).toContain('CRITICAL');
+      const snapshot = metrics.getSnapshot();
+      expect(snapshot.avgMTTR).toBeGreaterThan(0);
     });
 
-    it('generates performance alert when latency is high', async () => {
-      global.fetch = vi.fn().mockImplementation(() => {
-        return new Promise((resolve) => {
-          setTimeout(
-            () => {
-              resolve({
-                ok: true,
-                status: 200,
-                json: async () => ({ ok: true }),
-              });
-            },
-            3100
-          );
-        });
-      });
+    it('should calculate alert delivery rate', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
 
-      const report = await runProductionHealthChecks(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordAlertDelivery('incident-001');
 
-      const perfAlert = report.alerts.find((a) => a.includes('PERFORMANCE'));
-      expect(perfAlert).toBeDefined();
+      metrics.recordDetection('incident-002', now);
+      // No alert for incident-002
+
+      const snapshot = metrics.getSnapshot();
+      expect(snapshot.alertDeliveryRate).toBe(0.5);
     });
 
-    it('includes all checks in report', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ ok: true }),
-      });
+    it('should calculate false positive rate', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
 
-      const report = await runProductionHealthChecks(testBaseUrl);
+      metrics.recordDetection('incident-001', now);
+      metrics.recordFalsePositive('incident-001');
 
-      expect(report.checks).toHaveLength(4);
-      expect(report.checks.map((c) => c.name)).toEqual([
-        'landing-page',
-        'signup-page',
-        'api-health',
-        'supabase-connection',
-      ]);
+      metrics.recordDetection('incident-002', now);
+      metrics.recordDetection('incident-003', now);
+
+      const snapshot = metrics.getSnapshot();
+      expect(snapshot.falsePositiveRate).toBeCloseTo(0.333, 2);
+    });
+
+    it('should calculate success rate', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+      const resolved = new Date(Date.now() + 30000).toISOString();
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordRemediation('incident-001', now);
+      metrics.recordRecovery('incident-001', resolved);
+
+      metrics.recordDetection('incident-002', now);
+      metrics.recordRecoveryFailure('incident-002');
+
+      const snapshot = metrics.getSnapshot();
+      expect(snapshot.orchestrationSuccessRate).toBe(0.5);
+    });
+
+    it('should track GitHub issue count', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordGitHubIssue('incident-001');
+
+      metrics.recordDetection('incident-002', now);
+      metrics.recordGitHubIssue('incident-002');
+
+      metrics.recordDetection('incident-003', now);
+
+      const snapshot = metrics.getSnapshot();
+      expect(snapshot.gitHubIssuesCreated).toBe(2);
+    });
+  });
+
+  describe('SLA Compliance', () => {
+    it('should report SLA compliant when metrics meet targets', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+      const resolved = new Date(Date.now() + 20000).toISOString(); // 20s recovery
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordRemediation('incident-001', now);
+      metrics.recordRecovery('incident-001', resolved);
+
+      const sla = metrics.getSLACompliance(30000, 120000); // 30s MTTD, 120s MTTR targets
+      expect(sla.mttdCompliant).toBe(true);
+      expect(sla.mttrCompliant).toBe(true);
+      expect(sla.overallCompliant).toBe(true);
+    });
+
+    it('should report SLA non-compliant when metrics exceed targets', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+      const resolved = new Date(Date.now() + 200000).toISOString(); // 200s recovery
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordRemediation('incident-001', now);
+      metrics.recordRecovery('incident-001', resolved);
+
+      const sla = metrics.getSLACompliance(30000, 120000);
+      expect(sla.mttrCompliant).toBe(false);
+      expect(sla.overallCompliant).toBe(false);
+    });
+  });
+
+  describe('Time Window Queries', () => {
+    it('should retrieve incidents from last N minutes', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+      const earlier = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 minutes ago
+
+      metrics.recordDetection('incident-recent', now);
+      // Can't easily test older incidents without mocking Date
+
+      const recent = metrics.getIncidentsSince(1); // Last 1 minute
+      expect(recent.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Report Generation', () => {
+    it('should generate text report', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordAlertDelivery('incident-001');
+      metrics.recordGitHubIssue('incident-001');
+
+      const report = metrics.generateReport();
+      expect(report).toContain('PRODUCTION INCIDENT RESPONSE METRICS');
+      expect(report).toContain('Total Incidents: 1');
+      expect(report).toContain('Success Rate');
+      expect(report).toContain('MTTD');
+      expect(report).toContain('MTTR');
+    });
+  });
+
+  describe('JSON Export', () => {
+    it('should export metrics as JSON', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+
+      metrics.recordDetection('incident-001', now);
+      metrics.recordAlertDelivery('incident-001');
+
+      const json = metrics.toJSON();
+      expect(json.snapshot).toBeDefined();
+      expect(json.incidents).toBeDefined();
+      expect(json.sla).toBeDefined();
+      expect(json.incidents.length).toBe(1);
+    });
+  });
+
+  describe('Singleton Pattern', () => {
+    it('should maintain state across multiple calls', () => {
+      const metrics1 = getProductionMetrics();
+      const now = new Date().toISOString();
+      metrics1.recordDetection('incident-001', now);
+
+      const metrics2 = getProductionMetrics();
+      expect(metrics2.getAllIncidents().length).toBe(1);
+
+      const incident = metrics2.getIncident('incident-001');
+      expect(incident).toBeDefined();
+    });
+
+    it('should reset when requested', () => {
+      const metrics = getProductionMetrics();
+      const now = new Date().toISOString();
+      metrics.recordDetection('incident-001', now);
+
+      resetProductionMetrics();
+
+      const fresh = getProductionMetrics();
+      expect(fresh.getAllIncidents().length).toBe(0);
     });
   });
 });

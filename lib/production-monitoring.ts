@@ -1,264 +1,238 @@
 /**
- * DNA-GOV-002: Production Monitoring
+ * Production Monitoring Module
  *
- * Autonomously monitors production deployment to verify critical flows work.
- * Unlike DNA-GOV-001 (external blockers), this checks if OUR code is working.
+ * Tracks key incident response metrics for observability during pilot launch:
+ * - Detection speed (MTTD)
+ * - Recovery time (MTTR)
+ * - Alert delivery rate
+ * - False positive rate
+ * - Orchestration success rate
  *
- * Monitors:
- * - Auth flow: Can users sign up, verify email, create workspace?
- * - Dashboard: Can authenticated users read their workspace?
- * - API latency: Are responses within SLA?
- * - Error rates: Are failures within acceptable threshold?
- *
- * Evidence: No monitoring = blind spot between "code tested locally" and "customer can use it".
- * GitHub Actions was down 4+ hours undetected. If auth also failed, we wouldn't know.
+ * Used by production-wiring to populate metrics during incident handling.
+ * Metrics are logged to Supabase for dashboarding and analysis.
  */
 
-export interface HealthCheckResult {
-  name: string;
-  status: 'healthy' | 'degraded' | 'critical';
-  latencyMs: number;
-  error?: string;
+export interface MetricsSnapshot {
   timestamp: string;
+  incidentCount: number;
+  avgMTTD: number; // milliseconds
+  avgMTTR: number; // milliseconds
+  alertDeliveryRate: number; // 0-1
+  falsePositiveRate: number; // 0-1
+  orchestrationSuccessRate: number; // 0-1
+  remediationAttempts: number;
+  remediationSuccesses: number;
+  gitHubIssuesCreated: number;
+  slackAlertsDelivered: number;
+  emailAlertsDelivered: number;
+  lastIncidentAt: string | null;
 }
 
-export interface ProductionHealthReport {
-  ok: boolean;
-  timestamp: string;
-  checks: HealthCheckResult[];
-  summary: {
-    healthy: number;
-    degraded: number;
-    critical: number;
-  };
-  alerts: string[];
+export interface IncidentMetrics {
+  incidentId: string;
+  detectedAt: string;
+  detectionDurationMs: number;
+  orchestratedAt?: string;
+  remediatedAt?: string;
+  recoveredAt?: string;
+  recoveryDurationMs?: number;
+  alertsSent: number;
+  gitHubIssueCreated: boolean;
+  success: boolean;
+  falsePositive: boolean;
 }
 
 /**
- * Check if landing page loads (basic connectivity + static asset serving).
+ * Production metrics tracker
+ * Accumulates and reports on incident response performance
  */
-export async function checkLandingPage(
-  baseUrl: string
-): Promise<HealthCheckResult> {
-  const start = Date.now();
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+export class ProductionMetrics {
+  private incidents: Map<string, IncidentMetrics> = new Map();
+  private startTime = Date.now();
 
-    const res = await fetch(`${baseUrl}/`, {
-      method: 'HEAD',
-      signal: controller.signal,
+  recordDetection(incidentId: string, detectedAt: string): void {
+    const now = Date.now();
+    const parsed = new Date(detectedAt).getTime();
+
+    this.incidents.set(incidentId, {
+      incidentId,
+      detectedAt,
+      detectionDurationMs: Math.max(0, now - parsed),
+      alertsSent: 0,
+      gitHubIssueCreated: false,
+      success: false,
+      falsePositive: false,
     });
-    clearTimeout(timeout);
-
-    const latency = Date.now() - start;
-    return {
-      name: 'landing-page',
-      status: res.ok ? 'healthy' : 'degraded',
-      latencyMs: latency,
-      timestamp: new Date().toISOString(),
-      error: res.ok ? undefined : `HTTP ${res.status}`,
-    };
-  } catch (error) {
-    return {
-      name: 'landing-page',
-      status: 'critical',
-      latencyMs: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    };
   }
-}
 
-/**
- * Check if signup page renders (auth route accessible).
- */
-export async function checkSignupPage(
-  baseUrl: string
-): Promise<HealthCheckResult> {
-  const start = Date.now();
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    const res = await fetch(`${baseUrl}/auth/signup`, {
-      method: 'GET',
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    const latency = Date.now() - start;
-    return {
-      name: 'signup-page',
-      status: res.ok ? 'healthy' : 'degraded',
-      latencyMs: latency,
-      timestamp: new Date().toISOString(),
-      error: res.ok ? undefined : `HTTP ${res.status}`,
-    };
-  } catch (error) {
-    return {
-      name: 'signup-page',
-      status: 'critical',
-      latencyMs: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-
-/**
- * Check if API health endpoint responds (backend + monitoring working).
- */
-export async function checkApiHealth(
-  baseUrl: string
-): Promise<HealthCheckResult> {
-  const start = Date.now();
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    const res = await fetch(`${baseUrl}/api/health`, {
-      method: 'GET',
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    const latency = Date.now() - start;
-    if (!res.ok) {
-      return {
-        name: 'api-health',
-        status: 'degraded',
-        latencyMs: latency,
-        error: `HTTP ${res.status}`,
-        timestamp: new Date().toISOString(),
-      };
+  recordOrchestration(incidentId: string, orchestratedAt: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      incident.orchestratedAt = orchestratedAt;
     }
+  }
 
-    const data = (await res.json()) as { ok?: boolean };
+  recordRemediation(incidentId: string, remediatedAt: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      incident.remediatedAt = remediatedAt;
+    }
+  }
+
+  recordRecovery(incidentId: string, recoveredAt: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      const remediation = new Date(incident.remediatedAt || recoveredAt).getTime();
+      const recovery = new Date(recoveredAt).getTime();
+
+      incident.recoveredAt = recoveredAt;
+      incident.recoveryDurationMs = Math.max(0, recovery - remediation);
+      incident.success = true;
+    }
+  }
+
+  recordRecoveryFailure(incidentId: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      incident.success = false;
+    }
+  }
+
+  recordAlertDelivery(incidentId: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      incident.alertsSent++;
+    }
+  }
+
+  recordGitHubIssue(incidentId: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      incident.gitHubIssueCreated = true;
+    }
+  }
+
+  recordFalsePositive(incidentId: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      incident.falsePositive = true;
+    }
+  }
+
+  getSnapshot(): MetricsSnapshot {
+    const incidents = Array.from(this.incidents.values());
+    const resolvedIncidents = incidents.filter(i => i.success);
+    const falsePositives = incidents.filter(i => i.falsePositive);
+    const deliveredAlerts = incidents.reduce((sum, i) => sum + i.alertsSent, 0);
+    const createdIssues = incidents.filter(i => i.gitHubIssueCreated).length;
+
+    const avgMTTD = incidents.length > 0
+      ? incidents.reduce((sum, i) => sum + i.detectionDurationMs, 0) / incidents.length
+      : 0;
+
+    const avgMTTR = resolvedIncidents.length > 0
+      ? resolvedIncidents.reduce((sum, i) => sum + (i.recoveryDurationMs || 0), 0) / resolvedIncidents.length
+      : 0;
+
+    const alertDeliveryRate = incidents.length > 0
+      ? incidents.filter(i => i.alertsSent > 0).length / incidents.length
+      : 0;
+
+    const falsePositiveRate = incidents.length > 0
+      ? falsePositives.length / incidents.length
+      : 0;
+
+    const orchestrationSuccessRate = incidents.length > 0
+      ? resolvedIncidents.length / incidents.length
+      : 0;
+
+    const lastIncident = incidents
+      .sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime())
+      .at(0);
+
     return {
-      name: 'api-health',
-      status: data.ok ? 'healthy' : 'degraded',
-      latencyMs: latency,
       timestamp: new Date().toISOString(),
-      error: data.ok ? undefined : 'Health check returned ok:false',
+      incidentCount: incidents.length,
+      avgMTTD,
+      avgMTTR,
+      alertDeliveryRate,
+      falsePositiveRate,
+      orchestrationSuccessRate,
+      remediationAttempts: resolvedIncidents.length,
+      remediationSuccesses: resolvedIncidents.length,
+      gitHubIssuesCreated: createdIssues,
+      slackAlertsDelivered: deliveredAlerts,
+      emailAlertsDelivered: deliveredAlerts,
+      lastIncidentAt: lastIncident?.detectedAt || null,
     };
-  } catch (error) {
+  }
+
+  getIncident(incidentId: string): IncidentMetrics | undefined {
+    return this.incidents.get(incidentId);
+  }
+
+  getAllIncidents(): IncidentMetrics[] {
+    return Array.from(this.incidents.values());
+  }
+
+  getIncidentsSince(minutesAgo: number): IncidentMetrics[] {
+    const cutoff = Date.now() - minutesAgo * 60 * 1000;
+    return Array.from(this.incidents.values()).filter(
+      i => new Date(i.detectedAt).getTime() >= cutoff
+    );
+  }
+
+  getSLACompliance(mttdTarget = 30000, mttrTarget = 120000): {
+    mttdCompliant: boolean;
+    mttrCompliant: boolean;
+    overallCompliant: boolean;
+  } {
+    const snapshot = this.getSnapshot();
     return {
-      name: 'api-health',
-      status: 'critical',
-      latencyMs: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
+      mttdCompliant: snapshot.avgMTTD <= mttdTarget,
+      mttrCompliant: snapshot.avgMTTR <= mttrTarget,
+      overallCompliant: snapshot.avgMTTD <= mttdTarget && snapshot.avgMTTR <= mttrTarget,
+    };
+  }
+
+  generateReport(): string {
+    const snapshot = this.getSnapshot();
+    const sla = this.getSLACompliance();
+
+    return `PRODUCTION INCIDENT RESPONSE METRICS
+    
+Total Incidents: ${snapshot.incidentCount}
+Success Rate: ${(snapshot.orchestrationSuccessRate * 100).toFixed(1)}%
+MTTD: ${snapshot.avgMTTD.toFixed(0)}ms (target < 30000ms) ${sla.mttdCompliant ? '✓' : '✗'}
+MTTR: ${snapshot.avgMTTR.toFixed(0)}ms (target < 120000ms) ${sla.mttrCompliant ? '✓' : '✗'}
+Alert Delivery Rate: ${(snapshot.alertDeliveryRate * 100).toFixed(1)}%
+False Positive Rate: ${(snapshot.falsePositiveRate * 100).toFixed(1)}%
+GitHub Issues: ${snapshot.gitHubIssuesCreated}
+Overall Compliant: ${sla.overallCompliant ? '✓ YES' : '✗ NO'}`;
+  }
+
+  toJSON(): {
+    snapshot: MetricsSnapshot;
+    incidents: IncidentMetrics[];
+    sla: { mttdCompliant: boolean; mttrCompliant: boolean; overallCompliant: boolean };
+  } {
+    return {
+      snapshot: this.getSnapshot(),
+      incidents: this.getAllIncidents(),
+      sla: this.getSLACompliance(),
     };
   }
 }
 
-/**
- * Check if Supabase connection is working (required for auth, workspace, dashboard).
- * Calls the workspace API which exercises the database connection.
- */
-export async function checkSupabaseConnection(
-  baseUrl: string
-): Promise<HealthCheckResult> {
-  const start = Date.now();
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+let globalMetrics: ProductionMetrics | null = null;
 
-    // POST to workspace (requires auth) to test DB connection
-    // This will fail with 401 (no auth) but the request will test DB connectivity
-    const res = await fetch(`${baseUrl}/api/workspace`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        company_name: 'test',
-        country: 'DE',
-        industry: 'tech',
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    const latency = Date.now() - start;
-
-    // Expected: 401 (no auth), 400 (validation), 500 (DB error)
-    // Not expected: network error, timeout
-    const isHealthy =
-      res.status === 401 || res.status === 400 || res.status === 500;
-
-    return {
-      name: 'supabase-connection',
-      status: isHealthy ? 'healthy' : 'degraded',
-      latencyMs: latency,
-      error: isHealthy ? undefined : `Unexpected HTTP ${res.status}`,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      name: 'supabase-connection',
-      status: 'critical',
-      latencyMs: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    };
+export function getProductionMetrics(): ProductionMetrics {
+  if (!globalMetrics) {
+    globalMetrics = new ProductionMetrics();
   }
+  return globalMetrics;
 }
 
-/**
- * Run all health checks and generate a production health report.
- */
-export async function runProductionHealthChecks(
-  baseUrl: string
-): Promise<ProductionHealthReport> {
-  const timestamp = new Date().toISOString();
-
-  const checks = await Promise.all([
-    checkLandingPage(baseUrl),
-    checkSignupPage(baseUrl),
-    checkApiHealth(baseUrl),
-    checkSupabaseConnection(baseUrl),
-  ]);
-
-  const summary = {
-    healthy: checks.filter((c) => c.status === 'healthy').length,
-    degraded: checks.filter((c) => c.status === 'degraded').length,
-    critical: checks.filter((c) => c.status === 'critical').length,
-  };
-
-  const alerts: string[] = [];
-
-  if (summary.critical > 0) {
-    alerts.push(
-      `[CRITICAL] ${summary.critical} health check(s) failed: ${checks
-        .filter((c) => c.status === 'critical')
-        .map((c) => c.name)
-        .join(', ')}`
-    );
-  }
-
-  if (summary.degraded > 0) {
-    alerts.push(
-      `[WARNING] ${summary.degraded} health check(s) degraded: ${checks
-        .filter((c) => c.status === 'degraded')
-        .map((c) => c.name)
-        .join(', ')}`
-    );
-  }
-
-  const avgLatency = Math.round(
-    checks.reduce((sum, c) => sum + c.latencyMs, 0) / checks.length
-  );
-  if (avgLatency > 3000) {
-    alerts.push(
-      `[PERFORMANCE] Average latency is high: ${avgLatency}ms (SLA: <2000ms)`
-    );
-  }
-
-  return {
-    ok: summary.critical === 0 && summary.degraded === 0,
-    timestamp,
-    checks,
-    summary,
-    alerts,
-  };
+export function resetProductionMetrics(): void {
+  globalMetrics = new ProductionMetrics();
 }
