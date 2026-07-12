@@ -970,6 +970,150 @@ interface CanaryDeployment {
 
 ---
 
+### DNS-GOV-016: Supabase Realtime Sync
+
+**Status:** Active  
+**Created:** 2026-07-12  
+**Owner:** Chief Engineering Officer + Product Lead  
+
+#### Purpose
+Enable real-time collaborative features where multiple users see changes to shared data instantly. When a colleague updates workspace data, all connected users receive a notification and see the change immediately. Support conflict detection and resolution for concurrent edits.
+
+#### Problem Discovered
+Workspace data updates require page refresh to see changes. Multi-user collaboration workflows are blocked because users don't know when data changes remotely. No way to detect or resolve conflicts when multiple users edit the same record simultaneously.
+
+#### Evidence
+- **Weakness:** No real-time update mechanism; users must refresh pages manually
+- **Impact:** Poor collaborative experience; data inconsistency during concurrent edits
+- **Root cause:** Traditional polling-based architecture; no subscription system
+- **Discovery method:** Product requirements identified multi-user workspace as core feature
+
+#### Inputs
+- Table name to subscribe to (e.g., 'workspace', 'users')
+- Event types to listen for ('INSERT', 'UPDATE', 'DELETE', or '*' for all)
+- Optional filter (e.g., 'user_id=eq.123')
+- Conflict values: localValue, remoteValue, operation type
+
+#### Outputs
+```typescript
+interface RealtimeSubscription {
+  id: string
+  table: string
+  event: RealtimeEvent  // 'INSERT' | 'UPDATE' | 'DELETE' | '*'
+  filter?: string
+  active: boolean
+  subscribedAt: string
+  lastEventAt?: string
+}
+
+interface RealtimeEvent_v {
+  id: string
+  timestamp: string
+  table: string
+  operation: RealtimeEvent
+  before?: Record<string, unknown>
+  after?: Record<string, unknown>
+  userId?: string
+}
+
+interface RealtimeConflict {
+  table: string
+  recordId: string
+  operation: RealtimeEvent
+  localValue?: Record<string, unknown>
+  remoteValue?: Record<string, unknown>
+  resolvedAt?: string
+  resolvedBy?: 'local' | 'remote' | 'merge'
+}
+```
+
+#### Implementation
+- `lib/supabase-realtime-sync.ts` — Core realtime synchronization engine (350 LoC)
+  - `initializeRealtimeSync()` — Start realtime connection
+  - `disconnectRealtimeSync()` — Stop realtime connection
+  - `subscribeToTable()` — Subscribe to table updates with optional filtering
+  - `unsubscribeFromTable()` — Unsubscribe from updates
+  - `onTableChange()` — Register event handler for table changes
+  - `broadcastRealtimeEvent()` — Broadcast events to all subscribers
+  - `detectConflict()` — Detect conflict between local and remote changes
+  - `resolveConflict()` — Resolve conflict using specified strategy (local/remote/merge)
+  - `getSyncState()` — Get current sync status and statistics
+  - `getActiveSubscriptions()` — List all active subscriptions
+  - `getRecentEvents()` — Retrieve recent events with optional filtering
+  - `getActiveConflicts()` — List all unresolved conflicts
+  - `formatSyncStatus()` — Format status for display
+  - `resetRealtimeSync()` — Reset state (testing)
+- `app/api/realtime-sync/route.ts` — HTTP API for realtime operations (250 LoC)
+  - `GET /api/realtime-sync?action=health|subscriptions|events|conflicts|status` — Retrieve sync state
+  - `POST /api/realtime-sync` — Manage subscriptions and conflicts
+  - Commands: init, disconnect, subscribe, unsubscribe, detect-conflict, resolve-conflict
+- `tests/supabase-realtime-sync.test.ts` — 44 comprehensive tests covering:
+  - Sync initialization and disconnection
+  - Subscription lifecycle (create, list, unsubscribe)
+  - Event broadcasting to all subscribers
+  - Event handlers and unsubscribe functions
+  - Conflict detection for INSERT, UPDATE, DELETE operations
+  - Conflict resolution strategies (local, remote, merge)
+  - Sync state tracking and event history
+  - Status formatting
+  - Multi-user collaboration workflow integration test
+  - Concurrent edit detection and resolution
+
+#### Verification Method
+- **Unit tests:** 44 tests covering:
+  - Sync connection lifecycle
+  - Subscription creation, filtering, uniqueness
+  - Event broadcasting and handler notification
+  - Conflict detection for all operation types
+  - Conflict resolution with all strategies
+  - Sync state queries and event history management
+  - Subscriptions list filtering
+  - Event history bounded at 1000 events
+  - Multi-user workspace updates (integration)
+  - Concurrent edits detection (integration)
+- **All tests pass:** 44/44 ✅
+- **Integration:** Multi-user collaboration and conflict resolution verified
+- **Type safety:** TypeScript strict mode verified
+
+#### Dependencies
+- In-memory event store and subscription registry (can be extended to Supabase in production)
+- JavaScript Map-based storage for subscriptions and conflicts
+- Event emitter pattern for handler notifications
+- No database schema changes required for initial implementation
+- Future: Integrate with Supabase Realtime API for distributed subscription management
+
+#### Risks
+- **In-memory storage:** Subscriptions reset on server restart. Mitigation: Persist subscriptions to Supabase database
+- **No persistence:** Conflict resolution decisions lost on restart. Mitigation: Store resolution history in database
+- **Single-server limitation:** Multiple servers have separate subscriptions. Mitigation: Use Supabase Realtime for server-to-server synchronization
+- **Event ordering:** No guarantee of event order across network. Mitigation: Add sequence numbers or timestamps
+- **Merge conflict strategy:** No automatic merge logic; app must provide merged value. Mitigation: Build domain-specific merge strategies
+
+#### Rollback Method
+- Delete `app/api/realtime-sync/route.ts`
+- Delete `lib/supabase-realtime-sync.ts`
+- Delete `tests/supabase-realtime-sync.test.ts`
+- Remove realtime sync initialization calls from application
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Real-time updates:** Users see changes from others within 100ms (in-memory), <500ms (Supabase)
+2. **Conflict resolution:** 99.9% of concurrent edits detected and resolved correctly
+3. **Subscription reliability:** Event delivery to 100% of active subscribers
+4. **Scalability:** Support 100+ concurrent subscriptions per table
+5. **Developer experience:** Simple API (subscribeToTable → onTableChange) for collaborative features
+
+#### Next Steps
+1. ✅ **Core implementation:** Full library + 44 tests + HTTP API — DONE
+2. **Supabase integration:** Wire to Supabase Realtime API for distributed subscriptions
+3. **Persistence:** Store active subscriptions and conflict resolutions in database
+4. **UI components:** Build React hooks (useRealtimeSubscription, useTableChanges) for frontend
+5. **Dashboard:** Real-time activity monitor (users editing, conflicts, sync status)
+6. **Broadcast service:** Build server-to-server sync for multi-instance deployments
+7. **Merge strategies:** Implement automatic merge for common data types (arrays, objects, primitives)
+
+---
+
 ## Notes
 
 - All DNA must pass 8-test survival rule before integration
