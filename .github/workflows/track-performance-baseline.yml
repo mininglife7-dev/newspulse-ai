@@ -1,0 +1,106 @@
+name: Track Performance Baseline
+
+on:
+  schedule:
+    # Every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  performance-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Measure API Response Time
+        id: performance
+        run: |
+          # Measure 10 requests to health endpoint, calculate average
+          echo "Measuring API response time (10 requests)..."
+
+          for i in {1..10}; do
+            curl -w '%{time_total}\n' -o /dev/null -s \
+              https://newspulse-ai.vercel.app/api/health
+          done > /tmp/times.txt
+
+          # Calculate average
+          AVG=$(awk '{s+=$1; n++} END {if (n > 0) print s/n; else print 0}' /tmp/times.txt)
+          echo "Average response time: ${AVG}s"
+          echo "avg_response_time=$AVG" >> $GITHUB_OUTPUT
+
+          # Alert if >1 second (2x baseline of ~500ms)
+          if (( $(echo "$AVG > 1.0" | bc -l) )); then
+            echo "⚠️ Slow response detected: ${AVG}s (threshold: 1.0s)"
+            echo "performance_degradation=true" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ Response time normal: ${AVG}s"
+            echo "performance_degradation=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repo for logging
+        if: always()
+        run: |
+          # Already checked out, just prepare for commit
+          git config user.email "governor@euroai.com"
+          git config user.name "Governor"
+
+      - name: Log Performance Baseline
+        if: always()
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          AVG="${{ steps.performance.outputs.avg_response_time }}"
+          STATUS="${{ job.status }}"
+
+          # Create performance-logs directory if it doesn't exist
+          mkdir -p monitoring-logs
+
+          # Append to performance baseline log (CSV format)
+          echo "$TIMESTAMP,$AVG,$STATUS" >> monitoring-logs/performance-baseline.csv
+
+          echo "Logged: $TIMESTAMP | Avg: ${AVG}s | Status: $STATUS"
+
+      - name: Commit Performance Log
+        if: always()
+        run: |
+          git add monitoring-logs/performance-baseline.csv || true
+          git commit -m "Log performance baseline: avg=${{ steps.performance.outputs.avg_response_time }}s" || true
+
+      - name: Push Performance Log
+        if: always()
+        run: |
+          git push origin HEAD:${{ github.ref }} || true
+
+      - name: Alert on Performance Degradation
+        if: failure() && steps.performance.outcome == 'failure'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            ⚠️ Performance Degradation Detected
+
+            Average Response Time: ${{ steps.performance.outputs.avg_response_time }}s
+            Threshold: 1.0s
+            Status: Degraded
+
+            Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        continue-on-error: true
+
+      - name: Report Performance Metrics
+        if: always()
+        run: |
+          echo "Performance Baseline Report:"
+          echo "============================"
+          echo "Timestamp: $(date -u)"
+          echo "Average Response Time: ${{ steps.performance.outputs.avg_response_time }}s"
+          echo "Performance Status: ${{ steps.performance.outputs.performance_degradation }}"
+          echo "Overall Status: ${{ job.status }}"
+          echo ""
+          echo "Baseline: ~500ms"
+          echo "Warning: >1000ms (2x baseline)"
+          echo "Critical: >5000ms (10x baseline)"
