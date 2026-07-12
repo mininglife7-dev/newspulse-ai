@@ -196,7 +196,10 @@ export class CircuitBreaker {
       this.failureCount++;
       this.lastFailureTime = Date.now();
 
-      if (this.failureCount >= this.failureThreshold && this.state !== 'OPEN') {
+      if (
+        this.failureCount >= this.failureThreshold &&
+        (this.state === 'CLOSED' || this.state === 'HALF_OPEN')
+      ) {
         this.state = 'OPEN';
         console.error(
           `[circuit-breaker] ${this.label} tripped after ${this.failureCount} failures, entering OPEN state`
@@ -312,7 +315,6 @@ export async function healthCheck(url: string, timeoutMs = 5000): Promise<boolea
       () =>
         fetch(url, {
           method: 'HEAD',
-          timeout: timeoutMs,
         }),
       timeoutMs
     );
