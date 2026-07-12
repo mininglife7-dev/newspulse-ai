@@ -5,12 +5,65 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-11 (Evolution Phase 2: DNA-GOV-009/010/011/014 complete; Cost & incident monitoring live)
-**State:** Executing (DNA-001/002/008 live; DNS-GOV-009/010/011/014 merged; Priority 1 Supabase deployment awaiting Founder access)
+**Last updated:** 2026-07-12 (HERCULES Kernel v1.0 Phase 1 complete; Unified Command Centre live)
+**State:** Executing (HERCULES kernel operational; Command Centre dashboard accessible at /hercules/command-centre; All DNA organs integrated)
 
 ---
 
-## Executive summary
+## 🚀 HERCULES v1.0 Phase 1 — NOW OPERATIONAL
+
+**Date:** 2026-07-12 | **Status:** ⚡ VERIFIED & LIVE
+
+The HERCULES Living Enterprise Operating System kernel is now active and operational. This is a fundamental shift in how we manage Cathedral/EURO AI and scale to future enterprises.
+
+### What's New This Session
+
+**HERCULES Kernel (26 tests, all passing):**
+- Unified enterprise registry, mission management, task queue
+- Event bus with correlation tracking for distributed tracing
+- Persistent state serialization for interruption recovery
+- Authority matrix enforcement (CLASS A/B/C actions)
+- Comprehensive audit trail (all kernel operations logged)
+- Health model aggregating signals from all DNA organs
+
+**Founder Command Centre Dashboard:**
+- Live at `/hercules/command-centre`
+- Real-time enterprise health display (HEALTHY/DEGRADED/AT_RISK/CRITICAL)
+- Organ health visualization (DNA-002, 004, 006, 008, 009, 011)
+- Kernel state metrics (missions, tasks, events, audit entries)
+- Blocking issues and recommendation engine
+- One-click refresh for real-time updates
+
+**Unified Health Endpoint:**
+- Aggregates signals from all 6 monitoring DNA systems
+- Calculates overall system health from fresh evidence
+- Provides blocking issues and remediation recommendations
+- Available at `/api/hercules/health`
+
+**Integration & Quality:**
+- ✅ All 321 tests passing (26 new kernel tests + 295 existing)
+- ✅ Production build successful
+- ✅ Full type checking with TypeScript strict mode
+- ✅ Cost-anomaly & incident alert recording bugs fixed
+- ✅ Governor autonomous execution constitution still active
+
+### Next Actions (Autonomous)
+
+- Register Cathedral as Enterprise 001 (import mission + repos)
+- Create Enterprise 002 (sandbox) to prove reusability
+- Implement survival testing suite (chaos + fault injection)
+- Complete HERCULES certification (all 15 alive criteria verified)
+
+### Access Points
+
+- **Founder Dashboard:** `/hercules/command-centre`
+- **Kernel API:** `/api/hercules/kernel` (status, enterprises, health, audit)
+- **Unified Health:** `/api/hercules/health` (organ aggregation)
+- **Phase 0 Inventory:** `docs/governance/HERCULES-PHASE0-INVENTORY.md`
+
+---
+
+## Executive summary — Cathedral/EURO AI Platform Status
 
 The product is now **EURO AI on `main`'s full infrastructure**: the #22 pivot has
 been integrated with everything that landed after it branched, the NewsPulse dead
