@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   getAlertHubReport,
   formatAlertHubReport,
   cleanupResolvedAlerts,
 } from '@/lib/alert-hub';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,11 @@ export const dynamic = 'force-dynamic';
  * GET /api/alerts
  *
  * DNA-GOV-005 endpoint: Centralized Founder Alert Hub.
+ * REQUIRES: ADMIN_TOKEN authentication (Bearer token in Authorization header)
  *
  * Returns:
  * - 200 + summary: All active alerts from all DNA systems consolidated
+ * - 401: Missing or invalid authentication token
  *
  * Includes alerts from:
  * - DNA-GOV-001: External blockers (GitHub Actions, Supabase)
@@ -25,7 +28,12 @@ export const dynamic = 'force-dynamic';
  *
  * Used by: Founder's monitoring dashboard, automated alerting
  */
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  // Require authentication
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
+
   try {
     // Cleanup old resolved alerts (older than 24 hours)
     cleanupResolvedAlerts(24 * 60);

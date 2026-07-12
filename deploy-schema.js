@@ -19,7 +19,17 @@ function loadEnv(filePath) {
 const config = loadEnv('/home/user/newspulse-ai/.env.local');
 const supabaseUrl = config.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = config.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseProjectId = config.SUPABASE_PROJECT_ID;
 const schemaPath = path.join('/home/user/newspulse-ai', 'supabase', 'schema.sql');
+
+// Fail fast if required env vars missing
+if (!supabaseUrl || !supabaseServiceKey || !supabaseProjectId) {
+  console.error('❌ Missing required environment variables:');
+  if (!supabaseUrl) console.error('   - NEXT_PUBLIC_SUPABASE_URL');
+  if (!supabaseServiceKey) console.error('   - SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseProjectId) console.error('   - SUPABASE_PROJECT_ID');
+  process.exit(1);
+}
 
 async function deploySchema() {
   try {
@@ -73,7 +83,7 @@ async function deploySchema() {
       console.log('\n✅ Schema file is ready for manual deployment via Supabase SQL Editor');
       console.log('   Path: ' + schemaPath);
       console.log('\nTo complete:');
-      console.log('1. Go to https://app.supabase.com/project/yrroytwfdrafvajdfkog/sql/new');
+      console.log(`1. Go to https://app.supabase.com/project/${supabaseProjectId}/sql/new`);
       console.log('2. Copy entire contents of supabase/schema.sql');
       console.log('3. Click "Run"');
     } else if (error) {

@@ -19,15 +19,15 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: Request) {
   const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER || 'mininglife7-dev';
-  const repo = process.env.GITHUB_REPO || 'newspulse-ai';
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
 
-  if (!token) {
+  if (!token || !owner || !repo) {
     return NextResponse.json(
       {
         ok: false,
-        error: 'GITHUB_TOKEN not configured',
-        message: 'Set GITHUB_TOKEN in Vercel env to enable deployment verification',
+        error: 'GitHub configuration incomplete',
+        message: 'Set GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO in Vercel env',
         status: 'unconfigured',
       },
       { status: 503 }

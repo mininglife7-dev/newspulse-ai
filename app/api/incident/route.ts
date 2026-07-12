@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { commandIncident, commandToAlert, type IncidentTrigger } from '@/lib/incident-commander';
 import { recordAlert } from '@/lib/alert-hub';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/incident
  *
  * DNA-GOV-014 endpoint: Incident Commander.
+ * REQUIRES: ADMIN_TOKEN authentication (Bearer token in Authorization header)
  *
  * Receives incident triggers from monitoring systems (DNA-001/002/004/008/011)
  * and makes autonomous remediation decisions:
@@ -28,8 +30,14 @@ export const dynamic = 'force-dynamic';
  *
  * Returns:
  * - 200 + incident command: Decision made, action taken/pending
+ * - 401: Missing or invalid authentication token
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  // Require authentication for incident commands
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
+
   try {
     const body = (await req.json()) as IncidentTrigger;
 
