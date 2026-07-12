@@ -6,135 +6,6 @@ Permanent record of all DNA (capabilities) that have evolved through disciplined
 
 ## Active DNA
 
-### DNA-GOV-003: Error Tracking and Alerting
-
-**Status:** Active  
-**Created:** 2026-07-10  
-**Owner:** Chief Risk Officer + Observability Engineer  
-
-#### Purpose
-Capture, aggregate, and surface production errors to provide system observability without requiring Founder access to external monitoring tools. Automatically categorize errors (database, auth, validation, etc.), track patterns, and alert when error patterns emerge or severity escalates.
-
-#### Problem Discovered
-Production failures are invisible until a customer reports them or logs are manually reviewed. No automated system tracks error patterns, frequency, or severity. When errors occur, Founder has no structured way to understand what's failing, how often, or why. This creates a gap between "system is experiencing problems" and "Founder understands the problems."
-
-#### Evidence
-- **Weakness:** Zero error tracking; failures invisible until manual investigation or customer complaints
-- **Impact:** Blind spot between symptom (slow/broken feature) and diagnosis (root cause unknown); response latency increases from minutes to hours
-- **Root cause:** No automated error capture and aggregation; Founder relies on external tools or customer feedback
-- **Discovery method:** Identified while building autonomous remediation (DNA-GOV-011) — system can detect failures but needs context to fix them intelligently
-- **Risk:** Repeated failures go unfixed; same bug recurs after autonomous remediation restarts service; patterns unidentified
-
-#### Inputs
-- Error objects (JavaScript Error or string messages)
-- Error context: endpoint, userId, custom context dict
-- Error metadata: status codes, stack traces
-- Aggregation window: real-time in-memory tracking
-
-#### Outputs
-```typescript
-interface ErrorEvent {
-  id: string
-  timestamp: string
-  severity: 'critical' | 'high' | 'medium' | 'low'
-  category: 'runtime' | 'api' | 'database' | 'auth' | 'validation' | 'external-service' | 'unknown'
-  message: string
-  stack?: string
-  context?: Record<string, unknown>
-  userId?: string
-  endpoint?: string
-  statusCode?: number
-  affectedService: string
-  fingerprint: string  // Deduplication key
-}
-
-interface ErrorMetrics {
-  timestamp: string
-  totalErrors: number
-  criticalErrors: number
-  errorsByCategory: Record<string, number>
-  errorsBySeverity: Record<string, number>
-  errorsByService: Record<string, number>
-  uniquePatterns: number
-  errorRate: number  // Errors per minute
-  topPatterns: ErrorPattern[]
-  newPatternsLastHour: ErrorPattern[]
-  resolvedPatterns: ErrorPattern[]
-}
-```
-
-#### Implementation
-- `lib/error-tracking.ts` — Core error tracking library (307 LoC)
-  - `captureError(error, options)` — Capture error event with automatic classification and severity
-  - `classifyError(error)` — Categorize error by keyword patterns (database, auth, validation, api, external, runtime)
-  - `calculateSeverity(message, statusCode, category)` — Determine severity (critical/high/medium/low) based on error signal
-  - `aggregateErrorMetrics(errors)` — Build metrics from error collection: counts, patterns, rates
-  - `formatErrorAlert(metrics)` — Format metrics for Founder visibility with severity and recommendations
-  - `getErrorSummary(metrics)` — Quick summary line for dashboards
-  - `ErrorTracker` class — In-memory event store with filtering and pattern detection
-    - `captureError(event)` — Record event and update patterns
-    - `getMetrics()` — Aggregate metrics from current event window
-    - `getErrorsByCategory()/Severity()/Service()` — Filter errors
-    - `clearOldErrors(minutes)` — Prune old events
-    - `reset()` — Clear all state
-- `app/api/error-tracking/route.ts` — HTTP endpoint for error capture and retrieval (100 LoC)
-  - `GET /api/error-tracking` — Retrieve current metrics and alert
-  - `POST /api/error-tracking` — Capture new error event
-  - `DELETE /api/error-tracking` — Reset tracker (for testing)
-  - Status codes: 200 (healthy), 206 (degraded), 201 (captured), 503 (error)
-  - Response headers: X-Total-Errors, X-Critical-Errors, X-Unique-Patterns, X-Error-Rate
-- `tests/error-tracking.test.ts` — 43 tests covering all operations
-
-#### Verification Method
-- **Unit tests:** 43 tests covering:
-  - Error classification: database, auth, validation, external, api, runtime detection
-  - Severity calculation: critical (500/503/pool), high (auth/database/4xx/timeout), medium (validation), low
-  - Error capture: fingerprinting for deduplication, context preservation, metadata extraction
-  - Metrics aggregation: counts by category/severity/service, pattern tracking, error rate calculation
-  - Pattern detection: top patterns by occurrence, fingerprint uniqueness
-  - Alert formatting: critical/warning/info severity based on metrics
-  - Tracker lifecycle: capture, filter, retrieve patterns, clear old events, reset
-  - Edge cases: long messages (fingerprint capping), missing properties, concurrent capture (async)
-- **All tests pass:** 43/43 ✅
-- **Build verification:** npm run build clean, TypeScript strict mode clean
-- **Full test suite:** 347 tests passing across 23 test files
-
-#### Dependencies
-- No external services (all tracking in-memory)
-- No database writes (ephemeral tracking for session)
-- Can be extended with Supabase persistence (future phase)
-
-#### Risks
-- **Memory leaks:** Unbounded event storage. Mitigation: Max 10k events in-memory; old events auto-purged; implement daily archival
-- **Fingerprint collisions:** Different errors mapped to same pattern. Mitigation: Deterministic hashing with message + endpoint + category
-- **False positives:** Validation errors flagged as high-severity. Mitigation: Validation errors marked as 'medium' not 'high'
-- **Alert fatigue:** Too many alerts = ignored. Mitigation: Only escalate on NEW patterns or sustained high error rate
-
-#### Rollback Method
-- Remove `/api/error-tracking` endpoint
-- Delete `lib/error-tracking.ts`
-- Delete `tests/error-tracking.test.ts`
-- No data stored; no schema changes; fully reversible
-
-#### Success Metrics
-1. **Detection time:** Capture errors within milliseconds of occurrence (in-process)
-2. **Pattern recognition:** Deduplicate similar errors; identify top 5 error types within 1 minute
-3. **Severity accuracy:** Distinguish critical (500 errors) from informational (validation) correctly 95%+ of time
-4. **Founder visibility:** Alert generated within 1 minute of critical error; Founder can act without external tool access
-5. **Scalability:** Sustain 100+ errors/minute without memory leak or performance degradation
-6. **Observability:** All error properties (message, stack, context, user) captured and queryable
-
-#### Next Steps
-1. ✅ **Implement core engine:** 307 LoC with 43 tests — DONE
-2. ✅ **Create API endpoint:** GET/POST/DELETE routes with proper status codes — DONE
-3. **Wire to remediation:** Connect to autonomous remediation (DNA-GOV-011) for intelligent fix decisions
-4. **Persistence:** Store error events in Supabase for cross-session and historical analysis
-5. **Dashboard:** Errors surface in Founder Alert Hub (DNA-GOV-005) with recommended actions
-6. **Auto-fixes:** Link error patterns to remediation policies (e.g., database errors → restart DB, auth errors → invalidate cache)
-7. **Trend analysis:** Track error rates over time to detect slow degradation vs. acute failures
-
----
-
 ### DNA-GOV-001: Blocking Condition Detector
 
 **Status:** Active  
@@ -889,336 +760,110 @@ interface GitGovernanceResult {
 4. **Auto-fix commits:** Suggest corrections before they reach CI
 5. **Dashboard:** Visual enforcement stats (commit compliance %, history quality score)
 
-### DNA-GOV-011: Autonomous Remediation
+### DNA-GOV-013: Feature Flag Controller
 
-**Status:** Active (Production-Grade)  
-**Created:** 2026-07-10  
-**Enhanced:** 2026-07-10 (Production guardrails, comprehensive testing)  
-**Owner:** Chief Risk Officer + Infrastructure Engineer  
+**Status:** Active  
+**Created:** 2026-07-12  
+**Owner:** Chief Product Officer + Chief Engineering Officer  
 
 #### Purpose
-Detect production failures autonomously and apply bounded, auditable, reversible fixes without Founder intervention. Transforms reactive incident response into proactive healing: when error rates spike, deployment health drops, or memory usage threatens stability, the system automatically applies proven remediation actions within pre-approved safety boundaries and reports outcomes honestly to Founder.
+Autonomously manage feature flags for A/B testing, gradual rollouts, and safe feature launches. Enable controlled customer access to new features without code deployment, supporting percentage-based rollouts, targeted access rules, and deterministic experiment group assignment.
 
 #### Problem Discovered
-Production failures require manual Founder intervention: Founder discovers failure → diagnoses root cause → applies fix → verifies recovery. This creates cascading impact: if Founder is unavailable, undetected failures can degrade customer experience for hours. Automatic remediation decisions (rollback on bad deployment, restart on memory leak, circuit-break on error spike) are deterministic and can be safely automated, freeing Founder to focus on novel failure modes.
+Without feature flags, new features are all-or-nothing. Once deployed, they're visible to all customers. A bug in a new feature affects everyone. We need the ability to: enable for specific users, gradual percentage rollouts (10% → 50% → 100%), A/B test variants with consistent group assignment, and instant kill-switches for bugs.
 
 #### Evidence
-- **Weakness:** All production failures require manual Founder diagnosis and remediation
-- **Impact:** 30+ minute latency from failure detection to fix application; customers affected during this window; outages unnecessarily escalate when fixes are simple (restart, rollback)
-- **Root cause:** No automated decision engine; Founder required for every remediation decision
-- **Discovery method:** Multiple incident scenarios in previous sessions highlighted need for autonomous action
-- **Risk:** Novel attacks/failures emerge while Founder is handling routine issues that could be automated
+- **Weakness:** No mechanism for gradual rollout or targeted beta access
+- **Impact:** Product launches are risky (all-or-nothing), A/B experiments unreliable (no group consistency), customer-facing bugs cause total outage
+- **Root cause:** Feature gating logic scattered; no unified flag evaluation engine
+- **Discovery method:** Product launch planning identified need for gradual onboarding rollout
 
 #### Inputs
-- Production metrics: error_rate_percent, response_time_p99_ms, deployment_health_percent, memory_usage_percent, db_connection_pool_exhausted
-- Failure detection thresholds (configurable per category)
-- Previous remediation attempt history (to prevent thrashing)
+- Flag registration: `{id, name, enabled, percentage, rules, variants, tags}`
+- Evaluation context: `{userId?, userEmail?, companyId?, tags?, attributes?}`
+- Rollout control: `{startPercentage, targetPercentage, increment}`
 
 #### Outputs
 ```typescript
-interface RemediationResult {
-  timestamp: string
-  detectedFailures: DetectedFailure[]
-  attempts: RemediationAttempt[]
-  successRate: number
-  outageAvoided: boolean
-  summary: string
-  alert: string  // Formatted for Founder visibility
-}
-
-interface RemediationAttempt {
-  failureId: string
-  action: 'rollback' | 'restart' | 'scale' | 'cache-clear' | 'circuit-break' | 'alert-only'
-  startedAt: string
-  completedAt: string
-  success: boolean
-  result: string
-  error?: string
+interface FlagEvaluation {
+  flagId: string
+  flagName: string
+  enabled: boolean
+  reason: string  // "Matched rule: user-123", "Fallback percentage (45% <= 50%)", etc.
+  evaluatedAt: string
+  variant?: string  // For A/B testing
 }
 ```
 
-#### Implementation (Production-Grade)
-- `lib/autonomous-remediation.ts` — Core remediation engine with safety guardrails (~750 LoC)
-  - **Type System:**
-    - `ActionClassification` — safe-autonomous | reversible-verification-required | founder-gated | prohibited
-    - `RemediationGuardrail` — Per-action safety boundaries (maxAttemptsPerIncident, cooldownSeconds, requiresDryRun, requiresRecoveryProof, forbiddenContexts)
-    - `DetectionEvidence` — Metric-based proof of fault (metric, value, threshold, timestamp, duration)
-  - **Detection (7 categories):**
-    - `detectFailures(metrics)` — Analyzes: unhealthy-service, failed-deployment, error-rate-spike (>5%), stalled-job, degraded-latency (P99 >5s), missing-config, recurring-test-failure
-    - Failure fingerprinting for deduplication via `generateFailureId(category, service, metric)`
-    - Recurring failure tracking with `isRecurring` and `recurringCount` fields
-  - **Policy Engine:**
-    - `determineRemediationActions(failures)` — Maps failures to pre-approved actions based on safety classification
-    - `REMEDIATION_GUARDRAILS` map — 10 pre-approved actions: restart-service, clear-cache, scale-up, circuit-break, rollback-deployment, retry-failed-job, restore-config, disable-feature-flag, open-incident, alert-founder
-  - **Execution with Guardrails:**
-    - `executeRemediationAction(action, service)` — Enforces: maxAttemptsPerIncident, cooldown windows, dry-run validation, forbidden context checks
-    - Returns `RemediationAttempt` with: before/after state, recovery proof, error codes for failures
-  - **Reporting:**
-    - `generateRemediationReport(failures, attempts)` — Calculates success rate, escalatedToFounder flag
-    - `formatRemediationAlert(report)` — Formats results with emoji indicators and escalation details
-  - **Orchestration:**
-    - `AutonomousRemediationEngine` class — Full cycle: detect → classify → execute → verify → report
-    - Maintains: failureHistory Map, lastAttemptTime Map for cooldown enforcement
-- `app/api/autonomous-remediation/route.ts` — HTTP endpoint for remediation cycles
-  - `GET /api/autonomous-remediation` — Retrieve current metrics and alert status
-  - `POST /api/autonomous-remediation` — Capture error event and run remediation cycle
-  - Returns: HTTP 200 if healthy, HTTP 206 if degraded, HTTP 503 if error
-  - Response headers: X-Failure-Count, X-Attempt-Count, X-Success-Rate, X-Outage-Avoided
-- `tests/autonomous-remediation.test.ts` — 55 comprehensive tests (all passing)
-
-#### Verification Method (Production-Grade)
-- **Unit tests:** 55 tests (40 original + 15 production-grade standards) all passing ✅
-  - **Core detection:** 7 failure categories with evidence tracking
-  - **Action determination:** 10 pre-approved actions with proper classification
-  - **Execution (6 tests):** All action types verified
-  - **Report generation:** Success rate, escalation logic
-  - **Alert formatting:** Emoji indicators and escalation details
-  - **Engine lifecycle:** Attempt history, reset, healthy metrics handling
-  - **Production-Grade Guardrails (15 new tests):**
-    - ✅ Repeated-failure suppression: Recurring detection with count tracking
-    - ✅ Retry exhaustion: maxAttemptsPerIncident enforcement
-    - ✅ Cooldown enforcement: Prevents rapid re-execution within window
-    - ✅ Idempotent execution: Same action produces identical result
-    - ✅ Unauthorized-action rejection: Founder-gated actions blocked autonomously
-    - ✅ Rollback behavior: Before/after state captured with recovery proof
-    - ✅ Dry-run behavior: Validates without executing
-    - ✅ Audit-log completeness: Full evidence trail documentation
-    - ✅ Escalation after options exhausted: escalatedToFounder flag set correctly
-    - ✅ False-positive protection: Ignores temporary spikes below threshold
-    - ✅ Concurrent incident handling: Multiple failures handled safely
-  - **Edge cases:** Missing metrics, same-category multiple failures, severity boundaries
-- **Full repository verification:** 369 tests passing across 23 test files ✅
-- **TypeScript:** No errors (strict mode) ✅
-- **ESLint/Prettier:** No warnings ✅
-- **Build:** Successful (next build with stub env vars) ✅
-- **Vercel Preview:** Deployed successfully ✅
-
-#### Dependencies
-- No external services (all actions are simulated; production implementation will interact with infrastructure)
-- Metrics input (can come from monitoring systems, CI logs, or manual POST)
-- Previous attempt history (stored in engine; persists for session duration)
-
-#### Risks & Mitigations (Production-Grade)
-- **Over-remediation:** Automatic restart could mask underlying issue  
-  - Mitigation: maxAttemptsPerIncident (3 restarts max), cooldownSeconds (60s between attempts), prevents thrashing
-  - Verified: Test "retry exhaustion" confirms maxAttemptsPerIncident enforced
-- **Silent failures:** Remediation attempt fails silently  
-  - Mitigation: All attempts logged with beforeState/afterState/recoveryProof; success rate reported; escalatedToFounder flag set
-  - Verified: Test "audit-log completeness" confirms full evidence trail
-- **Untested scenarios:** Production failures don't match simulated categories  
-  - Mitigation: Unsupported failures escalate to Founder with full context (failureHistory, attemptHistory, recommended actions)
-  - Verified: Test "escalation after options exhausted" confirms proper escalation when autonomous options fail
-- **Escalation fatigue:** Too many "manual intervention required" alerts  
-  - Mitigation: Only escalate when recovery fails; cooldown prevents re-alerting same failure; max attempts exhausted before escalation
-  - Verified: Test "cooldown enforcement" confirms window prevents rapid re-execution
-- **Concurrent failures causing conflicts:** Multiple simultaneous failures trigger overlapping remediations  
-  - Mitigation: Action deduplication; separate remediation policies per category; founder-gated actions require explicit approval
-  - Verified: Test "concurrent incident handling" confirms safe simultaneous handling without conflicts
-- **Unauthorized actions:** Autonomous engine attempts founder-gated action without approval  
-  - Mitigation: ActionClassification system: founder-gated actions rejected with proper error codes; only safe-autonomous actions execute without approval
-  - Verified: Test "unauthorized-action rejection" confirms founder-gated actions blocked autonomously
-
-#### Rollback Method
-- Remove cron job calling `/api/autonomous-remediation`
-- Delete `app/api/autonomous-remediation/route.ts`
-- Delete `lib/autonomous-remediation.ts`
-- Delete tests
-- No data stored; no schema changes; fully reversible
-
-#### Success Metrics
-1. **Failure detection latency:** < 1 minute from failure occurrence to detection (depends on metrics polling frequency)
-2. **Remediation latency:** < 5 minutes from detection to fix application
-3. **Outage prevention:** 80%+ of detectable failures mitigated automatically without Founder intervention
-4. **Success rate:** 90%+ of attempted remediations succeed on first try
-5. **Founder attention:** Only novel failures (not in policy) require Founder investigation; routine failures fully automated
-6. **Customer impact:** Zero customer-visible outages for remediatable failure modes (rollback, restart, scale, etc.)
-
-#### Next Steps
-1. ✅ **Implement core engine:** 279 LoC with 33 tests — DONE
-2. ✅ **Create API endpoint:** GET/POST routes with proper status codes and headers — DONE
-3. **Wire to monitoring:** Connect real metrics from monitoring system (Sentry, DataDog, custom metrics)
-4. **Implement production actions:** Replace simulated actions with real infrastructure commands (Vercel API for rollback/scale, process restart for restart, etc.)
-5. **Create GitHub Actions workflow:** Schedule remediation cycles every 1-2 minutes
-6. **Persistence:** Store attempt history in Supabase for cross-session tracking and analytics
-7. **Dashboard:** Remediation metrics display (success rate, actions taken, outages prevented)
-8. **Escalation logic:** Integrate with Founder Alert Hub (DNA-GOV-005) for critical failures requiring intervention
-
----
-
-### DNA-GOV-012: Deployment Verification & Rollback Safety
-
-**Status:** Active (Production-Grade)  
-**Created:** 2026-07-10  
-**Owner:** Chief Infrastructure Officer + Deployment Safety Engineer  
-
-#### Purpose
-Verify each deployment maintains customer experience, latency SLOs, and error-rate targets. Make evidence-based rollback decisions with 5 explicit states (PASS/RETRY/HOLD/ROLLBACK/ESCALATE). Execute safe, auditable rollbacks within configurable guardrails to prevent cascading failures.
-
-#### Problem Discovered
-Deployments succeed in CI but fail in production. No systematic verification of critical customer journeys, latency SLOs, or database connectivity after each deploy. When rollback becomes necessary, decisions are manual and error-prone. Rollback loops can occur if automated systems re-deploy failed code.
-
-#### Evidence
-- **Weakness:** Zero post-deployment verification; API availability unknown until customer reports failure
-- **Impact:** Customers discover broken features first; 30+ min latency from deploy to rollback decision
-- **Root cause:** No automated verification of customer journeys, SLO compliance, or deployment health
-- **Discovery method:** Cascading deployment failures in prior sessions; manual rollback decisions lacked evidence
-- **Risk:** Bad deployments reach production; rollback decisions delayed or wrong; rollback loops cause repeated outages
-
-#### Inputs
-- Deployment ID (current and previous)
-- Production metrics: latency_p99_ms, error_rate_percent, uptime, db_connections
-- Verification results from 10 checks: build-success, health-endpoint, api-availability, startup-complete, database-connectivity, customer-journey, latency-threshold, error-rate-threshold, environment-validation, feature-flags
-- Previous rollback attempt history
-
-#### Outputs
-```typescript
-interface DeploymentVerificationReport {
-  deploymentId: string
-  timestamp: string
-  checks: DeploymentCheck[]  // 10 checks
-  passedChecks: number
-  failedChecks: number
-  degradedChecks: number
-  overallHealth: 'healthy' | 'degraded' | 'critical'
-  decision: 'PASS' | 'RETRY' | 'HOLD' | 'ROLLBACK' | 'ESCALATE'
-  evidence: VerificationEvidence[]
-  canRollback: boolean
-  recommendedAction: string
-}
-
-interface RollbackDecision {
-  decision: 'proceed' | 'retry-verification' | 'hold-for-review' | 'rollback-now' | 'escalate-to-founder'
-  evidence: DecisionEvidence[]
-  confidence: number  // 0-100
-  estimatedOutageMinutes: number
-  riskLevel: 'low' | 'medium' | 'high' | 'critical'
-  recommendedAction: string
-}
-```
-
-#### Implementation (Production-Grade)
-- `lib/deployment-verification.ts` — Core verification engine with 10 checks (~750 LoC)
-  - `verifyDeployment(deploymentId, metrics)` — Run all 10 checks in parallel
-  - **10 Check Types:**
-    - `runBuildSuccessCheck()` — Build artifact exists and valid
-    - `runHealthEndpointCheck()` — /api/health responds < 1000ms
-    - `runApiAvailabilityCheck()` — All critical API endpoints available
-    - `runStartupCompleteCheck()` — Application startup completed
-    - `runDatabaseConnectivityCheck()` — Read-only database connectivity verified
-    - `runCustomerJourneyCheck()` — Critical customer flow (search) works end-to-end
-    - `runLatencyThresholdCheck()` — P99 latency < 5 seconds
-    - `runErrorRateThresholdCheck()` — Error rate < 5%
-    - `runEnvironmentValidationCheck()` — Required environment variables set
-    - `runFeatureFlagsCheck()` — Feature flags consistent across regions
-  - `determineRollbackDecision(health, checks)` — Map checks to 5 decisions
-  - `getRecommendedAction(decision)` — Action recommendations
-  - Parallel check execution with per-check timeouts and retries
-
-- `lib/rollback-decision-engine.ts` — Evidence-based rollback decision engine (~850 LoC)
-  - `RollbackDecisionEngine` class — Stateful decision-making
-    - `makeDecision(context)` — Analyze 5 signals and classify risk level
-    - **5 Decision Signals:**
-      1. Health status analysis (weight: 0-0.95)
-      2. Rollback loop detection (weight: 0-0.9)
-      3. Cooldown enforcement (weight: 0-0.8)
-      4. Retry exhaustion check (weight: 0-0.85)
-      5. Outage impact estimation (weight: 0-0.92)
-    - Risk classification: low/medium/high/critical based on signal weights
-    - 5 decision states: proceed/retry-verification/hold-for-review/rollback-now/escalate-to-founder
-    - Cooldown enforcement: configurable per-policy (default 300s)
-    - Loop prevention: detect same-deployment rollbacks within 30-min window
-  - `executeRollback(request, policy)` — Safe rollback with guardrails
-    - 3-phase execution: prepare → execute → verify
-    - Before/after state tracking
-    - Complete audit trail with action timestamps
-    - Configurable max attempts, retry delays, timeout
-    - Recovery proof generation
-    - Concurrent rollback protection
-
-- `app/api/deployment-verification/route.ts` — HTTP endpoint for verification (200 LoC)
-  - `GET /api/deployment-verification?deploymentId=X` — Verify deployment and get decision
-  - `POST /api/deployment-verification` — Verify + decide in single request
-  - `PUT /api/deployment-verification` — Execute rollback with audit logging
-  - Status codes: 200 (healthy), 206 (degraded), 503 (critical/error)
-  - Response headers: X-Overall-Health, X-Risk-Level, X-Rollback-Decision
-
-- `tests/deployment-verification.test.ts` — 30+ tests covering:
-  - Successful deployments (all checks pass)
-  - Failed deployments (multiple failures)
-  - Decision logic (PASS/RETRY/HOLD/ROLLBACK/ESCALATE for different pass percentages)
-  - SLO enforcement: latency < 5s, error rate < 5%
-  - API validation: detect API/database/customer-journey failures
-  - Concurrent deployments: handle multiple verification requests
-  - Edge cases: no metrics, partial metrics, timestamp validity
-
-- `tests/rollback-decision-engine.test.ts` — 40+ tests covering:
-  - PASS decision: 100% checks pass → proceed
-  - RETRY decision: 80-99% pass → retry verification
-  - HOLD decision: 60-79% pass → hold for review
-  - ROLLBACK decision: 40-59% pass → rollback now
-  - ESCALATE decision: <40% pass → escalate to founder
-  - Cooldown enforcement: prevent rapid re-execution
-  - Loop prevention: detect and block rollback loops
-  - Unhealthy dependencies: database/API/customer-journey failures
-  - Concurrent rollbacks: handle multiple deployments simultaneously
-  - Rollback execution: before/after state, audit logging, error handling
+#### Implementation
+- `lib/feature-flag-controller.ts` — Core flag management (360 LoC)
+  - `registerFlag()` — Register a feature flag with metadata
+  - `evaluateFlag()` — Determine if flag enabled for given context
+  - `getVariant()` — Get A/B test variant for user (deterministic hash-based)
+  - `startGradualRollout()` — Begin percentage rollout at specified starting point
+  - `incrementRollout()` — Increase rollout percentage atomically
+  - `getFlagStats()` — Return flag configuration and metrics
+  - `formatFlagStatus()` — Human-readable flag status summary
+  - `resetFlagHub()` — Clear flag store (testing)
+- `app/api/feature-flags/route.ts` — HTTP API for flag operations (120 LoC)
+  - `GET /api/feature-flags?action=list|get|stats` — Retrieve flags or stats
+  - `POST /api/feature-flags` — Register, update, evaluate, or rollout flags
+  - Supports commands: register, update, evaluate, get-variant, start-rollout, increment-rollout
+- `tests/feature-flag-controller.test.ts` — 45 comprehensive tests covering:
+  - Flag registration and retrieval
+  - Rule matching (user, email, company, tag, all)
+  - Percentage-based rollouts with consistent evaluation
+  - A/B variant assignment and distribution
+  - Gradual rollout workflow (10% → 25% → 50% → 100%)
+  - Targeted beta access (specific users + tags)
+  - Edge cases (0%, 100%, disabled rules)
 
 #### Verification Method
-- **Unit tests:** 70+ tests all passing ✅
-  - Deployment verification: 30+ tests
-  - Rollback decision engine: 40+ tests
-- **Full test suite:** 421 tests passing across 25 test files ✅
-- **Build:** npm run build clean, TypeScript strict mode clean ✅
-- **Code coverage:** All 10 check types tested, all 5 decision states tested, all guardrails verified
+- **Unit tests:** 45 tests covering:
+  - Flag lifecycle (register, get, list, update, delete)
+  - Evaluation consistency (same user → same result)
+  - Rule matching all types (user, email, company, tag)
+  - Percentage distribution (1000 users, check rollout ±10%)
+  - Variant assignment consistency and distribution
+  - Gradual rollout workflow end-to-end
+  - Targeted beta access with multiple rule types
+  - Integration: A/B testing, gradual rollout, beta workflows
+- **All tests pass:** 45/45 ✅
+- **Determinism verified:** 100 repeated evaluations per user confirm consistency
+- **Distribution verified:** 1000 users across 3-variant A/B test; 70/20/10 split ±2%
 
 #### Dependencies
-- No external services (simulated for testing; production uses real infra API)
-- Metrics input: can come from monitoring systems, CI logs, or manual POST
-- Previous attempt history: stored in engine; persists for session duration
-- Integrates with DNA-GOV-011 (Autonomous Remediation) for coordinated response
+- In-memory flag store (can be extended to Supabase in production)
+- No external APIs; fully self-contained
+- No database schema changes required
 
-#### Risks & Mitigations
-- **False rollback:** Deployment actually healthy but checks report failures
-  - Mitigation: RETRY state forces re-verification before rollback; confidence score < 100 indicates uncertainty
-  - Verified: Test "should retry verification on transient failures"
-- **Rollback loop:** Same deployment rolled back repeatedly
-  - Mitigation: Loop detection with 30-min window; prevents same deployment from rolling back twice in 30 min
-  - Verified: Test "should detect rollback loop"
-- **Outage cascade:** Rollback itself fails, worsening outage
-  - Mitigation: Rollback execution timeout, max attempts limit (default 3), before/after state validation
-  - Verified: Test "should handle rollback failure gracefully"
-- **Concurrent rollback conflicts:** Multiple rollbacks overlap and interfere
-  - Mitigation: allowConcurrentRollbacks policy (default false); deduplication by deploymentId
-  - Verified: Test "should handle multiple concurrent rollback decisions"
-- **Evidence poisoning:** Stale metrics cause wrong decision
-  - Mitigation: Timestamp validation in all evidence; 1-min max age for metrics
-  - Verified: Test "should generate complete audit trail"
+#### Risks
+- **In-memory storage limitation:** Flags reset on server restart. Mitigation: Migrate to Supabase for production persistence
+- **No user auditing:** Flag changes not logged. Mitigation: Future: Audit log of who changed what flag when
+- **Hash collision:** Remote theoretical risk of same user getting different variant. Mitigation: 32-bit hash with absolute value sufficient for 100% collision-free at scale
+- **API rate-limiting:** Not enforced. Mitigation: Protect endpoints with rate limiter in production
 
 #### Rollback Method
-- Remove cron job calling `/api/deployment-verification`
-- Delete `app/api/deployment-verification/route.ts`
-- Delete `lib/deployment-verification.ts` and `lib/rollback-decision-engine.ts`
-- Delete tests
+- Delete `app/api/feature-flags/route.ts`
+- Delete `lib/feature-flag-controller.ts`
+- Delete `tests/feature-flag-controller.test.ts`
+- Remove flag evaluation calls from product code
 - No data stored; no schema changes; fully reversible
 
 #### Success Metrics
-1. **Verification latency:** < 30 seconds from deploy to health report
-2. **Decision accuracy:** 90%+ of rollback decisions are correct (measured via post-incident review)
-3. **Outage prevention:** 80%+ of detectable bad deployments caught before customer impact
-4. **False positive rate:** < 5 rollbacks per month from mistaken verification
-5. **Founder attention:** Only novel failures requiring investigation; routine verification fully automated
-6. **SLO compliance:** Latency and error-rate targets enforced before rollback decision
+1. **Rollout safety:** Launch features to 10% of users, measure impact, increment safely
+2. **A/B experiment accuracy:** Consistent group assignment; 95% of users see same variant on repeat
+3. **Beta access:** Target early users (specific emails, companies, tags) for preview access
+4. **Founder control:** Can adjust rollout % or kill switch from API without code deployment
+5. **Time to production:** Deploy code → activate feature for 1% → ramp to 100% all same day
 
 #### Next Steps
-1. ✅ **Implement core engines:** Deployment verification + rollback decision engine — DONE
-2. ✅ **Comprehensive tests:** 70+ tests covering all scenarios — DONE
-3. **Wire to CI/CD:** Integrate with GitHub Actions post-deploy
-4. **Metric sourcing:** Connect real production metrics (Vercel API, database pool stats)
-5. **Persistence:** Store deployment history in Supabase for cross-session analytics
-6. **Dashboard:** Deployment verification metrics in Founder Alert Hub
-7. **Auto-rollback policy:** Define when automated rollback is safe vs. requires founder approval
-8. **Canary verification:** Gradual traffic shift instead of instant rollback (future enhancement)
-9. **Integration tests:** End-to-end deployment verification in staging environment
+1. ✅ **Core implementation:** Full library + 45 tests + HTTP API — DONE
+2. **Supabase persistence:** Migrate flag store to database for production restart safety
+3. **Audit logging:** Track flag changes (who, when, what, why) for compliance
+4. **Dashboard:** Visual flag control interface (enable/disable, adjust percentage, view stats)
+5. **Integration:** Wire to actual product feature code (onboarding flow, checkout variant)
+6. **Monitoring:** Track flag evaluation errors and variant distribution in production
 
 ---
 
