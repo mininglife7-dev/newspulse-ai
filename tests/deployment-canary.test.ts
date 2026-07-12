@@ -231,7 +231,15 @@ describe('Deployment Canary Controller - DNA-GOV-015', () => {
     });
 
     it('throws error for non-existent deployment', () => {
-      expect(() => recordCanaryMetrics('nonexistent', {})).toThrow();
+      expect(() =>
+        recordCanaryMetrics('nonexistent', {
+          error_rate: 0,
+          latency: 0,
+          availability: 100,
+          memory: 0,
+          cpu: 0,
+        })
+      ).toThrow();
     });
 
     it('tracks metric history in snapshots', () => {
