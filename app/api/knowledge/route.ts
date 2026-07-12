@@ -11,6 +11,7 @@ import {
   KnowledgeEntry,
 } from '@/lib/knowledge-memory';
 import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -125,55 +126,33 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // Validate required fields
-    const { type, title, description, evidence, impact, tags } = body;
+    // Validate input using schema
+    const validationResult = validate(body, {
+      type: validators.enum(['decision', 'learning', 'pattern', 'fix', 'risk'] as const),
+      title: validators.string({ minLength: 1, maxLength: 255 }),
+      description: validators.string({ minLength: 1, maxLength: 5000 }),
+      evidence: validators.array(validators.string({ maxLength: 2000 }), { minLength: 1 }),
+      impact: validators.enum(['high', 'medium', 'low'] as const),
+      tags: validators.array(validators.string({ minLength: 1, maxLength: 100 }), { minLength: 1 }),
+      relatedDNA: validators.optional(validators.string({ maxLength: 255 })),
+      resolved: validators.optional(validators.boolean()),
+    });
 
-    if (!type || !title || !description || !evidence || !impact || !tags) {
+    if (!validationResult.ok) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Missing required fields',
-          required: ['type', 'title', 'description', 'evidence', 'impact', 'tags'],
+          error: 'Invalid input',
+          errors: validationResult.errors,
         },
         { status: 400 }
       );
     }
 
-    // Validate field types
-    if (!['decision', 'learning', 'pattern', 'fix', 'risk'].includes(type)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Invalid type',
-          allowed: ['decision', 'learning', 'pattern', 'fix', 'risk'],
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!['high', 'medium', 'low'].includes(impact)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Invalid impact',
-          allowed: ['high', 'medium', 'low'],
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!Array.isArray(evidence) || !Array.isArray(tags)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'evidence and tags must be arrays',
-        },
-        { status: 400 }
-      );
-    }
+    const validated = validationResult.value as any;
 
     // Check for duplicates
-    const existing = await knowledgeExists(title);
+    const existing = await knowledgeExists(validated.title);
     if (existing) {
       return NextResponse.json(
         {
@@ -189,14 +168,14 @@ export async function POST(req: Request) {
     const entry: KnowledgeEntry = {
       timestamp: new Date().toISOString(),
       sessionId: req.headers.get('x-session-id') ?? 'unknown-session',
-      type: type as KnowledgeEntry['type'],
-      title,
-      description,
-      evidence,
-      impact: impact as 'high' | 'medium' | 'low',
-      tags,
-      relatedDNA: body.relatedDNA,
-      resolved: body.resolved ?? false,
+      type: validated.type as KnowledgeEntry['type'],
+      title: validated.title,
+      description: validated.description,
+      evidence: validated.evidence,
+      impact: validated.impact as 'high' | 'medium' | 'low',
+      tags: validated.tags,
+      relatedDNA: validated.relatedDNA,
+      resolved: validated.resolved ?? false,
     };
 
     // Write to persistent storage

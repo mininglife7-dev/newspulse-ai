@@ -3,6 +3,7 @@ import { commandIncident, commandToAlert, type IncidentTrigger } from '@/lib/inc
 import { recordAlert } from '@/lib/alert-hub';
 import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,34 +43,30 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as IncidentTrigger;
 
-    // Validate trigger
-    const validTypes = ['error_rate', 'latency', 'availability', 'cost_spike'];
-    const validSeverities = ['warning', 'critical'];
+    // Validate trigger using schema
+    const validationResult = validate(body, {
+      type: validators.enum(['error_rate', 'latency', 'availability', 'cost_spike'] as const),
+      severity: validators.enum(['warning', 'critical'] as const),
+      metric: validators.string({ maxLength: 255 }),
+      threshold: validators.number({ min: 0 }),
+      current: validators.number({ min: 0 }),
+      message: validators.string({ maxLength: 1000 }),
+    });
 
-    if (!validTypes.includes(body.type) || !validSeverities.includes(body.severity)) {
+    if (!validationResult.ok) {
       return NextResponse.json(
         {
           ok: false,
           error: 'Invalid trigger',
-          message: `type must be one of: ${validTypes.join(', ')}; severity must be one of: ${validSeverities.join(', ')}`,
+          errors: validationResult.errors,
         },
         { status: 400 }
       );
     }
 
-    if (typeof body.current !== 'number' || typeof body.threshold !== 'number') {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Invalid trigger',
-          message: 'current and threshold must be numbers',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Process incident
-    const command = await commandIncident(body);
+    // Process incident with validated data
+    const validated = validationResult.value as IncidentTrigger;
+    const command = await commandIncident(validated);
 
     // Convert to alert and record
     const alert = commandToAlert(command);
