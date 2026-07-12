@@ -64,19 +64,15 @@ const syncState: RealtimeSyncState = {
 
 const conflicts: Map<string, RealtimeConflict> = new Map();
 const eventHandlers: Map<string, Set<(event: RealtimeEvent_v) => void>> = new Map();
+let subscriptionCounter = 0;
 
 /**
  * Initialize realtime sync connection
  */
 export function initializeRealtimeSync(): SyncStatus {
-  syncState.status = 'syncing';
+  syncState.status = 'connected';
   syncState.lastSyncAt = new Date().toISOString();
   syncState.errorCount = 0;
-
-  // Simulate connection initialization
-  setTimeout(() => {
-    syncState.status = 'connected';
-  }, 100);
 
   return syncState.status;
 }
@@ -98,7 +94,8 @@ export function subscribeToTable(
   event: RealtimeEvent = '*',
   filter?: string
 ): RealtimeSubscription {
-  const subscriptionId = `sub-${table}-${event}-${Date.now()}`;
+  subscriptionCounter++;
+  const subscriptionId = `sub-${table}-${event}-${subscriptionCounter}`;
 
   const subscription: RealtimeSubscription = {
     id: subscriptionId,
@@ -340,6 +337,7 @@ export function resetRealtimeSync(): void {
   syncState.eventHistory = [];
   syncState.errorCount = 0;
   syncState.lastError = undefined;
+  subscriptionCounter = 0;
   conflicts.clear();
   eventHandlers.clear();
 }
