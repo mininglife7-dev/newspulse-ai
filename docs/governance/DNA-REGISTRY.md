@@ -1349,6 +1349,306 @@ interface CohortMetrics {
 - **API validated:** All 10 GET actions and 5 POST commands tested
 - **Code coverage:** Core logic, edge cases, integration paths
 
+### DNS-GOV-019: Billing Integration (Usage-Based Pricing & Tier Management)
+
+**Status:** Queued for Implementation  
+**Created:** 2026-07-12  
+**Owner:** Chief Revenue Officer + Chief Engineering Officer  
+**Priority:** High (revenue-critical for launch readiness)
+
+#### Purpose
+Implement autonomous usage-based billing system that tracks per-workspace consumption, enforces tier limits, calculates costs, and integrates with payment processing. Enable Founder to monetize the platform without manual intervention.
+
+#### Problem Discovered
+- No revenue model tracking: Cannot determine if workspace is consuming within tier
+- No cost enforcement: Unlimited usage possible without overage charges or rate limiting
+- No billing state: Cannot identify which customers should be invoiced
+- No payment integration: No connection to Stripe, payment processors, or invoicing systems
+- No usage alerts: Customers exceed limits without warning
+- No tier management: Cannot upgrade/downgrade customers or enforce different feature sets
+- Manual billing: Every transaction requires Founder intervention
+
+#### Evidence
+- Product readiness blocked by monetization (launch requires revenue model)
+- Founder Brief lists "Priority 4: Billing Integration" as next DNA candidate
+- Customer retention data (DNS-GOV-018) identifies at-risk customers—can now apply pricing incentives
+- Analytics pipeline (DNS-GOV-017) provides usage metrics—can now meter consumption
+
+#### Capabilities
+
+**1. Tier Management**
+- 3 standard tiers: Free (default), Pro ($49/month), Enterprise (custom)
+- Per-tier feature flags, API rate limits, storage quotas
+- Per-workspace tier assignment and upgrade/downgrade support
+- Tier switching history tracking for analytics
+
+**2. Usage Metering**
+- Track 5 key metrics per workspace:
+  - API requests (calls to /api/search, /api/history, custom endpoints)
+  - Storage usage (GB of search results, user data in Supabase)
+  - Active users (unique authenticated users per month)
+  - Data retention (days of searchable history)
+  - Support channels (email, Slack integration, phone tier)
+- Real-time meter collection via middleware
+- Usage reset on billing cycle (monthly or annual)
+- Historical usage tracking for trends
+
+**3. Cost Calculation**
+- Base fee per tier (Free=$0, Pro=$49, Enterprise=custom)
+- Usage-based overages:
+  - API requests: $0.001 per 100 requests above tier limit
+  - Storage: $5 per extra GB above quota
+  - Active users: $10 per extra active user above seat count
+- Annual commitment discount: 20% off monthly pricing for yearly plans
+- Volume discounts: 10% at $500/month, 15% at $1000/month
+- Calculation engine produces: total monthly cost, usage breakdown, projected spend
+
+**4. Billing Limits & Enforcement**
+- Per-workspace spending cap (default: tier limit, configurable)
+- Automatic warnings at 80% and 100% of cap
+- Rate limiting enforcement: API returns 429 when quota exceeded
+- Graceful degradation: Free tier continues at reduced speeds instead of blocking
+- Admin override: Founder can temporarily increase limits for good customers
+
+**5. Payment Integration (Stripe)**
+- Store Stripe customer ID per workspace
+- Support 2 billing models:
+  - Subscription: monthly/annual recurring charges
+  - Invoice: metered billing per usage period (default)
+- Webhook handlers for payment events:
+  - payment_intent.succeeded → mark invoice paid
+  - customer.subscription.deleted → downgrade to free tier
+- Invoice generation and delivery automation
+- Past-due handling: suspend non-essential features after 7 days
+
+**6. Usage Alerts & Notifications**
+- Alert user when approaching usage limits (80%, 95%, 100%)
+- Email notifications: "You've used 80% of API requests this month"
+- In-app banner: "Upgrade to Pro to remove limits"
+- Projected overage warning: "At current usage, you'll exceed by $45 this month"
+- Billing summary email: monthly usage report + cost breakdown
+
+**7. Retention Integration (DNA-GOV-018 Hookup)**
+- Identify "at-risk" customers from risk score > 70
+- Auto-suggest Pro tier upgrade if customer is heavy user (API >10k/month)
+- Create "upgrade-opportunity" retention trigger when customer exceeds free tier
+- Track upgrade conversions as success metric
+
+#### Inputs
+- Workspace ID, workspace settings (tier, billing email, payment method)
+- Usage events from middleware (API calls, storage operations, user logins)
+- Stripe API credentials (for payment processing)
+- Billing configuration (tier pricing, limits, discounts)
+
+#### Outputs
+```typescript
+interface BillingTier {
+  id: 'free' | 'pro' | 'enterprise'
+  name: string
+  monthlyPrice: number
+  annualPrice: number
+  apiRequestLimit: number
+  storageQuotaGB: number
+  activeUserLimit: number
+  features: string[]
+}
+
+interface UsageMetrics {
+  workspaceId: string
+  billingPeriod: { start: Date; end: Date }
+  apiRequests: number
+  storageUsedGB: number
+  activeUsers: number
+  dataRetentionDays: number
+  supportChannels: ('email' | 'slack' | 'phone')[]
+}
+
+interface BillingCalculation {
+  workspaceId: string
+  tier: BillingTier
+  usage: UsageMetrics
+  baseCost: number
+  overageCost: number
+  discounts: { reason: string; amount: number }[]
+  totalCost: number
+  projectedMonthlySpend: number
+  isWithinLimit: boolean
+  status: 'active' | 'warning' | 'at-limit' | 'over-limit'
+}
+
+interface StripeIntegration {
+  customerId: string
+  subscriptionId?: string
+  paymentMethodId: string
+  billingEmail: string
+  lastPaymentDate: Date
+  nextBillingDate: Date
+  pastDueAmount: number
+}
+
+interface BillingAlert {
+  workspaceId: string
+  type: 'usage_warning' | 'overage_risk' | 'limit_exceeded' | 'payment_failed'
+  severity: 'info' | 'warning' | 'critical'
+  message: string
+  suggestedAction: string
+  sentAt: Date
+}
+```
+
+#### Implementation
+
+**Core Libraries:**
+- `lib/billing.ts` (400+ LoC)
+  - `getTierDefinitions()` — returns 3 tier definitions with limits and pricing
+  - `getCurrentUsage()` — aggregates metrics for workspace in current period
+  - `calculateCost()` — computes total cost with overages and discounts
+  - `getWorkspaceTier()` — retrieves current tier assignment
+  - `setWorkspaceTier()` — updates tier (with payment method validation)
+  - `enforceRateLimit()` — checks if workspace is within quota
+  - `generateUsageAlert()` — creates warning notifications
+  - `formatBillingEmail()` — generates monthly invoice template
+
+- `lib/stripe-integration.ts` (300+ LoC)
+  - `initializeCustomer()` — creates Stripe customer for workspace
+  - `attachPaymentMethod()` — adds card to customer
+  - `createSubscription()` — sets up recurring billing
+  - `createInvoice()` — generates metered usage invoice
+  - `processPaymentWebhook()` — handles Stripe events
+  - `cancelSubscription()` — stops recurring charges
+
+- `lib/usage-tracker.ts` (250+ LoC)
+  - `recordApiCall()` — increment API request meter
+  - `recordStorageUsage()` — track storage consumption
+  - `recordActiveUser()` — track monthly active users
+  - `getUsageSummary()` — current billing period totals
+  - `resetMeters()` — reset meters at billing cycle end
+  - `getUserTierFeatures()` — returns accessible features for tier
+
+**API Endpoints:**
+- `app/api/billing/tiers` — GET (list available tiers)
+- `app/api/billing/usage` — GET (current usage + costs for workspace)
+- `app/api/billing/subscription` — GET/POST (view/update subscription)
+- `app/api/billing/invoice` — GET (list invoices for workspace)
+- `app/api/billing/payment-method` — POST (add/update card)
+- `app/api/billing/alerts` — GET (list usage alerts)
+- `app/api/billing/webhook` — POST (Stripe event handler)
+
+**Middleware Integration:**
+- `middleware.ts` — Add usage tracking before route handler
+  - Increment API call counter for authenticated requests
+  - Check rate limit, return 429 if exceeded
+  - Add `X-Usage-Percent` header to responses
+
+**Database Schema Changes:**
+```sql
+-- New tables
+CREATE TABLE billing_tiers (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  monthly_price DECIMAL NOT NULL,
+  annual_price DECIMAL NOT NULL,
+  api_request_limit INTEGER,
+  storage_quota_gb DECIMAL,
+  active_user_limit INTEGER,
+  features JSONB
+);
+
+CREATE TABLE workspace_billing (
+  workspace_id UUID PRIMARY KEY REFERENCES workspaces(id),
+  tier_id TEXT REFERENCES billing_tiers(id),
+  stripe_customer_id TEXT UNIQUE,
+  stripe_subscription_id TEXT,
+  billing_email TEXT,
+  billing_cycle_start DATE,
+  billing_cycle_end DATE,
+  spending_limit_cents INTEGER,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE usage_meters (
+  workspace_id UUID,
+  billing_period_start DATE,
+  api_requests_count INTEGER DEFAULT 0,
+  storage_used_gb DECIMAL DEFAULT 0,
+  active_users_count INTEGER DEFAULT 0,
+  data_retention_days INTEGER DEFAULT 30,
+  support_channels TEXT[] DEFAULT '{}',
+  recorded_at TIMESTAMP,
+  PRIMARY KEY (workspace_id, billing_period_start)
+);
+
+CREATE TABLE billing_invoices (
+  id UUID PRIMARY KEY,
+  workspace_id UUID REFERENCES workspaces(id),
+  stripe_invoice_id TEXT UNIQUE,
+  amount_cents INTEGER,
+  currency TEXT DEFAULT 'USD',
+  status TEXT, -- 'draft', 'sent', 'paid', 'past_due'
+  due_date DATE,
+  paid_at TIMESTAMP,
+  created_at TIMESTAMP
+);
+
+CREATE TABLE billing_alerts (
+  id UUID PRIMARY KEY,
+  workspace_id UUID REFERENCES workspaces(id),
+  alert_type TEXT,
+  severity TEXT,
+  message TEXT,
+  suggested_action TEXT,
+  sent_at TIMESTAMP,
+  acknowledged_at TIMESTAMP
+);
+
+-- RLS Policies
+ALTER TABLE workspace_billing ENABLE ROW LEVEL SECURITY;
+CREATE POLICY workspace_billing_owner_only ON workspace_billing
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM workspace_members WHERE workspace_members.workspace_id = workspace_billing.workspace_id AND workspace_members.user_id = auth.uid() AND workspace_members.role = 'owner')
+  );
+```
+
+#### Verification Method
+- **Unit tests (48 required):**
+  - Tier definitions and feature access (4 tests)
+  - Usage tracking and aggregation (6 tests)
+  - Cost calculation with overages and discounts (8 tests)
+  - Rate limit enforcement (6 tests)
+  - Stripe payment flow simulation (8 tests)
+  - Webhook event handling (8 tests)
+  - Billing alerts and notifications (6 tests)
+  - Retention integration (2 tests)
+- **Integration tests (6 required):**
+  - Free → Pro upgrade flow end-to-end
+  - Usage exceeding limit → alert → upgrade flow
+  - Monthly billing cycle reset
+  - Invoice generation and payment
+  - Past-due handling and suspension
+  - Downgrade scenario with refund calculation
+- **Production build:** TypeScript strict mode clean
+- **Database schema:** RLS policies enforced, migrations reversible
+- **All tests pass:** 54/54 minimum
+- **Load test:** 1000 concurrent meter recordings per second
+
+#### Success Criteria
+1. ✅ Core tier system supports Free/Pro/Enterprise
+2. ✅ Usage accurately tracked and billable
+3. ✅ Stripe integration processes payments
+4. ✅ Rate limiting enforced per tier
+5. ✅ Customers can self-serve upgrade/downgrade
+6. ✅ Monthly invoices generated automatically
+7. ✅ At-risk customers can be targeted with upgrade offers
+8. ✅ Founder can view per-workspace billing dashboard
+
+#### Launch Impact
+- Enables revenue model for production launch
+- Converts product into self-service business (Founder hours → $0)
+- Aligns retention triggers (DNS-GOV-018) with pricing incentives
+- Creates data foundation for Unit Economics DNA (DNS-GOV-020)
+- Qualifies for enterprise SaaS positioning
+
 ---
 
 ## Notes
