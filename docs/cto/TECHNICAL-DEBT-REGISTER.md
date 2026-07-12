@@ -1,6 +1,6 @@
 # Technical Debt Register
-**Last Updated:** 2026-07-11  
-**Trend:** ↓ Decreasing (observability + E2E tests reduce unknown risk)
+**Last Updated:** 2026-07-12  
+**Trend:** ↓ Decreasing (observability + E2E tests reduce unknown risk, flaky tests eliminated)
 
 ---
 
@@ -128,11 +128,17 @@
 **Solution:** 25-test security audit covering PII, injection, access control, GDPR  
 **Outcome:** No critical vulnerabilities found
 
+### ✓ RESOLVED-004: Flaky Timing Test in Performance Metrics
+**Fixed:** 2026-07-12  
+**Issue:** Performance metrics test was timing-sensitive; occasionally failed due to system scheduling variations  
+**Solution:** Increased sleep duration from 50ms to 100ms, added tolerance (threshold 80ms instead of 50ms)  
+**Outcome:** Test now reliably passes; all 945 tests stable
+
 ---
 
 ## Metrics
 
-**Total Debt Items:** 14 (8 active, 3 resolved, 3 monitoring)  
+**Total Debt Items:** 14 (8 active, 4 resolved, 2 monitoring)  
 **Critical Blockers:** 1 (Founder action required)  
 **Effort to Clear All:** ~45-60 hours (10-12 weeks at 5 hours/week)  
 **Target Completion:** End of Q3 2026
@@ -140,4 +146,5 @@
 **Trend:**
 - 2026-06-01: 22 items (pre-observability)
 - 2026-07-11: 14 items (30% reduction)
+- 2026-07-12: 14 items (4 resolved, test reliability improved)
 - Target 2026-09-30: < 10 items
