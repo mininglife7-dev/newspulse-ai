@@ -167,10 +167,11 @@ export async function POST(req: Request) {
     }));
 
     // Generate audit package
+    const overallStatus = metrics.overallStatus === 'unknown' ? 'partial' : metrics.overallStatus;
     const summary = generateAuditPackageSummary(
       company.name,
       0, // TODO: Calculate from compliance metrics
-      metrics.overallStatus,
+      overallStatus as 'compliant' | 'partial' | 'non_compliant',
       'high', // TODO: Get from risk assessments
       {
         totalObligations: metrics.totalObligations,

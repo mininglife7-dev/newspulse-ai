@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle, Clock, TrendingUp, AlertTriangle, Download } from 'lucide-react';
@@ -54,11 +54,7 @@ export function ComplianceDashboard({ companyId, companyName }: ComplianceDashbo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchComplianceData();
-  }, [companyId]);
-
-  async function fetchComplianceData() {
+  const fetchComplianceData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -85,7 +81,11 @@ export function ComplianceDashboard({ companyId, companyName }: ComplianceDashbo
     } finally {
       setLoading(false);
     }
-  }
+  }, [companyId]);
+
+  useEffect(() => {
+    fetchComplianceData();
+  }, [fetchComplianceData]);
 
   async function exportAuditPackage() {
     try {
