@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
       {
         ok: false,
         error: 'Alert hub failed',
-        message,
+        message: 'Internal error processing alerts',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }
