@@ -29,7 +29,7 @@ create table if not exists public.profiles (
     email             text        not null,
     first_name        text,
     last_name         text,
-    current_workspace_id uuid,
+    current_workspace_id uuid references public.workspaces(id) on delete set null,
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
@@ -40,6 +40,7 @@ create index if not exists profiles_email_idx on public.profiles (email);
 -- Profile Auto-Creation Trigger
 -- Creates a profile row automatically when a user signs up via auth.users
 -- Runs with elevated privileges (service_role context in Supabase)
+-- Uses INSERT ... ON CONFLICT to handle idempotency
 -- ---------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger as $$
@@ -52,12 +53,16 @@ begin
     new.raw_user_meta_data ->> 'last_name',
     now(),
     now()
-  );
+  )
+  on conflict (id) do update
+  set email = excluded.email,
+      first_name = excluded.first_name,
+      last_name = excluded.last_name,
+      updated_at = now();
   return new;
 exception when others then
-  -- Log error but don't fail signup (defensive pattern)
-  raise warning 'Error creating profile for user %: %', new.id, sqlerrm;
-  return new;
+  -- Re-raise error to fail signup properly (prevents inconsistent state)
+  raise exception 'Failed to create profile for user %: %', new.id, sqlerrm;
 end;
 $$ language plpgsql security definer;
 
@@ -79,13 +84,14 @@ create trigger on_auth_user_created
 -- ---------------------------------------------------------------
 create table if not exists public.workspaces (
     id                uuid        primary key default gen_random_uuid(),
-    slug              text        not null unique,
+    slug              text        not null,
     name              text        not null,
     description       text,
     owner_id          uuid        not null references auth.users(id) on delete cascade,
-    status            text        not null default 'active', -- active, suspended, deleted
+    status            text        not null default 'active' check (status in ('active', 'suspended', 'deleted')),
     created_at        timestamptz not null default now(),
-    updated_at        timestamptz not null default now()
+    updated_at        timestamptz not null default now(),
+    unique(slug, owner_id)
 );
 
 create index if not exists workspaces_owner_id_idx on public.workspaces (owner_id);
@@ -99,11 +105,11 @@ create table if not exists public.workspace_members (
     id                uuid        primary key default gen_random_uuid(),
     workspace_id      uuid        not null references public.workspaces(id) on delete cascade,
     user_id           uuid        not null references auth.users(id) on delete cascade,
-    role              text        not null, -- owner, admin, member, viewer
+    role              text        not null check (role in ('owner', 'admin', 'member', 'viewer')),
     email             text        not null,
     invited_at        timestamptz not null default now(),
     joined_at         timestamptz,
-    status            text        not null default 'pending', -- pending, active, removed
+    status            text        not null default 'pending' check (status in ('pending', 'active', 'removed')),
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now(),
     unique(workspace_id, user_id)
@@ -111,6 +117,8 @@ create table if not exists public.workspace_members (
 
 create index if not exists workspace_members_workspace_idx on public.workspace_members (workspace_id);
 create index if not exists workspace_members_user_idx on public.workspace_members (user_id);
+-- Critical composite index for RLS policy performance: enables efficient (workspace_id, user_id, status) lookups
+create index if not exists workspace_members_workspace_user_status_idx on public.workspace_members (workspace_id, user_id, status);
 
 -- ---------------------------------------------------------------
 -- Companies
@@ -126,7 +134,7 @@ create table if not exists public.companies (
     employees_range   text,        -- e.g. '1-10', '11-50', '51-200'
     website           text,
     governance_priorities text,
-    status            text        not null default 'active',
+    status            text        not null default 'active' check (status in ('active', 'inactive', 'archived')),
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
@@ -147,7 +155,7 @@ create table if not exists public.ai_systems (
     vendor            text,
     purpose           text,
     data_categories   text[], -- personal_data, financial_data, health_data, etc.
-    status            text        not null default 'active', -- active, pilot, deprecated
+    status            text        not null default 'active' check (status in ('active', 'pilot', 'deprecated')),
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
@@ -164,10 +172,10 @@ create table if not exists public.risk_assessments (
     ai_system_id      uuid        not null references public.ai_systems(id) on delete cascade,
     company_id        uuid        not null references public.companies(id) on delete cascade,
     workspace_id      uuid        not null references public.workspaces(id) on delete cascade,
-    risk_level        text        not null, -- unacceptable, high, medium, low
+    risk_level        text        not null check (risk_level in ('unacceptable', 'high', 'medium', 'low')),
     risk_score        float,
     assessment_data   jsonb       not null default '{}'::jsonb,
-    status            text        not null default 'draft', -- draft, in_review, finalized
+    status            text        not null default 'draft' check (status in ('draft', 'in_review', 'finalized')),
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
@@ -186,8 +194,8 @@ create table if not exists public.obligations (
     title             text        not null,
     description       text,
     source            text, -- EU_AI_ACT, GDPR, LOCAL_REGULATION, etc.
-    status            text        not null default 'identified', -- identified, in_progress, completed, not_applicable
-    priority          text, -- critical, high, medium, low
+    status            text        not null default 'identified' check (status in ('identified', 'in_progress', 'completed', 'not_applicable')),
+    priority          text check (priority in ('critical', 'high', 'medium', 'low')),
     due_date          date,
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
@@ -210,8 +218,8 @@ create table if not exists public.evidence (
     file_url          text,
     file_type         text,
     file_size         integer,
-    uploaded_by       uuid        references auth.users(id),
-    status            text        not null default 'submitted', -- submitted, under_review, approved, rejected
+    uploaded_by       uuid        references auth.users(id) on delete set null,
+    status            text        not null default 'submitted' check (status in ('submitted', 'under_review', 'approved', 'rejected')),
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
@@ -232,7 +240,7 @@ create table if not exists public.remediation_plans (
     description       text,
     action_items      jsonb       not null default '[]'::jsonb,
     owner             text,
-    status            text        not null default 'planned', -- planned, in_progress, completed, on_hold
+    status            text        not null default 'planned' check (status in ('planned', 'in_progress', 'completed', 'on_hold')),
     target_date       date,
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
@@ -665,6 +673,37 @@ create policy "Members can delete workspace evidence"
     );
 
 -- =============================================================
+-- AUDIT_LOG — Application Audit Trail
+-- Comprehensive logging of sensitive operations for compliance and debugging
+-- =============================================================
+create table if not exists public.audit_log (
+    id                uuid        primary key default gen_random_uuid(),
+    workspace_id      uuid        not null references public.workspaces(id) on delete cascade,
+    user_id           uuid        references auth.users(id) on delete set null,
+    action            text        not null check (action in ('create', 'read', 'update', 'delete', 'member_add', 'member_remove', 'permission_change')),
+    resource_type     text        not null,
+    resource_id       uuid,
+    details           jsonb       not null default '{}'::jsonb,
+    ip_address        text,
+    user_agent        text,
+    created_at        timestamptz not null default now()
+);
+
+alter table public.audit_log enable row level security;
+
+create index if not exists audit_log_workspace_idx on public.audit_log(workspace_id);
+create index if not exists audit_log_user_idx on public.audit_log(user_id);
+create index if not exists audit_log_created_idx on public.audit_log(created_at desc);
+create index if not exists audit_log_action_idx on public.audit_log(action);
+
+-- Audit log is read-only for application; all writes via service role only
+drop policy if exists "Audit log is service-role-only" on public.audit_log;
+create policy "Audit log is service-role-only"
+    on public.audit_log for all
+    using (false)
+    with check (false);
+
+-- =============================================================
 -- REMEDIATION_PLANS POLICIES
 -- =============================================================
 drop policy if exists "Members can read workspace remediation_plans" on public.remediation_plans;
@@ -730,13 +769,6 @@ create policy "Members can delete workspace remediation_plans"
 -- Application code accesses HERCULES via service role, never via user session.
 -- =============================================================
 
-alter table public.hercules_checkpoints enable row level security;
-alter table public.hercules_enterprise_missions enable row level security;
-alter table public.hercules_enterprise_tasks enable row level security;
-alter table public.hercules_enterprise_events enable row level security;
-alter table public.hercules_enterprise_audit enable row level security;
-alter table public.hercules_recovery_log enable row level security;
-
 -- Checkpoints: Full kernel state snapshots for recovery
 create table if not exists public.hercules_checkpoints (
     checkpoint_id text primary key,
@@ -746,6 +778,8 @@ create table if not exists public.hercules_checkpoints (
     status text default 'complete' check (status in ('pending', 'complete', 'failed')),
     failure_reason text
 );
+
+alter table public.hercules_checkpoints enable row level security;
 
 create index if not exists hercules_checkpoints_status_idx on public.hercules_checkpoints(status);
 create index if not exists hercules_checkpoints_created_idx on public.hercules_checkpoints(created_at desc);
@@ -761,6 +795,8 @@ create table if not exists public.hercules_enterprise_missions (
     updated_at timestamptz default now()
 );
 
+alter table public.hercules_enterprise_missions enable row level security;
+
 create index if not exists hercules_missions_enterprise_idx on public.hercules_enterprise_missions(enterprise_id);
 
 -- Enterprise Tasks: Per-enterprise task queue persistence
@@ -775,6 +811,8 @@ create table if not exists public.hercules_enterprise_tasks (
     completed_at timestamptz
 );
 
+alter table public.hercules_enterprise_tasks enable row level security;
+
 create index if not exists hercules_tasks_enterprise_idx on public.hercules_enterprise_tasks(enterprise_id);
 create index if not exists hercules_tasks_state_idx on public.hercules_enterprise_tasks(state);
 
@@ -788,6 +826,8 @@ create table if not exists public.hercules_enterprise_events (
     created_at timestamptz default now()
 );
 
+alter table public.hercules_enterprise_events enable row level security;
+
 create index if not exists hercules_events_enterprise_idx on public.hercules_enterprise_events(enterprise_id);
 create index if not exists hercules_events_correlation_idx on public.hercules_enterprise_events(correlation_id);
 
@@ -800,17 +840,21 @@ create table if not exists public.hercules_enterprise_audit (
     created_at timestamptz default now()
 );
 
+alter table public.hercules_enterprise_audit enable row level security;
+
 create index if not exists hercules_audit_enterprise_idx on public.hercules_enterprise_audit(enterprise_id);
 
 -- Recovery Log: Track all kernel recovery events
 create table if not exists public.hercules_recovery_log (
     recovery_id text primary key,
-    checkpoint_id text references public.hercules_checkpoints(checkpoint_id),
+    checkpoint_id text references public.hercules_checkpoints(checkpoint_id) on delete set null,
     recovered_at timestamptz default now(),
     enterprise_count int,
     task_count int,
     event_count int
 );
+
+alter table public.hercules_recovery_log enable row level security;
 
 create index if not exists hercules_recovery_checkpoint_idx on public.hercules_recovery_log(checkpoint_id);
 
