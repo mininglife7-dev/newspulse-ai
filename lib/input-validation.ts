@@ -91,8 +91,12 @@ export const validators = {
       const trimmed = value.trim();
       try {
         const url = new URL(trimmed);
-        if (opts?.allowedProtocols && !opts.allowedProtocols.includes(url.protocol)) {
-          return { ok: false, error: `Protocol must be one of: ${opts.allowedProtocols.join(', ')}` };
+        if (opts?.allowedProtocols) {
+          // URL.protocol includes the colon (e.g., 'https:'), so we remove it for comparison
+          const protocol = url.protocol.replace(':', '');
+          if (!opts.allowedProtocols.includes(protocol)) {
+            return { ok: false, error: `Protocol must be one of: ${opts.allowedProtocols.join(', ')}` };
+          }
         }
         return { ok: true, value: url.toString() };
       } catch {
