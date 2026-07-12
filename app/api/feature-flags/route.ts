@@ -193,7 +193,7 @@ export async function POST(req: Request) {
 
     // Register a new flag
     if (command === 'register') {
-      const flagData = body as FeatureFlag;
+      const flagData = body as unknown as FeatureFlag;
 
       if (!flagData.id || !flagData.name || flagData.enabled === undefined) {
         return NextResponse.json(
@@ -221,7 +221,7 @@ export async function POST(req: Request) {
 
     // Update a flag
     if (command === 'update') {
-      const { flagId, updates } = body as { flagId: string; updates: Partial<FeatureFlag> };
+      const { flagId, updates } = body as unknown as { flagId: string; updates: Partial<FeatureFlag> };
 
       if (!flagId) {
         return NextResponse.json(
@@ -259,7 +259,7 @@ export async function POST(req: Request) {
 
     // Evaluate a flag
     if (command === 'evaluate') {
-      const { flagId, context } = body as { flagId: string; context?: FlagContext };
+      const { flagId, context } = body as unknown as { flagId: string; context?: FlagContext };
 
       if (!flagId) {
         return NextResponse.json(
@@ -285,7 +285,7 @@ export async function POST(req: Request) {
 
     // Get variant for A/B testing
     if (command === 'get-variant') {
-      const { flagId, context } = body as { flagId: string; context?: FlagContext };
+      const { flagId, context } = body as unknown as { flagId: string; context?: FlagContext };
 
       if (!flagId) {
         return NextResponse.json(
@@ -311,7 +311,7 @@ export async function POST(req: Request) {
 
     // Start gradual rollout
     if (command === 'start-rollout') {
-      const { flagId, startPercentage, targetPercentage } = body as {
+      const { flagId, startPercentage, targetPercentage } = body as unknown as {
         flagId: string;
         startPercentage: number;
         targetPercentage: number;
@@ -365,7 +365,7 @@ export async function POST(req: Request) {
 
     // Increment rollout
     if (command === 'increment-rollout') {
-      const { flagId, increment } = body as { flagId: string; increment: number };
+      const { flagId, increment } = body as unknown as { flagId: string; increment: number };
 
       if (!flagId || typeof increment !== 'number') {
         return NextResponse.json(
