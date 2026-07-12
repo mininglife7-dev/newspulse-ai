@@ -865,6 +865,109 @@ interface FlagEvaluation {
 5. **Integration:** Wire to actual product feature code (onboarding flow, checkout variant)
 6. **Monitoring:** Track flag evaluation errors and variant distribution in production
 
+### DNA-GOV-015: Deployment Canary
+
+**Status:** Active  
+**Created:** 2026-07-12  
+**Owner:** Chief Engineering Officer + SRE Lead  
+
+#### Purpose
+Autonomously manage gradual code deployments with continuous health monitoring and automatic rollback if metrics degrade. Deploy to 10% of traffic, measure impact, then safely increment. Eliminates all-or-nothing deployments and enables zero-customer-impact rollback.
+
+#### Problem Discovered
+Deployments are high-risk: ship code to 100% of users immediately; if bugs slip through tests, they affect everyone instantly. Need: gradual rollout strategy, continuous health monitoring during rollout, automatic abort when metrics degrade, manual kill-switch at any stage.
+
+#### Evidence
+- **Weakness:** No mechanism for gradual code deployment
+- **Impact:** Production bugs affect 100% of customers; mean time to recovery (MTTR) is manual revert (15-30 min)
+- **Root cause:** Feature gating at binary level (on/off); no staged traffic control
+- **Discovery method:** Product launch planning identified need for safe deployment of critical flows (checkout, auth)
+
+#### Inputs
+- Deployment plan: `{name, commit, version, description, stages[]}`
+- Deployment stage config: `{percentage, duration, thresholds[]}`
+- Health metrics: `{error_rate, latency, availability, memory, cpu}`
+
+#### Outputs
+```typescript
+interface CanaryDeployment {
+  id: string
+  status: 'planning' | 'staged' | 'active' | 'aborted' | 'complete'
+  currentPercentage: number  // 10%, 25%, 50%, 100%
+  metrics: Record<'error_rate' | 'latency' | 'availability', {current, baseline, status}>
+  stageHistory: Array<{stage, percentage, startedAt, completedAt?, status}>
+}
+```
+
+#### Implementation
+- `lib/deployment-canary.ts` — Core deployment orchestration (360 LoC)
+  - `planCanaryDeployment()` — Define multi-stage deployment strategy
+  - `startCanaryDeployment()` — Begin rollout at first stage
+  - `recordCanaryMetrics()` — Record health snapshots during rollout
+  - `incrementCanaryStage()` — Move to next stage if healthy
+  - `completeCanaryDeployment()` — Mark deployment as 100% complete
+  - `abortCanaryDeployment()` — Emergency rollback with reason
+  - `getCanarySummary()` — Dashboard-ready deployment status
+  - `resetCanaryHub()` — Clear deployment store (testing)
+- `app/api/deployment-canary/route.ts` — HTTP API for deployment ops (140 LoC)
+  - `GET /api/deployment-canary?action=health|get|snapshots|summary` — Retrieve deployment state
+  - `POST /api/deployment-canary` — Manage deployment lifecycle
+  - Commands: plan, start, record-metrics, increment, complete, abort
+- `tests/deployment-canary.test.ts` — 33 comprehensive tests covering:
+  - Deployment lifecycle (planning → staged → active → complete)
+  - Auto-abort on critical metrics
+  - Health snapshot history
+  - Gradual rollout workflow (10% → 25% → 50% → 100%)
+  - Manual abort with reason
+
+#### Verification Method
+- **Unit tests:** 33 tests covering:
+  - Deployment lifecycle all states
+  - Multi-stage configuration
+  - Automatic abort on critical metrics (error_rate >15%, latency >5s)
+  - Health snapshot tracking (5 snapshots, verify series)
+  - Stage incrementing with health validation
+  - Gradual rollout workflow end-to-end (10% → 100%)
+  - Auto-abort on critical metrics
+  - Error handling for invalid operations
+- **All tests pass:** 33/33 ✅
+- **Integration:** Gradual deployment + auto-abort + health monitoring verified
+
+#### Dependencies
+- In-memory deployment store (can be extended to Supabase in production)
+- Health metrics from DNS-GOV-002 (Production Monitoring) or external monitoring
+- Alert integration with DNS-GOV-005 (Founder Alert Hub)
+- No database schema changes required
+
+#### Risks
+- **In-memory storage:** Deployments reset on server restart. Mitigation: Migrate to Supabase for production persistence
+- **No distributed consensus:** Multiple servers may disagree on deployment state. Mitigation: Single deployment coordinator service in production
+- **Threshold tuning:** Critical thresholds (error >15%, latency >5s) may not fit all services. Mitigation: Per-deployment threshold customization
+- **Metrics integration:** Requires external monitoring (Vercel Analytics, Supabase metrics). Mitigation: Build adapters for each monitoring source
+
+#### Rollback Method
+- Delete `app/api/deployment-canary/route.ts`
+- Delete `lib/deployment-canary.ts`
+- Delete `tests/deployment-canary.test.ts`
+- Remove canary orchestration calls from deployment pipeline
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Deployment safety:** Zero customer-impacting bugs reach 100% due to early detection at 10%
+2. **MTTR reduction:** Auto-abort on metrics spike reduces recovery time from 15-30 min to <2 min
+3. **Confidence:** Founder approves deployments during business hours only; off-hours deployments run autonomously with auto-abort
+4. **Rollout speed:** Move from 10% to 100% in 2 hours (15 min per stage × 4 stages)
+5. **Health accuracy:** Snapshot data enables post-deployment analysis (what metrics changed, when)
+
+#### Next Steps
+1. ✅ **Core implementation:** Full library + 33 tests + HTTP API — DONE
+2. **Supabase persistence:** Store deployments in database (id, name, version, status, stageHistory)
+3. **Metrics integration:** Wire to DNS-GOV-002 (fetch production metrics for auto-abort decision)
+4. **Alert integration:** Send deployment events to DNS-GOV-005 (Founder Alert Hub)
+5. **Deployment coordinator:** Build orchestrator that calls canary API during CD pipeline
+6. **Dashboard:** Visual deployment timeline (stage progress, metrics graph, abort button)
+7. **Cost tracking:** Monitor infrastructure costs during rollout stages (validate no unexpected spending)
+
 ---
 
 ## Notes
