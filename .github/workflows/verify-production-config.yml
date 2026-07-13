@@ -24,90 +24,77 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline
 
-      - name: Run preflight checks
+      - name: Verify GitHub Actions Secrets (CI/CD only)
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          GITHUB_OWNER: ${{ secrets.GITHUB_OWNER || 'mininglife7-dev' }}
-          GITHUB_REPO: ${{ secrets.GITHUB_REPO || 'newspulse-ai' }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
-          NODE_ENV: production
         run: |
-          echo "🔍 Verifying production configuration..."
+          echo "🔐 Checking GitHub Actions secrets (required for CI/CD)..."
           echo ""
 
-          # Check each required variable
-          declare -A vars=(
-            [NEXT_PUBLIC_SUPABASE_URL]="Supabase Project URL"
-            [NEXT_PUBLIC_SUPABASE_ANON_KEY]="Supabase Anonymous Key"
+          declare -A secrets=(
             [SUPABASE_SERVICE_ROLE_KEY]="Supabase Service Role Key"
-            [SUPABASE_PROJECT_ID]="Supabase Project ID"
-            [GITHUB_OWNER]="GitHub Repository Owner"
-            [GITHUB_REPO]="GitHub Repository Name"
-            [NEXT_PUBLIC_APP_URL]="Application URL"
-            [ADMIN_TOKEN]="Admin Token"
+            [ADMIN_TOKEN]="Admin Authentication Token"
           )
 
+          # Note: SUPABASE_DB_PASSWORD only required for schema deployment workflow
           missing=0
-          for var in "${!vars[@]}"; do
-            value="${!var}"
+          for secret in "${!secrets[@]}"; do
+            value="${!secret}"
             if [ -z "$value" ]; then
-              echo "❌ ${vars[$var]}: NOT CONFIGURED"
+              echo "❌ ${secrets[$secret]}: NOT CONFIGURED"
               ((missing++))
             else
-              echo "✅ ${vars[$var]}: Configured"
+              echo "✅ ${secrets[$secret]}: Configured"
             fi
           done
 
-          echo ""
           if [ $missing -gt 0 ]; then
-            echo "❌ $missing required variables not configured"
             echo ""
-            echo "Configure in GitHub repository Settings → Secrets and variables → Actions:"
-            echo "  1. NEXT_PUBLIC_SUPABASE_URL (e.g., https://xyz.supabase.co)"
-            echo "  2. NEXT_PUBLIC_SUPABASE_ANON_KEY (from Supabase API settings)"
-            echo "  3. SUPABASE_SERVICE_ROLE_KEY (from Supabase API settings)"
-            echo "  4. SUPABASE_PROJECT_ID (project reference)"
-            echo "  5. GITHUB_OWNER (mininglife7-dev)"
-            echo "  6. GITHUB_REPO (newspulse-ai)"
-            echo "  7. NEXT_PUBLIC_APP_URL (e.g., https://newspulse-ai-production.vercel.app)"
-            echo "  8. ADMIN_TOKEN (generate: openssl rand -hex 32)"
+            echo "⚠️  Missing $missing GitHub Actions secrets"
+            echo ""
+            echo "Configure in GitHub: Settings → Secrets and variables → Actions"
+            echo "Required secrets:"
+            echo "  - SUPABASE_SERVICE_ROLE_KEY (from Supabase Dashboard → Settings → API)"
+            echo "  - ADMIN_TOKEN (generate: openssl rand -hex 32)"
+            echo ""
+            echo "For schema deployment also add:"
+            echo "  - SUPABASE_DB_PASSWORD (from Supabase Dashboard → Settings → Database)"
             exit 1
           fi
 
-          echo "✅ All required variables configured"
+          echo ""
+          echo "✅ All required GitHub Actions secrets configured"
 
-      - name: Verify Supabase connectivity
-        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - name: Verify Vercel Environment Configuration
         run: |
-          echo "Testing Supabase connectivity..."
-          npm test -- --testNamePattern="Supabase" --bail 2>&1 | head -50 || true
-
-      - name: Build production bundle
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-        run: |
-          echo "🔨 Building production bundle..."
-          npm run build
-          echo "✅ Build successful"
+          echo "🌐 Vercel environment configuration (separate system)"
+          echo ""
+          echo "⚠️  GitHub Actions and Vercel use separate configuration stores"
+          echo ""
+          echo "Required Vercel environment variables:"
+          echo "  - NEXT_PUBLIC_SUPABASE_URL"
+          echo "  - NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          echo "  - SUPABASE_SERVICE_ROLE_KEY"
+          echo "  - NEXT_PUBLIC_APP_URL"
+          echo "  - ADMIN_TOKEN"
+          echo "  - GITHUB_OWNER (optional)"
+          echo "  - GITHUB_REPO (optional)"
+          echo "  - GITHUB_TOKEN (for API endpoints)"
+          echo "  - VERCEL_TOKEN (optional, for cost monitoring)"
+          echo ""
+          echo "Configure at: Vercel Dashboard → Settings → Environment Variables"
+          echo "Note: These are independent from GitHub Actions configuration"
 
       - name: Summary
         run: |
           echo ""
-          echo "=== PRODUCTION CONFIGURATION STATUS ==="
-          echo "✅ All environment variables configured"
-          echo "✅ Build successful"
+          echo "=== GITHUB ACTIONS CONFIGURATION STATUS ==="
+          echo "✅ GitHub Actions secrets verified"
           echo ""
           echo "Next steps:"
-          echo "1. Deploy Supabase schema (if not already deployed)"
-          echo "2. Push to main to trigger Vercel deployment"
-          echo "3. Verify production application"
+          echo "1. Configure Vercel environment variables (separate system)"
+          echo "2. Deploy Supabase schema (if not already deployed)"
+          echo "3. Monitor Vercel deployment"
+          echo "4. Verify production application at your Vercel URL"
