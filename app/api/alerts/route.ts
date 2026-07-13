@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   getAlertHubReport,
   formatAlertHubReport,
   cleanupResolvedAlerts,
 } from '@/lib/alert-hub';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,9 +14,11 @@ export const dynamic = 'force-dynamic';
  * GET /api/alerts
  *
  * DNA-GOV-005 endpoint: Centralized Founder Alert Hub.
+ * REQUIRES: ADMIN_TOKEN authentication (Bearer token in Authorization header)
  *
  * Returns:
  * - 200 + summary: All active alerts from all DNA systems consolidated
+ * - 401: Missing or invalid authentication token
  *
  * Includes alerts from:
  * - DNA-GOV-001: External blockers (GitHub Actions, Supabase)
@@ -25,7 +29,12 @@ export const dynamic = 'force-dynamic';
  *
  * Used by: Founder's monitoring dashboard, automated alerting
  */
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  // Require authentication
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
+
   try {
     // Cleanup old resolved alerts (older than 24 hours)
     cleanupResolvedAlerts(24 * 60);
@@ -33,14 +42,22 @@ export async function GET(req: Request) {
     const report = getAlertHubReport();
     const formatted = formatAlertHubReport(report);
 
-    // Log for Founder visibility
+    // Log summary only (safe for production)
     if (report.alertCount > 0) {
       if (report.criticalCount > 0) {
-        console.error('[alerts] CRITICAL:\n', formatted);
+        logger.error('Alert hub critical conditions detected', 'ALERTS_CRITICAL', {
+          total: report.alertCount,
+          critical: report.criticalCount,
+        });
       } else if (report.warningCount > 0) {
-        console.warn('[alerts] WARNINGS:\n', formatted);
+        logger.warn('Alert hub warnings detected', 'ALERTS_WARNING', {
+          total: report.alertCount,
+          warnings: report.warningCount,
+        });
       } else {
-        console.log('[alerts] INFO:\n', formatted);
+        logger.info('Alert hub status', 'ALERTS_OK', {
+          total: report.alertCount,
+        });
       }
     }
 
@@ -66,14 +83,13 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[alerts] Hub failed:', message);
+    logger.error('Alert hub failed', 'ALERTS_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Alert hub failed',
-        message,
+        message: 'Internal error processing alerts',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

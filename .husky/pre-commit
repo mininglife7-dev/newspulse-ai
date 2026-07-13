@@ -1,0 +1,24 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run lint-staged on changed files
+npx lint-staged
+
+# Check if lint-staged passed
+if [ $? -ne 0 ]; then
+  echo "❌ Lint-staged failed"
+  exit 1
+fi
+
+# Run TypeScript type checking
+echo "🔎 Type checking..."
+npx tsc --noEmit
+
+if [ $? -ne 0 ]; then
+  echo "❌ Type check failed"
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed"

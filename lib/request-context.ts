@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-let requestId: string;
+let requestId: string | undefined;
 
 export function getRequestId(): string {
   if (!requestId) {
@@ -10,7 +10,7 @@ export function getRequestId(): string {
 }
 
 export function resetRequestId(): void {
-  requestId = undefined as any;
+  requestId = undefined;
 }
 
 export function generateRequestId(): string {

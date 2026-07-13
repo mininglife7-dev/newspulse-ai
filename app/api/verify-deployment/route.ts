@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyDeployment, formatDeploymentAlert } from '@/lib/deployment-verifier';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,15 +20,15 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: Request) {
   const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER || 'mininglife7-dev';
-  const repo = process.env.GITHUB_REPO || 'newspulse-ai';
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
 
-  if (!token) {
+  if (!token || !owner || !repo) {
     return NextResponse.json(
       {
         ok: false,
-        error: 'GITHUB_TOKEN not configured',
-        message: 'Set GITHUB_TOKEN in Vercel env to enable deployment verification',
+        error: 'GitHub configuration incomplete',
+        message: 'Set GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO in Vercel env',
         status: 'unconfigured',
       },
       { status: 503 }
@@ -38,13 +39,18 @@ export async function GET(req: Request) {
     const result = await verifyDeployment(owner, repo, token);
     const alert = formatDeploymentAlert(result);
 
-    // Log alerts for Founder visibility
+    // Log deployment status (safe for production)
     if (result.status === 'critical') {
-      console.error('[verify-deployment] CRITICAL:\n', alert);
+      logger.error('Deployment verification: critical mismatch detected', 'DEPLOYMENT_CRITICAL', {
+        hasDeployment: !!result.currentDeployment,
+        latestCommit: result.latestCommit?.sha?.substring(0, 7),
+      });
     } else if (result.status === 'warning') {
-      console.warn('[verify-deployment] WARNING:\n', alert);
+      logger.warn('Deployment verification: warning detected', 'DEPLOYMENT_WARNING', {
+        mismatch: result.mismatch,
+      });
     } else {
-      console.log('[verify-deployment] OK:\n', alert);
+      logger.info('Deployment verification: healthy', 'DEPLOYMENT_OK');
     }
 
     return NextResponse.json(
@@ -66,14 +72,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[verify-deployment] Check failed:', message);
+    logger.error('Deployment verification check failed', 'DEPLOYMENT_CHECK_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Deployment verification failed',
-        message,
         status: 'error',
       },
       { status: 503 }

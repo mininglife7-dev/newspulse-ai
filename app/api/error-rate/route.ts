@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getErrorRateReport, formatErrorAlert } from '@/lib/error-rate-monitor';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,12 +23,17 @@ export async function GET(req: Request) {
     const report = getErrorRateReport();
     const alert = formatErrorAlert(report);
 
-    // Log alerts for Founder visibility
+    // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.criticalEndpoints.length > 0) {
-        console.error('[error-rate] CRITICAL alerts:\n', report.alerts.join('\n'));
+        logger.error('Error rate: critical endpoints detected', 'ERROR_RATE_CRITICAL', {
+          criticalEndpoints: report.summary.criticalEndpoints.length,
+          totalErrors: report.summary.totalErrors,
+        });
       } else {
-        console.warn('[error-rate] Warnings:\n', report.alerts.join('\n'));
+        logger.warn('Error rate: warnings detected', 'ERROR_RATE_WARNING', {
+          alertCount: report.alerts.length,
+        });
       }
     }
 
@@ -51,14 +57,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[error-rate] Report failed:', message);
+    logger.error('Error rate report failed', 'ERROR_RATE_REPORT_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Error rate report failed',
-        message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

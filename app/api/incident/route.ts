@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { commandIncident, commandToAlert, type IncidentTrigger } from '@/lib/incident-commander';
 import { recordAlert } from '@/lib/alert-hub';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,6 +12,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/incident
  *
  * DNA-GOV-014 endpoint: Incident Commander.
+ * REQUIRES: ADMIN_TOKEN authentication (Bearer token in Authorization header)
  *
  * Receives incident triggers from monitoring systems (DNA-001/002/004/008/011)
  * and makes autonomous remediation decisions:
@@ -28,43 +32,51 @@ export const dynamic = 'force-dynamic';
  *
  * Returns:
  * - 200 + incident command: Decision made, action taken/pending
+ * - 401: Missing or invalid authentication token
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  // Require authentication for incident commands
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
+
   try {
     const body = (await req.json()) as IncidentTrigger;
 
-    // Validate trigger
-    const validTypes = ['error_rate', 'latency', 'availability', 'cost_spike'];
-    const validSeverities = ['warning', 'critical'];
+    // Validate trigger using schema
+    const validationResult = validate(body, {
+      type: validators.enum(['error_rate', 'latency', 'availability', 'cost_spike'] as const),
+      severity: validators.enum(['warning', 'critical'] as const),
+      metric: validators.string({ maxLength: 255 }),
+      threshold: validators.number({ min: 0 }),
+      current: validators.number({ min: 0 }),
+      message: validators.string({ maxLength: 1000 }),
+    });
 
-    if (!validTypes.includes(body.type) || !validSeverities.includes(body.severity)) {
+    if (!validationResult.ok) {
       return NextResponse.json(
         {
           ok: false,
           error: 'Invalid trigger',
-          message: `type must be one of: ${validTypes.join(', ')}; severity must be one of: ${validSeverities.join(', ')}`,
+          errors: validationResult.errors,
         },
         { status: 400 }
       );
     }
 
-    if (typeof body.current !== 'number' || typeof body.threshold !== 'number') {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Invalid trigger',
-          message: 'current and threshold must be numbers',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Process incident
-    const command = await commandIncident(body);
+    // Process incident with validated data
+    const validated = validationResult.value as IncidentTrigger;
+    const command = await commandIncident(validated);
 
     // Convert to alert and record
     const alert = commandToAlert(command);
-    recordAlert(alert);
+    recordAlert(
+      'security', // Using 'security' as source for incidents
+      alert.severity as 'critical' | 'warning' | 'info',
+      alert.title,
+      alert.message,
+      command.decision === 'autorollback' ? 'Auto-rollback completed' : 'Escalate to manual incident review'
+    );
 
     const status = command.decision === 'autorollback' ? 200 : 202; // 200 for executed, 202 for pending
     const statusText =
@@ -95,14 +107,12 @@ export async function POST(req: Request) {
       { status }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[incident] POST failed:', message);
+    logger.error('Incident processing failed', 'INCIDENT_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Incident processing failed',
-        message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

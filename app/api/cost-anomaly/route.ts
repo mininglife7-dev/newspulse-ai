@@ -5,6 +5,7 @@ import {
   type CostAnomalyReport,
 } from '@/lib/cost-anomaly-detector';
 import { recordAlert } from '@/lib/alert-hub';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,13 @@ export async function GET(req: Request) {
     // Convert anomalies to alert hub format and record
     const alerts = anomaliesToAlerts(report);
     for (const alert of alerts) {
-      recordAlert(alert);
+      recordAlert(
+        'security', // Using 'security' as closest source type for cost anomalies
+        alert.severity as 'critical' | 'warning' | 'info',
+        alert.title,
+        alert.message,
+        'Monitor cost trends and adjust resource allocation if anomaly persists'
+      );
     }
 
     // Determine response status based on severity
@@ -43,12 +50,18 @@ export async function GET(req: Request) {
     const status = hasCritical ? 503 : 200;
     const alertLevel = hasCritical ? 'critical' : hasHigh ? 'warning' : 'ok';
 
-    // Log for observability
+    // Log anomalies (safe for production)
     if (report.anomalies.length > 0) {
-      console.warn('[dna-011] Cost anomalies detected:', {
-        summary: report.summary,
-        anomalies: report.anomalies,
-      });
+      const hasCritical = report.anomalies.some((a) => a.severity === 'critical');
+      if (hasCritical) {
+        logger.error('Cost anomalies detected: critical', 'COST_ANOMALY_CRITICAL', {
+          anomalyCount: report.anomalies.length,
+        });
+      } else {
+        logger.warn('Cost anomalies detected: high severity', 'COST_ANOMALY_WARNING', {
+          anomalyCount: report.anomalies.length,
+        });
+      }
     }
 
     return NextResponse.json(
@@ -71,14 +84,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[dna-011] Cost anomaly detection failed:', message);
+    logger.error('Cost anomaly detection failed', 'COST_ANOMALY_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Cost anomaly detection failed',
-        message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }
