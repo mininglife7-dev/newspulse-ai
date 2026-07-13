@@ -1,4 +1,4 @@
-name: Verify Production Configuration
+name: Verify GitHub Deployment Secrets
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
     branches: [main]
 
 jobs:
-  verify-config:
-    name: Check Production Readiness
+  verify-secrets:
+    name: Check GitHub Actions Secrets
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -15,86 +15,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --prefer-offline
-
-      - name: Verify GitHub Actions Secrets (CI/CD only)
+      - name: Verify Schema Deployment Secret
         env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
-          echo "🔐 Checking GitHub Actions secrets (required for CI/CD)..."
+          echo "🔐 Checking schema deployment credential..."
           echo ""
 
-          declare -A secrets=(
-            [SUPABASE_SERVICE_ROLE_KEY]="Supabase Service Role Key"
-            [ADMIN_TOKEN]="Admin Authentication Token"
-          )
-
-          # Note: SUPABASE_DB_PASSWORD only required for schema deployment workflow
-          missing=0
-          for secret in "${!secrets[@]}"; do
-            value="${!secret}"
-            if [ -z "$value" ]; then
-              echo "❌ ${secrets[$secret]}: NOT CONFIGURED"
-              ((missing++))
-            else
-              echo "✅ ${secrets[$secret]}: Configured"
-            fi
-          done
-
-          if [ $missing -gt 0 ]; then
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "❌ SUPABASE_DB_PASSWORD: NOT CONFIGURED"
             echo ""
-            echo "⚠️  Missing $missing GitHub Actions secrets"
-            echo ""
+            echo "This secret is required for the schema deployment workflow."
             echo "Configure in GitHub: Settings → Secrets and variables → Actions"
-            echo "Required secrets:"
-            echo "  - SUPABASE_SERVICE_ROLE_KEY (from Supabase Dashboard → Settings → API)"
-            echo "  - ADMIN_TOKEN (generate: openssl rand -hex 32)"
             echo ""
-            echo "For schema deployment also add:"
-            echo "  - SUPABASE_DB_PASSWORD (from Supabase Dashboard → Settings → Database)"
-            exit 1
+            echo "To get the value:"
+            echo "1. Go to Supabase Dashboard → Settings → Database"
+            echo "2. Click 'Show Password' or reset if needed"
+            echo "3. Copy the password to GitHub → SUPABASE_DB_PASSWORD"
+            echo ""
+            # Note: Not exiting with error; schema deployment is separate workflow
+            echo "⚠️  Schema deployment will be skipped until configured"
+          else
+            echo "✅ SUPABASE_DB_PASSWORD: Configured"
           fi
 
-          echo ""
-          echo "✅ All required GitHub Actions secrets configured"
-
-      - name: Verify Vercel Environment Configuration
-        run: |
-          echo "🌐 Vercel environment configuration (separate system)"
-          echo ""
-          echo "⚠️  GitHub Actions and Vercel use separate configuration stores"
-          echo ""
-          echo "Required Vercel environment variables:"
-          echo "  - NEXT_PUBLIC_SUPABASE_URL"
-          echo "  - NEXT_PUBLIC_SUPABASE_ANON_KEY"
-          echo "  - SUPABASE_SERVICE_ROLE_KEY"
-          echo "  - NEXT_PUBLIC_APP_URL"
-          echo "  - ADMIN_TOKEN"
-          echo "  - GITHUB_OWNER (optional)"
-          echo "  - GITHUB_REPO (optional)"
-          echo "  - GITHUB_TOKEN (for API endpoints)"
-          echo "  - VERCEL_TOKEN (optional, for cost monitoring)"
-          echo ""
-          echo "Configure at: Vercel Dashboard → Settings → Environment Variables"
-          echo "Note: These are independent from GitHub Actions configuration"
-
-      - name: Summary
+      - name: Explain Vercel Configuration
         run: |
           echo ""
-          echo "=== GITHUB ACTIONS CONFIGURATION STATUS ==="
-          echo "✅ GitHub Actions secrets verified"
+          echo "📝 Production configuration is separate: Vercel environment variables"
           echo ""
-          echo "Next steps:"
-          echo "1. Configure Vercel environment variables (separate system)"
-          echo "2. Deploy Supabase schema (if not already deployed)"
-          echo "3. Monitor Vercel deployment"
-          echo "4. Verify production application at your Vercel URL"
+          echo "Vercel (NOT GitHub Actions) requires these:"
+          echo "  1. NEXT_PUBLIC_SUPABASE_URL (from Supabase Dashboard → Settings → API)"
+          echo "  2. NEXT_PUBLIC_SUPABASE_ANON_KEY (from Supabase Dashboard → Settings → API)"
+          echo "  3. SUPABASE_SERVICE_ROLE_KEY (from Supabase Dashboard → Settings → API)"
+          echo "  4. NEXT_PUBLIC_APP_URL (your production URL)"
+          echo "  5. ADMIN_TOKEN (generate: openssl rand -hex 32)"
+          echo ""
+          echo "Configure in Vercel Dashboard → Your Project → Settings → Environment Variables"
+          echo ""
+          echo "After adding Vercel variables:"
+          echo "  1. Trigger a new production deployment in Vercel"
+          echo "  2. Wait for deployment to complete"
+          echo "  3. Test your production application"
