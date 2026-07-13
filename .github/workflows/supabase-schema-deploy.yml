@@ -70,25 +70,37 @@ jobs:
           sudo apt-get install -y postgresql-client
           psql --version
 
-      - name: Verify environment variables
+      - name: Extract and verify Supabase project ID
+        run: |
+          # Extract SUPABASE_PROJECT_ID from URL in .env.local or fallback
+          SUPABASE_PROJECT_ID=$(grep "SUPABASE_PROJECT_ID=" .env.local 2>/dev/null | cut -d'=' -f2 || echo "")
+          if [ -z "$SUPABASE_PROJECT_ID" ]; then
+            # Extract from NEXT_PUBLIC_SUPABASE_URL if available
+            SUPABASE_URL=$(grep "NEXT_PUBLIC_SUPABASE_URL=" .env.local 2>/dev/null | cut -d'=' -f2 || echo "")
+            if [ -z "$SUPABASE_URL" ]; then
+              echo "❌ SUPABASE_PROJECT_ID not found in .env.local"
+              exit 1
+            fi
+            SUPABASE_PROJECT_ID=$(echo "$SUPABASE_URL" | sed 's/https:\/\/\([^.]*\).*/\1/')
+          fi
+          echo "SUPABASE_PROJECT_ID=$SUPABASE_PROJECT_ID" >> $GITHUB_ENV
+          echo "✅ Supabase project ID extracted: $SUPABASE_PROJECT_ID"
+
+      - name: Verify database password secret
         env:
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          if [ -z "$SUPABASE_PROJECT_ID" ]; then
-            echo "❌ SUPABASE_PROJECT_ID not configured in GitHub secrets"
-            exit 1
-          fi
           if [ -z "$SUPABASE_DB_PASSWORD" ]; then
             echo "❌ SUPABASE_DB_PASSWORD not configured in GitHub secrets"
-            echo "   (Contact Founder: Get database password from Supabase Settings → Database)"
+            echo "   Required: Go to Settings → Secrets and variables → Actions"
+            echo "   Add new secret: SUPABASE_DB_PASSWORD"
+            echo "   Value: From Supabase Dashboard → Settings → Database → Password"
             exit 1
           fi
-          echo "✅ Required secrets are configured"
+          echo "✅ Database password secret is configured"
 
       - name: Deploy schema via PostgreSQL
         env:
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           set +e  # Don't exit on first error
@@ -144,7 +156,6 @@ jobs:
       - name: Run security tests
         if: success()
         env:
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "🔐 Running security tests..."
