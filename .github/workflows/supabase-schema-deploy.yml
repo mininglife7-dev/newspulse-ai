@@ -15,6 +15,10 @@ on:
         description: 'Supabase project ID (optional - uses SUPABASE_PROJECT_ID var if not provided)'
         required: false
         type: string
+      db_password:
+        description: 'Supabase database password (optional - uses SUPABASE_DB_PASSWORD secret if not provided)'
+        required: false
+        type: string
   # Uncomment to auto-deploy on push to main:
   # push:
   #   branches: [main]
@@ -79,7 +83,10 @@ jobs:
           PROJECT_ID_INPUT="${{ github.event.inputs.project_id }}"
           PROJECT_ID_VAR="${{ vars.SUPABASE_PROJECT_ID }}"
           PROJECT_ID="${PROJECT_ID_INPUT:-$PROJECT_ID_VAR}"
-          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
+
+          DB_PASSWORD_INPUT="${{ github.event.inputs.db_password }}"
+          DB_PASSWORD_SECRET="${{ secrets.SUPABASE_DB_PASSWORD }}"
+          DB_PASSWORD="${DB_PASSWORD_INPUT:-$DB_PASSWORD_SECRET}"
 
           echo "🔍 Configuration Accessibility Check"
           echo "---"
@@ -94,14 +101,19 @@ jobs:
             echo "✅ SUPABASE_PROJECT_ID repository variable: ${#PROJECT_ID_VAR} characters"
           fi
 
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "❌ SUPABASE_DB_PASSWORD secret: EMPTY"
+          if [ -n "$DB_PASSWORD_INPUT" ]; then
+            echo "✅ DB_PASSWORD from workflow input: PRESENT"
+          fi
+
+          if [ -z "$DB_PASSWORD_SECRET" ]; then
+            echo "⚠️  SUPABASE_DB_PASSWORD repository secret: NOT SET"
           else
-            echo "✅ SUPABASE_DB_PASSWORD secret: PRESENT"
+            echo "✅ SUPABASE_DB_PASSWORD repository secret: PRESENT"
           fi
 
           echo "---"
           echo "Final PROJECT_ID source: $([ -n "$PROJECT_ID_INPUT" ] && echo "INPUT" || echo "VARIABLE")"
+          echo "Final DB_PASSWORD source: $([ -n "$DB_PASSWORD_INPUT" ] && echo "INPUT" || echo "SECRET")"
           echo "Repository: ${{ github.repository }}"
           echo "Workflow SHA: ${{ github.sha }}"
           echo "Job environment: ${GITHUB_JOB}"
@@ -138,16 +150,29 @@ jobs:
 
       - name: Verify database password secret
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          DB_PASSWORD_INPUT: ${{ github.event.inputs.db_password }}
+          DB_PASSWORD_SECRET: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "❌ SUPABASE_DB_PASSWORD not configured in GitHub secrets"
-            echo "   Required: Go to Settings → Secrets and variables → Actions"
-            echo "   Add new secret: SUPABASE_DB_PASSWORD"
-            echo "   Value: From Supabase Dashboard → Settings → Database → Password"
+          # Use input if provided, otherwise use secret
+          DB_PASSWORD="${DB_PASSWORD_INPUT:-$DB_PASSWORD_SECRET}"
+
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "❌ SUPABASE_DB_PASSWORD not configured"
+            echo "   Option 1: Set GitHub repository secret: SUPABASE_DB_PASSWORD"
+            echo "     Path: Settings → Secrets and variables → Actions → New repository secret"
+            echo "   Option 2: Pass as workflow input when triggering (db_password parameter)"
+            echo "   Value source: Supabase Dashboard → Settings → Database → Password"
             exit 1
           fi
-          echo "✅ Database password secret is configured"
+
+          if [ -n "$DB_PASSWORD_INPUT" ]; then
+            echo "✅ Database password from workflow input"
+          else
+            echo "✅ Database password from GitHub secret"
+          fi
+
+          # Export for use in next steps
+          echo "SUPABASE_DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
 
       - name: Deploy schema via PostgreSQL
         env:
