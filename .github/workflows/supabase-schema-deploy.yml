@@ -70,6 +70,34 @@ jobs:
           sudo apt-get install -y postgresql-client
           psql --version
 
+      - name: Diagnostic - Verify configuration accessibility
+        run: |
+          PROJECT_ID="${{ vars.SUPABASE_PROJECT_ID }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
+
+          echo "🔍 Configuration Accessibility Check"
+          echo "---"
+
+          if [ -z "$PROJECT_ID" ]; then
+            echo "❌ SUPABASE_PROJECT_ID: EMPTY"
+          else
+            PROJECT_ID_LENGTH=${#PROJECT_ID}
+            echo "✅ SUPABASE_PROJECT_ID: PRESENT ($PROJECT_ID_LENGTH characters)"
+          fi
+
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "❌ SUPABASE_DB_PASSWORD: EMPTY"
+          else
+            echo "✅ SUPABASE_DB_PASSWORD: PRESENT"
+          fi
+
+          echo "---"
+          echo "Repository: ${{ github.repository }}"
+          echo "Workflow SHA: ${{ github.sha }}"
+          echo "Job environment: ${GITHUB_JOB}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+
       - name: Validate Supabase configuration
         run: |
           PROJECT_ID="${{ vars.SUPABASE_PROJECT_ID }}"
