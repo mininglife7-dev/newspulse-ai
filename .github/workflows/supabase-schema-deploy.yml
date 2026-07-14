@@ -11,6 +11,10 @@ on:
         options:
           - production
           - staging
+      project_id:
+        description: 'Supabase project ID (optional - uses SUPABASE_PROJECT_ID var if not provided)'
+        required: false
+        type: string
   # Uncomment to auto-deploy on push to main:
   # push:
   #   branches: [main]
@@ -72,26 +76,32 @@ jobs:
 
       - name: Diagnostic - Verify configuration accessibility
         run: |
-          PROJECT_ID="${{ vars.SUPABASE_PROJECT_ID }}"
+          PROJECT_ID_INPUT="${{ github.event.inputs.project_id }}"
+          PROJECT_ID_VAR="${{ vars.SUPABASE_PROJECT_ID }}"
+          PROJECT_ID="${PROJECT_ID_INPUT:-$PROJECT_ID_VAR}"
           DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
 
           echo "🔍 Configuration Accessibility Check"
           echo "---"
 
-          if [ -z "$PROJECT_ID" ]; then
-            echo "❌ SUPABASE_PROJECT_ID: EMPTY"
+          if [ -n "$PROJECT_ID_INPUT" ]; then
+            echo "✅ PROJECT_ID from workflow input: ${#PROJECT_ID_INPUT} characters"
+          fi
+
+          if [ -z "$PROJECT_ID_VAR" ]; then
+            echo "⚠️  SUPABASE_PROJECT_ID repository variable: NOT SET"
           else
-            PROJECT_ID_LENGTH=${#PROJECT_ID}
-            echo "✅ SUPABASE_PROJECT_ID: PRESENT ($PROJECT_ID_LENGTH characters)"
+            echo "✅ SUPABASE_PROJECT_ID repository variable: ${#PROJECT_ID_VAR} characters"
           fi
 
           if [ -z "$DB_PASSWORD" ]; then
-            echo "❌ SUPABASE_DB_PASSWORD: EMPTY"
+            echo "❌ SUPABASE_DB_PASSWORD secret: EMPTY"
           else
-            echo "✅ SUPABASE_DB_PASSWORD: PRESENT"
+            echo "✅ SUPABASE_DB_PASSWORD secret: PRESENT"
           fi
 
           echo "---"
+          echo "Final PROJECT_ID source: $([ -n "$PROJECT_ID_INPUT" ] && echo "INPUT" || echo "VARIABLE")"
           echo "Repository: ${{ github.repository }}"
           echo "Workflow SHA: ${{ github.sha }}"
           echo "Job environment: ${GITHUB_JOB}"
@@ -100,14 +110,18 @@ jobs:
 
       - name: Validate Supabase configuration
         run: |
-          PROJECT_ID="${{ vars.SUPABASE_PROJECT_ID }}"
+          # Use input if provided, otherwise fall back to repository variable
+          PROJECT_ID="${{ github.event.inputs.project_id }}"
+          if [ -z "$PROJECT_ID" ]; then
+            PROJECT_ID="${{ vars.SUPABASE_PROJECT_ID }}"
+          fi
 
           # Fail-closed: project ID must be present
           if [ -z "$PROJECT_ID" ]; then
-            echo "❌ SUPABASE_PROJECT_ID repository variable not configured"
-            echo "   Required: GitHub repository Settings → Variables → Actions"
-            echo "   Create variable: SUPABASE_PROJECT_ID"
-            echo "   Value: Supabase project reference (from project URL)"
+            echo "❌ SUPABASE_PROJECT_ID not configured"
+            echo "   Option 1: Set GitHub repository variable: SUPABASE_PROJECT_ID"
+            echo "     Path: Settings → Secrets and variables → Actions → New repository variable"
+            echo "   Option 2: Pass as workflow input when triggering"
             exit 1
           fi
 
@@ -115,6 +129,7 @@ jobs:
           if ! echo "$PROJECT_ID" | grep -E '^[a-z0-9]+$' > /dev/null; then
             echo "❌ SUPABASE_PROJECT_ID format invalid"
             echo "   Expected: lowercase alphanumeric characters only"
+            echo "   Got: $PROJECT_ID"
             exit 1
           fi
 
