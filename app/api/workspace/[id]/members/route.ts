@@ -8,8 +8,9 @@ interface InviteMemberBody {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = await createRouteClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -25,7 +26,7 @@ export async function GET(
     const { data: membership } = await supabase
       .from('workspace_members')
       .select('workspace_id')
-      .eq('workspace_id', params.id)
+      .eq('workspace_id', id)
       .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
@@ -41,7 +42,7 @@ export async function GET(
     const { data: members, error } = await supabase
       .from('workspace_members')
       .select('id, user_id, email, role, status, joined_at, invited_at')
-      .eq('workspace_id', params.id)
+      .eq('workspace_id', id)
       .order('joined_at', { ascending: false, nullsFirst: true });
 
     if (error) throw error;
@@ -61,8 +62,9 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   let body: InviteMemberBody;
   try {
     body = await req.json();
@@ -96,7 +98,7 @@ export async function POST(
     const { data: userMembership } = await supabase
       .from('workspace_members')
       .select('role')
-      .eq('workspace_id', params.id)
+      .eq('workspace_id', id)
       .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
@@ -112,7 +114,7 @@ export async function POST(
     const { data: existing } = await supabase
       .from('workspace_members')
       .select('id')
-      .eq('workspace_id', params.id)
+      .eq('workspace_id', id)
       .eq('email', body.email.toLowerCase())
       .single();
 
@@ -127,7 +129,7 @@ export async function POST(
     const { data: invitation, error: inviteError } = await supabase
       .from('workspace_members')
       .insert({
-        workspace_id: params.id,
+        workspace_id: id,
         email: body.email.toLowerCase(),
         role: body.role || 'member',
         status: 'pending',

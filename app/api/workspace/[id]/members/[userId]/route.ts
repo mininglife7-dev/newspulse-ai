@@ -8,8 +8,9 @@ interface UpdateMemberBody {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string; userId: string } }
+  { params }: { params: Promise<{ id: string; userId: string }> }
 ) {
+  const { id, userId } = await params;
   let body: UpdateMemberBody;
   try {
     body = await req.json();
@@ -35,8 +36,8 @@ export async function PATCH(
     const { data: targetMember } = await supabase
       .from('workspace_members')
       .select('*')
-      .eq('workspace_id', params.id)
-      .eq('id', params.userId)
+      .eq('workspace_id', id)
+      .eq('id', userId)
       .single();
 
     if (!targetMember) {
@@ -50,7 +51,7 @@ export async function PATCH(
     const { data: userMembership } = await supabase
       .from('workspace_members')
       .select('role')
-      .eq('workspace_id', params.id)
+      .eq('workspace_id', id)
       .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
@@ -61,8 +62,8 @@ export async function PATCH(
       const { data: invitedUser } = await supabase
         .from('workspace_members')
         .select('id')
-        .eq('workspace_id', params.id)
-        .eq('id', params.userId)
+        .eq('workspace_id', id)
+        .eq('id', userId)
         .eq('user_id', user.id)
         .single();
 
@@ -87,7 +88,7 @@ export async function PATCH(
           status: 'active',
           joined_at: new Date().toISOString(),
         })
-        .eq('id', params.userId)
+        .eq('id', userId)
         .select('*')
         .single();
 
@@ -114,7 +115,7 @@ export async function PATCH(
       const { error: deleteError } = await supabase
         .from('workspace_members')
         .delete()
-        .eq('id', params.userId);
+        .eq('id', userId);
 
       if (deleteError) throw deleteError;
 
@@ -145,7 +146,7 @@ export async function PATCH(
       const { error: deleteError } = await supabase
         .from('workspace_members')
         .delete()
-        .eq('id', params.userId);
+        .eq('id', userId);
 
       if (deleteError) throw deleteError;
 
@@ -183,7 +184,7 @@ export async function PATCH(
       const { data: updated, error: updateError } = await supabase
         .from('workspace_members')
         .update({ role: body.role })
-        .eq('id', params.userId)
+        .eq('id', userId)
         .select('*')
         .single();
 

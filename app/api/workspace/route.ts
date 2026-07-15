@@ -100,8 +100,8 @@ export async function POST(req: Request) {
   let company: { id: string };
 
   try {
-    const result = await withTimeout(
-      supabase.rpc('create_workspace_atomic', {
+    const rpcCall = async () => {
+      return supabase.rpc('create_workspace_atomic', {
         p_slug: slug,
         p_name: companyName,
         p_description: body.description?.trim() || null,
@@ -112,8 +112,10 @@ export async function POST(req: Request) {
         p_employees_range: body.employees?.trim() || null,
         p_website: body.website?.trim() || null,
         p_governance_priorities: body.description?.trim() || null,
-      })
-    );
+      });
+    };
+
+    const result = await withTimeout(rpcCall());
 
     const data = result.data as { success: boolean; workspace_id?: string; company_id?: string; error?: string };
 
@@ -146,11 +148,12 @@ export async function POST(req: Request) {
   // profile row may not exist if the signup trigger isn't installed).
   try {
     await withTimeout(
-      supabase.from('profiles').upsert({
-        id: user.id,
-        email: user.email ?? '',
-        current_workspace_id: workspace.id,
-      })
+      (async () =>
+        supabase.from('profiles').upsert({
+          id: user.id,
+          email: user.email ?? '',
+          current_workspace_id: workspace.id,
+        }))()
     );
   } catch (error) {
     console.warn('[api/workspace] profile upsert timeout/error:', error);
