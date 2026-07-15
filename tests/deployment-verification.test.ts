@@ -290,7 +290,11 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       const dbCheck = report!.checks.find((c) => c.type === 'database-connectivity');
       if (dbCheck && dbCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
-        expect(['HOLD', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        // With a single failure among many checks the pass rate stays >=80%, so
+        // the decision is RETRY; only multiple failures drop it to HOLD/ROLLBACK/
+        // ESCALATE. Omitting RETRY here made this test flaky (matches the
+        // api-availability case above).
+        expect(['RETRY', 'HOLD', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
       }
     });
 
