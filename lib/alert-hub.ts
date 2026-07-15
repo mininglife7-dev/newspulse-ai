@@ -50,7 +50,11 @@ const alertStore = new Map<string, Alert>();
 /**
  * Generate deterministic alert ID from source and content
  */
-function generateAlertId(source: AlertSource, title: string, timestamp: string): string {
+function generateAlertId(
+  source: AlertSource,
+  title: string,
+  timestamp: string
+): string {
   // Simple hash of source + title for deduplication
   const content = `${source}:${title}`;
   let hash = 0;
@@ -128,8 +132,12 @@ export function getActiveAlerts(): Alert[] {
  */
 export function getAlertHubReport(): AlertHubReport {
   const activeAlerts = getActiveAlerts();
-  const criticalCount = activeAlerts.filter((a) => a.severity === 'critical').length;
-  const warningCount = activeAlerts.filter((a) => a.severity === 'warning').length;
+  const criticalCount = activeAlerts.filter(
+    (a) => a.severity === 'critical'
+  ).length;
+  const warningCount = activeAlerts.filter(
+    (a) => a.severity === 'warning'
+  ).length;
   const infoCount = activeAlerts.filter((a) => a.severity === 'info').length;
 
   let summary = '';

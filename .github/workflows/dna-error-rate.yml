@@ -2,8 +2,11 @@ name: DNA-GOV-004 - Error Rate Monitor
 
 on:
   schedule:
-    # Every 5 minutes
-    - cron: '*/5 * * * *'
+    # Every 6 hours. Was */5 (288 runs/day) which — across all DNA monitors —
+    # exhausted the repo's GitHub Actions minutes and took CI down entirely.
+    # Run on-demand any time via workflow_dispatch; for tighter monitoring use a
+    # dedicated uptime service against /api/health (blocker M-06) rather than CI.
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 jobs:

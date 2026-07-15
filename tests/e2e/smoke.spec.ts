@@ -17,7 +17,9 @@ test('home page renders landing page with governance messaging', async ({
     'AI Governance'
   );
   // Check for CTA buttons
-  await expect(page.getByRole('link', { name: /Start Free Trial/ })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /Start Free Trial/ })
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: /Learn More/ })).toBeVisible();
 });
 
@@ -58,8 +60,61 @@ test('auth pages render for signed-out visitors', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Create your account'
   );
+  // The consent checkbox must link to the real legal pages, not dead anchors —
+  // users are agreeing to terms they must be able to read. Scope to the form
+  // (main) so the footer's own legal links don't create an ambiguous match.
+  const main = page.getByRole('main');
+  await expect(
+    main.getByRole('link', { name: 'Terms of Service' })
+  ).toHaveAttribute('href', '/terms');
+  await expect(
+    main.getByRole('link', { name: 'Privacy Policy' })
+  ).toHaveAttribute('href', '/privacy');
+
   await page.goto('/auth/signin');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Welcome back'
   );
+  // "Forgot password?" must reach the real reset flow, not a dead anchor.
+  await expect(
+    page.getByRole('link', { name: 'Forgot password?' })
+  ).toHaveAttribute('href', '/auth/reset');
+});
+
+test('password reset request page renders for signed-out visitors', async ({
+  page,
+}) => {
+  await page.goto('/auth/reset');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Reset your password'
+  );
+  await expect(
+    page.getByRole('button', { name: /Send reset link/ })
+  ).toBeVisible();
+});
+
+test('set-new-password page renders (reachable with a recovery session)', async ({
+  page,
+}) => {
+  await page.goto('/auth/reset-password');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Set a new password'
+  );
+  await expect(
+    page.getByRole('button', { name: /Update password/ })
+  ).toBeVisible();
+});
+
+test('verify-email offers a working resend control when an email is known', async ({
+  page,
+}) => {
+  await page.goto('/auth/verify-email?email=e2e%40example.com');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Verify your email'
+  );
+  // The "resend verification link" must be an interactive control, not a
+  // dead <a href="#">.
+  await expect(
+    page.getByRole('button', { name: /resend verification link/ })
+  ).toBeEnabled();
 });

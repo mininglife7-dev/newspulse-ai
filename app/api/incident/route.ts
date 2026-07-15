@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { commandIncident, commandToAlert, type IncidentTrigger } from '@/lib/incident-commander';
+import {
+  commandIncident,
+  commandToAlert,
+  type IncidentTrigger,
+} from '@/lib/incident-commander';
 import { recordAlert } from '@/lib/alert-hub';
 import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { logger } from '@/lib/logger';
@@ -45,7 +49,12 @@ export async function POST(req: NextRequest) {
 
     // Validate trigger using schema
     const validationResult = validate(body, {
-      type: validators.enum(['error_rate', 'latency', 'availability', 'cost_spike'] as const),
+      type: validators.enum([
+        'error_rate',
+        'latency',
+        'availability',
+        'cost_spike',
+      ] as const),
       severity: validators.enum(['warning', 'critical'] as const),
       metric: validators.string({ maxLength: 255 }),
       threshold: validators.number({ min: 0 }),
@@ -68,14 +77,17 @@ export async function POST(req: NextRequest) {
     const validated = validationResult.value as IncidentTrigger;
     const command = await commandIncident(validated);
 
-    // Convert to alert and record
+    // Convert to alert and record. recordAlert takes the alert fields
+    // positionally (same as every other DNA source), so unpack the alert.
     const alert = commandToAlert(command);
     recordAlert(
       'incident-commander',
       alert.severity as 'critical' | 'warning' | 'info',
       alert.title,
       alert.message,
-      command.decision === 'autorollback' ? 'Auto-rollback completed' : 'Escalate to manual incident review'
+      command.decision === 'autorollback'
+        ? 'Auto-rollback completed'
+        : 'Escalate to manual incident review'
     );
 
     const status = command.decision === 'autorollback' ? 200 : 202; // 200 for executed, 202 for pending

@@ -20,12 +20,19 @@ function stubClient() {
           const failed = state.failTable === table;
           const result = failed
             ? { data: null, error: { message: `boom:${table}` } }
-            : { data: { id: `${table}-id`, slug: 'acme-1234', name: row.name }, error: null };
+            : {
+                data: { id: `${table}-id`, slug: 'acme-1234', name: row.name },
+                error: null,
+              };
           return {
             select: () => ({ single: async () => result }),
             // insert without .select() resolves directly (workspace_members)
             then: (resolve: any) =>
-              resolve(failed ? { error: { message: `boom:${table}` } } : { error: null }),
+              resolve(
+                failed
+                  ? { error: { message: `boom:${table}` } }
+                  : { error: null }
+              ),
           };
         },
         upsert: async (row: any) => {
@@ -42,6 +49,23 @@ vi.mock('@/lib/supabase-server', () => ({
 }));
 // The route imports 'server-only' transitively via lib/supabase-server —
 // mocking createRouteClient avoids that, but the route file itself is safe.
+
+// Records service-role rollback deletes so we can assert orphan cleanup.
+const adminDeletes: { table: string; id: string }[] = [];
+vi.mock('@/lib/supabase', () => ({
+  getSupabaseAdmin: () => ({
+    from(table: string) {
+      return {
+        delete: () => ({
+          eq: async (_col: string, val: string) => {
+            adminDeletes.push({ table, id: val });
+            return { error: null };
+          },
+        }),
+      };
+    },
+  }),
+}));
 
 import { POST } from '@/app/api/workspace/route';
 
@@ -66,6 +90,7 @@ beforeEach(() => {
   state.user = { id: 'user-1', email: 'ceo@acme.example' };
   state.inserts = {};
   state.failTable = null;
+  adminDeletes.length = 0;
 });
 
 describe('POST /api/workspace', () => {
@@ -129,5 +154,27 @@ describe('POST /api/workspace', () => {
     state.failTable = 'workspaces';
     const res = await POST(request(validBody));
     expect(res.status).toBe(500);
+    // Nothing was committed, so there is nothing to roll back.
+    expect(adminDeletes).toHaveLength(0);
+  });
+
+  it('rolls back the orphan workspace when membership creation fails', async () => {
+    state.failTable = 'workspace_members';
+    const res = await POST(request(validBody));
+    expect(res.status).toBe(500);
+    expect(adminDeletes).toContainEqual({
+      table: 'workspaces',
+      id: 'workspaces-id',
+    });
+  });
+
+  it('rolls back the orphan workspace when company creation fails', async () => {
+    state.failTable = 'companies';
+    const res = await POST(request(validBody));
+    expect(res.status).toBe(500);
+    expect(adminDeletes).toContainEqual({
+      table: 'workspaces',
+      id: 'workspaces-id',
+    });
   });
 });

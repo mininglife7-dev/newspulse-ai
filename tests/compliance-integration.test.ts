@@ -40,7 +40,9 @@ describe('Compliance System Integration', () => {
       );
 
       // Verify critical obligations exist
-      const criticalCount = templates.filter((t) => t.priority === 'critical').length;
+      const criticalCount = templates.filter(
+        (t) => t.priority === 'critical'
+      ).length;
       expect(criticalCount).toBeGreaterThan(0);
     });
 
@@ -87,9 +89,9 @@ describe('Compliance System Integration', () => {
     });
 
     it('should generate low-risk obligations when assessment is low-risk', () => {
-      const answers = new Map<string, any>([
+      const answers = new Map<string, boolean>(
         // No risky indicators
-      ]);
+      );
       const assessment = classifyRisk(answers);
 
       if (assessment.riskLevel === 'low') {
@@ -153,9 +155,9 @@ describe('Compliance System Integration', () => {
       ).toBe(true);
 
       // High should have critical and high
-      expect(
-        high.every((t) => ['critical', 'high'].includes(t.priority))
-      ).toBe(true);
+      expect(high.every((t) => ['critical', 'high'].includes(t.priority))).toBe(
+        true
+      );
 
       // Medium should not have critical
       expect(medium.every((t) => t.priority !== 'critical')).toBe(true);
@@ -193,7 +195,7 @@ describe('Compliance System Integration', () => {
     });
 
     it('should handle empty assessment (no indicators)', () => {
-      const answers = new Map<string, any>([]); // No answers provided
+      const answers = new Map<string, boolean>(); // No answers provided
       const assessment = classifyRisk(answers);
 
       expect(assessment.riskLevel).toBe('low');
@@ -218,12 +220,20 @@ describe('Compliance System Integration', () => {
       // Simulate metric calculation
       const metrics = {
         total: mockObligations.length,
-        identified: mockObligations.filter((o) => o.status === 'identified').length,
-        in_progress: mockObligations.filter((o) => o.status === 'in_progress').length,
-        completed: mockObligations.filter((o) => o.status === 'completed').length,
-        not_applicable: mockObligations.filter((o) => o.status === 'not_applicable').length,
-        critical_priority: mockObligations.filter((o) => o.priority === 'critical').length,
-        high_priority: mockObligations.filter((o) => o.priority === 'high').length,
+        identified: mockObligations.filter((o) => o.status === 'identified')
+          .length,
+        in_progress: mockObligations.filter((o) => o.status === 'in_progress')
+          .length,
+        completed: mockObligations.filter((o) => o.status === 'completed')
+          .length,
+        not_applicable: mockObligations.filter(
+          (o) => o.status === 'not_applicable'
+        ).length,
+        critical_priority: mockObligations.filter(
+          (o) => o.priority === 'critical'
+        ).length,
+        high_priority: mockObligations.filter((o) => o.priority === 'high')
+          .length,
       };
 
       expect(metrics.total).toBe(6);
@@ -236,7 +246,10 @@ describe('Compliance System Integration', () => {
 
       // Verify sum
       expect(
-        metrics.identified + metrics.in_progress + metrics.completed + metrics.not_applicable
+        metrics.identified +
+          metrics.in_progress +
+          metrics.completed +
+          metrics.not_applicable
       ).toBe(metrics.total);
     });
 
@@ -252,7 +265,8 @@ describe('Compliance System Integration', () => {
       };
 
       // Critical if critical_priority > 0
-      const complianceHealth = obligationMetrics.critical_priority > 0 ? 'critical' : 'good';
+      const complianceHealth =
+        obligationMetrics.critical_priority > 0 ? 'critical' : 'good';
       expect(complianceHealth).toBe('critical');
     });
 
@@ -272,7 +286,9 @@ describe('Compliance System Integration', () => {
         obligationMetrics.completed + obligationMetrics.not_applicable ===
         obligationMetrics.total;
       const complianceHealth =
-        allResolved && obligationMetrics.critical_priority === 0 ? 'excellent' : 'good';
+        allResolved && obligationMetrics.critical_priority === 0
+          ? 'excellent'
+          : 'good';
 
       expect(complianceHealth).toBe('excellent');
     });
@@ -301,10 +317,14 @@ describe('Compliance System Integration', () => {
 
       // Simulate progressive answering
       const checkpoints = [0, 5, 10, 18];
-      const expectedProgress = checkpoints.map((count) => (count / totalQuestions) * 100);
+      const expectedProgress = checkpoints.map(
+        (count) => (count / totalQuestions) * 100
+      );
 
       checkpoints.forEach((checkpoint, index) => {
-        expect(expectedProgress[index]).toBe((checkpoint / totalQuestions) * 100);
+        expect(expectedProgress[index]).toBe(
+          (checkpoint / totalQuestions) * 100
+        );
       });
 
       // Final should be 100%

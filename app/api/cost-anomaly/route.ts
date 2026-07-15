@@ -32,7 +32,9 @@ export async function GET(req: Request) {
   try {
     const report = await detectCostAnomalies();
 
-    // Convert anomalies to alert hub format and record
+    // Convert anomalies to alert hub format and record. recordAlert takes the
+    // alert fields positionally (same as every other DNA source), so unpack
+    // each generated alert into it.
     const alerts = anomaliesToAlerts(report);
     for (const alert of alerts) {
       recordAlert(
@@ -52,15 +54,25 @@ export async function GET(req: Request) {
 
     // Log anomalies (safe for production)
     if (report.anomalies.length > 0) {
-      const hasCritical = report.anomalies.some((a) => a.severity === 'critical');
+      const hasCritical = report.anomalies.some(
+        (a) => a.severity === 'critical'
+      );
       if (hasCritical) {
-        logger.error('Cost anomalies detected: critical', 'COST_ANOMALY_CRITICAL', {
-          anomalyCount: report.anomalies.length,
-        });
+        logger.error(
+          'Cost anomalies detected: critical',
+          'COST_ANOMALY_CRITICAL',
+          {
+            anomalyCount: report.anomalies.length,
+          }
+        );
       } else {
-        logger.warn('Cost anomalies detected: high severity', 'COST_ANOMALY_WARNING', {
-          anomalyCount: report.anomalies.length,
-        });
+        logger.warn(
+          'Cost anomalies detected: high severity',
+          'COST_ANOMALY_WARNING',
+          {
+            anomalyCount: report.anomalies.length,
+          }
+        );
       }
     }
 
