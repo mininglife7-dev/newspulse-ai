@@ -86,9 +86,16 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
 
       expect(report).toBeDefined();
       if (report!.overallHealth === 'critical') {
-        expect(['ROLLBACK', 'ESCALATE']).toContain(report!.decision);
-        expect(report!.canRollback).toBe(true);
-        expect(report!.recommendedAction).toMatch(/Rollback|Escalate/);
+        // >=3 hard failures cap the pass rate at 70%, so the decision is
+        // HOLD, ROLLBACK, or ESCALATE — never PASS/RETRY. Exactly 3 failures
+        // lands on HOLD (70%), which the old ROLLBACK/ESCALATE-only set and
+        // the unconditional canRollback assertion both got wrong.
+        expect(['HOLD', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        // canRollback is only set for ROLLBACK/RETRY (determineRollbackDecision).
+        if (report!.decision === 'ROLLBACK') {
+          expect(report!.canRollback).toBe(true);
+        }
+        expect(report!.recommendedAction).toMatch(/Rollback|Escalate|Investigate/);
       }
     });
 
