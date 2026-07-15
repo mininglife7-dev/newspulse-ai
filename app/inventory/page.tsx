@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Cpu,
   Loader2,
+  Pencil,
   Plus,
   Trash2,
 } from 'lucide-react';
@@ -39,6 +40,14 @@ const STATUS_BADGE: Record<string, string> = {
   deprecated: 'bg-slate-800/60 text-slate-400 border-slate-700',
 };
 
+const EMPTY_FORM = {
+  name: '',
+  systemType: '',
+  vendor: '',
+  purpose: '',
+  status: 'active',
+};
+
 export default function InventoryPage() {
   const [systems, setSystems] = useState<AiSystem[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -48,13 +57,8 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    name: '',
-    systemType: '',
-    vendor: '',
-    purpose: '',
-    status: 'active',
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -103,6 +107,33 @@ export default function InventoryPage() {
     }
   };
 
+  const startAdd = () => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setFormError(null);
+    setShowForm((v) => !v);
+  };
+
+  const startEdit = (s: AiSystem) => {
+    setEditingId(s.id);
+    setForm({
+      name: s.name,
+      systemType: s.system_type ?? '',
+      vendor: s.vendor ?? '',
+      purpose: s.purpose ?? '',
+      status: s.status,
+    });
+    setFormError(null);
+    setShowForm(true);
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setFormError(null);
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError(null);
@@ -112,14 +143,18 @@ export default function InventoryPage() {
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/ai-systems', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        editingId ? `/api/ai-systems/${editingId}` : '/api/ai-systems',
+        {
+          method: editingId ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        }
+      );
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to save');
-      setForm({ name: '', systemType: '', vendor: '', purpose: '', status: 'active' });
+      setForm(EMPTY_FORM);
+      setEditingId(null);
       setShowForm(false);
       await load();
     } catch (err: any) {
@@ -175,7 +210,7 @@ export default function InventoryPage() {
                 : `${systems.length} system${systems.length === 1 ? '' : 's'} registered`}
             </div>
             <button
-              onClick={() => setShowForm((v) => !v)}
+              onClick={startAdd}
               className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-blue-500/40"
             >
               <Plus className="h-4 w-4" />
@@ -188,6 +223,9 @@ export default function InventoryPage() {
               onSubmit={handleSubmit}
               className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/50 p-6"
             >
+              <h2 className="text-sm font-semibold text-white">
+                {editingId ? 'Edit AI system' : 'Register a new AI system'}
+              </h2>
               {formError && (
                 <div className="flex items-center gap-2 rounded-md border border-red-800/60 bg-red-950/30 px-4 py-2 text-sm text-red-200">
                   <AlertCircle className="h-4 w-4" /> {formError}
@@ -272,11 +310,15 @@ export default function InventoryPage() {
                   className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-blue-500/40 disabled:opacity-60"
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {saving ? 'Saving…' : 'Save system'}
+                  {saving
+                    ? 'Saving…'
+                    : editingId
+                      ? 'Update system'
+                      : 'Save system'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={cancelForm}
                   className="rounded-lg border border-slate-700 px-5 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
                 >
                   Cancel
@@ -320,6 +362,14 @@ export default function InventoryPage() {
                       >
                         {s.status}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(s)}
+                        aria-label={`Edit ${s.name}`}
+                        className="inline-flex items-center rounded-md p-1.5 text-slate-500 transition hover:bg-blue-950/40 hover:text-blue-300"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(s.id, s.name)}
