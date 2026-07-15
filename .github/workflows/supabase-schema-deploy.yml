@@ -35,6 +35,11 @@ jobs:
             exit 1
           fi
           echo "✅ Schema file found ($(wc -l < supabase/schema.sql) lines)"
+          if [ ! -f "supabase/ceis-schema.sql" ]; then
+            echo "❌ supabase/ceis-schema.sql not found"
+            exit 1
+          fi
+          echo "✅ CEIS schema file found ($(wc -l < supabase/ceis-schema.sql) lines)"
 
       - name: Validate schema syntax (basic)
         run: |
@@ -71,20 +76,31 @@ jobs:
           psql --version
 
       - name: Extract and verify Supabase project ID
+        env:
+          # CI has no .env.local — resolve from repo variables/secrets first.
+          VAR_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          SECRET_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          VAR_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SECRET_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         run: |
-          # Extract SUPABASE_PROJECT_ID from URL in .env.local or fallback
-          SUPABASE_PROJECT_ID=$(grep "SUPABASE_PROJECT_ID=" .env.local 2>/dev/null | cut -d'=' -f2 || echo "")
+          SUPABASE_PROJECT_ID="${VAR_PROJECT_ID:-$SECRET_PROJECT_ID}"
           if [ -z "$SUPABASE_PROJECT_ID" ]; then
-            # Extract from NEXT_PUBLIC_SUPABASE_URL if available
-            SUPABASE_URL=$(grep "NEXT_PUBLIC_SUPABASE_URL=" .env.local 2>/dev/null | cut -d'=' -f2 || echo "")
+            SUPABASE_URL="${VAR_SUPABASE_URL:-$SECRET_SUPABASE_URL}"
+            # Local-run fallback only; .env.local is never present in CI checkouts.
+            if [ -z "$SUPABASE_URL" ] && [ -f .env.local ]; then
+              SUPABASE_URL=$(grep "NEXT_PUBLIC_SUPABASE_URL=" .env.local | cut -d'=' -f2 || echo "")
+            fi
             if [ -z "$SUPABASE_URL" ]; then
-              echo "❌ SUPABASE_PROJECT_ID not found in .env.local"
+              echo "❌ Cannot resolve the Supabase project."
+              echo "   Set ONE of these in Settings → Secrets and variables → Actions:"
+              echo "   - variable or secret SUPABASE_PROJECT_ID (the <ref> in https://<ref>.supabase.co)"
+              echo "   - variable or secret NEXT_PUBLIC_SUPABASE_URL"
               exit 1
             fi
             SUPABASE_PROJECT_ID=$(echo "$SUPABASE_URL" | sed 's/https:\/\/\([^.]*\).*/\1/')
           fi
           echo "SUPABASE_PROJECT_ID=$SUPABASE_PROJECT_ID" >> $GITHUB_ENV
-          echo "✅ Supabase project ID extracted: $SUPABASE_PROJECT_ID"
+          echo "✅ Supabase project ID resolved: $SUPABASE_PROJECT_ID"
 
       - name: Verify database password secret
         env:
@@ -136,6 +152,19 @@ jobs:
             echo "❌ Schema deployment failed"
             cat /tmp/deploy.log | tail -20
             deployment_success=0
+          fi
+
+          # Deploy the CEIS schema (DNA-300) — idempotent, five ceis_* tables
+          if [ $deployment_success -eq 1 ]; then
+            echo ""
+            echo "🧬 Deploying CEIS schema..."
+            if psql -f supabase/ceis-schema.sql > /tmp/ceis-deploy.log 2>&1; then
+              echo "✅ CEIS schema deployed successfully"
+            else
+              echo "❌ CEIS schema deployment failed"
+              cat /tmp/ceis-deploy.log | tail -20
+              deployment_success=0
+            fi
           fi
 
           # Run verification
