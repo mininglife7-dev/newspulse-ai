@@ -144,21 +144,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // 4. Point the user's profile at their new workspace (best effort —
-  // profile row may not exist if the signup trigger isn't installed).
-  try {
-    await withTimeout(
-      (async () =>
-        supabase.from('profiles').upsert({
-          id: user.id,
-          email: user.email ?? '',
-          current_workspace_id: workspace.id,
-        }))()
-    );
-  } catch (error) {
-    console.warn('[api/workspace] profile upsert timeout/error:', error);
-    // Non-fatal: continue anyway, workspace is already created
-  }
 
   return NextResponse.json({
     ok: true,

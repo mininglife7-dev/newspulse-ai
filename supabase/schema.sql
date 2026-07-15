@@ -21,7 +21,6 @@ create table if not exists public.profiles (
     email             text        not null,
     first_name        text,
     last_name         text,
-    current_workspace_id uuid,
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
