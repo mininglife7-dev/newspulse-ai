@@ -78,3 +78,17 @@ export async function updatePassword(newPassword: string) {
 
   if (error) throw error;
 }
+
+export async function resendVerificationEmail(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/confirm`
+        : process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm` : undefined,
+    },
+  });
+
+  if (error) throw error;
+}
