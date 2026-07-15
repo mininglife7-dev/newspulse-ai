@@ -87,7 +87,7 @@ describe('Compliance System Integration', () => {
     });
 
     it('should generate low-risk obligations when assessment is low-risk', () => {
-      const answers = new Map([
+      const answers = new Map<string, any>([
         // No risky indicators
       ]);
       const assessment = classifyRisk(answers);
@@ -193,7 +193,7 @@ describe('Compliance System Integration', () => {
     });
 
     it('should handle empty assessment (no indicators)', () => {
-      const answers = new Map([]); // No answers provided
+      const answers = new Map<string, any>([]); // No answers provided
       const assessment = classifyRisk(answers);
 
       expect(assessment.riskLevel).toBe('low');
