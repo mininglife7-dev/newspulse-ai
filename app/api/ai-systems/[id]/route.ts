@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { SYSTEM_TYPES, SYSTEM_STATUSES } from '@/lib/ai-systems';
+import { resolveWorkspaceContext } from '@/lib/ai-systems-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,40 +19,6 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-type WorkspaceContext =
-  { status: 200; workspaceId: string } | { status: 401 | 409; error: string };
-
-/**
- * Resolve the caller's active workspace, or explain why not. Runs as the
- * signed-in user, so RLS applies to the mutations below, and the returned
- * workspaceId scopes each mutation to the caller's own workspace (defence in
- * depth on top of RLS).
- */
-async function resolveWorkspace(
-  supabase: Awaited<ReturnType<typeof createRouteClient>>
-): Promise<WorkspaceContext> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 401, error: 'Authentication required' };
-
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
-    return {
-      status: 409,
-      error: 'No workspace yet — complete company setup first',
-    };
-  }
-  return { status: 200, workspaceId: membership.workspace_id as string };
-}
-
 /** DELETE /api/ai-systems/:id — remove a system from the workspace inventory. */
 export async function DELETE(_req: Request, { params }: RouteContext) {
   const { id } = await params;
@@ -63,7 +30,7 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
   }
 
   const supabase = await createRouteClient();
-  const ctx = await resolveWorkspace(supabase);
+  const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
       { ok: false, error: ctx.error },
@@ -164,7 +131,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
   updates.updated_at = new Date().toISOString();
 
   const supabase = await createRouteClient();
-  const ctx = await resolveWorkspace(supabase);
+  const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
       { ok: false, error: ctx.error },

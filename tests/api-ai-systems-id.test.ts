@@ -33,6 +33,16 @@ function memberChain() {
   return c;
 }
 
+function companyChain() {
+  const c: any = {
+    select: () => c,
+    eq: () => c,
+    limit: () => c,
+    maybeSingle: async () => ({ data: { id: 'co-1' }, error: null }),
+  };
+  return c;
+}
+
 function aiSystemsTable() {
   return {
     delete() {
@@ -81,6 +91,7 @@ function stubClient() {
     auth: { getUser: async () => ({ data: { user: state.user } }) },
     from(table: string) {
       if (table === 'workspace_members') return memberChain();
+      if (table === 'companies') return companyChain();
       if (table === 'ai_systems') return aiSystemsTable();
       throw new Error(`unexpected table ${table}`);
     },
