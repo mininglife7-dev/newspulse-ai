@@ -1,430 +1,359 @@
-# Supabase Deployment Verification Guide
-
-**Objective:** Validate that the production schema deployed successfully and is production-ready  
-**Timeline:** 10-15 minutes  
-**When to Use:** Immediately after running `supabase/schema.sql` in Supabase SQL Editor  
-**Status:** READY FOR EXECUTION
+# Supabase Deployment Verification Checklist
+**Purpose:** Verify that the Supabase schema has been correctly deployed and all RLS policies are in place  
+**Audience:** Founder (verification only; no CLI/code changes needed)  
+**Time Required:** 10–15 minutes
 
 ---
 
-## Executive Summary
+## ⚠️ Critical Requirement
 
-After deploying the schema to production Supabase, use these exact SQL queries to verify:
-1. ✅ All required tables exist
-2. ✅ Row-Level Security (RLS) is enabled
-3. ✅ Profile auto-creation trigger is installed
-4. ✅ Foreign key relationships are correct
-5. ✅ All indexes are present
-6. ✅ RLS policies are active
+The compliance system (and all EURO AI features) will **silently fail** if the Supabase schema has not been deployed. This checklist helps you verify deployment before teams attempt to sign up or use the system.
 
-Do not consider deployment successful until ALL verification queries pass.
+**Status:** If you have NOT run the schema.sql in Supabase, **do this first** before teams use the system.
 
 ---
 
-## Pre-Verification Checklist
+## Quick Deployment Status Check
 
-Before running verification:
-- [ ] Schema deployment completed successfully (Supabase showed "Success!")
-- [ ] No error messages in Supabase SQL Editor output
-- [ ] You're logged into the correct Supabase project
-- [ ] You have access to the SQL Editor
+### 1. Log into Supabase Dashboard
 
----
+1. Go to https://app.supabase.com
+2. Select your EURO AI project
+3. Navigate to **SQL Editor** (left sidebar)
 
-## Verification Queries
+### 2. Run the Preflight Check (Non-Destructive)
 
-### Query 1: Verify Core Tables Exist
-
-**Purpose:** Confirm all required customer-data tables were created
-
-**Run this in Supabase SQL Editor:**
+In the SQL Editor, run this query to see what's currently deployed:
 
 ```sql
--- Check that all required tables exist
-select 
-  table_schema, 
-  table_name,
-  case 
-    when table_schema = 'auth' then '✓ Auth System'
-    when table_name = 'profiles' then '✓ User Profiles'
-    when table_name = 'workspaces' then '✓ Organizations'
-    when table_name = 'workspace_members' then '✓ Memberships'
-    when table_name = 'companies' then '✓ Governed Companies'
-    when table_name = 'ai_systems' then '✓ AI Inventory'
-    when table_name = 'risk_assessments' then '✓ Risk Assessment'
-    when table_name = 'obligations' then '✓ Compliance Obligations'
-    when table_name = 'evidence' then '✓ Evidence'
-    when table_name = 'remediation_plans' then '✓ Remediation Plans'
-    else '? Unknown table'
-  end as purpose
-from information_schema.tables
-where
-  (table_schema = 'public' and table_name in (
-    'profiles',
-    'workspaces',
-    'workspace_members',
-    'companies',
-    'ai_systems',
-    'risk_assessments',
-    'obligations',
-    'evidence',
-    'remediation_plans'
-  ))
-  or
-  (table_schema = 'auth' and table_name = 'users')
-order by table_schema, table_name;
+-- Shows all existing tables (should see 20+ if schema is deployed)
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY table_name;
 ```
 
-**Expected Output:**
+**Expected output if schema IS deployed:**
 ```
-table_schema │ table_name              │ purpose
-─────────────┼────────────────────────┼───────────────────────
-auth         │ users                  │ ✓ Auth System
-public       │ ai_systems             │ ✓ AI Inventory
-public       │ companies              │ ✓ Governed Companies
-public       │ evidence               │ ✓ Evidence
-public       │ obligations            │ ✓ Compliance Obligations
-public       │ profiles               │ ✓ User Profiles
-public       │ remediation_plans      │ ✓ Remediation Plans
-public       │ risk_assessments       │ ✓ Risk Assessment
-public       │ workspace_members      │ ✓ Memberships
-public       │ workspaces             │ ✓ Organizations
-(10 rows)
+ai_systems
+assessments
+companies
+evidence
+governance_state
+knowledge_memory
+obligations
+profiles
+remediation_plans
+risk_assessments
+team_roles
+workspace_members
+workspaces
+... (20+ total tables)
 ```
 
-**✅ Pass Criteria:** All 10 tables present (9 public + 1 auth.users)
+**If you see 0 tables or only `profiles`:** Schema has NOT been deployed. Proceed to "Deploy Schema" section below.
 
 ---
 
-### Query 2: Verify Row-Level Security is Enabled
+## Deploy Schema (If Needed)
 
-**Purpose:** Confirm RLS is active on all customer-data tables (default deny, explicit allow)
+### Option 1: Using Supabase SQL Editor (Recommended for Most Users)
+
+1. Go to https://supabase.com/docs/guides/cli/local-development (for schema reference)
+2. Or open `supabase/schema.sql` from the NewsPulse AI repository
+3. Copy the **entire** contents of `/supabase/schema.sql` from the repo
+4. In your Supabase SQL Editor, create a new query
+5. Paste the entire schema
+6. Click **Run** (top right)
+7. Wait for completion (30–60 seconds)
+8. Check for errors: **If all green, you're done. If red, scroll down to see error messages.**
+
+**Expected result:** "Query executed successfully" with no errors
+
+### Option 2: Using Supabase CLI (For Teams Comfortable with Command Line)
+
+```bash
+# Install Supabase CLI if not already installed
+npm install -g supabase
+
+# Link to your Supabase project
+supabase link --project-ref <YOUR_PROJECT_ID>
+
+# Push schema from local
+supabase push
+
+# Verify deployment
+supabase db pull  # This will show you the current schema
+```
+
+### Schema Safety Features
+
+The schema is **idempotent** — safe to run multiple times:
+- Uses `CREATE TABLE IF NOT EXISTS` (won't fail if tables exist)
+- Uses `CREATE OR REPLACE FUNCTION` (overwrites functions safely)
+- Uses `CREATE INDEX IF NOT EXISTS` (won't fail if indexes exist)
+- Uses `DROP TRIGGER IF EXISTS` (removes old triggers before recreating)
+
+**You can safely re-run schema.sql without data loss.**
+
+---
+
+## Post-Deployment Verification
+
+After deploying the schema, verify these 5 critical components:
+
+### ✅ Check 1: All Tables Exist
 
 ```sql
--- Check RLS status on all public tables
-select 
-  table_name,
-  case when rowsecurity = true then '✓ ENABLED' else '❌ DISABLED' end as rls_status,
-  row_number() over (order by table_name) as seq
-from information_schema.tables
-where table_schema = 'public'
-order by table_name;
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY table_name;
 ```
 
-**Expected Output (RLS ENABLED on all):**
-```
-table_name              │ rls_status
-────────────────────────┼───────────
-ai_systems              │ ✓ ENABLED
-companies               │ ✓ ENABLED
-evidence                │ ✓ ENABLED
-obligations             │ ✓ ENABLED
-profiles                │ ✓ ENABLED
-remediation_plans       │ ✓ ENABLED
-risk_assessments        │ ✓ ENABLED
-workspace_members       │ ✓ ENABLED
-workspaces              │ ✓ ENABLED
-(9 rows)
-```
+**Expected:** 20+ tables including:
+- `auth.users` (Supabase built-in)
+- `profiles`, `workspaces`, `workspace_members`, `companies`
+- `ai_systems`, `risk_assessments`, `assessments`
+- `obligations`, `evidence`, `remediation_plans`
+- `team_roles`, `governance_state`, `knowledge_memory`
 
-**✅ Pass Criteria:** All 9 tables show `✓ ENABLED`
+**If missing:** Re-run schema.sql and check for error messages.
 
----
-
-### Query 3: Verify RLS Policies are Installed
-
-**Purpose:** Confirm that access-control policies exist (at minimum 13 policies)
+### ✅ Check 2: RLS Policies Are Enabled
 
 ```sql
--- List all RLS policies
-select 
-  schemaname,
-  tablename,
-  policyname,
-  permissive,
-  roles,
-  qual as policy_condition_short
-from pg_policies
-where schemaname = 'public'
-order by tablename, policyname;
+SELECT tablename FROM pg_tables
+WHERE schemaname = 'public'
+AND rowsecurity = true
+ORDER BY tablename;
 ```
 
-**Expected Output (Sample):**
-```
-schemaname │ tablename │ policyname                          │ permissive │ roles  │ policy_condition_short
-────────────┼───────────┼────────────────────────────────────┼────────────┼────────┼──────────────────────────
-public     │ companies │ Members can insert workspace...     │ true      │ {role} │ ...
-public     │ companies │ Members can read workspace...       │ true      │ {role} │ ...
-public     │ profiles  │ Users can insert their own profile  │ true      │ {role} │ ...
-public     │ profiles  │ Users can read their own profile    │ true      │ {role} │ ...
-public     │ profiles  │ Users can update their own profile  │ true      │ {role} │ ...
-public     │ workspaces│ Authenticated users can create...   │ true      │ {role} │ ...
-public     │ workspaces│ Owners can add themselves as...     │ true      │ {role} │ ...
-...
-(13+ rows)
-```
+**Expected:** See tables like `obligations`, `workspace_members`, `evidence`, `ai_systems`, etc. (all should have RLS enabled)
 
-**✅ Pass Criteria:** At least 13 policies listed
+**If empty:** RLS may not have been enabled. Check SQL Editor for errors in the schema deployment.
 
----
-
-### Query 4: Verify Profile Auto-Creation Trigger
-
-**Purpose:** Confirm the trigger function and trigger exist for auto-profile creation on signup
+### ✅ Check 3: Row-Level Security Policies Exist
 
 ```sql
--- Check for profile auto-creation trigger
-select 
-  tgname as trigger_name,
-  relname as table_name,
-  proname as function_name,
-  tgtype as trigger_type,
-  case when tgenabled = 'O' then '✓ ENABLED' else '⚠ DISABLED' end as status
-from pg_trigger
-join pg_class on tgrelid = pg_class.oid
-join pg_proc on pg_trigger.tgfoid = pg_proc.oid
-where relname = 'users' and tgname like '%auth_user%'
-order by tgname;
+SELECT tablename, policyname, permissive
+FROM pg_policies
+WHERE schemaname = 'public'
+ORDER BY tablename, policyname;
 ```
 
-**Alternative (if above returns empty, check function exists):**
+**Expected:** 30+ policies across tables (each table should have SELECT, INSERT, UPDATE, DELETE policies)
+
+Example policies you should see:
+- `obligations_select_workspace_members` — Members can read workspace obligations
+- `workspace_members_select_own` — Users can see their workspace roster
+- `evidence_insert_workspace_members` — Members can submit evidence
+
+**If 0 policies:** Schema deployment may have failed at the RLS policy section. Check SQL Editor error log.
+
+### ✅ Check 4: Key Functions Exist
 
 ```sql
--- Check if the profile creation function exists
-select 
-  proname as function_name,
-  pg_catalog.pg_get_functiondef(oid) as function_definition
-from pg_proc
-where proname = 'handle_new_user'
-and pg_catalog.pg_get_namespace(pronamespace) = 'public';
+SELECT routine_name FROM information_schema.routines
+WHERE routine_schema = 'public'
+ORDER BY routine_name;
 ```
 
-**Expected Output:**
-```
-function_name │ status
-───────────────┼──────────────
-handle_new_user│ ✓ ENABLED
-(1 row)
-```
+**Expected:** Functions like:
+- `handle_new_user` — Creates profile when user signs up
+- `is_workspace_member` — RLS helper: checks if user is a workspace member
+- `is_workspace_admin` — RLS helper: checks if user is a workspace admin
 
-**✅ Pass Criteria:** `handle_new_user` function exists and trigger is active
+**If missing:** Re-run schema.sql.
 
-**If trigger NOT found:**
-- Manually verify the trigger exists:
-  ```sql
-  select * from pg_trigger where tgname = 'on_auth_user_created';
-  ```
-- If empty, the trigger did not deploy. Check SQL output for errors.
-
----
-
-### Query 5: Verify Foreign Keys and Cascading Deletes
-
-**Purpose:** Confirm data integrity constraints are in place
+### ✅ Check 5: Indexes Are Present
 
 ```sql
--- List all foreign key relationships
-select 
-  constraint_name,
-  table_schema || '.' || table_name as from_table,
-  column_name as from_column,
-  referenced_table_schema || '.' || referenced_table_name as to_table,
-  referenced_column_name as to_column,
-  delete_rule,
-  update_rule
-from information_schema.referential_constraints
-where constraint_schema = 'public'
-order by table_name, constraint_name;
+SELECT indexname FROM pg_indexes
+WHERE schemaname = 'public'
+ORDER BY indexname;
 ```
 
-**Expected Output (Sample):**
-```
-constraint_name                │ from_table           │ from_column  │ to_table      │ to_column │ delete_rule │ update_rule
-────────────────────────────────┼──────────────────────┼──────────────┼───────────────┼───────────┼─────────────┼────────────
-companies_workspace_id_fkey     │ public.companies     │ workspace_id │ public.worksp │ id        │ CASCADE     │ CASCADE
-profiles_id_fkey               │ public.profiles      │ id           │ auth.users    │ id        │ CASCADE     │ CASCADE
-workspaces_owner_id_fkey       │ public.workspaces    │ owner_id     │ auth.users    │ id        │ CASCADE     │ CASCADE
-workspace_members_user_id_fkey │ public.workspace_mem │ user_id      │ auth.users    │ id        │ CASCADE     │ CASCADE
-workspace_members_workspace_id │ public.workspace_mem │ workspace_id │ public.worksp │ id        │ CASCADE     │ CASCADE
-...
-(10+ rows)
-```
+**Expected:** 20+ indexes on high-query tables
 
-**✅ Pass Criteria:** All foreign keys use `CASCADE` for delete (ensures data integrity)
+**If sparse:** Not critical for launch; queries will just be slower. Indexes can be added post-launch.
 
 ---
 
-### Query 6: Verify Indexes Exist
+## Email Configuration Verification
 
-**Purpose:** Confirm performance indexes are installed
+The compliance system requires email verification for sign-ups. Verify Supabase email settings:
+
+1. In Supabase dashboard, go to **Authentication** (left sidebar)
+2. Click **Providers**
+3. Click **Email** (not OAuth)
+4. Verify:
+   - ✅ **Enable email confirmations** is checked
+   - ✅ **Confirm email** type is set (default is fine)
+   - ✅ Redirect URLs include your Vercel domain (e.g., `https://your-app.vercel.app/auth/confirm`)
+
+**Critical redirect URL:** Must match `AUTH_REDIRECT_URL` in your `.env.local` on Vercel
+
+If email is not configured, sign-ups will succeed but confirmation emails won't send, leaving users stuck.
+
+---
+
+## Environment Variable Verification
+
+After schema deployment, verify Vercel has the correct Supabase environment variables:
+
+1. Go to your Vercel deployment settings
+2. Go to **Environment Variables**
+3. Check these are set:
+   - `NEXT_PUBLIC_SUPABASE_URL` — Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Public anon key (safe to expose)
+   - `SUPABASE_SERVICE_ROLE_KEY` — Private key (secret, should be masked)
+
+**Do NOT commit these to git. Vercel environment variables are the safe place for secrets.**
+
+Get these from Supabase:
+1. In Supabase dashboard, go to **Settings** → **API**
+2. Copy the values under "Project API keys"
+
+---
+
+## Quick System Test (After Schema Deployment)
+
+Once schema is deployed and env vars are set on Vercel, test the end-to-end flow:
+
+1. Go to https://your-app.vercel.app/auth/signup (your Vercel URL)
+2. Sign up with a test email
+3. Check your email for confirmation link
+4. Click the link to confirm
+5. You should be redirected to `/dashboard` and see your workspace setup form
+6. Fill out the form (company name, employees range, etc.)
+7. Check that you can navigate to `/obligations` and see the templates page
+
+**If all steps work:** Schema is deployed correctly ✅
+
+**If any step fails:**
+- **Step 3 fails (no confirmation email):** Email provider not configured in Supabase
+- **Step 5 fails (form doesn't save):** RLS policies not deployed; workspace creation is blocked
+- **Step 7 fails (obligations page doesn't load):** Obligations table or RLS policies not deployed
+
+---
+
+## Rollback Procedure (If Needed)
+
+If schema deployment causes issues, you can safely roll back:
+
+1. Go to Supabase SQL Editor
+2. Run: `SELECT version FROM schema_version ORDER BY version DESC LIMIT 1;` to see schema version
+3. Contact Anthropic support or check Supabase docs for rollback procedures
+
+**Note:** The schema design uses `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE`, so re-running schema.sql multiple times is safe (idempotent). No rollback needed for re-runs.
+
+---
+
+## Post-Launch Maintenance
+
+After schema is deployed and teams are using the system:
+
+### Weekly: Monitor RLS Policy Performance
 
 ```sql
--- Check all indexes on public tables
-select 
-  tablename,
-  indexname,
-  indexdef
-from pg_indexes
-where schemaname = 'public'
-order by tablename, indexname;
+-- Check for policy evaluation delays
+SELECT schemaname, tablename, policyname, 
+       COUNT(*) as evaluations
+FROM pg_stat_statements
+WHERE query LIKE '%policy%'
+GROUP BY schemaname, tablename, policyname
+ORDER BY evaluations DESC;
 ```
 
-**Expected Indexes (Minimum):**
-- `profiles_email_idx` on profiles(email)
-- `workspaces_owner_id_idx` on workspaces(owner_id)
-- `workspaces_slug_idx` on workspaces(slug)
-- `workspace_members_*` indexes
-- `companies_workspace_idx` on companies(workspace_id)
+If any policy is evaluating too frequently (high count with slow query time), consider indexing or caching.
 
-**✅ Pass Criteria:** At least 6-8 indexes present
+### Monthly: Verify Integrity
 
----
+```sql
+-- Check for orphaned foreign key references
+SELECT * FROM obligations WHERE workspace_id NOT IN (SELECT id FROM workspaces);
+SELECT * FROM assessments WHERE workspace_id NOT IN (SELECT id FROM workspaces);
+```
 
-## Post-Verification Test (Manual Browser)
+Should return 0 rows (no orphans). If rows appear, investigate foreign key constraints.
 
-Once all SQL queries pass, test the actual signup flow:
+### Before Major Releases
 
-### Step 1: Clear Browser Cache
-1. Open http://localhost:3000 in a **new incognito/private window**
-2. Or manually clear cookies for localhost
+Run the full PREFLIGHT_CHECK.sql again to ensure no policy conflicts before deploying code changes:
 
-### Step 2: Sign Up (Don't Use test@example.com)
-1. Go to http://localhost:3000/auth/signup
-2. Enter a **real or disposable email** (not test@example.com):
-   - Real: your.email@gmail.com
-   - Disposable: Use MailinatorPro, TempMail, or similar
-3. Enter password (min 8 chars)
-4. Check "I agree to terms"
-5. Click "Sign Up"
-6. Expected: "Check your email to confirm your account"
-
-### Step 3: Confirm Email
-1. Check the email inbox for Supabase confirmation link
-2. Click the confirmation link
-3. Expected: Redirected to http://localhost:3000/dashboard
-4. Expected: Dashboard loads (or sign-in if session not established)
-
-### Step 4: Verify Profile Was Created
-1. In Supabase, go to **Table Editor** → **profiles**
-2. Look for a row with the email you used
-3. Expected columns:
-   - `id`: Should match auth.users.id
-   - `email`: Should match signup email
-   - `created_at`: Should be recent timestamp
-   - `updated_at`: Should be recent timestamp
-
-**✅ Manual Test Pass:** Profile row created automatically, no manual inserts needed
-
----
-
-## Verification Checklist
-
-Before declaring deployment complete, verify:
-
-- [ ] Query 1: All 10 tables present (9 public + auth.users)
-- [ ] Query 2: All 9 public tables have RLS ENABLED
-- [ ] Query 3: At least 13 RLS policies installed
-- [ ] Query 4: `handle_new_user` trigger function exists
-- [ ] Query 5: Foreign keys with CASCADE delete rules present
-- [ ] Query 6: At least 6-8 performance indexes present
-- [ ] Manual test: Browser signup → email confirmation works
-- [ ] Manual test: Profile row auto-created (verified in table editor)
-- [ ] Manual test: Dashboard loads after confirmation
-- [ ] No error messages in Supabase SQL Editor or browser console
+```bash
+# In Supabase SQL Editor, open supabase/PREFLIGHT_CHECK.sql
+# Copy entire contents, paste into SQL Editor, run
+# Review GO/NO-GO decision output
+```
 
 ---
 
 ## Troubleshooting
 
-### Issue: Query 1 Returns Fewer Than 10 Tables
+### Problem: "Syntax error in SQL"
 
-**Problem:** Tables didn't create
+**Cause:** Schema file may have been partially copied or modified  
+**Solution:** Copy schema.sql again carefully, ensure no truncation. Verify all lines present.
 
-**Solutions:**
-1. Check Supabase SQL Editor output for errors
-2. Re-run `supabase/schema.sql` (it's idempotent)
-3. Contact Supabase support with exact error message
+### Problem: "ERROR: policy already exists"
+
+**Cause:** Schema was previously deployed; re-run is hitting existing policies  
+**Solution:** This is not an error — the schema.sql should handle this with `DROP POLICY IF EXISTS`. If you see the error anyway, check for manually-created policies in your Supabase that aren't in schema.sql.
+
+### Problem: "Deadline exceeded" during schema run
+
+**Cause:** Large schema deployment on Hobby tier Supabase may take >60 seconds  
+**Solution:** Re-run the same SQL. Supabase's `CREATE TABLE IF NOT EXISTS` pattern will skip already-created tables on retry. It's safe to re-run.
+
+### Problem: RLS policies not enforced (queries succeed when they should fail)
+
+**Cause:** 
+1. RLS not enabled on the table, OR
+2. Service role key is being used instead of anon key
+
+**Solution:**
+- Verify `rowsecurity = true` for the table: `SELECT * FROM pg_tables WHERE tablename='obligations' AND rowsecurity=true;`
+- Check that your API calls use the **anon key**, not service role key. Service role bypasses RLS.
+
+### Problem: Forgot email confirmation, can't sign in
+
+**Cause:** Email configuration issue or user never clicked link  
+**Solution:** 
+1. In Supabase **Auth Users** tab, find the user
+2. Click the user row
+3. Manually mark as confirmed (or resend email)
 
 ---
 
-### Issue: RLS Shows DISABLED on Some Tables
+## Deployment Checklist (Print & Use)
 
-**Problem:** RLS enforcement didn't activate
+```
+SUPABASE DEPLOYMENT VERIFICATION
+Date: ___________    Person: ___________
 
-**Solutions:**
-```sql
--- Manually enable RLS on a table
-alter table public.profiles enable row level security;
+[ ] Step 1: Logged into Supabase dashboard
+[ ] Step 2: Ran preflight check — saw 20+ tables
+[ ] Step 3: Copied schema.sql from repo
+[ ] Step 4: Pasted into SQL Editor and ran (got "Query executed successfully")
+[ ] Step 5: Verified all tables exist (Check 1)
+[ ] Step 6: Verified RLS is enabled (Check 2)
+[ ] Step 7: Verified RLS policies exist (Check 3)
+[ ] Step 8: Verified functions exist (Check 4)
+[ ] Step 9: Verified indexes exist (Check 5)
+[ ] Step 10: Configured email provider in Supabase
+[ ] Step 11: Set environment variables on Vercel
+[ ] Step 12: Tested sign-up → confirmation → workspace setup → obligations page
+[ ] COMPLETE: Schema is deployed and verified ✅
 ```
 
-Then re-run Query 2 to verify.
-
 ---
 
-### Issue: Query 4 Shows No Trigger
+## Next Steps
 
-**Problem:** Profile creation trigger didn't install
+Once verified:
+1. ✅ Schema is deployed and all RLS policies are in place
+2. ✅ Email confirmation is configured
+3. ✅ Environment variables are set on Vercel
+4. **→ Teams can now sign up and use the compliance system**
 
-**Solutions:**
-1. Manually re-run trigger section from schema:
-   ```sql
-   create or replace function public.handle_new_user()
-   returns trigger as $$
-   begin
-     insert into public.profiles (id, email, first_name, last_name, created_at, updated_at)
-     values (
-       new.id,
-       new.email,
-       new.raw_user_meta_data ->> 'first_name',
-       new.raw_user_meta_data ->> 'last_name',
-       now(),
-       now()
-     );
-     return new;
-   exception when others then
-     raise warning 'Error creating profile for user %: %', new.id, sqlerrm;
-     return new;
-   end;
-   $$ language plpgsql security definer;
-   
-   create trigger on_auth_user_created
-     after insert on auth.users
-     for each row
-     execute function public.handle_new_user();
-   ```
-2. Re-test signup
-
----
-
-### Issue: Manual Signup Works But Profile Not Created
-
-**Problem:** Trigger exists but isn't firing
-
-**Solutions:**
-1. Check Supabase logs for trigger errors
-2. Verify trigger is enabled: Query 4
-3. Check if profile was inserted manually by workspace API (upsert)
-
----
-
-## Final Acceptance Criteria
-
-Production Supabase deployment is **VERIFIED COMPLETE** when:
-
-1. ✅ All 10 tables exist (Query 1)
-2. ✅ All 9 tables have RLS enabled (Query 2)
-3. ✅ All 13+ policies installed (Query 3)
-4. ✅ Trigger function exists (Query 4)
-5. ✅ Foreign keys with CASCADE (Query 5)
-6. ✅ Indexes present (Query 6)
-7. ✅ Browser signup → confirmation works
-8. ✅ Profile auto-created (no manual insert)
-9. ✅ No error messages anywhere
-
-**Result:** Supabase is production-ready for customer signups.
-
----
-
-**Document Version:** 2026-07-10  
-**Status:** READY FOR USE  
-**Last Updated:** (Autonomous deployment guide v1)
+If you run into issues, check the **Troubleshooting** section above, or ask Governor for schema review.

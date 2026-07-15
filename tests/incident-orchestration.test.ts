@@ -80,6 +80,36 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
       }
     });
 
+    // Deterministic companion to the randomized test above: the guard there can
+    // skip its assertion when the simulation yields a non-deployment category, so
+    // this test constructs the deployment-failure premise directly and always
+    // exercises the rollback path.
+    it.each(['critical', 'high'] as const)(
+      'always initiates rollback for auto-remediable %s deployment failure',
+      async (severity) => {
+        const incident: DetectedIncident = {
+          incidentId: `inc-det-${severity}`,
+          deploymentId: `deploy-det-${severity}`,
+          category: 'deployment-failure',
+          severity,
+          signals: [],
+          detectedAt: new Date().toISOString(),
+          description: 'Deterministic deployment failure',
+          affectedServices: ['api'],
+          estimatedUserImpact: 0.9,
+          canAutoRemediate: true,
+          requiresFounderNotification: false,
+        };
+
+        const decision = await orchestrator.orchestrateIncident({
+          incident,
+          previousAttempts: [],
+        });
+
+        expect(decision.recommendedAction).toBe('initiate-rollback');
+      }
+    );
+
     it('should escalate cascading failures to founder', async () => {
       const incidents = await detector.detectIncidents('deploy-cascade-orch', {
         recentErrors: [

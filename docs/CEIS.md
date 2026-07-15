@@ -32,7 +32,7 @@ flowchart TD
         AN[AI News*]
         RG[EU AI Act / Regulatory*]
         CT[Conference Talks*]
-        CS[Customer Signals<br/>first-party search keywords]
+        CS[Customer Signals<br/>first-party ai_systems inventory]
     end
 
     Observe -->|Observations:<br/>source · date · confidence · category · evidence| EX
@@ -116,16 +116,16 @@ flowchart LR
 
 ## Design principles
 
-| Principle                      | How CEIS implements it                                                                                                                                                                                                        |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Ethics first**               | Collectors store only public metadata + short excerpts. The extraction prompt forbids copying features/code/IP; it extracts _mechanisms_. Every report footer restates this.                                                  |
-| **Evidence or nothing**        | Every observation carries source, date, confidence, category, evidence. Principles without a real backing observation are dropped (`normalizePrinciple`). Confidence below 0.55 is auto-rejected.                             |
-| **No duplicate DNA**           | Gap analysis compares against the genome; the immune system rejects `already-exists`, `duplicate-of-active-work`, and `previously-rejected` (unless confidence is ≥0.15 higher than at rejection time).                       |
-| **Nothing self-approves**      | Every proposal is born `proposed` with nine `pending` gates. `approve` returns HTTP 409 until all gates pass. Approval/rejection is a founder action via `PATCH /api/ceis/proposals/:id`.                                     |
-| **Autonomous, not disruptive** | Weekly Vercel cron (`0 6 * * 1`). Collector failures are isolated (`Promise.allSettled` + 20s timeouts); Supabase writes are best-effort; a broken source never blocks the cycle.                                             |
-| **Reuse over rebuild**         | Firecrawl wrapper, OpenAI client, Supabase clients, middleware rate-limiting, UI theme — all reused, none duplicated.                                                                                                         |
-| **Permanent memory**           | The genome (`ceis_genome`) records lessons, rejected ideas (with confidence at rejection), successful ideas, and architecture decisions. Rejected ideas are never rediscovered without new evidence.                          |
-| **Degrade gracefully**         | Without `OPENAI_API_KEY`: heuristic extraction (deliberately low confidence → nothing reaches DNA). Without `FIRECRAWL_API_KEY`: web collectors skip. Without Supabase: cycle still runs, seed genome used, nothing persists. |
+| Principle                      | How CEIS implements it                                                                                                                                                                                                                                    |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ethics first**               | Collectors store only public metadata + short excerpts. The extraction prompt forbids copying features/code/IP; it extracts _mechanisms_. Every report footer restates this.                                                                              |
+| **Evidence or nothing**        | Every observation carries source, date, confidence, category, evidence. Principles without a real backing observation are dropped (`normalizePrinciple`). Confidence below 0.55 is auto-rejected.                                                         |
+| **No duplicate DNA**           | Gap analysis compares against the genome; the immune system rejects `already-exists`, `duplicate-of-active-work`, and `previously-rejected` (unless confidence is ≥0.15 higher than at rejection time).                                                   |
+| **Nothing self-approves**      | Every proposal is born `proposed` with nine `pending` gates. `approve` returns HTTP 409 until all gates pass. Approval/rejection is a founder action via `PATCH /api/ceis/proposals/:id`.                                                                 |
+| **Autonomous, not disruptive** | Weekly Vercel cron (`0 6 * * 1`). Collector failures are isolated (`Promise.allSettled` + 20s timeouts); Supabase writes are best-effort; a broken source never blocks the cycle.                                                                         |
+| **Reuse over rebuild**         | Supabase clients, auth middleware, route classifier, Tailwind theme — all reused. Where the platform retired an integration, CEIS carries its own self-contained client (`lib/ceis/llm.ts`, `collectors/firecrawl.ts`) instead of re-adding dependencies. |
+| **Permanent memory**           | The genome (`ceis_genome`) records lessons, rejected ideas (with confidence at rejection), successful ideas, and architecture decisions. Rejected ideas are never rediscovered without new evidence.                                                      |
+| **Degrade gracefully**         | Without `OPENAI_API_KEY`: heuristic extraction (deliberately low confidence → nothing reaches DNA). Without `FIRECRAWL_API_KEY`: web collectors skip. Without Supabase: cycle still runs, seed genome used, nothing persists.                             |
 
 ## Evolution Score model
 
