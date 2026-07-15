@@ -618,3 +618,66 @@ create policy "Members can update workspace ai_system_detections"
             and status = 'active'
         )
     );
+
+-- ---------------------------------------------------------------
+-- Runtime Monitoring Alerts
+-- Stores threat detection results from runtime event processing
+-- ---------------------------------------------------------------
+create table if not exists public.monitoring_alerts (
+    id              text        primary key,
+    workspace_id    uuid        not null references public.workspaces(id) on delete cascade,
+    system_id       text        not null,
+    alert_type      text        not null,
+    severity        text        not null,
+    confidence      numeric     not null,
+    message         text        not null,
+    details         jsonb       default '{}',
+    metadata        jsonb       default '{}',
+    timestamp       timestamptz not null,
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now()
+);
+
+create index if not exists monitoring_alerts_workspace_idx on public.monitoring_alerts (workspace_id);
+create index if not exists monitoring_alerts_system_id_idx on public.monitoring_alerts (system_id);
+create index if not exists monitoring_alerts_severity_idx on public.monitoring_alerts (severity);
+create index if not exists monitoring_alerts_alert_type_idx on public.monitoring_alerts (alert_type);
+create index if not exists monitoring_alerts_timestamp_idx on public.monitoring_alerts (timestamp);
+
+-- ---------------------------------------------------------------
+-- RLS for monitoring_alerts
+-- ---------------------------------------------------------------
+alter table public.monitoring_alerts enable row level security;
+
+create policy "Members can read workspace monitoring_alerts"
+    on public.monitoring_alerts for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = monitoring_alerts.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace monitoring_alerts"
+    on public.monitoring_alerts for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = monitoring_alerts.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can update workspace monitoring_alerts"
+    on public.monitoring_alerts for update
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = monitoring_alerts.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
