@@ -1036,6 +1036,386 @@ All endpoints return standardized error responses with HTTP status codes.
 
 ---
 
+#### POST /api/workspace
+
+Create a new workspace (organization) for the authenticated user. Required to begin using the platform.
+
+**Authentication:** Required (Bearer token)
+
+**Request Body:**
+```json
+{
+  "companyName": "Acme Corp",
+  "legalName": "Acme Corporation GmbH",
+  "country": "DE",
+  "industry": "Technology",
+  "employees": "101-500",
+  "website": "https://acme.com",
+  "description": "Enterprise AI governance platform provider"
+}
+```
+
+**Parameters:**
+- `companyName` (string, required) — Organization display name
+- `legalName` (string, optional) — Legal registered name
+- `country` (string, required) — ISO 3166-1 alpha-2 country code (e.g., "DE", "FR", "US")
+- `industry` (string, required) — Industry classification (e.g., "Technology", "Finance", "Healthcare")
+- `employees` (string, optional) — Headcount range (e.g., "1-10", "101-500")
+- `website` (string, optional) — Organization website URL
+- `description` (string, optional) — Brief description of AI governance priorities
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "workspace": {
+    "id": "ws_abc123def456",
+    "slug": "acme-corp-xyz789",
+    "name": "Acme Corp"
+  },
+  "companyId": "comp_abc123def456"
+}
+```
+
+**Response (400 — Validation Error):**
+```json
+{
+  "ok": false,
+  "error": "companyName, country and industry are required"
+}
+```
+
+**Response (409 — Duplicate):**
+```json
+{
+  "ok": true,
+  "workspace": { "id": "ws_existing", "slug": "acme-corp-xyz789", "name": "Acme Corp" },
+  "isDuplicate": true,
+  "message": "Workspace already exists with this name"
+}
+```
+
+**Notes:**
+- Creates workspace, owner membership, and company profile atomically
+- Prevents orphaned records if any step fails
+- User automatically becomes workspace owner (role = "owner")
+- Idempotent: submitting the same request twice returns the same workspace
+
+---
+
+#### POST /api/assessment
+
+Create a risk assessment for a specific AI system within your workspace.
+
+**Authentication:** Required (Bearer token)
+
+**Request Body:**
+```json
+{
+  "ai_system_id": "sys_abc123",
+  "risk_level": "high",
+  "risk_score": 72,
+  "assessment_data": {
+    "model_type": "large_language_model",
+    "training_data_source": "external",
+    "intended_use": "customer_support",
+    "unacceptable_risk_identified": false
+  },
+  "status": "draft"
+}
+```
+
+**Parameters:**
+- `ai_system_id` (string, required) — ID of AI system to assess
+- `risk_level` (string, required) — Risk classification: "unacceptable", "high", "medium", or "low"
+- `risk_score` (number, optional) — Numerical risk score (0-100)
+- `assessment_data` (object, optional) — Custom assessment metadata (JSON)
+- `status` (string, optional) — Assessment status: "draft", "in_review", or "finalized" (default: "draft")
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "assessment": {
+    "id": "risk_abc123",
+    "ai_system_id": "sys_abc123",
+    "workspace_id": "ws_xyz789",
+    "risk_level": "high",
+    "risk_score": 72,
+    "status": "draft",
+    "created_at": "2026-07-15T12:00:00Z"
+  }
+}
+```
+
+**Response (404 — System Not Found):**
+```json
+{
+  "ok": false,
+  "error": "AI system not found in this workspace"
+}
+```
+
+---
+
+#### GET /api/assessment
+
+List all risk assessments for systems in your workspace.
+
+**Authentication:** Required (Bearer token)
+
+**Query Parameters:** None
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "assessments": [
+    {
+      "id": "risk_abc123",
+      "ai_system_id": "sys_abc123",
+      "risk_level": "high",
+      "risk_score": 72,
+      "status": "draft",
+      "created_at": "2026-07-15T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### PATCH /api/assessment/[id]
+
+Update an existing risk assessment.
+
+**Authentication:** Required (Bearer token)
+
+**Parameters:** `id` (string, required, in URL path) — Assessment ID
+
+**Request Body:**
+```json
+{
+  "risk_level": "medium",
+  "risk_score": 45,
+  "status": "in_review"
+}
+```
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "assessment": {
+    "id": "risk_abc123",
+    "risk_level": "medium",
+    "risk_score": 45,
+    "status": "in_review",
+    "updated_at": "2026-07-15T13:00:00Z"
+  }
+}
+```
+
+---
+
+#### DELETE /api/assessment/[id]
+
+Delete a risk assessment.
+
+**Authentication:** Required (Bearer token)
+
+**Parameters:** `id` (string, required, in URL path) — Assessment ID
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "message": "Assessment deleted"
+}
+```
+
+---
+
+#### POST /api/workspace/[id]/members
+
+Invite a user to your workspace.
+
+**Authentication:** Required (Bearer token)
+
+**Parameters:** `id` (string, required, in URL path) — Workspace ID
+
+**Request Body:**
+```json
+{
+  "email": "colleague@acme.com",
+  "role": "member"
+}
+```
+
+**Parameters:**
+- `email` (string, required) — Email address of user to invite
+- `role` (string, optional) — Role: "admin", "member", or "viewer" (default: "member")
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "invitation": {
+    "id": "mem_abc123",
+    "workspace_id": "ws_xyz789",
+    "email": "colleague@acme.com",
+    "role": "member",
+    "status": "pending",
+    "invited_at": "2026-07-15T12:00:00Z"
+  },
+  "message": "Invitation created. User will need to accept it to join the workspace."
+}
+```
+
+**Response (409 — Already Member):**
+```json
+{
+  "ok": false,
+  "error": "This email is already a member of this workspace"
+}
+```
+
+**Note:** Only workspace owners and admins can invite members.
+
+---
+
+#### GET /api/workspace/[id]/members
+
+List all members (active and pending) in your workspace.
+
+**Authentication:** Required (Bearer token)
+
+**Parameters:** `id` (string, required, in URL path) — Workspace ID
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "members": [
+    {
+      "id": "mem_abc123",
+      "email": "owner@acme.com",
+      "role": "owner",
+      "status": "active",
+      "joined_at": "2026-07-15T10:00:00Z",
+      "invited_at": "2026-07-15T10:00:00Z"
+    },
+    {
+      "id": "mem_def456",
+      "email": "colleague@acme.com",
+      "role": "member",
+      "status": "pending",
+      "joined_at": null,
+      "invited_at": "2026-07-15T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### PATCH /api/workspace/[id]/members/[userId]
+
+Accept/reject an invitation, remove a member, or change a member's role.
+
+**Authentication:** Required (Bearer token)
+
+**Parameters:**
+- `id` (string, required, in URL path) — Workspace ID
+- `userId` (string, required, in URL path) — Member ID
+
+**Request Body (Accept Invitation):**
+```json
+{
+  "action": "accept"
+}
+```
+
+**Request Body (Reject/Remove):**
+```json
+{
+  "action": "reject"
+}
+```
+
+**Request Body (Change Role):**
+```json
+{
+  "action": "change_role",
+  "role": "admin"
+}
+```
+
+**Parameters:**
+- `action` (string, required) — Action: "accept", "reject", "remove", or "change_role"
+- `role` (string, required if action="change_role") — New role: "admin", "member", or "viewer"
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "member": {
+    "id": "mem_abc123",
+    "role": "admin",
+    "status": "active",
+    "joined_at": "2026-07-15T13:00:00Z"
+  },
+  "message": "Member role updated."
+}
+```
+
+**Notes:**
+- `accept` — Invited user accepts their invitation (status: pending → active)
+- `reject` — Invited user rejects invitation or admin removes member
+- `remove` — Only owners/admins can remove members (cannot remove self)
+- `change_role` — Only owners can change member roles
+
+---
+
+#### POST /api/auth/resend-verification
+
+Resend email verification link if initial email was not received.
+
+**Authentication:** NOT required (unauthenticated endpoint)
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Parameters:**
+- `email` (string, required) — Email address to resend verification to
+
+**Response (200 — Success):**
+```json
+{
+  "ok": true,
+  "message": "Verification email sent successfully. Check your inbox."
+}
+```
+
+**Response (400 — Missing Email):**
+```json
+{
+  "ok": false,
+  "error": "Email is required"
+}
+```
+
+**Notes:**
+- Call this if you don't receive initial verification email
+- Verification link expires after 24 hours
+- Only users with unverified emails can request resend
+
+---
+
 ## Rate Limiting
 
 **Recommended Limits (not enforced, for planning):**

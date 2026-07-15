@@ -15,6 +15,15 @@ function stubClient() {
     },
     from(table: string) {
       return {
+        select(columns?: string) {
+          return {
+            eq: (col: string, val: any) => ({
+              eq: (col2: string, val2: any) => ({
+                single: async () => ({ data: null, error: null }),
+              }),
+            }),
+          };
+        },
         insert(row: any) {
           (state.inserts[table] ??= []).push(row);
           const failed = state.failTable === table;
@@ -33,6 +42,20 @@ function stubClient() {
           return { error: null };
         },
       };
+    },
+    rpc(name: string, params: any) {
+      if (state.failTable === 'rpc') {
+        return Promise.resolve({ data: null, error: { message: 'boom:rpc' } });
+      }
+      // Simulate create_workspace_atomic
+      return Promise.resolve({
+        data: {
+          success: true,
+          workspace_id: 'workspaces-id',
+          company_id: 'companies-id',
+        },
+        error: null,
+      });
     },
   };
 }
@@ -92,41 +115,28 @@ describe('POST /api/workspace', () => {
     expect(res.status).toBe(401);
   });
 
-  it('creates workspace, owner membership, company and profile', async () => {
+  it('creates workspace via atomic RPC transaction', async () => {
     const res = await POST(request(validBody));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(body.workspace.id).toBe('workspaces-id');
-
-    expect(state.inserts.workspaces?.[0]).toMatchObject({
+    expect(body.workspace).toMatchObject({
+      id: 'workspaces-id',
       name: 'Acme GmbH',
-      owner_id: 'user-1',
     });
-    expect(state.inserts.workspaces[0].slug).toMatch(/^acme-gmbh-/);
-    expect(state.inserts.workspace_members?.[0]).toMatchObject({
-      user_id: 'user-1',
-      role: 'owner',
-      status: 'active',
-    });
-    expect(state.inserts.companies?.[0]).toMatchObject({
-      name: 'Acme GmbH',
-      country: 'Germany',
-      employees_range: '51-200',
-    });
-    expect(state.inserts.profiles?.[0]).toMatchObject({
-      id: 'user-1',
-      current_workspace_id: 'workspaces-id',
-    });
+    expect(body.workspace.slug).toMatch(/^acme-gmbh-/);
+    expect(body.companyId).toBe('companies-id');
   });
 
   it('slugifies German umlauts safely', async () => {
-    await POST(request({ ...validBody, companyName: 'Müller & Söhne AG' }));
-    expect(state.inserts.workspaces[0].slug).toMatch(/^muller-sohne-ag-/);
+    const res = await POST(request({ ...validBody, companyName: 'Müller & Söhne AG' }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.workspace.slug).toMatch(/^muller-sohne-ag-/);
   });
 
-  it('surfaces workspace insert failure as 500', async () => {
-    state.failTable = 'workspaces';
+  it('returns 500 on RPC failure', async () => {
+    state.failTable = 'rpc';
     const res = await POST(request(validBody));
     expect(res.status).toBe(500);
   });
