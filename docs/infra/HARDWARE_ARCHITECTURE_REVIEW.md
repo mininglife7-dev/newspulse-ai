@@ -1,5 +1,9 @@
 # Hardware / Cloud Architecture Review — EURO AI / Cathedral
 
+> ⚠️ **SUPERSEDED — historical record (2026-07-09).** This is the original infrastructure audit of the **pre-pivot NewsPulse AI** app (Firecrawl news search + AI summaries). The repository has since pivoted to the **EURO AI / Cathedral** EU AI Act governance platform (Next 16 / React 19, Supabase Auth, ~50 API routes, evidence export, CEIS). The findings below — the `news_searches` schema, the "never deployed" / low readiness scores, and the Firecrawl/OpenAI-specific risks — **no longer describe the current codebase**. Some mitigations were carried forward to `main` (e.g. the opt-in encrypted DB backup workflow, rescued in #122). Kept for provenance only.
+>
+> **For the current infrastructure & launch posture, see:** [`CATHEDRAL-PRODUCTION-READINESS.md`](./CATHEDRAL-PRODUCTION-READINESS.md) · [`DEPLOYMENT_READINESS_REPORT.md`](./DEPLOYMENT_READINESS_REPORT.md) · [`PREDEPLOYMENT_AUDIT.md`](./PREDEPLOYMENT_AUDIT.md) · [`INDEPENDENT_VV_AUDIT.md`](./INDEPENDENT_VV_AUDIT.md) · [`../GO-NO-GO-REPORT.md`](../GO-NO-GO-REPORT.md)
+
 **Repository audited:** `mininglife7-dev/newspulse-ai` (the only repository accessible to this review)
 **Review date:** 2026-07-09
 **Reviewer role:** Senior cloud architect / security architect / DevOps lead / cost auditor

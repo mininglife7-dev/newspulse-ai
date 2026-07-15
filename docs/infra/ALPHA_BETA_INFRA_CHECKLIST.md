@@ -1,5 +1,9 @@
 # Alpha/Beta Infrastructure Launch Checklist — NewsPulse AI (EURO AI / Cathedral)
 
+> ⚠️ **SUPERSEDED — historical record (2026-07-09).** This checklist targets the **pre-pivot NewsPulse AI** app. The repository has since pivoted to the **EURO AI / Cathedral** EU AI Act governance platform, which tracks launch readiness through its own current gates. Use the live checklists below; the items here are a **historical reference**.
+>
+> **Current launch gates:** [`../PRODUCTION_READINESS_CHECKLIST.md`](../PRODUCTION_READINESS_CHECKLIST.md) · [`DEPLOYMENT_FINAL_CHECKLIST.md`](./DEPLOYMENT_FINAL_CHECKLIST.md) · [`../LAUNCH-BLOCKERS.md`](../LAUNCH-BLOCKERS.md) · [`../GO-NO-GO-REPORT.md`](../GO-NO-GO-REPORT.md)
+
 **Date:** 2026-07-09 · Tick every box in a phase before declaring that phase done.
 Verdict rule: **Alpha may not launch with any P0/P1 box unchecked** (see `HARDWARE_RISK_REGISTER.md`).
 
