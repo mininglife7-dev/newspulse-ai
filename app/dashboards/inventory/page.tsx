@@ -49,6 +49,7 @@ export default function InventoryDashboardPage() {
   const [inventory, setInventory] = useState<InventorySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -80,6 +81,31 @@ export default function InventoryDashboardPage() {
     'in-progress': '◐',
     'compliant': '✓',
     'needs-attention': '!',
+  };
+
+  const handleExport = async (format: 'json' | 'csv') => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/export/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format }),
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inventory-${new Date().toISOString().split('T')[0]}.${format === 'json' ? 'json' : 'csv'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Export error:', err);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const sourceIcons = {
@@ -192,10 +218,24 @@ export default function InventoryDashboardPage() {
       <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-semibold text-white">Systems</h3>
-          <button className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-2 text-white text-sm font-medium transition">
-            <Download className="h-4 w-4" />
-            Export
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleExport('json')}
+              disabled={exporting}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 px-3 py-2 text-white text-sm font-medium transition"
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? 'Exporting...' : 'JSON'}
+            </button>
+            <button
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+              className="flex items-center gap-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 px-3 py-2 text-white text-sm font-medium transition"
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? 'Exporting...' : 'CSV'}
+            </button>
+          </div>
         </div>
         {inventory.systems.length === 0 ? (
           <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-8 text-center">

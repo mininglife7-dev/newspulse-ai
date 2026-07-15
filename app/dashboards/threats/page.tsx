@@ -46,6 +46,7 @@ export default function ThreatsDashboardPage() {
   const [summary, setSummary] = useState<AlertsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [filters, setFilters] = useState({
     severity: '',
     alertType: '',
@@ -90,6 +91,31 @@ export default function ThreatsDashboardPage() {
     high: 'bg-orange-900 text-orange-200',
     medium: 'bg-yellow-900 text-yellow-200',
     low: 'bg-blue-900 text-blue-200',
+  };
+
+  const handleExport = async (format: 'json' | 'csv') => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/export/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format, ...filters }),
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `alerts-${new Date().toISOString().split('T')[0]}.${format === 'json' ? 'json' : 'csv'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Export error:', err);
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading && !summary) {
@@ -255,10 +281,24 @@ export default function ThreatsDashboardPage() {
           <h3 className="font-semibold text-white">
             Alerts ({summary.alerts.length} of {summary.stats.totalAlerts})
           </h3>
-          <button className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-2 text-white text-sm font-medium transition">
-            <Download className="h-4 w-4" />
-            Export
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleExport('json')}
+              disabled={exporting}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 px-3 py-2 text-white text-sm font-medium transition"
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? 'Exporting...' : 'JSON'}
+            </button>
+            <button
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+              className="flex items-center gap-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 px-3 py-2 text-white text-sm font-medium transition"
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? 'Exporting...' : 'CSV'}
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

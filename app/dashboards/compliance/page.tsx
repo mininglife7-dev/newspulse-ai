@@ -36,6 +36,7 @@ export default function ComplianceDashboardPage() {
   const [assessment, setAssessment] = useState<ComplianceAssessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchAssessment = async () => {
@@ -54,6 +55,31 @@ export default function ComplianceDashboardPage() {
 
     fetchAssessment();
   }, []);
+
+  const handleExport = async (format: 'json' | 'csv') => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/export/compliance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format }),
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance-assessment-${new Date().toISOString().split('T')[0]}.${format === 'json' ? 'json' : 'csv'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Export error:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -149,10 +175,24 @@ export default function ComplianceDashboardPage() {
             >
               {readinessLabels[assessment.readinessLevel]}
             </div>
-            <button className="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2 text-white font-medium transition">
-              <Download className="h-4 w-4" />
-              Export Report
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleExport('json')}
+                disabled={exporting}
+                className="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 px-4 py-2 text-white font-medium transition text-sm"
+              >
+                <Download className="h-4 w-4" />
+                {exporting ? 'Exporting...' : 'JSON'}
+              </button>
+              <button
+                onClick={() => handleExport('csv')}
+                disabled={exporting}
+                className="flex items-center gap-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 px-4 py-2 text-white font-medium transition text-sm"
+              >
+                <Download className="h-4 w-4" />
+                {exporting ? 'Exporting...' : 'CSV'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
