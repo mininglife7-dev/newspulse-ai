@@ -202,7 +202,7 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <Link
-            href="/workspace/setup"
+            href="/ai-systems"
             className="group flex gap-4 p-4 rounded-lg border border-slate-700 hover:border-blue-500/50 bg-slate-900/50 hover:bg-slate-900/80 transition"
           >
             <div className="flex-1">
