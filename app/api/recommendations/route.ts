@@ -5,6 +5,25 @@ import { generateRecommendations, getRecommendationsByCategory } from '@/lib/com
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+interface AssessmentResponse {
+  question_id: string;
+  answer: string | number | boolean;
+}
+
+interface AssessmentData {
+  responses: AssessmentResponse[];
+}
+
+interface RiskAssessment {
+  id: string;
+  risk_score: number;
+  assessment_data: AssessmentData;
+}
+
+interface WorkspaceMembership {
+  workspace_id: string;
+}
+
 async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
   const {
     data: { user },
@@ -28,7 +47,7 @@ async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
 
   return {
     status: 200 as const,
-    workspaceId: (membership as any).workspace_id as string,
+    workspaceId: (membership as WorkspaceMembership).workspace_id,
   };
 }
 
@@ -88,13 +107,14 @@ export async function GET(req: Request) {
     }
 
     // Generate recommendations
-    const assessmentData = (assessment as any).assessment_data || {};
-    const responses = (assessmentData.responses || []).map((r: any) => ({
+    const typedAssessment = assessment as RiskAssessment;
+    const assessmentData = typedAssessment.assessment_data || { responses: [] };
+    const responses = (assessmentData.responses || []).map((r) => ({
       question_id: r.question_id,
       answer: r.answer,
     }));
 
-    const result = generateRecommendations((assessment as any).risk_score, responses);
+    const result = generateRecommendations(typedAssessment.risk_score, responses);
     const byCategory = getRecommendationsByCategory(result.recommendations);
 
     return NextResponse.json({
@@ -103,7 +123,7 @@ export async function GET(req: Request) {
       byCategory,
       summary: result.summary,
       timeline: result.timeline,
-      riskScore: (assessment as any).risk_score,
+      riskScore: typedAssessment.risk_score,
     });
   } catch (err: any) {
     console.error('[api/recommendations] GET failed:', err);

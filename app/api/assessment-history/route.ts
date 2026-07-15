@@ -114,7 +114,7 @@ export async function GET(req: Request) {
         );
       }
 
-      const comp = (comparisonData as any)?.[0];
+      const comp = (comparisonData as unknown[])?.[0];
       if (!comp) {
         return NextResponse.json({
           ok: true,
@@ -124,17 +124,17 @@ export async function GET(req: Request) {
       }
 
       let improvement = null;
-      if (comp.previous_score !== null) {
+      if ((comp as Record<string, unknown>).previous_score !== null) {
         const { data: improvementData, error: impError } = await supabase.rpc(
           'calculate_assessment_improvement',
           {
-            old_score: comp.previous_score,
-            new_score: comp.current_score,
+            old_score: (comp as Record<string, unknown>).previous_score,
+            new_score: (comp as Record<string, unknown>).current_score,
           }
         );
 
         if (!impError && improvementData) {
-          improvement = (improvementData as any)?.[0] || null;
+          improvement = (improvementData as unknown[])?.[0] || null;
         }
       }
 
@@ -189,8 +189,14 @@ export async function GET(req: Request) {
     }
 
     // Combine historical records with current assessment
-    const allAssessments = (history || [])
-      .map((h: any) => ({
+    interface HistoryRecord {
+      version_number: number;
+      risk_score: number;
+      risk_level: string;
+      archived_at: string;
+    }
+    const allAssessments = (history || [] as HistoryRecord[])
+      .map((h) => ({
         version: h.version_number,
         risk_score: h.risk_score,
         risk_level: h.risk_level,
@@ -200,7 +206,7 @@ export async function GET(req: Request) {
     // Add current assessment if exists
     if (currentAssessment) {
       const maxVersion = allAssessments.length > 0
-        ? Math.max(...allAssessments.map((a: any) => a.version))
+        ? Math.max(...allAssessments.map((a) => a.version))
         : 0;
 
       allAssessments.push({

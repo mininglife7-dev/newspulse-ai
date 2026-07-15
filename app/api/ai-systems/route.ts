@@ -4,15 +4,15 @@ import { createRouteClient } from '@/lib/supabase-server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { SYSTEM_TYPES, SYSTEM_STATUSES } from '@/lib/ai-systems';
+import { SYSTEM_TYPES, SYSTEM_STATUSES, SystemType, SystemStatus } from '@/lib/ai-systems';
 
 interface CreateAiSystemBody {
   name: string;
   description?: string;
-  systemType?: string;
+  systemType?: SystemType;
   vendor?: string;
   purpose?: string;
-  status?: 'active' | 'pilot' | 'deprecated';
+  status?: SystemStatus;
 }
 
 /**
@@ -100,14 +100,14 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  if (body.systemType && !SYSTEM_TYPES.includes(body.systemType as any)) {
+  if (body.systemType && !SYSTEM_TYPES.includes(body.systemType)) {
     return NextResponse.json(
       { ok: false, error: `systemType must be one of: ${SYSTEM_TYPES.join(', ')}` },
       { status: 400 }
     );
   }
-  const status = body.status ?? 'active';
-  if (!SYSTEM_STATUSES.includes(status as any)) {
+  const status: SystemStatus = body.status ?? 'active';
+  if (!SYSTEM_STATUSES.includes(status)) {
     return NextResponse.json(
       { ok: false, error: 'status must be active, pilot or deprecated' },
       { status: 400 }
