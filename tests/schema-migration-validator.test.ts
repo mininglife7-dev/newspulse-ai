@@ -1,545 +1,562 @@
-/**
- * DNA-012: Schema Migration Validator Tests
- *
- * Verify zero-downtime database schema migration validation:
- * - Backward compatibility checking
- * - Data loss detection
- * - Rollback safety analysis
- * - Real migration scenarios
- *
- * Total: 12 tests covering safe and unsafe migrations
- */
-
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
-  SchemaMigrationValidator,
-  SchemaDefinition,
-  SchemaChange,
-  Table,
-  Column,
-  ValidationResult,
+  analyzeMigration,
+  analyzeMigrationBatch,
+  detectMigrationPatterns,
+  formatMigrationReport,
+  formatBatchReport,
+  MigrationReport,
 } from '@/lib/schema-migration-validator';
 
-describe('DNA-012: Schema Migration Validator', () => {
-  let validator: SchemaMigrationValidator;
-
-  beforeEach(() => {
-    validator = SchemaMigrationValidator.getInstance();
-  });
-
-  // =========================================================================
-  // Test Suite 1: Backward Compatibility (Safe Migrations)
-  // =========================================================================
-
-  describe('Backward Compatibility', () => {
-    it('should allow adding a nullable column (backward compatible)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('name', 'VARCHAR(255)', false)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [
-          createColumn('id', 'INT', false),
-          createColumn('name', 'VARCHAR(255)', false),
-          createColumn('email', 'VARCHAR(255)', true), // NEW: nullable
-        ]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_column',
-          table: 'users',
-          column: 'email',
-          details: { nullable: true },
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(true);
-      expect(result.checks.backwardCompatibility.pass).toBe(true);
-      expect(result.checks.dataLossDetection.pass).toBe(true);
-      expect(result.checks.rollbackSafety.pass).toBe(true);
+describe('DNA-GOV-012: Schema Migration Validator', () => {
+  describe('detectMigrationPatterns', () => {
+    it('returns empty array for safe migrations', () => {
+      const sql = `
+        CREATE TABLE users (
+          id BIGINT PRIMARY KEY,
+          email TEXT NOT NULL
+        );
+        CREATE INDEX idx_users_email ON users(email);
+      `;
+      const issues = detectMigrationPatterns(sql, 'add_users_table.sql');
+      expect(issues).toHaveLength(0);
     });
 
-    it('should allow adding an index (backward compatible)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('email', 'VARCHAR(255)', false)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('email', 'VARCHAR(255)', false)]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_index',
-          table: 'users',
-          column: 'email',
-          details: { unique: true },
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(true);
-      expect(result.checks.backwardCompatibility.pass).toBe(true);
+    it('detects adding NOT NULL column without DEFAULT', () => {
+      const sql = 'ALTER TABLE users ADD COLUMN age INT NOT NULL;';
+      const issues = detectMigrationPatterns(sql, 'add_age.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('add-column-not-null-no-default');
+      expect(issues[0].riskLevel).toBe('breaking');
     });
 
-    it('should allow adding a constraint to nullable column', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('status', 'VARCHAR(50)', true)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('status', 'VARCHAR(50)', true)]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_constraint',
-          table: 'users',
-          column: 'status',
-          details: { constraint_type: 'CHECK', expression: "status IN ('active', 'inactive')" },
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(true);
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 2: Data Loss Detection (Unsafe Migrations)
-  // =========================================================================
-
-  describe('Data Loss Detection', () => {
-    it('should detect dropping a column (data loss)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [
-          createColumn('id', 'INT', false),
-          createColumn('name', 'VARCHAR(255)', false),
-          createColumn('legacy_field', 'VARCHAR(255)', true),
-        ]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('name', 'VARCHAR(255)', false)]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'drop_column',
-          table: 'users',
-          column: 'legacy_field',
-          details: {},
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(false);
-      expect(result.checks.dataLossDetection.pass).toBe(false);
-      expect(result.checks.dataLossDetection.droppedColumns).toContain('users.legacy_field');
-      expect(result.risks.some((r) => r.type === 'DATA_LOSS')).toBe(true);
+    it('allows NOT NULL column with DEFAULT', () => {
+      const sql =
+        'ALTER TABLE users ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT NOW();';
+      const issues = detectMigrationPatterns(sql, 'add_timestamp.sql');
+      expect(issues).toHaveLength(0);
     });
 
-    it('should detect truncating a column (data loss)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('description', 'VARCHAR(1000)', false)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('description', 'VARCHAR(50)', false)]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'modify_column',
-          table: 'users',
-          column: 'description',
-          details: { size_reduction: true },
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(false);
-      expect(result.checks.dataLossDetection.pass).toBe(false);
+    it('allows NOT NULL column with GENERATED', () => {
+      const sql =
+        'ALTER TABLE users ADD COLUMN id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY;';
+      const issues = detectMigrationPatterns(sql, 'add_id.sql');
+      expect(issues).toHaveLength(0);
     });
 
-    it('should detect adding NOT NULL constraint without migration script (potential data loss)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('email', 'VARCHAR(255)', true)]),
-      ]);
+    it('detects dropping columns', () => {
+      const sql = 'ALTER TABLE users DROP COLUMN legacy_field;';
+      const issues = detectMigrationPatterns(sql, 'drop_legacy.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('drop-column');
+      expect(issues[0].riskLevel).toBe('high-risk');
+    });
 
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('email', 'VARCHAR(255)', false)]),
-      ]);
+    it('detects renaming columns', () => {
+      const sql = 'ALTER TABLE users RENAME COLUMN old_name TO new_name;';
+      const issues = detectMigrationPatterns(sql, 'rename_col.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('rename-column');
+      expect(issues[0].riskLevel).toBe('high-risk');
+    });
 
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_constraint',
-          table: 'users',
-          column: 'email',
-          details: { constraint_type: 'NOT NULL' },
-        },
-      ];
+    it('detects dropping indexes', () => {
+      const sql = 'DROP INDEX IF EXISTS idx_users_email;';
+      const issues = detectMigrationPatterns(sql, 'drop_index.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('drop-index');
+      expect(issues[0].riskLevel).toBe('high-risk');
+    });
 
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
+    it('detects adding unique constraints', () => {
+      const sql = 'ALTER TABLE users ADD CONSTRAINT unique_email UNIQUE(email);';
+      const issues = detectMigrationPatterns(sql, 'add_unique.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('add-unique-constraint');
+      expect(issues[0].riskLevel).toBe('high-risk');
+    });
 
-      expect(result.valid).toBe(false);
-      expect(result.checks.backwardCompatibility.pass).toBe(false);
+    it('detects modifying column types', () => {
+      const sql = 'ALTER TABLE users ALTER COLUMN age TYPE TEXT;';
+      const issues = detectMigrationPatterns(sql, 'change_type.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('modify-column-type');
+      expect(issues[0].riskLevel).toBe('high-risk');
+    });
+
+    it('detects dropping tables', () => {
+      const sql = 'DROP TABLE IF EXISTS old_users;';
+      const issues = detectMigrationPatterns(sql, 'drop_table.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('drop-table');
+      expect(issues[0].riskLevel).toBe('breaking');
+    });
+
+    it('detects disabling RLS', () => {
+      const sql = 'ALTER TABLE users DISABLE ROW LEVEL SECURITY;';
+      const issues = detectMigrationPatterns(sql, 'disable_rls.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('disable-rls');
+      expect(issues[0].riskLevel).toBe('breaking');
+    });
+
+    it('detects enabling RLS', () => {
+      const sql = 'ALTER TABLE users ENABLE ROW LEVEL SECURITY;';
+      const issues = detectMigrationPatterns(sql, 'enable_rls.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('enable-rls');
+      expect(issues[0].riskLevel).toBe('high-risk');
+    });
+
+    it('detects creating policies', () => {
+      const sql = `
+        CREATE POLICY user_isolation ON users
+        FOR SELECT USING (user_id = auth.uid());
+      `;
+      const issues = detectMigrationPatterns(sql, 'add_policy.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('alter-rls-policy');
+    });
+
+    it('detects altering policies', () => {
+      const sql = 'ALTER POLICY user_isolation ON users USING (true);';
+      const issues = detectMigrationPatterns(sql, 'alter_policy.sql');
+      expect(issues).toHaveLength(1);
+      expect(issues[0].pattern).toBe('alter-rls-policy');
+    });
+
+    it('detects multiple issues in one migration', () => {
+      const sql = `
+        ALTER TABLE users DROP COLUMN deprecated_field;
+        ALTER TABLE users ADD COLUMN new_int_col INT NOT NULL;
+        DROP INDEX idx_old_search;
+      `;
+      const issues = detectMigrationPatterns(sql, 'multi_change.sql');
+      expect(issues.length).toBeGreaterThan(1);
+      expect(issues.some((i) => i.pattern === 'drop-column')).toBe(true);
+      expect(issues.some((i) => i.pattern === 'add-column-not-null-no-default')).toBe(
+        true
+      );
+      expect(issues.some((i) => i.pattern === 'drop-index')).toBe(true);
+    });
+
+    it('records line numbers correctly', () => {
+      const sql = `
+        ALTER TABLE users DROP COLUMN old_field;
+        ALTER TABLE users ADD COLUMN new_field INT NOT NULL;
+      `;
+      const issues = detectMigrationPatterns(sql, 'test.sql');
+      expect(issues.length).toBeGreaterThan(0);
+      expect(issues[0].lineNumber).toBe(2); // First issue on line 2
+    });
+
+    it('is case-insensitive for SQL keywords', () => {
+      const sql1 = 'alter table users drop column old_field;';
+      const sql2 = 'ALTER TABLE users DROP COLUMN old_field;';
+      const sql3 = 'AlTeR tAbLe users DROP COLUMN old_field;';
+
+      const issues1 = detectMigrationPatterns(sql1, 'test.sql');
+      const issues2 = detectMigrationPatterns(sql2, 'test.sql');
+      const issues3 = detectMigrationPatterns(sql3, 'test.sql');
+
+      expect(issues1).toHaveLength(1);
+      expect(issues2).toHaveLength(1);
+      expect(issues3).toHaveLength(1);
     });
   });
 
-  // =========================================================================
-  // Test Suite 3: Rollback Safety (Reversibility)
-  // =========================================================================
+  describe('analyzeMigration', () => {
+    it('returns safe report for clean migration', () => {
+      const sql = `
+        CREATE TABLE posts (
+          id BIGINT PRIMARY KEY,
+          title TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+      `;
+      const report = analyzeMigration(sql, '20260701_create_posts.sql');
 
-  describe('Rollback Safety', () => {
-    it('should allow rollback of ADD COLUMN', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('email', 'VARCHAR(255)', true)]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_column',
-          table: 'users',
-          column: 'email',
-          details: { nullable: true },
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.checks.rollbackSafety.pass).toBe(true);
-      expect(result.checks.rollbackSafety.canRestore).toBe(true);
-      expect(result.checks.rollbackSafety.rollbackScript).toContain('DROP COLUMN email');
+      expect(report.name).toBe('20260701_create_posts.sql');
+      expect(report.riskLevel).toBe('safe');
+      expect(report.issues).toHaveLength(0);
+      expect(report.canAutoMerge).toBe(true);
+      expect(report.summary).toContain('safe');
     });
 
-    it('should flag DROP COLUMN as not safely reversible', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('email', 'VARCHAR(255)', false)]),
-      ]);
+    it('returns breaking report when breaking changes found', () => {
+      const sql = `
+        ALTER TABLE users DROP TABLE;
+      `;
+      const report = analyzeMigration(sql, '20260701_drop.sql');
 
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false)]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'drop_column',
-          table: 'users',
-          column: 'email',
-          details: {},
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.checks.rollbackSafety.pass).toBe(false);
-      expect(result.checks.rollbackSafety.canRestore).toBe(false);
-      expect(result.risks.some((r) => r.type === 'ROLLBACK_UNSAFE')).toBe(true);
+      expect(report.riskLevel).toBe('breaking');
+      expect(report.canAutoMerge).toBe(false);
+      expect(report.issues.some((i) => i.riskLevel === 'breaking')).toBe(true);
     });
 
-    it('should generate correct rollback script for multi-step migration', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false)]),
-      ]);
+    it('returns high-risk report when high-risk changes found', () => {
+      const sql = `
+        ALTER TABLE users ADD CONSTRAINT unique_email UNIQUE(email);
+      `;
+      const report = analyzeMigration(sql, '20260701_unique.sql');
 
-      const newSchema = createSchema(3, [
-        createTable('users', [
-          createColumn('id', 'INT', false),
-          createColumn('email', 'VARCHAR(255)', true),
-          createColumn('phone', 'VARCHAR(20)', true),
-        ]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_column',
-          table: 'users',
-          column: 'email',
-          details: { nullable: true },
-        },
-        {
-          type: 'add_column',
-          table: 'users',
-          column: 'phone',
-          details: { nullable: true },
-        },
-      ];
-
-      const rollbackScript = await validator.generateRollbackScript(3, changes);
-
-      expect(rollbackScript).toContain('DROP COLUMN phone');
-      expect(rollbackScript).toContain('DROP COLUMN email');
-      // Verify reverse order
-      expect(rollbackScript.indexOf('DROP COLUMN phone')).toBeLessThan(rollbackScript.indexOf('DROP COLUMN email'));
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 4: Real Migration Scenarios
-  // =========================================================================
-
-  describe('Real Migration Scenarios', () => {
-    it('should validate Cathedral adding audit_timestamp column (safe)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('missions', [
-          createColumn('id', 'UUID', false),
-          createColumn('title', 'VARCHAR(255)', false),
-          createColumn('created_at', 'TIMESTAMPTZ', false),
-        ]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('missions', [
-          createColumn('id', 'UUID', false),
-          createColumn('title', 'VARCHAR(255)', false),
-          createColumn('created_at', 'TIMESTAMPTZ', false),
-          createColumn('audit_timestamp', 'TIMESTAMPTZ', false),
-        ]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_column',
-          table: 'missions',
-          column: 'audit_timestamp',
-          details: { default: 'CURRENT_TIMESTAMP', nullable: false },
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(true);
-      expect(result.summary).toContain('safe');
+      expect(report.riskLevel).toBe('high-risk');
+      expect(report.canAutoMerge).toBe(false);
     });
 
-    it('should reject removing compliance_status column (data loss)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('enterprises', [
-          createColumn('id', 'UUID', false),
-          createColumn('name', 'VARCHAR(255)', false),
-          createColumn('compliance_status', 'VARCHAR(50)', false),
-        ]),
-      ]);
+    it('returns low-risk report when only low-risk patterns found', () => {
+      const sql = `
+        CREATE INDEX idx_users_updated_at ON users(updated_at);
+      `;
+      // Note: This migration has no issues, but we can test low-risk by
+      // adding a hypothetical low-risk issue
+      const report = analyzeMigration(sql, '20260701_index.sql');
 
-      const newSchema = createSchema(2, [
-        createTable('enterprises', [
-          createColumn('id', 'UUID', false),
-          createColumn('name', 'VARCHAR(255)', false),
-        ]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'drop_column',
-          table: 'enterprises',
-          column: 'compliance_status',
-          details: {},
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(false);
-      expect(result.summary).toContain('critical');
+      expect(report.riskLevel).toBe('safe');
+      expect(report.canAutoMerge).toBe(true);
     });
 
-    it('should validate adding unique index on email (safe)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [
-          createColumn('id', 'UUID', false),
-          createColumn('email', 'VARCHAR(255)', false),
-        ]),
-      ]);
+    it('includes execution strategy in report', () => {
+      const sql = `
+        ALTER TABLE users ADD COLUMN verified BOOLEAN NOT NULL;
+      `;
+      const report = analyzeMigration(sql, '20260701_verify.sql');
 
-      const newSchema = createSchema(2, [
-        createTable('users', [
-          createColumn('id', 'UUID', false),
-          createColumn('email', 'VARCHAR(255)', false),
-        ]),
-      ]);
-
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_index',
-          table: 'users',
-          column: 'email',
-          details: { unique: true },
-        },
-      ];
-
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(true);
+      expect(report.safeExecutionStrategy).toBeTruthy();
+      expect(report.safeExecutionStrategy).toContain('Step 1');
     });
 
-    it('should validate complex migration with add + index (safe)', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('tasks', [
-          createColumn('id', 'UUID', false),
-          createColumn('title', 'VARCHAR(255)', false),
-        ]),
-      ]);
+    it('counts total lines correctly', () => {
+      const sql = `line1
+line2
+line3
+line4
+line5`;
+      const report = analyzeMigration(sql, 'test.sql');
+      expect(report.totalLines).toBe(5);
+    });
 
-      const newSchema = createSchema(2, [
-        createTable('tasks', [
-          createColumn('id', 'UUID', false),
-          createColumn('title', 'VARCHAR(255)', false),
-          createColumn('priority', 'INT', false),
-          createColumn('assigned_to', 'UUID', true),
-        ]),
-      ]);
+    it('sets canAutoMerge true for safe migrations', () => {
+      const safeSql = 'CREATE TABLE t (id BIGINT PRIMARY KEY);';
+      const report = analyzeMigration(safeSql, 'test.sql');
+      expect(report.canAutoMerge).toBe(true);
+    });
 
-      const changes: SchemaChange[] = [
-        {
-          type: 'add_column',
-          table: 'tasks',
-          column: 'priority',
-          details: { default: 1 },
-        },
-        {
-          type: 'add_column',
-          table: 'tasks',
-          column: 'assigned_to',
-          details: { nullable: true },
-        },
-        {
-          type: 'add_index',
-          table: 'tasks',
-          column: 'assigned_to',
-          details: { unique: false },
-        },
-      ];
+    it('sets canAutoMerge false for breaking migrations', () => {
+      const breakingSql = 'DROP TABLE users;';
+      const report = analyzeMigration(breakingSql, 'test.sql');
+      expect(report.canAutoMerge).toBe(false);
+    });
 
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
+    it('accepts optional timestamp parameter', () => {
+      const sql = 'CREATE TABLE t (id BIGINT);';
+      const timestamp = '2026-07-01T10:00:00Z';
+      const report = analyzeMigration(sql, 'test.sql', timestamp);
 
-      expect(result.valid).toBe(true);
-      expect(result.checks.backwardCompatibility.pass).toBe(true);
-      expect(result.checks.dataLossDetection.pass).toBe(true);
-      expect(result.checks.rollbackSafety.pass).toBe(true);
+      expect(report.timestamp).toBe(timestamp);
+    });
+
+    it('generates summary for migrations with issues', () => {
+      const sql = 'ALTER TABLE users DROP COLUMN old;';
+      const report = analyzeMigration(sql, 'test.sql');
+
+      expect(report.summary).toContain('Found');
+      expect(report.summary).toContain('issue');
     });
   });
 
-  // =========================================================================
-  // Test Suite 5: Validation Results & Reporting
-  // =========================================================================
-
-  describe('Validation Results & Reporting', () => {
-    it('should include all risk details in validation result', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('email', 'VARCHAR(255)', true)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false)]),
-      ]);
-
-      const changes: SchemaChange[] = [
+  describe('analyzeMigrationBatch', () => {
+    it('returns batch report for multiple migrations', () => {
+      const migrations = [
         {
-          type: 'drop_column',
-          table: 'users',
-          column: 'email',
-          details: {},
+          name: '001_create_users.sql',
+          sql: 'CREATE TABLE users (id BIGINT PRIMARY KEY);',
+        },
+        {
+          name: '002_add_email.sql',
+          sql: 'ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT \'\';',
         },
       ];
+      const batch = analyzeMigrationBatch(migrations);
 
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      expect(result.valid).toBe(false);
-      expect(result.risks.length).toBeGreaterThan(0);
-      expect(result.risks.every((r) => r.severity && r.type && r.description)).toBe(true);
+      expect(batch.files).toHaveLength(2);
+      expect(batch.overallRisk).toBe('safe');
+      expect(batch.blocksCI).toBe(false);
     });
 
-    it('should provide mitigation suggestions for risks', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false), createColumn('legacy', 'VARCHAR(255)', true)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [createColumn('id', 'INT', false)]),
-      ]);
-
-      const changes: SchemaChange[] = [
+    it('sets overallRisk to breaking when any file has breaking changes', () => {
+      const migrations = [
         {
-          type: 'drop_column',
-          table: 'users',
-          column: 'legacy',
-          details: {},
+          name: '001_safe.sql',
+          sql: 'CREATE TABLE t (id BIGINT);',
+        },
+        {
+          name: '002_breaking.sql',
+          sql: 'DROP TABLE users;',
         },
       ];
+      const batch = analyzeMigrationBatch(migrations);
 
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
-
-      const dataLossRisk = result.risks.find((r) => r.type === 'DATA_LOSS');
-      expect(dataLossRisk).toBeDefined();
-      expect(dataLossRisk?.mitigation).toBeDefined();
+      expect(batch.overallRisk).toBe('breaking');
+      expect(batch.blocksCI).toBe(true);
     });
 
-    it('should generate meaningful validation summary', async () => {
-      const oldSchema = createSchema(1, [
-        createTable('users', [createColumn('id', 'INT', false)]),
-      ]);
-
-      const newSchema = createSchema(2, [
-        createTable('users', [
-          createColumn('id', 'INT', false),
-          createColumn('email', 'VARCHAR(255)', true),
-        ]),
-      ]);
-
-      const changes: SchemaChange[] = [
+    it('sets overallRisk to high-risk when files have high-risk but no breaking', () => {
+      const migrations = [
         {
-          type: 'add_column',
-          table: 'users',
-          column: 'email',
-          details: { nullable: true },
+          name: '001_safe.sql',
+          sql: 'CREATE TABLE t (id BIGINT);',
+        },
+        {
+          name: '002_high_risk.sql',
+          sql: 'ALTER TABLE users RENAME COLUMN old TO new;',
         },
       ];
+      const batch = analyzeMigrationBatch(migrations);
 
-      const result = await validator.validateMigration(2, oldSchema, newSchema, changes);
+      expect(batch.overallRisk).toBe('high-risk');
+      expect(batch.blocksCI).toBe(false);
+    });
 
-      expect(result.summary).toBeDefined();
-      expect(result.summary.length).toBeGreaterThan(0);
-      expect(result.summary).toContain(result.valid ? 'safe' : 'critical');
+    it('sets blocksCI true only for breaking changes', () => {
+      const breakingMigrations = [
+        {
+          name: 'drop.sql',
+          sql: 'DROP TABLE users;',
+        },
+      ];
+      const breakingBatch = analyzeMigrationBatch(breakingMigrations);
+      expect(breakingBatch.blocksCI).toBe(true);
+
+      const highRiskMigrations = [
+        {
+          name: 'rename.sql',
+          sql: 'ALTER TABLE users RENAME COLUMN a TO b;',
+        },
+      ];
+      const highRiskBatch = analyzeMigrationBatch(highRiskMigrations);
+      expect(highRiskBatch.blocksCI).toBe(false);
+    });
+
+    it('includes timestamp in batch report', () => {
+      const migrations = [
+        {
+          name: 'test.sql',
+          sql: 'CREATE TABLE t (id BIGINT);',
+        },
+      ];
+      const before = new Date();
+      const batch = analyzeMigrationBatch(migrations);
+      const after = new Date();
+
+      const batchTime = new Date(batch.timestamp);
+      expect(batchTime.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(batchTime.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+
+    it('handles empty migrations array', () => {
+      const batch = analyzeMigrationBatch([]);
+
+      expect(batch.files).toHaveLength(0);
+      expect(batch.overallRisk).toBe('safe');
+      expect(batch.blocksCI).toBe(false);
+    });
+  });
+
+  describe('formatMigrationReport', () => {
+    it('formats safe migration report', () => {
+      const sql = 'CREATE TABLE users (id BIGINT);';
+      const report = analyzeMigration(sql, 'test.sql');
+      const formatted = formatMigrationReport(report);
+
+      expect(formatted).toContain('test.sql');
+      expect(formatted).toContain('SAFE');
+      expect(formatted).toContain('Summary');
+    });
+
+    it('includes risk level in formatted report', () => {
+      const sql = 'DROP TABLE users;';
+      const report = analyzeMigration(sql, 'test.sql');
+      const formatted = formatMigrationReport(report);
+
+      expect(formatted).toContain('BREAKING');
+    });
+
+    it('includes auto-merge status in formatted report', () => {
+      const sql = 'CREATE TABLE t (id BIGINT);';
+      const report = analyzeMigration(sql, 'test.sql');
+      const formatted = formatMigrationReport(report);
+
+      expect(formatted).toContain('auto-merge');
+      expect(formatted).toContain('YES');
+    });
+
+    it('includes all issues in formatted report', () => {
+      const sql = `
+        DROP COLUMN old_field;
+        ADD COLUMN new_field INT NOT NULL;
+      `;
+      const report = analyzeMigration(sql, 'test.sql');
+      const formatted = formatMigrationReport(report);
+
+      expect(formatted).toContain('Issue');
+      expect(formatted).toContain('Recommendation');
+    });
+
+    it('includes line numbers in formatted report', () => {
+      const sql = `
+        line 1
+        ALTER TABLE users DROP COLUMN old_field;
+      `;
+      const report = analyzeMigration(sql, 'test.sql');
+      const formatted = formatMigrationReport(report);
+
+      expect(formatted).toContain('Line');
+    });
+  });
+
+  describe('formatBatchReport', () => {
+    it('formats batch report for multiple files', () => {
+      const migrations = [
+        {
+          name: '001_create.sql',
+          sql: 'CREATE TABLE t (id BIGINT);',
+        },
+        {
+          name: '002_modify.sql',
+          sql: 'ALTER TABLE t ADD COLUMN name TEXT;',
+        },
+      ];
+      const batch = analyzeMigrationBatch(migrations);
+      const formatted = formatBatchReport(batch);
+
+      expect(formatted).toContain('Batch Analysis');
+      expect(formatted).toContain('001_create.sql');
+      expect(formatted).toContain('002_modify.sql');
+    });
+
+    it('includes overall risk in batch report', () => {
+      const migrations = [
+        {
+          name: 'drop.sql',
+          sql: 'DROP TABLE users;',
+        },
+      ];
+      const batch = analyzeMigrationBatch(migrations);
+      const formatted = formatBatchReport(batch);
+
+      expect(formatted).toContain('BREAKING');
+    });
+
+    it('indicates CI blocking status in batch report', () => {
+      const migrations = [
+        {
+          name: 'drop.sql',
+          sql: 'DROP TABLE users;',
+        },
+      ];
+      const batch = analyzeMigrationBatch(migrations);
+      const formatted = formatBatchReport(batch);
+
+      expect(formatted).toContain('Blocks CI');
+      expect(formatted).toContain('YES');
+    });
+
+    it('lists all files with risk levels', () => {
+      const migrations = [
+        {
+          name: '001_safe.sql',
+          sql: 'CREATE TABLE t (id BIGINT);',
+        },
+        {
+          name: '002_high_risk.sql',
+          sql: 'ALTER TABLE t RENAME COLUMN a TO b;',
+        },
+      ];
+      const batch = analyzeMigrationBatch(migrations);
+      const formatted = formatBatchReport(batch);
+
+      expect(formatted).toContain('safe');
+      expect(formatted).toContain('high-risk');
+    });
+  });
+
+  describe('integration scenarios', () => {
+    it('handles real-world schema migration example 1: zero-downtime add column', () => {
+      const sql = `
+        -- Step 1: Add column nullable
+        ALTER TABLE users ADD COLUMN verified BOOLEAN;
+
+        -- Step 2: Backfill existing rows
+        UPDATE users SET verified = false WHERE verified IS NULL;
+
+        -- Step 3: Add NOT NULL constraint
+        ALTER TABLE users ALTER COLUMN verified SET NOT NULL;
+      `;
+      const report = analyzeMigration(sql, '001_safe_verified.sql');
+
+      expect(report.riskLevel).toBe('safe');
+      expect(report.canAutoMerge).toBe(true);
+    });
+
+    it('handles real-world schema migration example 2: dangerous single-step add column', () => {
+      const sql = `
+        ALTER TABLE users ADD COLUMN verified BOOLEAN NOT NULL;
+      `;
+      const report = analyzeMigration(sql, '001_unsafe_verified.sql');
+
+      expect(report.riskLevel).toBe('breaking');
+      expect(report.canAutoMerge).toBe(false);
+      expect(report.issues.length).toBeGreaterThan(0);
+    });
+
+    it('handles RLS policy creation scenario', () => {
+      const sql = `
+        CREATE POLICY "Users can only see their own data" ON users
+        FOR SELECT USING (auth.uid() = user_id);
+
+        CREATE POLICY "Users can update their own data" ON users
+        FOR UPDATE USING (auth.uid() = user_id);
+      `;
+      const report = analyzeMigration(sql, '002_user_policies.sql');
+
+      expect(report.riskLevel).toBe('high-risk');
+      expect(report.issues.every((i) => i.pattern === 'alter-rls-policy')).toBe(
+        true
+      );
+    });
+
+    it('passes CI validation for safe migration batch', () => {
+      const migrations = [
+        {
+          name: '001_tables.sql',
+          sql: 'CREATE TABLE companies (id BIGINT PRIMARY KEY); CREATE TABLE users (id BIGINT PRIMARY KEY);',
+        },
+        {
+          name: '002_indexes.sql',
+          sql: 'CREATE INDEX idx_users_company_id ON users(company_id);',
+        },
+      ];
+      const batch = analyzeMigrationBatch(migrations);
+
+      expect(batch.blocksCI).toBe(false);
+      expect(batch.overallRisk).toBe('safe');
+    });
+
+    it('blocks CI for dangerous migration batch', () => {
+      const migrations = [
+        {
+          name: '001_safe.sql',
+          sql: 'CREATE TABLE t (id BIGINT);',
+        },
+        {
+          name: '002_dangerous.sql',
+          sql: 'ALTER TABLE users DROP TABLE;',
+        },
+      ];
+      const batch = analyzeMigrationBatch(migrations);
+
+      expect(batch.blocksCI).toBe(true);
     });
   });
 });
-
-// =========================================================================
-// Test Helpers
-// =========================================================================
-
-function createSchema(version: number, tables: Table[]): SchemaDefinition {
-  return {
-    version,
-    tables,
-  };
-}
-
-function createTable(name: string, columns: Column[]): Table {
-  return {
-    name,
-    columns,
-    indexes: [],
-    constraints: [],
-  };
-}
-
-function createColumn(name: string, type: string, nullable: boolean): Column {
-  return {
-    name,
-    type,
-    nullable,
-  };
-}

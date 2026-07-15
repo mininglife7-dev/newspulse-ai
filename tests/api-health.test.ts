@@ -1,5 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// Mock Supabase module at top level
+vi.mock('@/lib/supabase', () => ({
+  getSupabaseAdmin: () => ({
+    from: () => ({
+      select: () => ({
+        limit: async () => ({ data: [], error: null }),
+      }),
+    }),
+  }),
+}));
+
 async function getHealth() {
   vi.resetModules();
   const { GET } = await import('@/app/api/health/route');
@@ -26,6 +37,7 @@ describe('GET /api/health', () => {
       supabase_anon: true,
       supabase_service: true,
     });
+    expect(body.db).toBe('ok');
   });
 
   it('reports degraded with 503 when configuration is missing', async () => {

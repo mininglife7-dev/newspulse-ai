@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     // Convert to alert and record
     const alert = commandToAlert(command);
     recordAlert(
-      'security', // Using 'security' as source for incidents
+      'incident-commander',
       alert.severity as 'critical' | 'warning' | 'info',
       alert.title,
       alert.message,
