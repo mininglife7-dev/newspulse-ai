@@ -1,346 +1,356 @@
 /**
- * DNA-013: Feature Flag Controller
+ * DNA-GOV-013: Feature Flag Controller
  *
- * Safe feature rollout system enabling:
- * - Instant rollouts (100% of users)
- * - Gradual rollouts (% of users over time)
- * - Canary deployments (gradual with automatic abort on error threshold)
- * - A/B testing (segment-based variants)
- * - User targeting (percentile-based, segment-based, explicit lists)
+ * Autonomously manage feature flags for A/B testing, gradual rollouts,
+ * and safe feature launches. Enable controlled customer access to new features
+ * without code deployment.
  *
- * Integrates with monitoring for automatic rollback on error spike.
+ * Problem: Without feature flags, new features are all-or-nothing. Once deployed,
+ * they're visible to all customers. A bug in a new feature affects everyone.
+ * We need the ability to: enable for specific users, gradual percentage rollouts,
+ * A/B test variants, and instant kill-switches for bugs.
  */
+
+export type FlagTargetingRule = 'percentage' | 'user' | 'company' | 'email' | 'tag' | 'all';
 
 export interface FeatureFlag {
   id: string;
   name: string;
   description: string;
   enabled: boolean;
-  rollout: RolloutStrategy;
-  targeting: UserTargeting;
+  // Percentage rollout: 0-100
+  percentage: number;
+  // Targeting rules for advanced control
+  rules: Array<{
+    type: FlagTargetingRule;
+    value: string | number;
+    enabled: boolean;
+  }>;
+  // Variants for A/B testing: { variantA: 50, variantB: 50 }
+  variants?: Record<string, number>;
+  // Metadata
   createdAt: string;
   updatedAt: string;
-  status: 'draft' | 'active' | 'paused' | 'rolled_back';
-  rollbackReason?: string;
+  createdBy: string;
+  tags: string[];
 }
 
-export type RolloutStrategy =
-  | { type: 'instant' }
-  | { type: 'gradual'; percentages: PercentagePhase[] }
-  | { type: 'canary'; errorThreshold: number; phases: CanaryPhase[] }
-  | { type: 'ab_test'; variants: ABVariant[] };
-
-export interface PercentagePhase {
-  percentage: number;
-  duration: number;
-  startedAt?: string;
-  completedAt?: string;
-}
-
-export interface CanaryPhase {
-  percentage: number;
-  duration: number;
-  maxErrorRate: number;
-  startedAt?: string;
-  completedAt?: string;
-  abortedAt?: string;
-  abortReason?: string;
-}
-
-export interface ABVariant {
-  id: string;
-  name: string;
-  percentage: number;
-  description?: string;
-}
-
-export interface UserTargeting {
-  type: 'all' | 'percentile' | 'segment' | 'explicit' | 'attribute';
-  percentile?: {
-    percentage: number;
-    seed: string;
-  };
-  segments?: string[];
-  userIds?: string[];
-  attributes?: {
-    [key: string]: string | number | boolean;
-  };
-}
-
-export interface FeatureFlagEvaluation {
+export interface FlagEvaluation {
   flagId: string;
-  userId: string;
+  flagName: string;
   enabled: boolean;
   variant?: string;
   reason: string;
+  evaluatedAt: string;
 }
 
-export interface FlagMetrics {
-  flagId: string;
-  exposedUsers: number;
-  errorCount: number;
-  errorRate: number;
-  avgLatency: number;
-  lastUpdated: string;
+export interface FlagContext {
+  userId?: string;
+  userEmail?: string;
+  companyId?: string;
+  tags?: string[];
+  // Custom attributes for targeting
+  attributes?: Record<string, string | number | boolean>;
 }
 
-export class FeatureFlagController {
-  private static instance: FeatureFlagController;
-  private flags: Map<string, FeatureFlag> = new Map();
-  private metrics: Map<string, FlagMetrics> = new Map();
-  private evaluationLog: FeatureFlagEvaluation[] = [];
+// In-memory flag store (would be persisted to database in production)
+const flags = new Map<string, FeatureFlag>();
 
-  private constructor() {}
-
-  static getInstance(): FeatureFlagController {
-    if (!FeatureFlagController.instance) {
-      FeatureFlagController.instance = new FeatureFlagController();
-    }
-    return FeatureFlagController.instance;
+// Deterministic hash for consistent variant assignment
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
   }
+  return Math.abs(hash);
+}
 
-  async createFlag(flag: Omit<FeatureFlag, 'createdAt' | 'updatedAt'>): Promise<FeatureFlag> {
-    const now = new Date().toISOString();
-    const fullFlag: FeatureFlag = {
-      ...flag,
-      createdAt: now,
-      updatedAt: now,
-    };
+/**
+ * Register a feature flag
+ */
+export function registerFlag(flag: FeatureFlag): void {
+  flags.set(flag.id, {
+    ...flag,
+    updatedAt: new Date().toISOString(),
+  });
+}
 
-    this.flags.set(flag.id, fullFlag);
-    this.metrics.set(flag.id, {
-      flagId: flag.id,
-      exposedUsers: 0,
-      errorCount: 0,
-      errorRate: 0,
-      avgLatency: 0,
-      lastUpdated: now,
-    });
+/**
+ * Get a flag definition
+ */
+export function getFlag(flagId: string): FeatureFlag | undefined {
+  return flags.get(flagId);
+}
 
-    return fullFlag;
-  }
+/**
+ * List all registered flags
+ */
+export function listFlags(): FeatureFlag[] {
+  return Array.from(flags.values());
+}
 
-  async getFlag(flagId: string): Promise<FeatureFlag | undefined> {
-    return this.flags.get(flagId);
-  }
+/**
+ * Update a flag
+ */
+export function updateFlag(flagId: string, updates: Partial<FeatureFlag>): FeatureFlag | undefined {
+  const flag = flags.get(flagId);
+  if (!flag) return undefined;
 
-  async updateFlag(flagId: string, updates: Partial<FeatureFlag>): Promise<FeatureFlag | undefined> {
-    const flag = this.flags.get(flagId);
-    if (!flag) return undefined;
+  const updated = {
+    ...flag,
+    ...updates,
+    id: flag.id, // Never change the ID
+    createdAt: flag.createdAt, // Never change creation time
+    updatedAt: new Date().toISOString(),
+  };
 
-    const updated: FeatureFlag = {
-      ...flag,
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
+  flags.set(flagId, updated);
+  return updated;
+}
 
-    this.flags.set(flagId, updated);
-    return updated;
-  }
+/**
+ * Evaluate if a flag is enabled for a given context
+ */
+export function evaluateFlag(flagId: string, context: FlagContext): FlagEvaluation {
+  const flag = flags.get(flagId);
+  const now = new Date().toISOString();
 
-  async evaluateFlag(flagId: string, userId: string, context?: Record<string, unknown>): Promise<FeatureFlagEvaluation> {
-    const flag = this.flags.get(flagId);
-
-    if (!flag || !flag.enabled) {
-      const evaluation: FeatureFlagEvaluation = {
-        flagId,
-        userId,
-        enabled: false,
-        reason: flag ? 'feature_disabled' : 'flag_not_found',
-      };
-      this.evaluationLog.push(evaluation);
-      return evaluation;
-    }
-
-    const targetingMatches = this.evaluateTargeting(flag, userId, context);
-    if (!targetingMatches) {
-      const evaluation: FeatureFlagEvaluation = {
-        flagId,
-        userId,
-        enabled: false,
-        reason: 'user_not_targeted',
-      };
-      this.evaluationLog.push(evaluation);
-      return evaluation;
-    }
-
-    const rolloutResult = this.evaluateRollout(flag, userId);
-
-    const evaluation: FeatureFlagEvaluation = {
+  if (!flag) {
+    return {
       flagId,
-      userId,
-      enabled: rolloutResult.enabled,
-      variant: rolloutResult.variant,
-      reason: rolloutResult.reason,
+      flagName: 'unknown',
+      enabled: false,
+      reason: 'Flag not found',
+      evaluatedAt: now,
     };
+  }
 
-    this.evaluationLog.push(evaluation);
+  // Flag must be globally enabled first
+  if (!flag.enabled) {
+    return {
+      flagId,
+      flagName: flag.name,
+      enabled: false,
+      reason: 'Flag is globally disabled',
+      evaluatedAt: now,
+    };
+  }
+
+  // Check explicit disabling rules
+  for (const rule of flag.rules) {
+    if (!rule.enabled) {
+      // Rule is disabled, skip it
+      continue;
+    }
+
+    switch (rule.type) {
+      case 'all':
+        return {
+          flagId,
+          flagName: flag.name,
+          enabled: true,
+          reason: 'Matched rule: all',
+          evaluatedAt: now,
+        };
+
+      case 'percentage':
+        // Use user ID for consistent percentage assignment
+        if (context.userId) {
+          const hash = hashCode(`${flag.id}:${context.userId}`);
+          const userPercentile = (hash % 100) + 1;
+          if (userPercentile <= flag.percentage) {
+            return {
+              flagId,
+              flagName: flag.name,
+              enabled: true,
+              reason: `Matched percentage rule (${userPercentile}% <= ${flag.percentage}%)`,
+              evaluatedAt: now,
+            };
+          }
+        }
+        break;
+
+      case 'user':
+        if (context.userId === rule.value) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched user rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
+
+      case 'email':
+        if (context.userEmail === rule.value) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched email rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
+
+      case 'company':
+        if (context.companyId === rule.value) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched company rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
+
+      case 'tag':
+        if (context.tags?.includes(rule.value as string)) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched tag rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
+    }
+  }
+
+  // No rules matched, fall back to percentage rollout
+  if (flag.percentage > 0 && context.userId) {
+    const hash = hashCode(`${flag.id}:${context.userId}`);
+    const userPercentile = (hash % 100) + 1;
+    if (userPercentile <= flag.percentage) {
+      return {
+        flagId,
+        flagName: flag.name,
+        enabled: true,
+        reason: `Fallback percentage rollout (${userPercentile}% <= ${flag.percentage}%)`,
+        evaluatedAt: now,
+      };
+    }
+  }
+
+  return {
+    flagId,
+    flagName: flag.name,
+    enabled: false,
+    reason: 'No matching rules and not in percentage rollout',
+    evaluatedAt: now,
+  };
+}
+
+/**
+ * Get variant for A/B testing
+ */
+export function getVariant(flagId: string, context: FlagContext): FlagEvaluation & { variant?: string } {
+  const evaluation = evaluateFlag(flagId, context);
+  const flag = flags.get(flagId);
+
+  if (!evaluation.enabled || !flag?.variants || !context.userId) {
     return evaluation;
   }
 
-  private evaluateTargeting(flag: FeatureFlag, userId: string, context?: Record<string, unknown>): boolean {
-    const targeting = flag.targeting;
+  // Deterministically assign variant based on user ID
+  const variantNames = Object.keys(flag.variants);
+  if (variantNames.length === 0) {
+    return evaluation;
+  }
 
-    switch (targeting.type) {
-      case 'all':
-        return true;
+  const hash = hashCode(`${flagId}:variant:${context.userId}`);
+  let selectedVariant: string | undefined;
+  let accumulator = 0;
+  const userPercentile = (hash % 100) + 1;
 
-      case 'percentile': {
-        if (!targeting.percentile) return false;
-        const hash = this.hashUserId(userId, targeting.percentile.seed);
-        return (hash % 100) < targeting.percentile.percentage;
-      }
-
-      case 'segment': {
-        if (!targeting.segments) return false;
-        const userSegments = context?.segments as string[] | undefined || [];
-        return targeting.segments.some(seg => userSegments.includes(seg));
-      }
-
-      case 'explicit': {
-        if (!targeting.userIds) return false;
-        return targeting.userIds.includes(userId);
-      }
-
-      case 'attribute': {
-        if (!targeting.attributes || !context) return false;
-        return Object.entries(targeting.attributes).every(([key, value]) => context[key] === value);
-      }
-
-      default:
-        return false;
+  for (const [variant, percentage] of Object.entries(flag.variants)) {
+    accumulator += percentage;
+    if (userPercentile <= accumulator) {
+      selectedVariant = variant;
+      break;
     }
   }
 
-  private evaluateRollout(flag: FeatureFlag, userId: string): { enabled: boolean; variant?: string; reason: string } {
-    const strategy = flag.rollout;
+  return {
+    ...evaluation,
+    variant: selectedVariant || variantNames[0],
+    reason: `${evaluation.reason}; variant: ${selectedVariant}`,
+  };
+}
 
-    switch (strategy.type) {
-      case 'instant':
-        return { enabled: true, reason: 'instant_rollout' };
-
-      case 'gradual': {
-        const currentPhase = this.getCurrentGradualPhase(strategy.percentages);
-        if (!currentPhase) return { enabled: false, reason: 'no_active_phase' };
-
-        const hash = this.hashUserId(userId, `gradual_${flag.id}`);
-        const enabled = (hash % 100) < currentPhase.percentage;
-        return { enabled, reason: enabled ? 'within_gradual_percentage' : 'outside_gradual_percentage' };
-      }
-
-      case 'canary': {
-        const currentPhase = this.getCurrentCanaryPhase(strategy.phases);
-        if (!currentPhase) return { enabled: false, reason: 'no_active_canary_phase' };
-        if (currentPhase.abortedAt) return { enabled: false, reason: 'canary_aborted' };
-
-        const hash = this.hashUserId(userId, `canary_${flag.id}`);
-        const enabled = (hash % 100) < currentPhase.percentage;
-        return { enabled, reason: enabled ? 'within_canary_percentage' : 'outside_canary_percentage' };
-      }
-
-      case 'ab_test': {
-        const hash = this.hashUserId(userId, `ab_${flag.id}`);
-        let runningTotal = 0;
-        for (const variant of strategy.variants) {
-          runningTotal += variant.percentage;
-          if ((hash % 100) < runningTotal) {
-            return { enabled: true, variant: variant.id, reason: `ab_variant_${variant.id}` };
-          }
-        }
-        return { enabled: false, reason: 'outside_ab_percentage' };
-      }
-
-      default:
-        return { enabled: false, reason: 'unknown_rollout_strategy' };
-    }
+/**
+ * Enable a flag for gradual rollout
+ */
+export function startGradualRollout(
+  flagId: string,
+  startPercentage: number,
+  targetPercentage: number
+): FeatureFlag | undefined {
+  if (startPercentage < 0 || startPercentage > 100 || targetPercentage < 0 || targetPercentage > 100) {
+    throw new Error('Percentages must be between 0 and 100');
   }
 
-  private getCurrentGradualPhase(phases: PercentagePhase[]): PercentagePhase | undefined {
-    const now = Date.now();
-    for (const phase of phases) {
-      if (!phase.startedAt) return phase;
-      const startTime = new Date(phase.startedAt).getTime();
-      const endTime = startTime + phase.duration;
-      if (now >= startTime && (!phase.completedAt || now < endTime)) {
-        return phase;
-      }
-    }
-    return undefined;
-  }
+  return updateFlag(flagId, {
+    enabled: true,
+    percentage: startPercentage,
+    tags: [...(flags.get(flagId)?.tags || []), `rollout-target-${targetPercentage}%`],
+  });
+}
 
-  private getCurrentCanaryPhase(phases: CanaryPhase[]): CanaryPhase | undefined {
-    const now = Date.now();
-    for (const phase of phases) {
-      if (!phase.startedAt) return phase;
-      const startTime = new Date(phase.startedAt).getTime();
-      const endTime = startTime + phase.duration;
-      if (now >= startTime && (!phase.completedAt || now < endTime)) {
-        return phase;
-      }
-    }
-    return undefined;
-  }
+/**
+ * Increment rollout percentage
+ */
+export function incrementRollout(flagId: string, increment: number): FeatureFlag | undefined {
+  const flag = flags.get(flagId);
+  if (!flag) return undefined;
 
-  async recordError(flagId: string): Promise<void> {
-    const metrics = this.metrics.get(flagId);
-    if (metrics) {
-      metrics.errorCount++;
-      metrics.errorRate = metrics.exposedUsers > 0 ? (metrics.errorCount / metrics.exposedUsers) * 100 : 0;
-      metrics.lastUpdated = new Date().toISOString();
-    }
-  }
+  const newPercentage = Math.min(100, flag.percentage + increment);
+  return updateFlag(flagId, { percentage: newPercentage });
+}
 
-  async recordExposure(flagId: string): Promise<void> {
-    const metrics = this.metrics.get(flagId);
-    if (metrics) {
-      metrics.exposedUsers++;
-      metrics.lastUpdated = new Date().toISOString();
-    }
-  }
+/**
+ * Format flag for display
+ */
+export function formatFlagStatus(flag: FeatureFlag): string {
+  const status = flag.enabled ? '✅ ENABLED' : '❌ DISABLED';
+  const rollout = flag.percentage > 0 ? ` (${flag.percentage}% rollout)` : '';
+  const ruleCount = flag.rules.length > 0 ? ` [${flag.rules.length} rules]` : '';
 
-  async getMetrics(flagId: string): Promise<FlagMetrics | undefined> {
-    return this.metrics.get(flagId);
-  }
+  return `${status}${rollout}${ruleCount}`;
+}
 
-  async abortCanary(flagId: string, reason: string): Promise<boolean> {
-    const flag = this.flags.get(flagId);
-    if (!flag || flag.rollout.type !== 'canary') return false;
+/**
+ * Get flag statistics
+ */
+export function getFlagStats(flagId: string): {
+  flagName: string;
+  enabled: boolean;
+  percentage: number;
+  ruleCount: number;
+  variants: string[];
+  tags: string[];
+} | undefined {
+  const flag = flags.get(flagId);
+  if (!flag) return undefined;
 
-    const strategy = flag.rollout as Extract<RolloutStrategy, { type: 'canary' }>;
-    const currentPhase = this.getCurrentCanaryPhase(strategy.phases);
-    if (!currentPhase) return false;
+  return {
+    flagName: flag.name,
+    enabled: flag.enabled,
+    percentage: flag.percentage,
+    ruleCount: flag.rules.length,
+    variants: flag.variants ? Object.keys(flag.variants) : [],
+    tags: flag.tags,
+  };
+}
 
-    currentPhase.abortedAt = new Date().toISOString();
-    currentPhase.abortReason = reason;
-
-    await this.updateFlag(flagId, {
-      status: 'rolled_back',
-      rollbackReason: reason,
-    });
-
-    return true;
-  }
-
-  private hashUserId(userId: string, seed: string): number {
-    const combined = `${userId}:${seed}`;
-    let hash = 0;
-    for (let i = 0; i < combined.length; i++) {
-      const char = combined.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash);
-  }
-
-  async getAllFlags(): Promise<FeatureFlag[]> {
-    return Array.from(this.flags.values());
-  }
-
-  async getEvaluationLog(limit: number = 1000): Promise<FeatureFlagEvaluation[]> {
-    return this.evaluationLog.slice(-limit);
-  }
-
-  async clearMetrics(): Promise<void> {
-    this.metrics.clear();
-  }
+/**
+ * Reset flag store (testing/manual reset)
+ */
+export function resetFlagHub(): void {
+  flags.clear();
 }

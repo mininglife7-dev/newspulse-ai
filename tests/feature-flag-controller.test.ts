@@ -1,505 +1,999 @@
-/**
- * DNA-013: Feature Flag Controller Tests
- *
- * Verify feature rollout system:
- * - Instant rollouts (100% of users)
- * - Gradual rollouts (% of users over time)
- * - Canary deployments (gradual with automatic abort)
- * - A/B testing (segment-based variants)
- * - User targeting (percentile, segment, explicit, attribute)
- *
- * Total: 18 tests covering safe and unsafe rollout scenarios
- */
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  FeatureFlagController,
-  FeatureFlag,
-  RolloutStrategy,
-  UserTargeting,
-  FeatureFlagEvaluation,
+  registerFlag,
+  getFlag,
+  listFlags,
+  updateFlag,
+  evaluateFlag,
+  getVariant,
+  startGradualRollout,
+  incrementRollout,
+  formatFlagStatus,
+  getFlagStats,
+  resetFlagHub,
+  type FeatureFlag,
+  type FlagContext,
 } from '@/lib/feature-flag-controller';
 
-describe('DNA-013: Feature Flag Controller', () => {
-  let controller: FeatureFlagController;
-
+describe('Feature Flag Controller - DNA-GOV-013', () => {
   beforeEach(() => {
-    controller = FeatureFlagController.getInstance();
+    resetFlagHub();
   });
 
-  // =========================================================================
-  // Test Suite 1: Instant Rollouts (Immediate Deployment)
-  // =========================================================================
-
-  describe('Instant Rollouts', () => {
-    it('should enable feature for all users on instant rollout', async () => {
-      await controller.createFlag({
-        id: 'feature-instant',
-        name: 'Instant Feature',
-        description: 'Deployed to all users immediately',
+  describe('registerFlag', () => {
+    it('registers a new flag', () => {
+      const flag: FeatureFlag = {
+        id: 'test-flag-1',
+        name: 'Test Feature',
+        description: 'A test feature flag',
         enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'test-user',
+        tags: [],
+      };
 
-      const result1 = await controller.evaluateFlag('feature-instant', 'user-001');
-      const result2 = await controller.evaluateFlag('feature-instant', 'user-999');
+      registerFlag(flag);
+      const retrieved = getFlag('test-flag-1');
 
-      expect(result1.enabled).toBe(true);
-      expect(result2.enabled).toBe(true);
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.name).toBe('Test Feature');
+      expect(retrieved?.enabled).toBe(true);
     });
 
-    it('should disable feature when disabled flag is evaluated', async () => {
-      await controller.createFlag({
-        id: 'feature-disabled',
-        name: 'Disabled Feature',
-        description: 'Feature is disabled',
+    it('updates timestamp when registering flag', () => {
+      const flag: FeatureFlag = {
+        id: 'test-flag-2',
+        name: 'Test',
+        description: '',
         enabled: false,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-10T00:00:00Z',
+        updatedAt: '2026-07-10T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      const before = new Date();
+      registerFlag(flag);
+      const after = new Date();
+
+      const retrieved = getFlag('test-flag-2');
+      const updateTime = new Date(retrieved?.updatedAt || '');
+
+      expect(updateTime.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(updateTime.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+  });
+
+  describe('getFlag', () => {
+    it('returns undefined for non-existent flag', () => {
+      const flag = getFlag('nonexistent');
+      expect(flag).toBeUndefined();
+    });
+
+    it('returns flag by ID', () => {
+      const original: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Feature One',
+        description: 'desc',
+        enabled: true,
+        percentage: 50,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: ['production'],
+      };
+
+      registerFlag(original);
+      const retrieved = getFlag('flag-1');
+
+      expect(retrieved?.id).toBe('flag-1');
+      expect(retrieved?.percentage).toBe(50);
+      expect(retrieved?.tags).toContain('production');
+    });
+  });
+
+  describe('listFlags', () => {
+    it('returns empty array when no flags registered', () => {
+      const flags = listFlags();
+      expect(Array.isArray(flags)).toBe(true);
+      expect(flags.length).toBe(0);
+    });
+
+    it('returns all registered flags', () => {
+      const flag1: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Feature 1',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      const flag2: FeatureFlag = {
+        id: 'flag-2',
+        name: 'Feature 2',
+        description: '',
+        enabled: false,
+        percentage: 100,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag1);
+      registerFlag(flag2);
+
+      const flags = listFlags();
+      expect(flags.length).toBe(2);
+      expect(flags.map((f) => f.id)).toContain('flag-1');
+      expect(flags.map((f) => f.id)).toContain('flag-2');
+    });
+  });
+
+  describe('updateFlag', () => {
+    it('returns undefined for non-existent flag', () => {
+      const updated = updateFlag('nonexistent', { enabled: true });
+      expect(updated).toBeUndefined();
+    });
+
+    it('updates flag properties', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Original Name',
+        description: 'Original desc',
+        enabled: false,
+        percentage: 10,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const updated = updateFlag('flag-1', {
+        name: 'Updated Name',
+        percentage: 50,
+        enabled: true,
       });
 
-      const result = await controller.evaluateFlag('feature-disabled', 'user-001');
+      expect(updated?.name).toBe('Updated Name');
+      expect(updated?.percentage).toBe(50);
+      expect(updated?.enabled).toBe(true);
+    });
 
+    it('preserves ID and createdAt when updating', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Original',
+        description: '',
+        enabled: false,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-01T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+      const updated = updateFlag('flag-1', { enabled: true })!;
+
+      expect(updated.id).toBe('flag-1');
+      expect(updated.createdAt).toBe('2026-07-01T00:00:00Z');
+    });
+
+    it('updates updatedAt timestamp', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: false,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const before = new Date();
+      updateFlag('flag-1', { enabled: true });
+      const after = new Date();
+
+      const updated = getFlag('flag-1')!;
+      const updateTime = new Date(updated.updatedAt);
+
+      expect(updateTime.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(updateTime.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+  });
+
+  describe('evaluateFlag', () => {
+    it('returns disabled for non-existent flag', () => {
+      const evaluation = evaluateFlag('nonexistent', {});
+      expect(evaluation.enabled).toBe(false);
+      expect(evaluation.reason).toBe('Flag not found');
+    });
+
+    it('returns disabled when flag is globally disabled', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: false,
+        percentage: 100,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const evaluation = evaluateFlag('flag-1', { userId: 'user-1' });
+      expect(evaluation.enabled).toBe(false);
+      expect(evaluation.reason).toBe('Flag is globally disabled');
+    });
+
+    it('enables flag when rule type is "all"', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [{ type: 'all', value: '', enabled: true }],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const evaluation = evaluateFlag('flag-1', {});
+      expect(evaluation.enabled).toBe(true);
+      expect(evaluation.reason).toContain('all');
+    });
+
+    it('matches user ID rule', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [{ type: 'user', value: 'user-123', enabled: true }],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const match = evaluateFlag('flag-1', { userId: 'user-123' });
+      expect(match.enabled).toBe(true);
+
+      const noMatch = evaluateFlag('flag-1', { userId: 'user-456' });
+      expect(noMatch.enabled).toBe(false);
+    });
+
+    it('matches email rule', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [{ type: 'email', value: 'admin@example.com', enabled: true }],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const match = evaluateFlag('flag-1', { userEmail: 'admin@example.com' });
+      expect(match.enabled).toBe(true);
+
+      const noMatch = evaluateFlag('flag-1', { userEmail: 'other@example.com' });
+      expect(noMatch.enabled).toBe(false);
+    });
+
+    it('matches company ID rule', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [{ type: 'company', value: 'company-abc', enabled: true }],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const match = evaluateFlag('flag-1', { companyId: 'company-abc' });
+      expect(match.enabled).toBe(true);
+
+      const noMatch = evaluateFlag('flag-1', { companyId: 'company-xyz' });
+      expect(noMatch.enabled).toBe(false);
+    });
+
+    it('matches tag rule', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [{ type: 'tag', value: 'beta-tester', enabled: true }],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const match = evaluateFlag('flag-1', { tags: ['beta-tester', 'early-access'] });
+      expect(match.enabled).toBe(true);
+
+      const noMatch = evaluateFlag('flag-1', { tags: ['other'] });
+      expect(noMatch.enabled).toBe(false);
+    });
+
+    it('skips disabled rules', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [{ type: 'user', value: 'user-123', enabled: false }],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const evaluation = evaluateFlag('flag-1', { userId: 'user-123' });
+      expect(evaluation.enabled).toBe(false);
+    });
+
+    it('applies percentage rollout consistently', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 50,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const userId = 'user-consistent';
+      const eval1 = evaluateFlag('flag-1', { userId });
+      const eval2 = evaluateFlag('flag-1', { userId });
+      const eval3 = evaluateFlag('flag-1', { userId });
+
+      expect(eval1.enabled).toBe(eval2.enabled);
+      expect(eval2.enabled).toBe(eval3.enabled);
+    });
+
+    it('handles percentage rollout with 0%', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const evaluation = evaluateFlag('flag-1', { userId: 'user-1' });
+      expect(evaluation.enabled).toBe(false);
+    });
+
+    it('handles percentage rollout with 100%', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 100,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const evaluation = evaluateFlag('flag-1', { userId: 'user-1' });
+      expect(evaluation.enabled).toBe(true);
+    });
+
+    it('returns flag metadata in evaluation', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test Feature',
+        description: 'A test flag',
+        enabled: true,
+        percentage: 50,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const evaluation = evaluateFlag('flag-1', { userId: 'user-1' });
+      expect(evaluation.flagId).toBe('flag-1');
+      expect(evaluation.flagName).toBe('Test Feature');
+      expect(evaluation.reason).toBeDefined();
+      expect(evaluation.evaluatedAt).toBeDefined();
+    });
+  });
+
+  describe('getVariant', () => {
+    it('returns evaluation without variant when flag disabled', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: false,
+        percentage: 100,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const result = getVariant('flag-1', { userId: 'user-1' });
       expect(result.enabled).toBe(false);
-      expect(result.reason).toBe('feature_disabled');
+      expect(result.variant).toBeUndefined();
     });
 
-    it('should return flag_not_found for non-existent flags', async () => {
-      const result = await controller.evaluateFlag('non-existent-flag', 'user-001');
-
-      expect(result.enabled).toBe(false);
-      expect(result.reason).toBe('flag_not_found');
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 2: Gradual Rollouts (Phased Deployment)
-  // =========================================================================
-
-  describe('Gradual Rollouts', () => {
-    it('should roll out to configured percentage of users', async () => {
-      await controller.createFlag({
-        id: 'feature-gradual',
-        name: 'Gradual Rollout',
-        description: 'Deploying to 50% of users',
+    it('returns evaluation without variant when no variants defined', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: true,
-        rollout: {
-          type: 'gradual',
-          percentages: [{ percentage: 50, duration: 86400000, startedAt: new Date().toISOString() }],
-        },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+        percentage: 100,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      const results = [];
-      for (let i = 0; i < 100; i++) {
-        const result = await controller.evaluateFlag('feature-gradual', `user-${i}`);
-        results.push(result.enabled);
-      }
+      registerFlag(flag);
 
-      const enabledCount = results.filter(r => r).length;
-      expect(enabledCount).toBeGreaterThan(30);
-      expect(enabledCount).toBeLessThan(70);
+      const result = getVariant('flag-1', { userId: 'user-1' });
+      expect(result.enabled).toBe(true);
+      expect(result.variant).toBeUndefined();
     });
 
-    it('should support multiple gradual phases', async () => {
-      const now = new Date();
-      const pastTime = new Date(now.getTime() - 86400000).toISOString();
-
-      await controller.createFlag({
-        id: 'feature-multi-phase',
-        name: 'Multi-Phase Gradual',
-        description: 'Multiple rollout phases',
+    it('assigns variant consistently for same user', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: true,
-        rollout: {
-          type: 'gradual',
-          percentages: [
-            { percentage: 25, duration: 86400000, startedAt: pastTime, completedAt: now.toISOString() },
-            { percentage: 50, duration: 86400000, startedAt: now.toISOString() },
-          ],
-        },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+        percentage: 100,
+        rules: [],
+        variants: { variantA: 50, variantB: 50 },
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      const flag = await controller.getFlag('feature-multi-phase');
-      expect(flag?.rollout.type).toBe('gradual');
-      if (flag?.rollout.type === 'gradual') {
-        expect(flag.rollout.percentages).toHaveLength(2);
-      }
-    });
-  });
+      registerFlag(flag);
 
-  // =========================================================================
-  // Test Suite 3: Canary Deployments (Automated Rollback)
-  // =========================================================================
-
-  describe('Canary Deployments', () => {
-    it('should deploy to small percentage with error monitoring', async () => {
-      await controller.createFlag({
-        id: 'feature-canary',
-        name: 'Canary Deployment',
-        description: 'Testing with 10% error threshold',
-        enabled: true,
-        rollout: {
-          type: 'canary',
-          errorThreshold: 10,
-          phases: [{ percentage: 5, duration: 3600000, maxErrorRate: 10, startedAt: new Date().toISOString() }],
-        },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
-
-      const result = await controller.evaluateFlag('feature-canary', 'user-001');
-      expect(result.reason).toMatch(/canary|outside_canary/);
-    });
-
-    it('should abort canary on high error rate', async () => {
-      await controller.createFlag({
-        id: 'feature-canary-abort',
-        name: 'Canary with Abort',
-        description: 'Canary deployment with error tracking',
-        enabled: true,
-        rollout: {
-          type: 'canary',
-          errorThreshold: 5,
-          phases: [{ percentage: 10, duration: 3600000, maxErrorRate: 5, startedAt: new Date().toISOString() }],
-        },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
-
-      await controller.recordExposure('feature-canary-abort');
-      await controller.recordError('feature-canary-abort');
-      await controller.recordError('feature-canary-abort');
-
-      const metrics = await controller.getMetrics('feature-canary-abort');
-      expect(metrics?.errorRate).toBeGreaterThan(0);
-
-      const aborted = await controller.abortCanary('feature-canary-abort', 'error_rate_exceeded');
-      expect(aborted).toBe(true);
-
-      const flag = await controller.getFlag('feature-canary-abort');
-      expect(flag?.status).toBe('rolled_back');
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 4: A/B Testing (Variant Experiments)
-  // =========================================================================
-
-  describe('A/B Testing', () => {
-    it('should distribute users across A/B variants', async () => {
-      await controller.createFlag({
-        id: 'feature-ab-test',
-        name: 'A/B Test Feature',
-        description: 'Testing two UI variants',
-        enabled: true,
-        rollout: {
-          type: 'ab_test',
-          variants: [
-            { id: 'variant-a', name: 'Original', percentage: 50 },
-            { id: 'variant-b', name: 'New', percentage: 50 },
-          ],
-        },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
-
-      const variantCounts: { [key: string]: number } = { 'variant-a': 0, 'variant-b': 0 };
-
-      for (let i = 0; i < 100; i++) {
-        const result = await controller.evaluateFlag('feature-ab-test', `user-${i}`);
-        if (result.variant) {
-          variantCounts[result.variant]++;
-        }
-      }
-
-      expect(variantCounts['variant-a']).toBeGreaterThan(30);
-      expect(variantCounts['variant-b']).toBeGreaterThan(30);
-    });
-
-    it('should assign same user to same variant consistently', async () => {
-      await controller.createFlag({
-        id: 'feature-ab-consistent',
-        name: 'Consistent A/B',
-        description: 'Same user gets same variant',
-        enabled: true,
-        rollout: {
-          type: 'ab_test',
-          variants: [
-            { id: 'variant-a', name: 'A', percentage: 50 },
-            { id: 'variant-b', name: 'B', percentage: 50 },
-          ],
-        },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
-
-      const result1 = await controller.evaluateFlag('feature-ab-consistent', 'user-123');
-      const result2 = await controller.evaluateFlag('feature-ab-consistent', 'user-123');
-      const result3 = await controller.evaluateFlag('feature-ab-consistent', 'user-123');
+      const userId = 'consistent-user';
+      const result1 = getVariant('flag-1', { userId });
+      const result2 = getVariant('flag-1', { userId });
+      const result3 = getVariant('flag-1', { userId });
 
       expect(result1.variant).toBe(result2.variant);
       expect(result2.variant).toBe(result3.variant);
-    });
-  });
-
-  // =========================================================================
-  // Test Suite 5: User Targeting (Segmentation)
-  // =========================================================================
-
-  describe('User Targeting', () => {
-    it('should target all users', async () => {
-      await controller.createFlag({
-        id: 'feature-target-all',
-        name: 'All Users',
-        description: 'Everyone gets it',
-        enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
-
-      const result = await controller.evaluateFlag('feature-target-all', 'user-001');
-      expect(result.enabled).toBe(true);
+      expect(result1.variant).toMatch(/variantA|variantB/);
     });
 
-    it('should target percentile of users by ID hash', async () => {
-      await controller.createFlag({
-        id: 'feature-target-percentile',
-        name: 'Percentile Target',
-        description: 'Target 20% by user ID hash',
+    it('distributes variants across users', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: true,
-        rollout: { type: 'instant' },
-        targeting: {
-          type: 'percentile',
-          percentile: { percentage: 20, seed: 'percentile-seed' },
-        },
-        status: 'active',
-      });
+        percentage: 100,
+        rules: [],
+        variants: { variantA: 50, variantB: 50 },
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      const results = [];
+      registerFlag(flag);
+
+      const variantCounts = { variantA: 0, variantB: 0 };
+
       for (let i = 0; i < 100; i++) {
-        const result = await controller.evaluateFlag('feature-target-percentile', `user-${i}`);
-        results.push(result.enabled);
+        const result = getVariant('flag-1', { userId: `user-${i}` });
+        if (result.variant === 'variantA') variantCounts.variantA++;
+        if (result.variant === 'variantB') variantCounts.variantB++;
       }
 
-      const enabledCount = results.filter(r => r).length;
-      expect(enabledCount).toBeGreaterThan(10);
-      expect(enabledCount).toBeLessThan(30);
+      expect(variantCounts.variantA).toBeGreaterThan(0);
+      expect(variantCounts.variantB).toBeGreaterThan(0);
     });
 
-    it('should target specific users by ID', async () => {
-      await controller.createFlag({
-        id: 'feature-target-explicit',
-        name: 'Explicit Users',
-        description: 'Specific user IDs only',
+    it('includes variant in reason', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: true,
-        rollout: { type: 'instant' },
-        targeting: {
-          type: 'explicit',
-          userIds: ['admin-001', 'beta-tester-001', 'beta-tester-002'],
-        },
-        status: 'active',
-      });
+        percentage: 100,
+        rules: [],
+        variants: { variantA: 100 },
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      const result1 = await controller.evaluateFlag('feature-target-explicit', 'admin-001');
-      const result2 = await controller.evaluateFlag('feature-target-explicit', 'regular-user');
+      registerFlag(flag);
 
-      expect(result1.enabled).toBe(true);
-      expect(result2.enabled).toBe(false);
+      const result = getVariant('flag-1', { userId: 'user-1' });
+      expect(result.reason).toContain('variant:');
     });
 
-    it('should target users by attributes', async () => {
-      await controller.createFlag({
-        id: 'feature-target-attribute',
-        name: 'Attribute Target',
-        description: 'Target by user attributes',
+    it('handles multiple variants with different percentages', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: true,
-        rollout: { type: 'instant' },
-        targeting: {
-          type: 'attribute',
-          attributes: { userType: 'beta_tester', region: 'EU' },
-        },
-        status: 'active',
-      });
+        percentage: 100,
+        rules: [],
+        variants: { controlGroup: 70, variantA: 20, variantB: 10 },
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      const betaTesterEU = await controller.evaluateFlag('feature-target-attribute', 'user-001', {
-        userType: 'beta_tester',
-        region: 'EU',
-      });
+      registerFlag(flag);
 
-      const regularUserEU = await controller.evaluateFlag('feature-target-attribute', 'user-002', {
-        userType: 'regular',
-        region: 'EU',
-      });
+      const variantCounts = { controlGroup: 0, variantA: 0, variantB: 0 };
 
-      expect(betaTesterEU.enabled).toBe(true);
-      expect(regularUserEU.enabled).toBe(false);
+      for (let i = 0; i < 1000; i++) {
+        const result = getVariant('flag-1', { userId: `user-${i}` });
+        const v = result.variant as 'controlGroup' | 'variantA' | 'variantB';
+        if (v in variantCounts) {
+          variantCounts[v]++;
+        }
+      }
+
+      const controlRatio = variantCounts.controlGroup / 1000;
+      const aRatio = variantCounts.variantA / 1000;
+      const bRatio = variantCounts.variantB / 1000;
+
+      expect(controlRatio).toBeGreaterThan(0.6);
+      expect(controlRatio).toBeLessThan(0.8);
+      expect(aRatio).toBeGreaterThan(0.1);
+      expect(aRatio).toBeLessThan(0.3);
+      expect(bRatio).toBeGreaterThan(0.05);
+      expect(bRatio).toBeLessThan(0.15);
     });
   });
 
-  // =========================================================================
-  // Test Suite 6: Feature Flag Lifecycle & Management
-  // =========================================================================
-
-  describe('Feature Flag Management', () => {
-    it('should create and retrieve features', async () => {
-      const created = await controller.createFlag({
-        id: 'feature-create-test',
-        name: 'Create Test',
-        description: 'Testing creation',
-        enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'draft',
-      });
-
-      const retrieved = await controller.getFlag('feature-create-test');
-
-      expect(created.id).toBe(retrieved?.id);
-      expect(created.status).toBe('draft');
-    });
-
-    it('should update feature flags', async () => {
-      await controller.createFlag({
-        id: 'feature-update-test',
-        name: 'Update Test',
-        description: 'Testing updates',
-        enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
-
-      const updated = await controller.updateFlag('feature-update-test', {
+  describe('startGradualRollout', () => {
+    it('throws error for invalid start percentage', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: false,
-        status: 'paused',
-      });
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      expect(updated?.enabled).toBe(false);
-      expect(updated?.status).toBe('paused');
+      registerFlag(flag);
+
+      expect(() => startGradualRollout('flag-1', -1, 100)).toThrow();
+      expect(() => startGradualRollout('flag-1', 101, 100)).toThrow();
     });
 
-    it('should list all flags', async () => {
-      await controller.createFlag({
-        id: 'feature-list-1',
-        name: 'List Test 1',
-        description: 'Test 1',
-        enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+    it('throws error for invalid target percentage', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: false,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      await controller.createFlag({
-        id: 'feature-list-2',
-        name: 'List Test 2',
-        description: 'Test 2',
-        enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+      registerFlag(flag);
 
-      const flags = await controller.getAllFlags();
-      expect(flags.length).toBeGreaterThanOrEqual(2);
+      expect(() => startGradualRollout('flag-1', 10, -1)).toThrow();
+      expect(() => startGradualRollout('flag-1', 10, 101)).toThrow();
     });
 
-    it('should track evaluation logs', async () => {
-      await controller.createFlag({
-        id: 'feature-log-test',
-        name: 'Log Test',
-        description: 'Testing logs',
-        enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+    it('enables flag and sets start percentage', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: false,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      await controller.evaluateFlag('feature-log-test', 'user-001');
-      await controller.evaluateFlag('feature-log-test', 'user-002');
-      await controller.evaluateFlag('feature-log-test', 'user-003');
+      registerFlag(flag);
 
-      const logs = await controller.getEvaluationLog();
-      expect(logs.length).toBeGreaterThanOrEqual(3);
+      const result = startGradualRollout('flag-1', 10, 100);
+
+      expect(result?.enabled).toBe(true);
+      expect(result?.percentage).toBe(10);
     });
 
-    it('should track feature metrics', async () => {
-      await controller.createFlag({
-        id: 'feature-metrics-test',
-        name: 'Metrics Test',
-        description: 'Testing metrics',
-        enabled: true,
-        rollout: { type: 'instant' },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+    it('adds target percentage tag', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: false,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      await controller.recordExposure('feature-metrics-test');
-      await controller.recordExposure('feature-metrics-test');
-      await controller.recordError('feature-metrics-test');
+      registerFlag(flag);
 
-      const metrics = await controller.getMetrics('feature-metrics-test');
-      expect(metrics?.exposedUsers).toBe(2);
-      expect(metrics?.errorCount).toBe(1);
-      expect(metrics?.errorRate).toBe(50);
+      const result = startGradualRollout('flag-1', 10, 75);
+
+      expect(result?.tags).toContain('rollout-target-75%');
+    });
+
+    it('returns undefined for non-existent flag', () => {
+      const result = startGradualRollout('nonexistent', 10, 100);
+      expect(result).toBeUndefined();
     });
   });
 
-  // =========================================================================
-  // Test Suite 7: Production Safety (Edge Cases & Error Handling)
-  // =========================================================================
+  describe('incrementRollout', () => {
+    it('increases percentage by increment amount', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 10,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-  describe('Production Safety', () => {
-    it('should handle non-existent flags gracefully', async () => {
-      const result = await controller.evaluateFlag('does-not-exist', 'user-001');
-      expect(result.enabled).toBe(false);
-      expect(result.reason).toBe('flag_not_found');
+      registerFlag(flag);
+
+      const result = incrementRollout('flag-1', 20);
+
+      expect(result?.percentage).toBe(30);
     });
 
-    it('should handle missing context in targeting', async () => {
-      await controller.createFlag({
-        id: 'feature-missing-context',
-        name: 'Missing Context Test',
-        description: 'Test without context',
+    it('caps percentage at 100', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: true,
-        rollout: { type: 'instant' },
-        targeting: {
-          type: 'attribute',
-          attributes: { region: 'EU' },
-        },
-        status: 'active',
-      });
+        percentage: 90,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      const result = await controller.evaluateFlag('feature-missing-context', 'user-001');
-      expect(result.enabled).toBe(false);
+      registerFlag(flag);
+
+      const result = incrementRollout('flag-1', 20);
+
+      expect(result?.percentage).toBe(100);
     });
 
-    it('should assign users consistently across multiple evaluations', async () => {
-      await controller.createFlag({
-        id: 'feature-consistency',
-        name: 'Consistency Test',
-        description: 'Same result for same user',
+    it('returns undefined for non-existent flag', () => {
+      const result = incrementRollout('nonexistent', 10);
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('formatFlagStatus', () => {
+    it('shows enabled status and percentage', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
         enabled: true,
-        rollout: {
-          type: 'gradual',
-          percentages: [{ percentage: 50, duration: 86400000, startedAt: new Date().toISOString() }],
-        },
-        targeting: { type: 'all' },
-        status: 'active',
-      });
+        percentage: 50,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
 
-      const result1 = await controller.evaluateFlag('feature-consistency', 'user-consistency-test');
-      const result2 = await controller.evaluateFlag('feature-consistency', 'user-consistency-test');
-      const result3 = await controller.evaluateFlag('feature-consistency', 'user-consistency-test');
+      const status = formatFlagStatus(flag);
 
-      expect(result1.enabled).toBe(result2.enabled);
-      expect(result2.enabled).toBe(result3.enabled);
+      expect(status).toContain('✅');
+      expect(status).toContain('50%');
+    });
+
+    it('shows disabled status', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: false,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      const status = formatFlagStatus(flag);
+
+      expect(status).toContain('❌');
+    });
+
+    it('shows rule count', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 0,
+        rules: [
+          { type: 'user', value: 'user-1', enabled: true },
+          { type: 'email', value: 'test@example.com', enabled: true },
+        ],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      const status = formatFlagStatus(flag);
+
+      expect(status).toContain('2 rules');
+    });
+  });
+
+  describe('getFlagStats', () => {
+    it('returns undefined for non-existent flag', () => {
+      const stats = getFlagStats('nonexistent');
+      expect(stats).toBeUndefined();
+    });
+
+    it('returns comprehensive stats', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test Feature',
+        description: 'A test flag',
+        enabled: true,
+        percentage: 75,
+        rules: [
+          { type: 'user', value: 'user-1', enabled: true },
+          { type: 'email', value: 'admin@example.com', enabled: true },
+        ],
+        variants: { variantA: 50, variantB: 50 },
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'founder',
+        tags: ['production', 'beta'],
+      };
+
+      registerFlag(flag);
+
+      const stats = getFlagStats('flag-1');
+
+      expect(stats?.flagName).toBe('Test Feature');
+      expect(stats?.enabled).toBe(true);
+      expect(stats?.percentage).toBe(75);
+      expect(stats?.ruleCount).toBe(2);
+      expect(stats?.variants).toEqual(['variantA', 'variantB']);
+      expect(stats?.tags).toEqual(['production', 'beta']);
+    });
+
+    it('handles flag without variants', () => {
+      const flag: FeatureFlag = {
+        id: 'flag-1',
+        name: 'Test',
+        description: '',
+        enabled: true,
+        percentage: 50,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'user',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const stats = getFlagStats('flag-1');
+
+      expect(stats?.variants).toEqual([]);
+    });
+  });
+
+  describe('Integration: Gradual Rollout Workflow', () => {
+    it('simulates gradual rollout from 0% to 100%', () => {
+      const flag: FeatureFlag = {
+        id: 'new-feature',
+        name: 'New Onboarding',
+        description: 'New onboarding flow',
+        enabled: false,
+        percentage: 0,
+        rules: [],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'founder',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      startGradualRollout('new-feature', 10, 100);
+      let stats = getFlagStats('new-feature')!;
+      expect(stats.percentage).toBe(10);
+
+      incrementRollout('new-feature', 15);
+      stats = getFlagStats('new-feature')!;
+      expect(stats.percentage).toBe(25);
+
+      incrementRollout('new-feature', 25);
+      stats = getFlagStats('new-feature')!;
+      expect(stats.percentage).toBe(50);
+
+      incrementRollout('new-feature', 50);
+      stats = getFlagStats('new-feature')!;
+      expect(stats.percentage).toBe(100);
+    });
+  });
+
+  describe('Integration: Targeted Feature Launch', () => {
+    it('enables feature for specific users during beta', () => {
+      const flag: FeatureFlag = {
+        id: 'beta-feature',
+        name: 'Beta Program',
+        description: 'Beta feature for selected users',
+        enabled: true,
+        percentage: 0,
+        rules: [
+          { type: 'user', value: 'beta-user-1', enabled: true },
+          { type: 'user', value: 'beta-user-2', enabled: true },
+          { type: 'tag', value: 'beta-tester', enabled: true },
+        ],
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'founder',
+        tags: [],
+      };
+
+      registerFlag(flag);
+
+      const betaUser1 = evaluateFlag('beta-feature', { userId: 'beta-user-1' });
+      expect(betaUser1.enabled).toBe(true);
+
+      const betaUser2 = evaluateFlag('beta-feature', { userId: 'beta-user-2' });
+      expect(betaUser2.enabled).toBe(true);
+
+      const taggedUser = evaluateFlag('beta-feature', { tags: ['beta-tester'] });
+      expect(taggedUser.enabled).toBe(true);
+
+      const regularUser = evaluateFlag('beta-feature', { userId: 'regular-user' });
+      expect(regularUser.enabled).toBe(false);
+    });
+  });
+
+  describe('Integration: A/B Testing Workflow', () => {
+    it('runs A/B test with consistent variant assignment', () => {
+      const flag: FeatureFlag = {
+        id: 'checkout-ab-test',
+        name: 'Checkout Redesign',
+        description: 'Testing new checkout flow',
+        enabled: true,
+        percentage: 100,
+        rules: [],
+        variants: { currentCheckout: 50, newCheckout: 50 },
+        createdAt: '2026-07-12T00:00:00Z',
+        updatedAt: '2026-07-12T00:00:00Z',
+        createdBy: 'founder',
+        tags: ['experiment'],
+      };
+
+      registerFlag(flag);
+
+      const results = new Map<string, number>();
+
+      for (let i = 0; i < 1000; i++) {
+        const variant = getVariant('checkout-ab-test', { userId: `user-${i}` });
+        const v = variant.variant || 'unknown';
+        results.set(v, (results.get(v) || 0) + 1);
+      }
+
+      expect(results.get('currentCheckout')).toBeGreaterThan(400);
+      expect(results.get('currentCheckout')).toBeLessThan(600);
+      expect(results.get('newCheckout')).toBeGreaterThan(400);
+      expect(results.get('newCheckout')).toBeLessThan(600);
     });
   });
 });

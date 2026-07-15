@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     const alerts = anomaliesToAlerts(report);
     for (const alert of alerts) {
       recordAlert(
-        'security', // Using 'security' as closest source type for cost anomalies
+        'cost-anomaly',
         alert.severity as 'critical' | 'warning' | 'info',
         alert.title,
         alert.message,

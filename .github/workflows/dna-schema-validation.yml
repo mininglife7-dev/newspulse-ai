@@ -1,0 +1,139 @@
+name: DNA-GOV-012 - Schema Migration Validator
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - '.github/workflows/dna-schema-validation.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate-migrations:
+    runs-on: ubuntu-latest
+    name: Schema Migration Validation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Find migration files
+        id: find-migrations
+        run: |
+          # Find all SQL migration files
+          FILES=$(find supabase/migrations -type f -name '*.sql' 2>/dev/null | sort || echo "")
+          COUNT=$(echo "$FILES" | grep -c '.*' || echo 0)
+
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No migration files found"
+          fi
+
+      - name: Validate with DNA-GOV-012
+        if: steps.find-migrations.outputs.count > 0
+        id: validate
+        run: |
+          # Create a validation script
+          cat > .github/validate-migrations.mjs << 'EOF'
+          import { readFileSync, writeFileSync } from 'fs';
+          import { analyzeMigrationBatch } from './lib/schema-migration-validator.ts';
+
+          const files = process.argv.slice(2).filter(f => f.trim());
+          const migrations = files.map(file => ({
+            name: file.split('/').pop(),
+            sql: readFileSync(file, 'utf-8'),
+            timestamp: new Date().toISOString()
+          }));
+
+          const batch = analyzeMigrationBatch(migrations);
+
+          // Write report
+          writeFileSync('migration-report.json', JSON.stringify(batch, null, 2));
+
+          // Exit with code based on whether CI is blocked
+          process.exit(batch.blocksCI ? 1 : 0);
+          EOF
+
+          # Run validation
+          npx tsx .github/validate-migrations.mjs ${{ steps.find-migrations.outputs.files }} || VALIDATION_RESULT=$?
+
+          # Store result
+          if [ "${VALIDATION_RESULT:-0}" -ne 0 ]; then
+            echo "status=failed" >> $GITHUB_OUTPUT
+          else
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment with results
+        if: always() && steps.find-migrations.outputs.count > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            try {
+              const report = JSON.parse(fs.readFileSync('migration-report.json', 'utf-8'));
+              const blocksCI = report.blocksCI || false;
+              const overallRisk = (report.overallRisk || 'unknown').toUpperCase();
+
+              let body = `## Schema Migration Validation (DNA-GOV-012)\n\n`;
+              body += `| Status | Risk Level | Blocks CI |\n`;
+              body += `|--------|-----------|----------|\n`;
+              const status = blocksCI ? '🔴' : '✅';
+              body += `| ${status} ${blocksCI ? 'BLOCKED' : 'PASSED'} | ${overallRisk} | ${blocksCI ? 'Yes' : 'No'} |\n\n`;
+
+              if (report.files && report.files.length > 0) {
+                body += `### Files Analyzed (${report.files.length})\n\n`;
+                for (const file of report.files) {
+                  const icon = file.riskLevel === 'safe' ? '✅' :
+                               file.riskLevel === 'low-risk' ? '⚠️' :
+                               file.riskLevel === 'high-risk' ? '🟠' : '🔴';
+
+                  body += `${icon} **${file.name}**\n`;
+                  body += `- Risk: \`${file.riskLevel}\`\n`;
+                  body += `- Lines: ${file.totalLines}\n`;
+                  body += `- Issues: ${file.issues?.length || 0}\n`;
+
+                  if (file.issues && file.issues.length > 0) {
+                    body += `\n  **Issues:**\n`;
+                    for (const issue of file.issues) {
+                      body += `  - **${issue.pattern}**: ${issue.description}\n`;
+                    }
+                  }
+                  body += '\n';
+                }
+
+                if (report.files[0]?.safeExecutionStrategy) {
+                  body += `### Execution Strategy\n\n\`\`\`\n${report.files[0].safeExecutionStrategy}\n\`\`\`\n`;
+                }
+              }
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+
+              if (blocksCI) {
+                core.setFailed('Breaking schema changes detected. Review comment for details.');
+              }
+            } catch (error) {
+              console.error('Error:', error);
+              core.warning('Could not parse migration validation report');
+            }
