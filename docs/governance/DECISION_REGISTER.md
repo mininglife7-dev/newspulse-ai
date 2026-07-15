@@ -7,6 +7,27 @@ are never requested from the Founder.
 
 ---
 
+## DR-0018 — Pause Phase 3 feature work; measure compliance system adoption first
+
+- **Decision:** Deploy the completed Obligation Tracking & Auto-generation system to production as-is (11 features verified, all test/lint/build green, live on main). Pause speculative Phase 3 work (evidence linking, audit logging, advanced analytics) for one week (baseline 2026-07-10, checkpoint 2026-07-17) to measure real user adoption, engagement patterns, and feature-specific pain points before committing to the next increment.
+- **Reason:** The compliance system (risk assessment → obligation generation → obligation tracking → compliance dashboard) is feature-complete and production-ready. Four Phase 3 candidates exist (evidence linking, audit logging, advanced analytics, template iteration). Rather than guess which teams need most, gather one week of live usage data: adoption metrics (obligations created, template imports by level), engagement (status updates, bulk actions, CSV exports, due date usage), errors (RLS rejections, query failures), and qualitative feedback (Slack/support mentions). This data will surface the actual next bottleneck instead of building based on design assumptions.
+- **Alternatives considered:**
+  1. Begin Phase 3 work now (evidence linking or audit logging) — risks building features with low adoption or that conflict with real user workflows.
+  2. Declare Phase 2 complete and hand off to Founder for long-term roadmap — abandons the measurement window while the product is fresh.
+- **Evidence:** 
+  - Compliance system verification: 589/589 unit tests green, 6/6 e2e smoke, lint/tsc clean, production build succeeds, deployed to main.
+  - All 11 features verified in production: obligation templates import, template library covers 28 obligations, bulk actions work, due dates + visual alerts render, CSV export generates correct data, compliance dashboard metrics calculate correctly, assessment progress tracker updates correctly.
+  - Measurement and planning frameworks documented: COMPLIANCE_USAGE_AUDIT_PLAN.md, CHECKPOINT-AUDIT-2026-07-17.md, PHASE-3-CANDIDATES.md
+- **Confidence:** High for the "pause" decision (one week is short, low-cost to reverse); Unknown for which Phase 3 feature will emerge as highest-value (depends on usage data not yet collected).
+- **Expected impact:** 
+  - Founders gain data-driven prioritization signal instead of design guesses.
+  - Week 1 checkpoint (2026-07-17) produces a usage audit report that identifies whether adoption is high/medium/low and which user pain points are real.
+  - Phase 3 feature recommendation comes with evidence, raising confidence of the next build.
+- **Risk assessment:** 
+  - Minimal. A one-week pause is reversible; if adoption is immediate and high, we know to proceed. If low, the pause avoided wasted Phase 3 work.
+  - Residual: If product design flaws surface during week 1 (e.g., bulk actions are confusing, template library is too generic), they exist now and would have existed after Phase 3 anyway. The pause allows us to fix actual problems instead of stacking new features on top of them.
+- **Timestamp:** 2026-07-10
+
 ## DR-0017 — Migrate to Next 16 + React 19 + eslint 9 (with an honest correction)
 
 - **Decision:** Upgrade next 15.5.20 → 16.2.10, react/react-dom 18 → 19.2.4,
