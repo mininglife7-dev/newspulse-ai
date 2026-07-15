@@ -8,7 +8,7 @@
  * 4. Impact scope (individual, group, systemic)
  */
 
-export type RiskLevel = 'unacceptable' | 'high' | 'limited' | 'minimal';
+export type RiskLevel = 'unacceptable' | 'high' | 'medium' | 'low';
 
 export interface RiskAssessmentInput {
   systemType: string;
@@ -151,9 +151,9 @@ export function assessRisk(input: RiskAssessmentInput): RiskAssessmentResult {
   if (score >= 70) {
     riskLevel = 'high';
   } else if (score >= 40) {
-    riskLevel = 'limited';
+    riskLevel = 'medium';
   } else {
-    riskLevel = 'minimal';
+    riskLevel = 'low';
   }
 
   // Generate obligations based on risk level
@@ -167,7 +167,7 @@ export function assessRisk(input: RiskAssessmentInput): RiskAssessmentResult {
       'Transparency statements to affected individuals',
       'Third-party audit recommended'
     );
-  } else if (riskLevel === 'limited') {
+  } else if (riskLevel === 'medium') {
     obligations.push(
       'Implement transparency measures',
       'Document AI system capabilities and limitations',

@@ -49,7 +49,7 @@ describe('Risk Assessment — EU AI Act Compliance Classification', () => {
 
       const result = assessRisk(input);
 
-      expect(['limited', 'high']).toContain(result.riskLevel);
+      expect(['medium', 'high']).toContain(result.riskLevel);
       expect(result.riskScore).toBeGreaterThanOrEqual(40);
     });
 
@@ -65,7 +65,7 @@ describe('Risk Assessment — EU AI Act Compliance Classification', () => {
 
       const result = assessRisk(input);
 
-      expect(result.riskLevel).toBe('minimal');
+      expect(result.riskLevel).toBe('low');
       expect(result.riskScore).toBeLessThan(40);
     });
   });
@@ -238,7 +238,7 @@ describe('Risk Assessment — EU AI Act Compliance Classification', () => {
 
       const result = assessRisk(input);
 
-      expect(['limited', 'high']).toContain(result.riskLevel);
+      expect(['medium', 'high']).toContain(result.riskLevel);
       expect(result.obligations.length).toBeGreaterThan(0);
     });
 
@@ -254,7 +254,7 @@ describe('Risk Assessment — EU AI Act Compliance Classification', () => {
 
       const result = assessRisk(input);
 
-      expect(result.riskLevel).toBe('minimal');
+      expect(result.riskLevel).toBe('low');
       expect(result.obligations).toContain('General compliance monitoring');
       expect(result.obligations.length).toBeLessThan(
         assessRisk({
@@ -371,7 +371,7 @@ describe('Risk Assessment — EU AI Act Compliance Classification', () => {
 
       const result = assessRisk(input);
 
-      expect(result.riskLevel).toBe('minimal');
+      expect(result.riskLevel).toBe('low');
       expect(result.riskScore).toBe(0);
     });
 

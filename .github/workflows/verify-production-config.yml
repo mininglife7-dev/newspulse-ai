@@ -1,0 +1,59 @@
+name: Verify GitHub Deployment Secrets
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  verify-secrets:
+    name: Check GitHub Actions Secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Schema Deployment Secret
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "🔐 Checking schema deployment credential..."
+          echo ""
+
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "❌ SUPABASE_DB_PASSWORD: NOT CONFIGURED"
+            echo ""
+            echo "This secret is required for the schema deployment workflow."
+            echo "Configure in GitHub: Settings → Secrets and variables → Actions"
+            echo ""
+            echo "To get the value:"
+            echo "1. Go to Supabase Dashboard → Settings → Database"
+            echo "2. Click 'Show Password' or reset if needed"
+            echo "3. Copy the password to GitHub → SUPABASE_DB_PASSWORD"
+            echo ""
+            # Note: Not exiting with error; schema deployment is separate workflow
+            echo "⚠️  Schema deployment will be skipped until configured"
+          else
+            echo "✅ SUPABASE_DB_PASSWORD: Configured"
+          fi
+
+      - name: Explain Vercel Configuration
+        run: |
+          echo ""
+          echo "📝 Production configuration is separate: Vercel environment variables"
+          echo ""
+          echo "Vercel (NOT GitHub Actions) requires these:"
+          echo "  1. NEXT_PUBLIC_SUPABASE_URL (from Supabase Dashboard → Settings → API)"
+          echo "  2. NEXT_PUBLIC_SUPABASE_ANON_KEY (from Supabase Dashboard → Settings → API)"
+          echo "  3. SUPABASE_SERVICE_ROLE_KEY (from Supabase Dashboard → Settings → API)"
+          echo "  4. NEXT_PUBLIC_APP_URL (your production URL)"
+          echo "  5. ADMIN_TOKEN (generate: openssl rand -hex 32)"
+          echo ""
+          echo "Configure in Vercel Dashboard → Your Project → Settings → Environment Variables"
+          echo ""
+          echo "After adding Vercel variables:"
+          echo "  1. Trigger a new production deployment in Vercel"
+          echo "  2. Wait for deployment to complete"
+          echo "  3. Test your production application"
