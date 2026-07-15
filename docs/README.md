@@ -181,6 +181,15 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 - When to escalate immediately
 - **When:** Use during launch if issues arise (reference during T+0 to T+24)
 
+**[LAUNCH_DAY_LOG_TEMPLATE.md](./LAUNCH_DAY_LOG_TEMPLATE.md)** (420+ lines)
+- Structured template for real-time event logging during launch day
+- Pre-populated with all key phases and checkpoints
+- Guidance on what to log and when
+- Example entries showing format and detail level
+- Instructions for using log in post-launch retrospective
+- Archiving procedures for historical reference
+- **When:** Open this on launch morning and update as events occur throughout launch day
+
 ### Operations & Monitoring
 
 **[FIRST_WEEK_TRACKING.md](./FIRST_WEEK_TRACKING.md)** (363 lines)
