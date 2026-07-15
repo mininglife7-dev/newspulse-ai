@@ -681,3 +681,79 @@ create policy "Members can update workspace monitoring_alerts"
             and status = 'active'
         )
     );
+
+-- ---------------------------------------------------------------
+-- Atomic Workspace Creation RPC
+-- Creates workspace, membership, and company in a single transaction
+-- Rolls back all inserts if any step fails
+-- ---------------------------------------------------------------
+create or replace function public.create_workspace_atomic(
+    p_slug text,
+    p_name text,
+    p_description text,
+    p_owner_id uuid,
+    p_legal_name text DEFAULT NULL,
+    p_country text DEFAULT NULL,
+    p_industry text DEFAULT NULL,
+    p_employees_range text DEFAULT NULL,
+    p_website text DEFAULT NULL,
+    p_governance_priorities text DEFAULT NULL
+)
+returns json as $$
+declare
+    v_workspace_id uuid;
+    v_company_id uuid;
+begin
+    -- Step 1: Insert workspace
+    insert into public.workspaces (slug, name, description, owner_id, status)
+    values (p_slug, p_name, p_description, p_owner_id, 'active')
+    returning id into v_workspace_id;
+
+    -- Step 2: Insert workspace membership (owner)
+    insert into public.workspace_members (workspace_id, user_id, role, email, status, joined_at)
+    values (
+        v_workspace_id,
+        p_owner_id,
+        'owner',
+        (select email from auth.users where id = p_owner_id),
+        'active',
+        now()
+    );
+
+    -- Step 3: Insert company profile
+    insert into public.companies (
+        workspace_id,
+        name,
+        legal_name,
+        country,
+        industry,
+        employees_range,
+        website,
+        governance_priorities
+    )
+    values (
+        v_workspace_id,
+        p_name,
+        p_legal_name,
+        p_country,
+        p_industry,
+        p_employees_range,
+        p_website,
+        p_governance_priorities
+    )
+    returning id into v_company_id;
+
+    -- Success: return both IDs
+    return json_build_object(
+        'workspace_id', v_workspace_id,
+        'company_id', v_company_id,
+        'success', true
+    );
+exception when others then
+    -- Transaction automatically rolls back on any error
+    return json_build_object(
+        'success', false,
+        'error', sqlerrm
+    );
+end;
+$$ language plpgsql security definer;

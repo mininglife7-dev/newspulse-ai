@@ -72,106 +72,51 @@ export async function POST(req: Request) {
     );
   }
 
-  // 1. Workspace (tenant boundary)
-  let workspace;
-  let wsError;
+  // Atomic workspace creation: all 3 operations (workspace, membership, company) in one transaction
+  const slug = slugify(companyName);
+
+  let workspace: { id: string; slug: string; name: string };
+  let company: { id: string };
+
   try {
     const result = await withTimeout(
-      supabase
-        .from('workspaces')
-        .insert({
-          slug: slugify(companyName),
-          name: companyName,
-          description: body.description?.trim() || null,
-          owner_id: user.id,
-        })
-        .select('id, slug, name')
-        .single()
+      supabase.rpc('create_workspace_atomic', {
+        p_slug: slug,
+        p_name: companyName,
+        p_description: body.description?.trim() || null,
+        p_owner_id: user.id,
+        p_legal_name: body.legalName?.trim() || null,
+        p_country: country,
+        p_industry: industry,
+        p_employees_range: body.employees?.trim() || null,
+        p_website: body.website?.trim() || null,
+        p_governance_priorities: body.description?.trim() || null,
+      })
     );
-    workspace = result.data;
-    wsError = result.error;
+
+    const data = result.data as { success: boolean; workspace_id?: string; company_id?: string; error?: string };
+
+    if (!data.success || !data.workspace_id || !data.company_id) {
+      console.error('[api/workspace] atomic creation failed:', data.error || 'Unknown error');
+      return NextResponse.json(
+        { ok: false, error: data.error || 'Could not create workspace. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    workspace = {
+      id: data.workspace_id,
+      slug,
+      name: companyName,
+    };
+
+    company = {
+      id: data.company_id,
+    };
   } catch (error) {
-    console.error('[api/workspace] workspace insert timeout/error:', error);
+    console.error('[api/workspace] atomic creation timeout/error:', error);
     return NextResponse.json(
       { ok: false, error: 'Workspace creation timed out or failed. Please try again.' },
-      { status: 500 }
-    );
-  }
-
-  if (wsError || !workspace) {
-    console.error('[api/workspace] workspace insert failed:', wsError);
-    return NextResponse.json(
-      { ok: false, error: 'Could not create workspace' },
-      { status: 500 }
-    );
-  }
-
-  // 2. Owner membership (activates RLS access to the workspace)
-  let memberError;
-  try {
-    const result = await withTimeout(
-      supabase
-        .from('workspace_members')
-        .insert({
-          workspace_id: workspace.id,
-          user_id: user.id,
-          role: 'owner',
-          email: user.email ?? '',
-          status: 'active',
-          joined_at: new Date().toISOString(),
-        })
-    );
-    memberError = result.error;
-  } catch (error) {
-    console.error('[api/workspace] member insert timeout/error:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Membership creation timed out or failed. Please try again.' },
-      { status: 500 }
-    );
-  }
-
-  if (memberError) {
-    console.error('[api/workspace] member insert failed:', memberError);
-    return NextResponse.json(
-      { ok: false, error: 'Could not create workspace membership' },
-      { status: 500 }
-    );
-  }
-
-  // 3. Company profile (the governed entity)
-  let company;
-  let companyError;
-  try {
-    const result = await withTimeout(
-      supabase
-        .from('companies')
-        .insert({
-          workspace_id: workspace.id,
-          name: companyName,
-          legal_name: body.legalName?.trim() || null,
-          country,
-          industry,
-          employees_range: body.employees?.trim() || null,
-          website: body.website?.trim() || null,
-          governance_priorities: body.description?.trim() || null,
-        })
-        .select('id')
-        .single()
-    );
-    company = result.data;
-    companyError = result.error;
-  } catch (error) {
-    console.error('[api/workspace] company insert timeout/error:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Company creation timed out or failed. Please try again.' },
-      { status: 500 }
-    );
-  }
-
-  if (companyError || !company) {
-    console.error('[api/workspace] company insert failed:', companyError);
-    return NextResponse.json(
-      { ok: false, error: 'Could not create company profile' },
       { status: 500 }
     );
   }
