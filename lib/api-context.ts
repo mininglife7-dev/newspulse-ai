@@ -6,14 +6,7 @@ export interface ApiContext {
   error?: string;
   workspaceId?: string;
   companyId?: string | null;
-}
-
-interface WorkspaceMembership {
-  workspace_id: string;
-}
-
-interface Company {
-  id: string;
+  userId?: string;
 }
 
 /**
@@ -47,10 +40,11 @@ export async function resolveContext(
     return {
       status: membershipError ? 500 : 409,
       error: membershipError ? 'Database access failed' : 'No workspace — complete company setup first',
+      userId: user.id,
     };
   }
 
-  const workspaceId = (membership as WorkspaceMembership).workspace_id;
+  const workspaceId = membership.workspace_id;
 
   if (options?.includeCompany) {
     const { data: company, error: companyError } = await supabase
@@ -65,19 +59,22 @@ export async function resolveContext(
       return {
         status: 500,
         error: 'Database access failed',
+        userId: user.id,
       };
     }
 
     return {
       status: 200,
       workspaceId,
-      companyId: (company as Company | null)?.id ?? null,
+      companyId: company?.id ?? null,
+      userId: user.id,
     };
   }
 
   return {
     status: 200,
     workspaceId,
+    userId: user.id,
   };
 }
 

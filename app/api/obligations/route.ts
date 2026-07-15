@@ -179,17 +179,6 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    // Get current user for assignment tracking
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { ok: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     // Verify user has access to this obligation
     const { data: existing } = await supabase
       .from('obligations')
@@ -235,7 +224,7 @@ export async function PATCH(req: Request) {
     if (body.owner_id !== undefined) {
       updateData.owner_id = body.owner_id;
       updateData.assigned_at = body.owner_id ? new Date().toISOString() : null;
-      updateData.assigned_by = body.owner_id ? user.id : null;
+      updateData.assigned_by = body.owner_id ? ctx.userId : null;
     }
 
     const { data, error } = await supabase

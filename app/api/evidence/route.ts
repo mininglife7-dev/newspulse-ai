@@ -94,16 +94,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { ok: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const formData = await req.formData();
     const obligationId = formData.get('obligation_id') as string;
     const file = formData.get('file') as File;
@@ -195,7 +185,7 @@ export async function POST(req: Request) {
           file_size: file.size,
           file_type: file.type,
           storage_path: storagePath,
-          uploaded_by: user.id,
+          uploaded_by: ctx.userId,
           notes: notes,
         },
       ])
@@ -247,16 +237,6 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { ok: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     // Verify ownership and get storage path
     const { data: evidence } = await supabase
       .from('obligation_evidence')
@@ -272,7 +252,7 @@ export async function DELETE(req: Request) {
       );
     }
 
-    if (evidence.uploaded_by !== user.id) {
+    if (evidence.uploaded_by !== ctx.userId) {
       return NextResponse.json(
         { ok: false, error: 'You can only delete evidence you uploaded' },
         { status: 403 }
