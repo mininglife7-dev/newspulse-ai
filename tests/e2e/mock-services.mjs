@@ -46,11 +46,22 @@ const ARTICLES = [
   },
 ];
 
+// The browser Supabase client (sign-in) calls this mock cross-origin
+// (app :3100 → mock :4545), so every response needs permissive CORS and
+// preflight must be answered. Server-side callers (API routes) are unaffected.
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET,POST,PATCH,DELETE,HEAD,OPTIONS',
+  'access-control-allow-headers': '*',
+  'access-control-expose-headers': 'content-range',
+};
+
 function json(res, status, body, headers = {}) {
   const data = JSON.stringify(body);
   res.writeHead(status, {
     'content-type': 'application/json',
     'content-length': Buffer.byteLength(data),
+    ...CORS_HEADERS,
     ...headers,
   });
   res.end(data);
@@ -74,8 +85,71 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   const path = url.pathname;
 
+  // CORS preflight for the browser Supabase client.
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, CORS_HEADERS);
+    return res.end();
+  }
+
   // --- liveness for playwright webServer ---
   if (path === '/health') return json(res, 200, { ok: true });
+
+  // --- Supabase GoTrue auth (subset) ---
+  // Enough for the real @supabase/ssr client to establish a cookie session and
+  // for server getUser() to validate it, so the authenticated journey
+  // (sign-in → dashboard) can be exercised end-to-end.
+  const AUTH_USER = {
+    id: '11111111-1111-1111-1111-111111111111',
+    aud: 'authenticated',
+    role: 'authenticated',
+    email: 'founder@acme.example',
+    email_confirmed_at: '2026-01-01T00:00:00Z',
+    user_metadata: { first_name: 'Lalit', last_name: 'Kumar' },
+    app_metadata: { provider: 'email', providers: ['email'] },
+    created_at: '2026-01-01T00:00:00Z',
+  };
+  const makeSession = () => ({
+    access_token: 'mock-access-token',
+    token_type: 'bearer',
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    refresh_token: 'mock-refresh-token',
+    user: AUTH_USER,
+  });
+
+  if (path === '/supabase/auth/v1/token') {
+    await readBody(req);
+    return json(res, 200, makeSession());
+  }
+  if (path === '/supabase/auth/v1/signup') {
+    await readBody(req);
+    return json(res, 200, { ...makeSession(), user: AUTH_USER });
+  }
+  if (path === '/supabase/auth/v1/user') {
+    const auth = req.headers.authorization || '';
+    if (req.method === 'GET' && auth.startsWith('Bearer ')) {
+      return json(res, 200, AUTH_USER);
+    }
+    return json(res, 401, { message: 'Unauthorized' });
+  }
+  if (path === '/supabase/auth/v1/logout') {
+    res.writeHead(204, CORS_HEADERS);
+    return res.end();
+  }
+
+  // --- Supabase PostgREST: workspace_members (dashboard read) ---
+  // Return no membership so the dashboard renders the fresh-account state;
+  // the authenticated greeting still comes from the validated user above.
+  if (path === '/supabase/rest/v1/workspace_members') {
+    const wantsObject = (req.headers.accept || '').includes('vnd.pgrst.object');
+    if (wantsObject) {
+      return json(res, 406, {
+        code: 'PGRST116',
+        message: 'JSON object requested, multiple (or no) rows returned',
+      });
+    }
+    return json(res, 200, [], { 'content-range': '0-0/0' });
+  }
 
   // --- Firecrawl ---
   if (path === '/firecrawl/v1/search' && req.method === 'POST') {
