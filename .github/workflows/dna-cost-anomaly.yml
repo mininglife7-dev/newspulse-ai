@@ -37,7 +37,7 @@ jobs:
             (async () => {
               try {
                 console.log('🔍 Running DNA-GOV-011: Cost Anomaly Detection...');
-                const response = await fetch(baseUrl + '/api/cost-anomaly');
+                const response = await fetch(baseUrl + '/api/cost-anomaly', { headers: { Authorization: 'Bearer ${{ secrets.ADMIN_TOKEN }}' } });
                 const data = await response.json();
 
                 console.log('Response Status:', response.status);

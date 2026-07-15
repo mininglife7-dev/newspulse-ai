@@ -3,8 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * Verify admin/internal API token for monitoring endpoints
  * Tokens should be passed as: Authorization: Bearer <token>
+ *
+ * Accepts a plain `Request` (route handlers) or `NextRequest` (middleware) —
+ * only the Authorization header is read.
  */
-export function requireAdminToken(req: NextRequest): boolean {
+export function requireAdminToken(req: Request | NextRequest): boolean {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return false;

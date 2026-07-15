@@ -5,6 +5,7 @@ describe('GET /api/blocking-conditions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Setup environment
+    process.env.ADMIN_TOKEN = 'test-admin-token';
     process.env.GITHUB_TOKEN = 'test-token';
     process.env.GITHUB_OWNER = 'test-owner';
     process.env.GITHUB_REPO = 'test-repo';
@@ -28,11 +29,13 @@ describe('GET /api/blocking-conditions', () => {
       }),
     });
 
-    const req = new Request('http://localhost:3000/api/blocking-conditions');
+    const req = new Request('http://localhost:3000/api/blocking-conditions', {
+      headers: { Authorization: 'Bearer test-admin-token' },
+    });
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean };
+    const body = (await res.json()) as { ok: boolean };
     expect(body.ok).toBe(true);
   });
 
@@ -51,11 +54,13 @@ describe('GET /api/blocking-conditions', () => {
       json: async () => mockRuns,
     });
 
-    const req = new Request('http://localhost:3000/api/blocking-conditions');
+    const req = new Request('http://localhost:3000/api/blocking-conditions', {
+      headers: { Authorization: 'Bearer test-admin-token' },
+    });
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; blockers: unknown[] };
+    const body = (await res.json()) as { ok: boolean; blockers: unknown[] };
     expect(body.ok).toBe(true);
     expect(body.blockers).toHaveLength(0);
   });
@@ -66,11 +71,13 @@ describe('GET /api/blocking-conditions', () => {
       json: async () => ({ workflow_runs: [] }),
     });
 
-    const req = new Request('http://localhost:3000/api/blocking-conditions');
+    const req = new Request('http://localhost:3000/api/blocking-conditions', {
+      headers: { Authorization: 'Bearer test-admin-token' },
+    });
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; blockers: unknown[] };
+    const body = (await res.json()) as { ok: boolean; blockers: unknown[] };
     expect(body.ok).toBe(true);
     expect(body.blockers.length).toBeGreaterThan(0);
   });
@@ -81,10 +88,12 @@ describe('GET /api/blocking-conditions', () => {
       json: async () => ({ workflow_runs: [] }),
     });
 
-    const req = new Request('http://localhost:3000/api/blocking-conditions');
+    const req = new Request('http://localhost:3000/api/blocking-conditions', {
+      headers: { Authorization: 'Bearer test-admin-token' },
+    });
     const res = await GET(req);
 
-    const body = await res.json() as { alerts?: unknown[] };
+    const body = (await res.json()) as { alerts?: unknown[] };
     expect(body.alerts).toBeDefined();
     expect(Array.isArray(body.alerts)).toBe(true);
   });
@@ -92,11 +101,13 @@ describe('GET /api/blocking-conditions', () => {
   it('handles fetch errors gracefully', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
-    const req = new Request('http://localhost:3000/api/blocking-conditions');
+    const req = new Request('http://localhost:3000/api/blocking-conditions', {
+      headers: { Authorization: 'Bearer test-admin-token' },
+    });
     const res = await GET(req);
 
     // Either 200 with error info or 503
-    const body = await res.json() as { ok?: boolean; error?: string };
+    const body = (await res.json()) as { ok?: boolean; error?: string };
     expect(body).toBeDefined();
   });
 
@@ -107,12 +118,33 @@ describe('GET /api/blocking-conditions', () => {
       json: async () => ({ workflow_runs: [] }),
     });
 
-    const req = new Request('http://localhost:3000/api/blocking-conditions');
+    const req = new Request('http://localhost:3000/api/blocking-conditions', {
+      headers: { Authorization: 'Bearer test-admin-token' },
+    });
     const res = await GET(req);
 
     // When blockers are found, the endpoint returns 200 with headers
     expect(res.status).toBe(200);
     expect(res.headers.get('X-Blocking-Conditions')).not.toBeNull();
-    expect(parseInt(res.headers.get('X-Blocking-Conditions') || '0')).toBeGreaterThan(0);
+    expect(
+      parseInt(res.headers.get('X-Blocking-Conditions') || '0')
+    ).toBeGreaterThan(0);
+  });
+
+  it('rejects requests without the admin token (401)', async () => {
+    global.fetch = vi.fn();
+    const req = new Request('http://localhost:3000/api/blocking-conditions');
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+    // The detector must not run for an unauthenticated caller.
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('rejects requests with a wrong admin token (401)', async () => {
+    const req = new Request('http://localhost:3000/api/blocking-conditions', {
+      headers: { Authorization: 'Bearer wrong-token' },
+    });
+    const res = await GET(req);
+    expect(res.status).toBe(401);
   });
 });

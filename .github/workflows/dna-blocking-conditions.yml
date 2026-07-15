@@ -19,7 +19,7 @@ jobs:
             echo "::notice::VERCEL_DEPLOYMENT_URL secret not configured - monitor skipped (will activate once set)"
             exit 0
           fi
-          RESPONSE=$(curl -s -w "\n%{http_code}" "$DEPLOY_URL/api/blocking-conditions")
+          RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" "$DEPLOY_URL/api/blocking-conditions")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
           BODY=$(echo "$RESPONSE" | head -n -1)
 

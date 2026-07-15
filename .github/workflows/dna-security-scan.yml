@@ -29,6 +29,7 @@ jobs:
         id: scan
         run: |
           curl -s "${{ secrets.DEPLOYMENT_URL || 'https://newspulse-ai.vercel.app' }}/api/security-scan" \
+            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" \
             -H "User-Agent: GitHub-Actions/dna-gov-008" \
             -w "\nHTTP Status: %{http_code}\n" \
             -o security-scan-result.json || true
