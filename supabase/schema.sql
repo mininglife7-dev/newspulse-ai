@@ -492,3 +492,129 @@ create policy "Members can update workspace remediation_plans"
             and status = 'active'
         )
     );
+
+-- ---------------------------------------------------------------
+-- Discovery Connections
+-- OAuth/API credentials for integrations (GitHub, AWS, Azure, GCP)
+-- ---------------------------------------------------------------
+create table if not exists public.discovery_connections (
+    id                uuid        primary key default gen_random_uuid(),
+    workspace_id      uuid        not null references public.workspaces(id) on delete cascade,
+    provider          text        not null, -- github, aws, azure, gcp
+    connection_name   text        not null,
+    config            jsonb       not null default '{}'::jsonb, -- encrypted token, org/username, etc.
+    status            text        not null default 'active', -- active, inactive, error
+    last_tested_at    timestamptz,
+    last_sync_at      timestamptz,
+    created_at        timestamptz not null default now(),
+    updated_at        timestamptz not null default now()
+);
+
+create index if not exists discovery_connections_workspace_idx on public.discovery_connections (workspace_id);
+create index if not exists discovery_connections_provider_idx on public.discovery_connections (provider);
+
+-- ---------------------------------------------------------------
+-- AI System Detections
+-- Auto-discovered AI systems from GitHub, AWS, Azure, GCP
+-- ---------------------------------------------------------------
+create table if not exists public.ai_system_detections (
+    id                uuid        primary key default gen_random_uuid(),
+    workspace_id      uuid        not null references public.workspaces(id) on delete cascade,
+    company_id        uuid        references public.companies(id) on delete set null,
+    ai_system_id      uuid        references public.ai_systems(id) on delete set null,
+    detection_source  text        not null, -- github, aws, azure, gcp, manual
+    external_id       text        not null, -- GitHub repo ID, AWS ARN, etc.
+    name              text        not null,
+    description       text,
+    url               text,
+    language          text,
+    topics            text[],
+    detected_patterns text[],
+    confidence        float       not null, -- 0-100 confidence score
+    metadata          jsonb       not null default '{}'::jsonb,
+    status            text        not null default 'detected', -- detected, approved, rejected, imported
+    imported_at       timestamptz,
+    created_at        timestamptz not null default now(),
+    updated_at        timestamptz not null default now(),
+    unique(workspace_id, detection_source, external_id)
+);
+
+create index if not exists ai_system_detections_workspace_idx on public.ai_system_detections (workspace_id);
+create index if not exists ai_system_detections_status_idx on public.ai_system_detections (status);
+create index if not exists ai_system_detections_confidence_idx on public.ai_system_detections (confidence);
+
+-- ---------------------------------------------------------------
+-- RLS for discovery_connections
+-- ---------------------------------------------------------------
+alter table public.discovery_connections enable row level security;
+
+create policy "Members can read workspace discovery_connections"
+    on public.discovery_connections for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = discovery_connections.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace discovery_connections"
+    on public.discovery_connections for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = discovery_connections.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can update workspace discovery_connections"
+    on public.discovery_connections for update
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = discovery_connections.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- ---------------------------------------------------------------
+-- RLS for ai_system_detections
+-- ---------------------------------------------------------------
+alter table public.ai_system_detections enable row level security;
+
+create policy "Members can read workspace ai_system_detections"
+    on public.ai_system_detections for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = ai_system_detections.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace ai_system_detections"
+    on public.ai_system_detections for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = ai_system_detections.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can update workspace ai_system_detections"
+    on public.ai_system_detections for update
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = ai_system_detections.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
