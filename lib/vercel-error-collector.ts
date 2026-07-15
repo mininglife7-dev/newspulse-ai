@@ -132,6 +132,11 @@ export class VercelErrorCollector {
     const patterns = new Map<string, ErrorPattern>();
 
     for (const entry of errorEntries) {
+      // Skip successful responses (2xx) - only process actual errors (4xx, 5xx)
+      if (entry.status < 400) {
+        continue;
+      }
+
       // Generate fingerprint from error message
       const fingerprint = this.generateFingerprint(entry.message);
 
@@ -250,11 +255,20 @@ export class VercelErrorCollector {
   }
 
   private estimateTotalErrors(deployment: any): number {
-    // Heuristic: if deployment status is ERROR, estimate based on size
-    if (deployment.status === 'ERROR') {
-      return Math.floor(Math.random() * 500) + 100; // 100–600 errors
+    // Deterministic estimation based on deployment ID hash, not random
+    // Ensures consistent metrics for testing and observability
+    const deploymentId = deployment.id || deployment.uid || '';
+    let hash = 0;
+    for (let i = 0; i < deploymentId.length; i++) {
+      hash = ((hash << 5) - hash) + deploymentId.charCodeAt(i);
+      hash = hash & hash; // Convert to 32bit integer
     }
-    return Math.floor(Math.random() * 50); // 0–50 errors
+    const normalized = Math.abs(hash) % 1000; // 0-999
+
+    if (deployment.status === 'ERROR') {
+      return Math.floor((normalized / 1000) * 500) + 100; // 100–600 errors (deterministic)
+    }
+    return Math.floor((normalized / 1000) * 50); // 0–50 errors (deterministic)
   }
 
   private estimateCriticalErrors(deployment: any): number {
@@ -297,7 +311,8 @@ export class VercelErrorCollector {
       .replace(/\d+/g, 'N') // Replace numbers
       .replace(/['"]/g, '') // Remove quotes
       .toLowerCase();
-    return `fp-${Buffer.from(normalized).toString('base64').slice(0, 16)}`;
+    // Use 40-char base64 hash instead of 16 to reduce collision risk
+    return `fp-${Buffer.from(normalized).toString('base64').slice(0, 40)}`;
   }
 
   private categorizeErrorMessage(message: string): ErrorCategory {
@@ -312,7 +327,8 @@ export class VercelErrorCollector {
   private inferSeverityFromStatus(status: number): ErrorSeverity {
     if (status >= 500) return 'critical';
     if (status >= 400) return 'high';
-    return 'medium';
+    // Should never receive 2xx codes after filtering, but be explicit
+    return 'high'; // Default to high for any error code
   }
 
   private identifyServices(path: string): string[] {

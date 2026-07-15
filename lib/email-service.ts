@@ -97,23 +97,31 @@ export class EmailService {
       payload.content.push({ type: 'text/plain', value: text });
     }
 
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.sendgridApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error(`SendGrid API error (${response.status}):`, error);
-      return false;
+    try {
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.sendgridApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`SendGrid API error (${response.status}):`, error);
+        return false;
+      }
+
+      console.log(`[EMAIL] Sent via SendGrid to ${to}: "${subject}"`);
+      return true;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    console.log(`[EMAIL] Sent via SendGrid to ${to}: "${subject}"`);
-    return true;
   }
 
   /**
@@ -142,7 +150,8 @@ export class EmailService {
     const sesClient = new SES({ region: this.sesRegion || 'us-east-1' });
 
     try {
-      const response = await sesClient.sendEmail({
+      // Add 5-second timeout to SES operation using Promise.race
+      const sendPromise = sesClient.sendEmail({
         Source: from,
         Destination: {
           ToAddresses: [to],
@@ -168,6 +177,12 @@ export class EmailService {
           },
         },
       });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SES send timeout after 5s')), 5000)
+      );
+
+      const response = await Promise.race([sendPromise, timeoutPromise]) as any;
 
       console.log(`[EMAIL] Sent via SES to ${to}: "${subject}" (MessageId: ${response.MessageId})`);
       return true;

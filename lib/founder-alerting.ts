@@ -104,8 +104,15 @@ export class FounderAlertingSystem {
       console.error('Failed to send Slack alert:', error);
     }
 
-    // Record alert time for deduplication (regardless of delivery success)
-    this.alertHistory.set(incident.incidentId, new Date());
+    // Record alert time for deduplication ONLY if:
+    // 1. At least one channel succeeded, OR
+    // 2. No channels were enabled (so alert was "sent" via no-op)
+    // Prevents dedup trap where failed alerts block retries
+    const anyChannelEnabled = this.emailEnabled || this.slackEnabled;
+    const shouldRecordDedup = emailSent || slackSent || !anyChannelEnabled;
+    if (shouldRecordDedup) {
+      this.alertHistory.set(incident.incidentId, new Date());
+    }
 
     return {
       emailSent,
@@ -133,12 +140,13 @@ export class FounderAlertingSystem {
           ? `✅ Incident ${incidentId} resolved in ${(recoveryTimeMs / 1000).toFixed(1)}s`
           : `❌ Incident ${incidentId} remediation failed`;
 
+        const htmlBody = success
+          ? `<h2>✅ Incident Resolved</h2><p><strong>Incident ID:</strong> ${incidentId}</p><p><strong>Recovery Time:</strong> ${(recoveryTimeMs / 1000).toFixed(1)}s</p><p><strong>Action Taken:</strong> ${actionTaken}</p>${lessonLearned ? `<p><strong>Lesson Learned:</strong> ${lessonLearned}</p>` : ''}`
+          : `<h2>❌ Remediation Failed</h2><p><strong>Incident ID:</strong> ${incidentId}</p><p><strong>Action Attempted:</strong> ${actionTaken}</p>`;
+
         emailSent = await this.sendEmail(this.founderEmail, subject, {
-          incidentId,
-          success,
-          recoveryTimeMs,
-          actionTaken,
-          lessonLearned,
+          html: htmlBody,
+          text: `${subject}\n\nIncident ID: ${incidentId}\nAction: ${actionTaken}${lessonLearned ? `\n\nLesson: ${lessonLearned}` : ''}`,
         });
       }
     } catch (error) {
@@ -187,11 +195,10 @@ export class FounderAlertingSystem {
 
     try {
       if (this.emailEnabled && this.founderEmail) {
+        const htmlBody = `<h2>⚠️ Repeated Error Pattern Detected</h2><p><strong>Pattern:</strong> ${pattern}</p><p><strong>Fingerprint:</strong> ${fingerprint}</p><p><strong>Occurrences:</strong> ${occurrenceCount}</p><p><strong>Suggested Prevention:</strong> ${suggestedPrevention}</p>`;
         emailSent = await this.sendEmail(this.founderEmail, `⚠️ Repeated Error Pattern: ${pattern}`, {
-          fingerprint,
-          pattern,
-          occurrenceCount,
-          suggestedPrevention,
+          html: htmlBody,
+          text: `Repeated Error Pattern Detected\n\nPattern: ${pattern}\nOccurrences: ${occurrenceCount}\nSuggestion: ${suggestedPrevention}`,
         });
       }
     } catch (error) {
@@ -273,13 +280,21 @@ export class FounderAlertingSystem {
    */
   private async sendSlackMessage(webhookUrl: string, payload: any): Promise<boolean> {
     try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      return response.ok;
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+
+        return response.ok;
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (error) {
       console.error('Slack API error:', error);
       return false;

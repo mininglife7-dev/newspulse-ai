@@ -82,11 +82,14 @@ export class ProductionMetrics {
   recordRecovery(incidentId: string, recoveredAt: string): void {
     const incident = this.incidents.get(incidentId);
     if (incident) {
-      const remediation = new Date(incident.remediatedAt || recoveredAt).getTime();
-      const recovery = new Date(recoveredAt).getTime();
+      // Calculate recovery time from remediation, or from detection if remediation not recorded
+      const remediationTime = incident.remediatedAt
+        ? new Date(incident.remediatedAt).getTime()
+        : new Date(incident.detectedAt).getTime();
+      const recoveryTime = new Date(recoveredAt).getTime();
 
       incident.recoveredAt = recoveredAt;
-      incident.recoveryDurationMs = Math.max(0, recovery - remediation);
+      incident.recoveryDurationMs = Math.max(0, recoveryTime - remediationTime);
       incident.success = true;
     }
   }
@@ -126,6 +129,10 @@ export class ProductionMetrics {
     const deliveredAlerts = incidents.reduce((sum, i) => sum + i.alertsSent, 0);
     const createdIssues = incidents.filter(i => i.gitHubIssueCreated).length;
 
+    // Track remediation attempts separately from successes
+    const remediationAttempts = incidents.filter(i => i.remediatedAt).length;
+    const remediationSuccesses = resolvedIncidents.length;
+
     const avgMTTD = incidents.length > 0
       ? incidents.reduce((sum, i) => sum + i.detectionDurationMs, 0) / incidents.length
       : 0;
@@ -158,8 +165,8 @@ export class ProductionMetrics {
       alertDeliveryRate,
       falsePositiveRate,
       orchestrationSuccessRate,
-      remediationAttempts: resolvedIncidents.length,
-      remediationSuccesses: resolvedIncidents.length,
+      remediationAttempts,
+      remediationSuccesses,
       gitHubIssuesCreated: createdIssues,
       slackAlertsDelivered: deliveredAlerts,
       emailAlertsDelivered: deliveredAlerts,
@@ -225,8 +232,13 @@ Overall Compliant: ${sla.overallCompliant ? '✓ YES' : '✗ NO'}`;
 }
 
 let globalMetrics: ProductionMetrics | null = null;
+let metricsInitialized = false;
 
 export function getProductionMetrics(): ProductionMetrics {
+  if (!globalMetrics && !metricsInitialized) {
+    metricsInitialized = true;
+    globalMetrics = new ProductionMetrics();
+  }
   if (!globalMetrics) {
     globalMetrics = new ProductionMetrics();
   }
