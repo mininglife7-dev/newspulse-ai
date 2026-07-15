@@ -3,11 +3,11 @@
 Welcome to the NewsPulse AI documentation. This index helps you find the right guide for any task.
 
 **Quick Links:**
-- 🚀 Ready to deploy Supabase? → [`PRE_DEPLOYMENT_READINESS.md`](#pre-deployment-readiness)
-- 📋 Quick reference card? → [`DEPLOYMENT_DAY_QUICK_REFERENCE.md`](#deployment-day-quick-reference)
+- **🚀 STARTING LAUNCH TODAY?** → **[`LAUNCH_EXECUTION_MASTER_CHECKLIST.md`](#launch-execution-master-checklist)** ← Start here!
+- 📋 Ready to deploy Supabase? → [`PRE_DEPLOYMENT_READINESS.md`](#pre-deployment-readiness)
+- 📋 Quick reference card (print this)? → [`DEPLOYMENT_DAY_QUICK_REFERENCE.md`](#deployment-day-quick-reference)
 - 🔒 Supabase just deployed? → [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps)
 - ✅ Pre-launch verification? → [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification)
-- 🚀 Ready to launch customers? → [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures)
 - 🆘 Launch day issue? → [`LAUNCH_DAY_TROUBLESHOOTING.md`](#launch-day-troubleshooting)
 - 📊 First week tracking? → [`FIRST_WEEK_TRACKING.md`](#first-week-tracking)
 - 🆘 Customer issue? → [`TROUBLESHOOTING_GUIDE.md`](#troubleshooting-guide)
@@ -19,14 +19,18 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 ### For the Founder (You)
 
 **Start here for launch:**
+0. **🚀 THIS IS YOUR MASTER CHECKLIST:** [`LAUNCH_EXECUTION_MASTER_CHECKLIST.md`](#launch-execution-master-checklist) — Follow this step-by-step (15 steps total, ~2.5 hours)
+
+**Then read these for details:**
 1. [`LAUNCH_READINESS_SUMMARY.md`](#launch-readiness-summary) — Executive summary of production readiness
-2. [`FOUNDER_ACTION_BOARD.md`](#founder-action-board) — Your 6-step action checklist (start here!)
+2. [`FOUNDER_ACTION_BOARD.md`](#founder-action-board) — Your 6-step action checklist
 3. [`PRE_DEPLOYMENT_READINESS.md`](#pre-deployment-readiness) — Verify you're ready before deploying Supabase
 4. [`DEPLOYMENT_DAY_QUICK_REFERENCE.md`](#deployment-day-quick-reference) — Print this and keep it handy
 5. [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps) — What to do immediately after Supabase deployment
 6. [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification) — Verify Supabase deployment succeeded
-7. [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures) — Hour-by-hour checklist for Day 1
-8. [`FIRST_WEEK_TRACKING.md`](#first-week-tracking) — Daily metrics tracking for first week
+7. [`LAUNCH_DAY_TROUBLESHOOTING.md`](#launch-day-troubleshooting) — If anything goes wrong
+8. [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures) — Hour-by-hour checklist for Day 1
+9. [`FIRST_WEEK_TRACKING.md`](#first-week-tracking) — Daily metrics tracking for first week
 
 **For ongoing operations:**
 - [`OPERATIONS_RUNBOOK.md`](#operations-runbook) — Daily operations checklist
@@ -89,6 +93,14 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 ## Complete Documentation Catalog
 
 ### Pre-Launch & Launch
+
+**🚀 [LAUNCH_EXECUTION_MASTER_CHECKLIST.md](./LAUNCH_EXECUTION_MASTER_CHECKLIST.md)** (760+ lines) — **START HERE**
+- Master execution checklist coordinating entire launch sequence
+- 5 phases: Pre-deployment, Schema deployment, Pre-flight, Launch day, Operations
+- 15 steps with clear success indicators and timing
+- Integrated with all other launch guides
+- Quick status check and critical path definition
+- **When:** This is your primary reference during launch. Follow steps 1-15 in order.
 
 **[LAUNCH_READINESS_SUMMARY.md](./LAUNCH_READINESS_SUMMARY.md)** (454 lines)
 - Executive summary of production readiness status
