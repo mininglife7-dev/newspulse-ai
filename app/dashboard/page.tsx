@@ -207,11 +207,11 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle className="h-6 w-6 text-cyan-400 flex-shrink-0" />
             <div>
               <h3 className="font-medium text-white">Add team members</h3>
               <p className="text-sm text-slate-400">
-                Invite colleagues to collaborate — coming soon
+                Invite colleagues to collaborate on compliance
               </p>
             </div>
           </div>
