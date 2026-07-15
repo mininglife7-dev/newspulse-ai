@@ -72,8 +72,29 @@ export async function POST(req: Request) {
     );
   }
 
+  // Idempotency check: prevent duplicate workspace creation if user already has one
+  // (user can have multiple workspaces, but we prevent re-submission of same form)
+  const proposedSlug = slugify(companyName);
+  const { data: existing } = await supabase
+    .from('workspaces')
+    .select('id, slug, name')
+    .eq('owner_id', user.id)
+    .eq('slug', proposedSlug)
+    .single();
+
+  if (existing) {
+    // Return the existing workspace (idempotent response)
+    console.log('[api/workspace] Idempotent: workspace already exists', existing.id);
+    return NextResponse.json({
+      ok: true,
+      workspace: { id: existing.id, slug: existing.slug, name: existing.name },
+      isDuplicate: true,
+      message: 'Workspace already exists with this name',
+    });
+  }
+
   // Atomic workspace creation: all 3 operations (workspace, membership, company) in one transaction
-  const slug = slugify(companyName);
+  const slug = proposedSlug;
 
   let workspace: { id: string; slug: string; name: string };
   let company: { id: string };
