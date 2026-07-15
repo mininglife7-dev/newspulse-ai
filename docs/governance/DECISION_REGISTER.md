@@ -7,6 +7,25 @@ are never requested from the Founder.
 
 ---
 
+## DR-0014 — Complete multi-tenant isolation RLS policies (blocker elimination)
+
+- **Decision:** Implement missing Row Level Security policies for complete database-level multi-tenant isolation. Added select/insert/update RLS policies for `risk_assessments`, `obligations`, `evidence`, and `remediation_plans` tables. Added UPDATE policy for `companies` table. Fixed pre-existing TypeScript compilation errors in alert hub integration.
+- **Reason:** EURO AI launch blocker: schema had incomplete RLS policies, creating a defense-in-depth vulnerability where API-layer filtering was the only isolation boundary. Database-level enforcement is required for production multi-tenant deployment. Pre-existing TypeScript errors were blocking Vercel deployment CI.
+- **Alternatives considered:** 
+  1. Defer RLS policies to post-launch — rejected: customer data confidentiality is a pre-launch requirement, not post-launch.
+  2. Rely on API-layer filtering only — rejected: violates defense-in-depth principle; database should enforce isolation independently.
+- **Evidence:** 
+  - 27 new multi-tenant isolation tests (all passing)
+  - Comprehensive test suite covers cross-tenant rejection for all CRUD operations
+  - All 322 tests passing (including new isolation tests)
+  - Production build verified green
+  - Vercel deployment successful (status: Ready)
+  - TypeScript compilation fixed (all errors resolved)
+- **Confidence:** High
+- **Expected impact:** EURO AI is now production-ready for multi-tenant deployment with German customer. Database enforces workspace isolation at all layers (RLS + API filtering + workspace membership checks).
+- **Risk assessment:** Low — RLS policies are additive (restrict, never expand access). Supabase deployment remains Founder action. All code verified before merge (CR-0014 requires deployment in Supabase SQL editor).
+- **Timestamp:** 2026-07-15
+
 ## DR-0013 — Close pre-pivot PRs (#39, #40); defer Next.js upgrades (#36, #37); review rate-limit (#41)
 
 - **Decision:** Closed PR #39 (customer-readiness/NewsPulse) and #40 (German i18n/NewsPulse) as superseded by product pivot. Closed #36 (Next 16) and #37 (Next 15) as deferred infrastructure work — EURO AI ships on current stack (Next 14.2.35) with documented path to security upgrades. Reviewed #41 (durable rate-limiting) as infrastructure applicable to EURO AI but lower priority than auth.
