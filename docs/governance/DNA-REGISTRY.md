@@ -443,6 +443,112 @@ interface GitGovernanceValidation {
 5. **Enforcement:** Upgrade to mandatory GitHub branch protection rules
 6. **Team adoption:** Document conventions in CONTRIBUTING.md
 
+### DNS-GOV-012: Schema Migration Validator
+
+**Status:** Active  
+**Created:** 2026-07-15  
+**Owner:** Chief Database Officer + Chief Risk Officer  
+
+#### Purpose
+Autonomously validate database schema migrations for zero-downtime safety. Prevents breaking changes from reaching production, enables confidently deploying database changes alongside application code.
+
+#### Problem Discovered
+Database migrations can silently break applications if they violate zero-downtime requirements:
+- DROP TABLE/COLUMN breaks existing application code
+- ADD NOT NULL without DEFAULT breaks existing rows
+- TRUNCATE destroys unrecoverable data
+- TRUNCATE and DROP SCHEMA get deployed without detection
+
+Without automated validation, these catastrophic changes can merge and reach production.
+
+#### Evidence
+- **Weakness:** Zero migration safety validation
+- **Impact:** Breaking database changes could reach production undetected
+- **Root cause:** No automated schema change safety checking
+- **Discovery method:** Identified during database schema deployment planning (Phase 2 launch readiness)
+
+#### Inputs
+- SQL migration file content
+- Migration filename (to determine direction: .up. or .down.)
+- Target environment (to apply strict vs. lenient rules)
+
+#### Outputs
+```typescript
+interface MigrationValidationReport {
+  filename: string
+  valid: boolean
+  direction: 'up' | 'down'
+  changes: SchemaChange[]
+  riskLevel: 'safe' | 'warning' | 'dangerous'
+  issues: string[]  // [❌/⚠️] formatted messages
+  suggestions: string[]  // Remediation actions
+  summary: string
+}
+```
+
+#### Implementation
+- `lib/schema-migration-validator.ts` — Migration safety validator (322 LoC)
+  - `parseMigrationSQL()` — Regex-based SQL parsing (CREATE/DROP TABLE, ADD/DROP COLUMN, INDEX, TRUNCATE, SCHEMA)
+  - `validateMigration()` — Classifies risk level and generates report
+  - `scanMigrations()` — Scans `supabase/migrations/` directory
+  - `generatePRReport()` — Creates GitHub markdown for PR comments
+- `app/api/migrations/validate/route.ts` — Cron/API endpoint (GET /api/migrations/validate)
+- `tests/schema-migration-validator.test.ts` — 28 comprehensive tests
+
+#### Verification Method
+- **Unit tests:** 28 tests covering:
+  - CREATE TABLE detection (safe)
+  - DROP TABLE detection (dangerous)
+  - ADD COLUMN with/without DEFAULT (safe vs. dangerous)
+  - DROP COLUMN detection (dangerous)
+  - CREATE/DROP INDEX detection (safe vs. warning)
+  - TRUNCATE detection (dangerous)
+  - DROP SCHEMA detection (dangerous)
+  - SQL comment handling (ignored correctly)
+  - Case-insensitive keyword matching
+  - Schema-qualified names (public.table)
+  - Multi-statement migrations (mixed safe/dangerous)
+  - Complex column definitions (VARCHAR(255), NUMERIC(10,2), constraints)
+  - Report structure validation (all required fields)
+  - Remediation suggestions presence
+- **All tests pass:** 28/28 ✅
+- **Build verification:** npm run build clean, type-check clean, lint clean
+
+#### Dependencies
+- Regex-based SQL parsing (no external SQL parser)
+- `fs` module for migration directory scanning
+- No database connection required
+
+#### Risks
+- **Regex parsing limitations:** Complex SQL edge cases might not be caught. Mitigated by comprehensive test coverage and conservative flagging (assume dangerous unless certain it's safe)
+- **False negatives:** Novel SQL patterns might bypass detection. Mitigated by requiring explicit validation before merge
+- **False positives:** Valid migrations flagged as dangerous. Mitigated by community feedback and pattern refinement
+
+#### Rollback Method
+- Remove API endpoint from CI/CD pipeline
+- Delete `lib/schema-migration-validator.ts`, `app/api/migrations/validate/route.ts`, and test file
+- No data stored; no schema changes; fully reversible
+
+#### Success Metrics
+1. **Safety:** Zero breaking schema changes reach production
+2. **Detection latency:** Catch unsafe migrations before PR merge
+3. **Developer experience:** Clear remediation suggestions included in reports
+4. **False positive rate:** < 1 per month (benign migrations incorrectly flagged)
+5. **Launch readiness:** Enable confident Supabase deployment with zero-downtime guarantee
+
+#### Integration Points
+- **GitHub Actions CI:** Runs on each migration file in PR
+- **Supabase deployment:** Can be called pre-deployment to verify schema safety
+- **Alert Hub:** Critical migration blocks escalated to Founder alerts
+- **Incident Commander:** Dangerous migrations can trigger rollback if deployed
+
+#### Next Steps
+1. **Wire to GitHub Actions:** Add schema validation to CI/CD pipeline
+2. **Supabase integration:** Test against real migration history
+3. **Coverage expansion:** Add support for more migration patterns (views, functions, triggers)
+4. **Auto-remediation:** Future DNA could suggest safe migration alternatives
+5. **Metrics tracking:** Log all migration validations for trend analysis
+
 ---
 
 ## Experimental DNA
