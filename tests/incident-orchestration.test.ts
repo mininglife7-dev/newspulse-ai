@@ -66,7 +66,14 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
             previousAttempts: [],
           });
 
-          if (incidents[0].canAutoRemediate) {
+          // Rollback is only guaranteed for auto-remediable deployment failures at
+          // critical/high severity; other simulated categories legitimately map to
+          // verify-remediation or notify-founder (see lib/incident-orchestration.ts).
+          if (
+            incidents[0].canAutoRemediate &&
+            incidents[0].category === 'deployment-failure' &&
+            ['critical', 'high'].includes(incidents[0].severity)
+          ) {
             expect(['initiate-rollback']).toContain(decision.recommendedAction);
           }
         }
