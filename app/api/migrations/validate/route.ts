@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { analyzeMigration, formatBatchReport } from '@/lib/schema-migration-validator';
+import { analyzeMigration, formatBatchReport, type MigrationRiskLevel } from '@/lib/schema-migration-validator';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,7 +52,8 @@ export async function GET(req: Request) {
     const anyHighRisk = reports.some((r) => r.riskLevel === 'high-risk');
 
     // Generate batch report
-    const overallRisk = (anyBreaking ? 'breaking' : anyHighRisk ? 'high-risk' : 'safe') as const;
+    const overallRisk: MigrationRiskLevel =
+      anyBreaking ? 'breaking' : anyHighRisk ? 'high-risk' : 'safe';
     const batchReport = {
       files: reports,
       overallRisk,
