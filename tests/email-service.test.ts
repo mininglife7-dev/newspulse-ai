@@ -138,14 +138,17 @@ describe('Email Service', () => {
       });
 
       expect(result).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledWith('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer test-sg-key',
-          'Content-Type': 'application/json',
-        },
-        body: expect.stringContaining('founder@example.com'),
-      });
+      expect(fetchSpy).toHaveBeenCalledWith('https://api.sendgrid.com/v3/mail/send',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer test-sg-key',
+            'Content-Type': 'application/json',
+          },
+          body: expect.stringContaining('founder@example.com'),
+          signal: expect.any(AbortSignal),
+        })
+      );
 
       fetchSpy.mockRestore();
     });
