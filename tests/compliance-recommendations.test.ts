@@ -250,8 +250,8 @@ describe('Compliance Recommendations Engine', () => {
         { effort: 'weeks' },
       ];
       const totalDays = recommendations.reduce((sum, r: any) => {
-        const map = { hours: 1, days: 5, weeks: 21 };
-        return sum + map[r.effort];
+        const map: Record<string, number> = { hours: 1, days: 5, weeks: 21 };
+        return sum + (map[r.effort] || 0);
       }, 0);
       expect(totalDays).toBe(27);
     });

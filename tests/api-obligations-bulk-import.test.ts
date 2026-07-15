@@ -178,7 +178,7 @@ describe('Obligation Bulk Import', () => {
     });
 
     it('should handle missing optional columns gracefully', () => {
-      const row = { obligation_id: 'obl_001', status: 'completed' };
+      const row: Record<string, string | undefined> = { obligation_id: 'obl_001', status: 'completed' };
       expect(row.priority).toBeUndefined();
       // Should skip priority update if not provided
     });
