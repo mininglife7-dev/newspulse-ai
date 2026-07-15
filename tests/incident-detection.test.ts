@@ -75,11 +75,12 @@ describe('Incident Detection (DNA-GOV-013)', () => {
         });
 
         if (incidents.length > 0) {
-          const incident = incidents[0];
           const failedCheckCount = report.checks.filter((c) => c.result === 'fail').length;
-          // Allow for some variance in signal count due to incident correlation
-          expect(incident.signals.length).toBeGreaterThanOrEqual(failedCheckCount);
-          incident.signals.forEach((signal) => {
+          // Failed checks may be correlated into separate incidents, so count
+          // signals across ALL incidents rather than just the first one.
+          const allSignals = incidents.flatMap((inc) => inc.signals);
+          expect(allSignals.length).toBeGreaterThanOrEqual(failedCheckCount);
+          allSignals.forEach((signal) => {
             expect(signal.type).toBeDefined();
             expect(['fail', 'degraded']).toContain(signal.value as string);
             expect(signal.timestamp).toBeDefined();
