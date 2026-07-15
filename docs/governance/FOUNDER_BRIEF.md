@@ -10,6 +10,16 @@ Updated continuously; read this instead of being interrupted.
 
 ---
 
+## ✅ 2026-07-15: main force-push incident resolved (PR #104, merge fbc4d76)
+
+The 2026-07-10 force-push that dropped the compliance/obligations line from `main`
+is fully reconciled: PR #104 merged both divergent lines as a union (nothing lost;
+pre-force-push history preserved at `backup/main-pre-forcepush-1719dcf`). Verified at
+merge: tsc/eslint clean, 851/851 unit tests, production build green, Lint & Build +
+E2E smoke CI green, Vercel preview deployed. Subsequent main commits build on the
+reconciled history with green CI. Standing ask unchanged: enable branch protection
+on `main` (require PRs, forbid force pushes) to prevent recurrence.
+
 ## Executive summary
 
 The product is now **EURO AI on `main`'s full infrastructure**: the #22 pivot has
