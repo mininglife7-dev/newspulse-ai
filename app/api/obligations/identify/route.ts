@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 interface IdentifyObligationsRequest {
   workspace_id: string;
   ai_system_id: string;
-  risk_assessment_id: string;
+  risk_assessment_id?: string;
   assessment_type: 'prohibited' | 'high_risk' | 'general';
   risk_score: number;
 }
@@ -51,6 +51,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { ok: false, error: 'Access denied to this workspace' },
         { status: 403 }
+      );
+    }
+
+    // Verify AI system exists and get company_id
+    const { data: aiSystem, error: aiError } = await supabase
+      .from('ai_systems')
+      .select('id, company_id')
+      .eq('id', body.ai_system_id)
+      .eq('workspace_id', body.workspace_id)
+      .single();
+
+    if (aiError || !aiSystem) {
+      return NextResponse.json(
+        { ok: false, error: 'AI system not found' },
+        { status: 404 }
       );
     }
 
@@ -105,14 +120,16 @@ export async function POST(req: NextRequest) {
     // Create obligations in database
     const obligationRecords = obligations.map((o) => ({
       workspace_id: body.workspace_id,
+      company_id: aiSystem.company_id,
       ai_system_id: body.ai_system_id,
-      risk_assessment_id: body.risk_assessment_id,
+      risk_assessment_id: body.risk_assessment_id || null,
       category: o.category,
       title: o.title,
       description: o.description,
       priority: o.priority,
       status: 'identified',
       deadline_days: o.deadline_days,
+      source: 'EU_AI_ACT',
       created_by: user.id,
     }));
 

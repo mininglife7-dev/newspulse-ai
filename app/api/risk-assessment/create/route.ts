@@ -59,10 +59,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verify AI system exists and get company_id
+    const { data: aiSystem, error: aiError } = await supabase
+      .from('ai_systems')
+      .select('id, company_id')
+      .eq('id', body.ai_system_id)
+      .eq('workspace_id', body.workspace_id)
+      .single();
+
+    if (aiError || !aiSystem) {
+      return NextResponse.json(
+        { ok: false, error: 'AI system not found' },
+        { status: 404 }
+      );
+    }
+
     // Calculate risk score based on responses
     const affirmativeAnswers = body.responses.filter((r) => r.answer).length;
     const totalQuestions = body.responses.length;
     const riskScore = totalQuestions > 0 ? Math.round((affirmativeAnswers / totalQuestions) * 100) : 0;
+
+    // Map assessment type to risk level
+    const riskLevelMap: Record<string, string> = {
+      prohibited: 'unacceptable',
+      high_risk: 'high',
+      general: 'medium',
+    };
 
     // Create risk assessment
     const { data: assessment, error: createError } = await supabase
@@ -71,9 +93,12 @@ export async function POST(req: NextRequest) {
         {
           workspace_id: body.workspace_id,
           ai_system_id: body.ai_system_id,
+          company_id: aiSystem.company_id,
           assessment_type: body.assessment_type,
+          risk_level: riskLevelMap[body.assessment_type] || 'medium',
           risk_score: riskScore,
           responses: body.responses,
+          assessment_data: { responses: body.responses },
           created_by: user.id,
           status: 'completed',
         },
