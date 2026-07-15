@@ -4,10 +4,11 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 
 **Quick Links:**
 - 🚀 Ready to launch? → [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures)
-- 🔒 Security questions? → [`SECURITY_AUDIT_CHECKLIST.md`](#security-audit-checklist)
-- 📊 Architecture decisions? → [`ARCHITECTURE_DECISIONS.md`](#architecture-decisions)
+- 🔒 Supabase just deployed? → [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps)
+- ✅ Pre-launch verification? → [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification)
+- 📊 First week tracking? → [`FIRST_WEEK_TRACKING.md`](#first-week-tracking)
+- 📋 Security audit? → [`SECURITY_AUDIT_CHECKLIST.md`](#security-audit-checklist)
 - 🆘 Something broken? → [`TROUBLESHOOTING_GUIDE.md`](#troubleshooting-guide)
-- 💰 Performance metrics? → [`PERFORMANCE_BASELINE.md`](#performance-baseline)
 
 ---
 
@@ -17,8 +18,11 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 
 **Start here for launch:**
 1. [`LAUNCH_READINESS_SUMMARY.md`](#launch-readiness-summary) — Executive summary of production readiness
-2. [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures) — Hour-by-hour checklist for Day 1
-3. [`POST_LAUNCH_MONITORING.md`](#post-launch-monitoring) — First week procedures
+2. [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps) — What to do immediately after Supabase deployment
+3. [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification) — Verify Supabase deployment succeeded
+4. [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures) — Hour-by-hour checklist for Day 1
+5. [`FIRST_WEEK_TRACKING.md`](#first-week-tracking) — Daily metrics tracking for first week
+6. [`POST_LAUNCH_MONITORING.md`](#post-launch-monitoring) — Ongoing operations post-launch
 
 **For ongoing operations:**
 - [`OPERATIONS_RUNBOOK.md`](#operations-runbook) — Daily operations checklist
@@ -110,7 +114,31 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 - Press release template
 - **When:** Use for customer communications
 
+**[SUPABASE_DEPLOYMENT_NEXT_STEPS.md](./SUPABASE_DEPLOYMENT_NEXT_STEPS.md)** (256 lines)
+- 8-step quick reference after Supabase schema deployment
+- Environment variable verification
+- Health endpoint testing
+- Bridges to pre-flight verification checklist
+- **When:** Follow immediately after Supabase deployment (5-8 minutes)
+
+**[PRE_FLIGHT_VERIFICATION.md](./PRE_FLIGHT_VERIFICATION.md)** (383 lines)
+- Post-Supabase deployment verification checklist (5 phases)
+- Database structure validation (9 tables, 13+ indexes)
+- RLS policy verification and cross-tenant isolation testing
+- Email authentication confirmation
+- Production health check validation
+- End-to-end signup flow test
+- **When:** After Supabase deployment, before enabling customer signup (20 minutes)
+
 ### Operations & Monitoring
+
+**[FIRST_WEEK_TRACKING.md](./FIRST_WEEK_TRACKING.md)** (363 lines)
+- Daily metrics tracking template for Days 1-7 post-launch
+- Hourly breakdowns for Day 1 (T+0, T+4, T+12, T+24)
+- Week 1 success criteria verification
+- Health thresholds and escalation triggers
+- Post-launch retrospective and lessons learned template
+- **When:** Fill out daily during first week post-launch
 
 **[OPERATIONS_RUNBOOK.md](./OPERATIONS_RUNBOOK.md)** (400+ lines)
 - Daily operations checklist
@@ -258,8 +286,11 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 
 **"I'm ready to launch"**
 1. Check [`LAUNCH_READINESS_SUMMARY.md`](./LAUNCH_READINESS_SUMMARY.md)
-2. Deploy Supabase schema (see instructions)
-3. Follow [`LAUNCH_DAY_PROCEDURES.md`](./LAUNCH_DAY_PROCEDURES.md) hour-by-hour
+2. Deploy Supabase schema using [`SUPABASE_DEPLOYMENT.md`](./SUPABASE_DEPLOYMENT.md)
+3. Follow [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](./SUPABASE_DEPLOYMENT_NEXT_STEPS.md) (5-8 min)
+4. Run [`PRE_FLIGHT_VERIFICATION.md`](./PRE_FLIGHT_VERIFICATION.md) checklist (20 min)
+5. Follow [`LAUNCH_DAY_PROCEDURES.md`](./LAUNCH_DAY_PROCEDURES.md) hour-by-hour
+6. Track daily using [`FIRST_WEEK_TRACKING.md`](./FIRST_WEEK_TRACKING.md)
 
 **"Something is broken"**
 1. Check [`TROUBLESHOOTING_GUIDE.md`](./TROUBLESHOOTING_GUIDE.md) for customer issues
@@ -323,15 +354,16 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 
 ## Documentation Statistics
 
-**Total Documentation:** 18+ comprehensive guides  
-**Total Lines:** 4,500+ lines of operational documentation  
+**Total Documentation:** 22+ comprehensive guides  
+**Total Lines:** 7,300+ lines of operational documentation  
 **Coverage:**
-- ✅ Pre-launch (security, readiness, checklists)
-- ✅ Launch (day procedures, communication)
-- ✅ Operations (monitoring, incident response)
+- ✅ Pre-launch (security, readiness, checklists, Supabase deployment)
+- ✅ Launch (day procedures, communication, pre-flight verification)
+- ✅ First week operations (daily tracking, metrics monitoring)
+- ✅ Operations (monitoring, incident response, runbooks)
 - ✅ Architecture (decisions, database, API)
 - ✅ Performance (baselines, scaling, optimization)
-- ✅ Support (customer onboarding, troubleshooting)
+- ✅ Support (customer onboarding, troubleshooting, playbooks)
 - ✅ Disaster Recovery (6 scenarios with procedures)
 - ✅ Team (handbook, roles, decision authority)
 
@@ -364,7 +396,10 @@ All documentation is checked into git. Updates should be:
 
 | Need | Document |
 |------|----------|
-| Ready to launch? | [LAUNCH_DAY_PROCEDURES.md](./LAUNCH_DAY_PROCEDURES.md) |
+| Supabase deployed? | [SUPABASE_DEPLOYMENT_NEXT_STEPS.md](./SUPABASE_DEPLOYMENT_NEXT_STEPS.md) |
+| Pre-launch verify? | [PRE_FLIGHT_VERIFICATION.md](./PRE_FLIGHT_VERIFICATION.md) |
+| Launch day? | [LAUNCH_DAY_PROCEDURES.md](./LAUNCH_DAY_PROCEDURES.md) |
+| Track first week? | [FIRST_WEEK_TRACKING.md](./FIRST_WEEK_TRACKING.md) |
 | Something broken? | [TROUBLESHOOTING_GUIDE.md](./TROUBLESHOOTING_GUIDE.md) |
 | Major incident? | [DISASTER_RECOVERY_PLAN.md](./DISASTER_RECOVERY_PLAN.md) |
 | New team member? | [TEAM_HANDBOOK.md](./TEAM_HANDBOOK.md) |
@@ -375,7 +410,6 @@ All documentation is checked into git. Updates should be:
 | Security audit? | [SECURITY_AUDIT_CHECKLIST.md](./SECURITY_AUDIT_CHECKLIST.md) |
 | Customer support? | [CUSTOMER_SUCCESS_PLAYBOOK.md](./CUSTOMER_SUCCESS_PLAYBOOK.md) |
 | Customer onboarding? | [CUSTOMER_ONBOARDING.md](./CUSTOMER_ONBOARDING.md) |
-| Decision authority? | [TEAM_HANDBOOK.md](./TEAM_HANDBOOK.md) |
 
 ---
 
