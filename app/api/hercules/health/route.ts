@@ -14,11 +14,29 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { HerculesKernel } from '@/lib/hercules-kernel';
-import type { HealthScore, HealthFactor, HealthStatus } from '@/lib/hercules-kernel';
+import type {
+  HealthScore,
+  HealthFactor,
+  HealthStatus,
+} from '@/lib/hercules-kernel';
 import { getRequiredAppUrl } from '@/lib/config-validation';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Options for this server-side aggregator's internal fetches to the telemetry
+ * endpoints. Those endpoints are admin-token gated (deny-by-default), so we
+ * must present the same ADMIN_TOKEN the monitoring workflows use — otherwise
+ * every organ check would 401 and the dashboard would show false-degraded.
+ */
+function internalFetchOptions(): RequestInit {
+  const token = process.env.ADMIN_TOKEN;
+  return {
+    cache: 'no-store',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  };
+}
 
 interface OrganHealth {
   organ: string;
@@ -41,7 +59,7 @@ async function checkProductionHealth(): Promise<OrganHealth> {
   try {
     const response = await fetch(
       new URL('/api/production-health', getRequiredAppUrl()).toString(),
-      { cache: 'no-store' }
+      internalFetchOptions()
     );
 
     if (!response.ok) {
@@ -79,7 +97,7 @@ async function checkErrorRates(): Promise<OrganHealth> {
   try {
     const response = await fetch(
       new URL('/api/error-rate', getRequiredAppUrl()).toString(),
-      { cache: 'no-store' }
+      internalFetchOptions()
     );
 
     if (!response.ok) {
@@ -111,7 +129,9 @@ async function checkErrorRates(): Promise<OrganHealth> {
       organ: 'Error Rate Monitoring (DNA-004)',
       status,
       percentage,
-      issues: data.errorRate ? [`Error rate: ${(data.errorRate * 100).toFixed(2)}%`] : [],
+      issues: data.errorRate
+        ? [`Error rate: ${(data.errorRate * 100).toFixed(2)}%`]
+        : [],
       lastChecked: new Date().toISOString(),
     };
   } catch (error) {
@@ -129,7 +149,7 @@ async function checkSecurityStatus(): Promise<OrganHealth> {
   try {
     const response = await fetch(
       new URL('/api/security-scan', getRequiredAppUrl()).toString(),
-      { cache: 'no-store' }
+      internalFetchOptions()
     );
 
     if (!response.ok) {
@@ -183,7 +203,7 @@ async function checkCostHealth(): Promise<OrganHealth> {
   try {
     const response = await fetch(
       new URL('/api/cost-anomaly', getRequiredAppUrl()).toString(),
-      { cache: 'no-store' }
+      internalFetchOptions()
     );
 
     if (!response.ok) {
@@ -202,7 +222,9 @@ async function checkCostHealth(): Promise<OrganHealth> {
     const issues: string[] = [];
 
     if (data.anomalies && data.anomalies.length > 0) {
-      const critical = data.anomalies.filter((a: any) => a.severity === 'CRITICAL');
+      const critical = data.anomalies.filter(
+        (a: any) => a.severity === 'CRITICAL'
+      );
       const high = data.anomalies.filter((a: any) => a.severity === 'HIGH');
 
       if (critical.length > 0) {
@@ -238,7 +260,7 @@ async function checkPerformanceHealth(): Promise<OrganHealth> {
   try {
     const response = await fetch(
       new URL('/api/performance-baseline', getRequiredAppUrl()).toString(),
-      { cache: 'no-store' }
+      internalFetchOptions()
     );
 
     if (!response.ok) {
@@ -257,7 +279,9 @@ async function checkPerformanceHealth(): Promise<OrganHealth> {
     const issues: string[] = [];
 
     if (data.regressions && data.regressions.length > 0) {
-      const critical = data.regressions.filter((r: any) => r.severity === 'CRITICAL');
+      const critical = data.regressions.filter(
+        (r: any) => r.severity === 'CRITICAL'
+      );
       const high = data.regressions.filter((r: any) => r.severity === 'HIGH');
 
       if (critical.length > 0) {
@@ -293,7 +317,7 @@ async function checkCustomerJourney(): Promise<OrganHealth> {
   try {
     const response = await fetch(
       new URL('/api/production-health', getRequiredAppUrl()).toString(),
-      { cache: 'no-store' }
+      internalFetchOptions()
     );
 
     if (!response.ok) {
@@ -324,7 +348,10 @@ async function checkCustomerJourney(): Promise<OrganHealth> {
   }
 }
 
-function calculateOverallHealth(organs: OrganHealth[]): { status: HealthStatus; percentage: number } {
+function calculateOverallHealth(organs: OrganHealth[]): {
+  status: HealthStatus;
+  percentage: number;
+} {
   if (organs.length === 0) {
     return { status: 'UNKNOWN', percentage: 0 };
   }
@@ -353,17 +380,26 @@ function calculateOverallHealth(organs: OrganHealth[]): { status: HealthStatus; 
 export async function GET(request: NextRequest) {
   try {
     // Collect health from all organs in parallel
-    const [production, errorRates, security, costs, performance, journey] = await Promise.all([
-      checkProductionHealth(),
-      checkErrorRates(),
-      checkSecurityStatus(),
-      checkCostHealth(),
-      checkPerformanceHealth(),
-      checkCustomerJourney(),
-    ]);
+    const [production, errorRates, security, costs, performance, journey] =
+      await Promise.all([
+        checkProductionHealth(),
+        checkErrorRates(),
+        checkSecurityStatus(),
+        checkCostHealth(),
+        checkPerformanceHealth(),
+        checkCustomerJourney(),
+      ]);
 
-    const organs = [production, errorRates, security, costs, performance, journey];
-    const { status: overallStatus, percentage: overallPercentage } = calculateOverallHealth(organs);
+    const organs = [
+      production,
+      errorRates,
+      security,
+      costs,
+      performance,
+      journey,
+    ];
+    const { status: overallStatus, percentage: overallPercentage } =
+      calculateOverallHealth(organs);
 
     // Identify blocking issues
     const blockingIssues = organs
@@ -374,11 +410,17 @@ export async function GET(request: NextRequest) {
     const recommendations: string[] = [];
     if (overallStatus === 'CRITICAL') {
       recommendations.push('🚨 CRITICAL: Immediate intervention required');
-      recommendations.push('Review blocking issues and escalate to incident commander');
+      recommendations.push(
+        'Review blocking issues and escalate to incident commander'
+      );
     } else if (overallStatus === 'AT_RISK') {
-      recommendations.push('⚠️ AT_RISK: Monitor closely and prepare remediation');
+      recommendations.push(
+        '⚠️ AT_RISK: Monitor closely and prepare remediation'
+      );
     } else if (overallStatus === 'DEGRADED') {
-      recommendations.push('🔧 DEGRADED: Address issues before they become critical');
+      recommendations.push(
+        '🔧 DEGRADED: Address issues before they become critical'
+      );
     }
 
     const health: UnifiedHealth = {
@@ -392,7 +434,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(health);
   } catch (error) {
-    logger.error('HERCULES health calculation failed', 'HERCULES_HEALTH_ERROR', error);
+    logger.error(
+      'HERCULES health calculation failed',
+      'HERCULES_HEALTH_ERROR',
+      error
+    );
     return NextResponse.json(
       {
         timestamp: new Date().toISOString(),
@@ -400,7 +446,9 @@ export async function GET(request: NextRequest) {
         overallPercentage: 0,
         organs: [],
         blockingIssues: [],
-        recommendations: ['Unable to calculate health. Check logs for details.'],
+        recommendations: [
+          'Unable to calculate health. Check logs for details.',
+        ],
       },
       { status: 500 }
     );
