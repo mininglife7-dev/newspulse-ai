@@ -185,17 +185,7 @@ export const validators = {
 
   optional: <T>(validator: FieldValidator<T>): FieldValidator<T | undefined> => ({
     validate(value: unknown): ValidationResult<T | undefined> {
-      // Treat absent AND blank as "not provided". HTML form controls submit
-      // unselected/empty fields as '' (a "Select…" dropdown, an untouched text
-      // input), never as undefined — so without this, an optional enum/url/etc.
-      // would run its inner check on '' and reject an otherwise-valid request
-      // (e.g. leaving an optional website blank failed workspace creation).
-      // No optional field has a meaningful '' value distinct from absent.
-      if (
-        value === undefined ||
-        value === null ||
-        (typeof value === 'string' && value.trim() === '')
-      ) {
+      if (value === undefined || value === null) {
         return { ok: true, value: undefined };
       }
       return validator.validate(value) as ValidationResult<T | undefined>;

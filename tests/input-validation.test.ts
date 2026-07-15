@@ -200,20 +200,16 @@ describe('Input Validation Framework', () => {
       expect(validator.validate(123).ok).toBe(false);
     });
 
-    it('treats an empty/blank string as absent (forms submit "" for untouched fields)', () => {
-      // A blank optional URL/enum must not be run through the inner validator —
-      // e.g. leaving the optional website blank used to fail workspace creation
-      // because url() rejects ''.
-      const url = validators.optional(validators.url());
-      expect(url.validate('').ok).toBe(true);
-      expect(url.validate('').value).toBeUndefined();
-      expect(url.validate('   ').value).toBeUndefined();
-
-      const choice = validators.optional(validators.enum(['a', 'b'] as const));
-      expect(choice.validate('').ok).toBe(true);
-      expect(choice.validate('').value).toBeUndefined();
-      // A non-empty invalid value is still rejected.
-      expect(choice.validate('z').ok).toBe(false);
+    it('does NOT treat a blank string as absent (JSON APIs stay strict)', () => {
+      // A blank '' is only "absent" for HTML forms, so that normalization lives
+      // in the form-facing routes (ai-systems, workspace), NOT here. Keeping the
+      // validator strict means a malformed blank on a non-string JSON field
+      // (e.g. optional(boolean()) on POST /api/knowledge) is still rejected
+      // rather than silently coerced.
+      expect(validators.optional(validators.boolean()).validate('').ok).toBe(
+        false
+      );
+      expect(validators.optional(validators.url()).validate('').ok).toBe(false);
     });
   });
 
