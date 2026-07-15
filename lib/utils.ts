@@ -15,6 +15,15 @@ export function formatRelativeDate(iso: string | null | undefined): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   const diffMs = Date.now() - d.getTime();
+  // Future timestamps (bad article metadata, clock skew) must not be
+  // presented as "just now" — show the honest absolute date instead.
+  if (diffMs < 0) {
+    return d.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
   const diffH = Math.floor(diffMs / (1000 * 60 * 60));
   if (diffH < 1) return 'just now';
   if (diffH < 24) return `${diffH}h ago`;
