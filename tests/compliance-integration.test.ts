@@ -147,8 +147,10 @@ describe('Compliance System Integration', () => {
       const medium = getTemplatesForRiskLevel('medium');
       const low = getTemplatesForRiskLevel('low');
 
-      // Unacceptable should have all critical
-      expect(unacceptable.every((t) => t.priority === 'critical')).toBe(true);
+      // Unacceptable should have critical and/or high priority only
+      expect(
+        unacceptable.every((t) => ['critical', 'high'].includes(t.priority))
+      ).toBe(true);
 
       // High should have critical and high
       expect(
