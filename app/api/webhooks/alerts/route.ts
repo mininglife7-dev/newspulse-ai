@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createRouteClient();
 
-    // Get authenticated user or use webhook secret
+    // Get authenticated user
     const {
       data: { user },
       error: authError,
