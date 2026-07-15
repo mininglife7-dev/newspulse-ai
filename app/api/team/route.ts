@@ -8,8 +8,12 @@ interface InviteMemberRequest {
   role: 'admin' | 'member' | 'viewer';
 }
 
-async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function resolveContext(
+  supabase: Awaited<ReturnType<typeof createRouteClient>>
+) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
   const { data: membership } = await supabase
@@ -141,139 +145,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, member: data });
-}
-
-/** PUT /api/team/:id — update member role or status */
-export async function PUT(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const memberId = pathname.split('/').pop();
-
-  if (!memberId) {
-    return NextResponse.json(
-      { ok: false, error: 'Member ID required' },
-      { status: 400 }
-    );
-  }
-
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid JSON' },
-      { status: 400 }
-    );
-  }
-
-  const supabase = await createRouteClient();
-  const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
-  }
-
-  // Only admins and owners can modify members
-  if (!['owner', 'admin'].includes(ctx.userRole)) {
-    return NextResponse.json(
-      { ok: false, error: 'Only admins can modify members' },
-      { status: 403 }
-    );
-  }
-
-  const updateData: any = {};
-  if (body.role && ['admin', 'member', 'viewer'].includes(body.role)) {
-    updateData.role = body.role;
-  }
-  if (body.status && ['active', 'pending', 'removed'].includes(body.status)) {
-    updateData.status = body.status;
-  }
-
-  if (Object.keys(updateData).length === 0) {
-    return NextResponse.json(
-      { ok: false, error: 'No valid fields to update' },
-      { status: 400 }
-    );
-  }
-
-  const { data, error } = await supabase
-    .from('workspace_members')
-    .update(updateData)
-    .eq('id', memberId)
-    .eq('workspace_id', ctx.workspaceId)
-    .select('*')
-    .single();
-
-  if (error) {
-    console.error('[api/team] PUT failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to update member' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ ok: true, member: data });
-}
-
-/** DELETE /api/team/:id — remove member from workspace */
-export async function DELETE(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const memberId = pathname.split('/').pop();
-
-  if (!memberId) {
-    return NextResponse.json(
-      { ok: false, error: 'Member ID required' },
-      { status: 400 }
-    );
-  }
-
-  const supabase = await createRouteClient();
-  const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
-  }
-
-  // Only admins and owners can remove members
-  if (!['owner', 'admin'].includes(ctx.userRole)) {
-    return NextResponse.json(
-      { ok: false, error: 'Only admins can remove members' },
-      { status: 403 }
-    );
-  }
-
-  // Prevent removing the workspace owner
-  const { data: member } = await supabase
-    .from('workspace_members')
-    .select('role')
-    .eq('id', memberId)
-    .eq('workspace_id', ctx.workspaceId)
-    .limit(1)
-    .maybeSingle();
-
-  if (member?.role === 'owner') {
-    return NextResponse.json(
-      { ok: false, error: 'Cannot remove workspace owner' },
-      { status: 403 }
-    );
-  }
-
-  const { error } = await supabase
-    .from('workspace_members')
-    .update({ status: 'removed' })
-    .eq('id', memberId)
-    .eq('workspace_id', ctx.workspaceId);
-
-  if (error) {
-    console.error('[api/team] DELETE failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to remove member' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ ok: true });
 }

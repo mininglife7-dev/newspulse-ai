@@ -27,6 +27,52 @@ describe('Risk Assessment Classification', () => {
       expect(result.riskLevel).toBe('unacceptable');
       expect(result.riskScore).toBe(100);
     });
+
+    // Regression: a prohibited trigger must name the actual prohibited
+    // practice, not always report 'biometric-identification'. The earlier
+    // implementation hardcoded a single category for every prohibited answer,
+    // which mislabelled emotion-recognition and social-scoring assessments.
+    it('names the real prohibited category, not always biometric', () => {
+      const emotion = classifyRisk(new Map([['q2-emotion-recognition', true]]));
+      expect(emotion.affectedCategories).toContain('emotion-recognition');
+      expect(emotion.affectedCategories).not.toContain(
+        'biometric-identification'
+      );
+
+      const social = classifyRisk(new Map([['q3-social-scoring', true]]));
+      expect(social.affectedCategories).toContain('social-scoring');
+      expect(social.affectedCategories).not.toContain(
+        'biometric-identification'
+      );
+
+      const biometric = classifyRisk(
+        new Map([['q1-prohibited-biometric', true]])
+      );
+      expect(biometric.affectedCategories).toContain(
+        'biometric-identification'
+      );
+    });
+
+    it('reports every distinct prohibited category when several are triggered', () => {
+      const result = classifyRisk(
+        new Map([
+          ['q1-prohibited-biometric', true],
+          ['q2-emotion-recognition', true],
+          ['q3-social-scoring', true],
+        ])
+      );
+      expect(result.riskLevel).toBe('unacceptable');
+      expect(result.affectedCategories).toEqual(
+        expect.arrayContaining([
+          'biometric-identification',
+          'emotion-recognition',
+          'social-scoring',
+        ])
+      );
+      // No duplicates — categories are de-duplicated before returning.
+      const unique = new Set(result.affectedCategories);
+      expect(unique.size).toBe(result.affectedCategories.length);
+    });
   });
 
   describe('High-risk indicators', () => {
@@ -141,7 +187,9 @@ describe('Risk Assessment Classification', () => {
         ])
       );
 
-      expect(withTransparency.riskScore).toBeLessThan(withoutTransparency.riskScore);
+      expect(withTransparency.riskScore).toBeLessThan(
+        withoutTransparency.riskScore
+      );
     });
 
     it('should reduce risk for systems with human oversight', () => {

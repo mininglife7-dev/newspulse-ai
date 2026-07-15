@@ -10,13 +10,12 @@ interface CreateAssessmentRequest {
   status?: 'draft' | 'in_review' | 'finalized';
 }
 
-interface UpdateAssessmentRequest {
-  status?: 'draft' | 'in_review' | 'finalized';
-  answers?: Record<string, any>;
-}
-
-async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function resolveContext(
+  supabase: Awaited<ReturnType<typeof createRouteClient>>
+) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
   const { data: membership } = await supabase
@@ -82,10 +81,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!data) {
-    return NextResponse.json(
-      { ok: true, assessment: null },
-      { status: 200 }
-    );
+    return NextResponse.json({ ok: true, assessment: null }, { status: 200 });
   }
 
   return NextResponse.json({ ok: true, assessment: data });
@@ -257,20 +253,28 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (createError || !created) {
-            console.warn('[api/assessments] failed to create obligation:', createError);
+            console.warn(
+              '[api/assessments] failed to create obligation:',
+              createError
+            );
             continue;
           }
           obligationId = created.id;
         }
 
         // Link obligation to assessment
-        const { error: linkError } = await supabase.from('assessment_obligations').insert({
-          assessment_id: response.id,
-          obligation_id: obligationId,
-        });
+        const { error: linkError } = await supabase
+          .from('assessment_obligations')
+          .insert({
+            assessment_id: response.id,
+            obligation_id: obligationId,
+          });
 
         if (linkError) {
-          console.warn('[api/assessments] failed to link obligation:', linkError);
+          console.warn(
+            '[api/assessments] failed to link obligation:',
+            linkError
+          );
         }
       }
     } catch (err) {
@@ -286,71 +290,4 @@ export async function POST(request: NextRequest) {
     },
     { status: 200 }
   );
-}
-
-/** PUT /api/assessments/:id — update assessment status */
-export async function PUT(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const assessmentId = pathname.split('/').pop();
-
-  if (!assessmentId) {
-    return NextResponse.json(
-      { ok: false, error: 'Assessment ID required' },
-      { status: 400 }
-    );
-  }
-
-  let body: UpdateAssessmentRequest;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid JSON' },
-      { status: 400 }
-    );
-  }
-
-  const supabase = await createRouteClient();
-  const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
-  }
-
-  // Re-classify if answers updated
-  let updateData: any = {};
-  if (body.answers) {
-    const answersMap = new Map(Object.entries(body.answers));
-    const result = classifyRisk(answersMap);
-    updateData.assessment_data = {
-      answers: body.answers,
-      classification: result,
-      completedAt: new Date().toISOString(),
-    };
-    updateData.risk_level = result.riskLevel;
-    updateData.risk_score = result.riskScore;
-  }
-  if (body.status) {
-    updateData.status = body.status;
-  }
-
-  const { data, error } = await supabase
-    .from('risk_assessments')
-    .update(updateData)
-    .eq('id', assessmentId)
-    .eq('workspace_id', ctx.workspaceId)
-    .select('*')
-    .single();
-
-  if (error) {
-    console.error('[api/assessments] PUT failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to update assessment' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ ok: true, assessment: data });
 }
