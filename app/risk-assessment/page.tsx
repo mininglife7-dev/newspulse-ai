@@ -39,12 +39,12 @@ const RISK_LEVEL_COLORS: Record<RiskLevel, { bg: string; text: string; border: s
     text: 'text-orange-300',
     border: 'border-orange-800/60',
   },
-  limited: {
+  medium: {
     bg: 'bg-amber-950/30',
     text: 'text-amber-300',
     border: 'border-amber-800/60',
   },
-  minimal: {
+  low: {
     bg: 'bg-green-950/30',
     text: 'text-green-300',
     border: 'border-green-800/60',

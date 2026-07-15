@@ -1,0 +1,20 @@
+{
+  "next:high": {
+    "package": "next",
+    "severity": "high",
+    "fixAvailable": true,
+    "cve": null,
+    "description": "Next.js self-hosted applications vulnerable to DoS via Image Optimizer remotePatterns configuration",
+    "affectedVersions": "9.3.4-canary.0 - 16.3.0-canary.5",
+    "patchedVersions": "16.2.10"
+  },
+  "postcss:moderate": {
+    "package": "postcss",
+    "severity": "moderate",
+    "fixAvailable": true,
+    "cve": null,
+    "description": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output",
+    "affectedVersions": "<8.5.10",
+    "patchedVersions": "16.2.10"
+  }
+}

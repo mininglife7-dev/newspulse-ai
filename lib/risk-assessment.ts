@@ -24,6 +24,7 @@ export interface RiskAssessmentResult {
   riskScore: number;
   reasoning: string[];
   obligations: string[];
+  recommendations: string[];
 }
 
 /**
@@ -82,6 +83,11 @@ export function assessRisk(input: RiskAssessmentInput): RiskAssessmentResult {
   );
 
   if (hasUnacceptable) {
+    const prohibitedObligations = [
+      'HALT deployment immediately',
+      'Consult with legal/compliance team',
+      'Review EU AI Act prohibited practices (Article 5)',
+    ];
     return {
       riskLevel: 'unacceptable',
       riskScore: 100,
@@ -89,11 +95,8 @@ export function assessRisk(input: RiskAssessmentInput): RiskAssessmentResult {
         'System use case is prohibited under EU AI Act',
         'Implementation or deployment of this use case is not permitted',
       ],
-      obligations: [
-        'HALT deployment immediately',
-        'Consult with legal/compliance team',
-        'Review EU AI Act prohibited practices (Article 5)',
-      ],
+      obligations: prohibitedObligations,
+      recommendations: prohibitedObligations,
     };
   }
 
@@ -188,6 +191,7 @@ export function assessRisk(input: RiskAssessmentInput): RiskAssessmentResult {
     riskScore: score,
     reasoning,
     obligations,
+    recommendations: obligations,
   };
 }
 
@@ -290,6 +294,10 @@ export interface AssessmentQuestion {
   question: string;
   description: string;
   risk_indicator: RiskLevel;
+  type?: 'yes-no' | 'select';
+  options?: string[];
+  riskWeight?: number;
+  showIf?: (answers: Map<string, any>) => boolean;
 }
 
 export function getAssessmentQuestions(): AssessmentQuestion[] {
@@ -300,6 +308,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does your system perform real-time remote biometric identification?',
       description: 'Real-time identification in public spaces',
       risk_indicator: 'unacceptable',
+      type: 'yes-no',
+      riskWeight: 1.0,
     },
     {
       id: 'q2-emotion-recognition',
@@ -307,6 +317,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does your system recognize or infer emotions or intentions?',
       description: 'Emotion or psychological analysis',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.9,
     },
     {
       id: 'q3-social-scoring',
@@ -314,6 +326,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does your system create social credit scores or rankings?',
       description: 'Systematic social or behavioral scoring',
       risk_indicator: 'unacceptable',
+      type: 'yes-no',
+      riskWeight: 1.0,
     },
     {
       id: 'q4-credit-decision',
@@ -321,6 +335,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Is the system used for credit or financial decisions?',
       description: 'Loan approval, insurance pricing, or financial eligibility',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.8,
     },
     {
       id: 'q5-recruitment',
@@ -328,6 +344,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Is the system used for employment decisions?',
       description: 'Hiring, promotion, or termination decisions',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.8,
     },
     {
       id: 'q6-education',
@@ -335,6 +353,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Is the system used for education or training assessment?',
       description: 'Student grading, educational assessment, or school admission',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.8,
     },
     {
       id: 'q7-law-enforcement',
@@ -342,6 +362,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Is the system used by law enforcement or criminal justice?',
       description: 'Policing, crime prediction, or court decisions',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.85,
     },
     {
       id: 'q8-sensitive-data',
@@ -349,6 +371,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does your system process special category (sensitive) data?',
       description: 'Race, ethnicity, political views, religious beliefs, health, sex life, etc.',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.7,
     },
     {
       id: 'q9-autonomy-high',
@@ -356,6 +380,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does the system make decisions with minimal human involvement?',
       description: 'Fully autonomous decision-making without human review',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.75,
     },
     {
       id: 'q10-rights-impact',
@@ -363,6 +389,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Can the system significantly affect fundamental rights?',
       description: 'Impact on privacy, freedoms, or legal status',
       risk_indicator: 'high',
+      type: 'yes-no',
+      riskWeight: 0.8,
     },
     {
       id: 'q11-personal-data',
@@ -370,6 +398,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does your system process personal data?',
       description: 'Any identifiable personal information',
       risk_indicator: 'medium',
+      type: 'yes-no',
+      riskWeight: 0.5,
     },
     {
       id: 'q12-public-facing',
@@ -377,6 +407,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Is the system deployed in public-facing context?',
       description: 'Directly accessible to citizens or affected individuals',
       risk_indicator: 'medium',
+      type: 'yes-no',
+      riskWeight: 0.6,
     },
     {
       id: 'q13-llm-generative',
@@ -384,6 +416,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Is the system a Large Language Model or Generative AI?',
       description: 'ChatGPT-like, code generation, image generation, etc.',
       risk_indicator: 'medium',
+      type: 'yes-no',
+      riskWeight: 0.55,
     },
     {
       id: 'q14-recommendations',
@@ -391,6 +425,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does your system provide personalized recommendations?',
       description: 'Content, product, or service recommendations to individuals',
       risk_indicator: 'low',
+      type: 'yes-no',
+      riskWeight: 0.3,
     },
     {
       id: 'q15-transparency',
@@ -398,6 +434,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Does your system provide transparency to affected individuals?',
       description: 'Users are informed they interact with AI and can understand decisions',
       risk_indicator: 'low',
+      type: 'yes-no',
+      riskWeight: 0.0,
     },
     {
       id: 'q16-oversight',
@@ -405,6 +443,8 @@ export function getAssessmentQuestions(): AssessmentQuestion[] {
       question: 'Is there human review or override capability?',
       description: 'Human decision-makers can review and override system decisions',
       risk_indicator: 'low',
+      type: 'yes-no',
+      riskWeight: 0.0,
     },
   ];
 }
