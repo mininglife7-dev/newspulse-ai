@@ -1,6 +1,9 @@
-import { createClient } from '@/lib/supabase/server';
+import { createRouteClient } from '@/lib/supabase-server';
 import { detectThreats, RuntimeEvent, MonitoringAlert } from '@/lib/integrations/runtime-monitoring';
 import { NextRequest, NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export interface DetectThreatsRequest {
   events: RuntimeEvent[];
@@ -41,7 +44,7 @@ export interface DetectThreatsResponse {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createRouteClient();
 
     // Get authenticated user
     const {
