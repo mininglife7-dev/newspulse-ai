@@ -37,3 +37,6 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# runtime cache written by /api/security-scan
+docs/governance/.security-scan-cache.json
