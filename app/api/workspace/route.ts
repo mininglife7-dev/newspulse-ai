@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,15 +45,28 @@ export async function POST(req: Request) {
     );
   }
 
-  const companyName = body.companyName?.trim();
-  const country = body.country?.trim();
-  const industry = body.industry?.trim();
-  if (!companyName || !country || !industry) {
+  // Validate input using schema
+  const validationResult = validate(body, {
+    companyName: validators.string({ minLength: 1, maxLength: 255 }),
+    country: validators.string({ minLength: 1, maxLength: 255 }),
+    industry: validators.string({ minLength: 1, maxLength: 255 }),
+    legalName: validators.optional(validators.string({ maxLength: 255 })),
+    employees: validators.optional(validators.string({ maxLength: 100 })),
+    website: validators.optional(validators.url()),
+    description: validators.optional(validators.string({ maxLength: 2000 })),
+  });
+
+  if (!validationResult.ok) {
     return NextResponse.json(
-      { ok: false, error: 'companyName, country and industry are required' },
+      { ok: false, error: 'Invalid input', errors: validationResult.errors },
       { status: 400 }
     );
   }
+
+  const validated = validationResult.value as WorkspaceSetupBody;
+  const companyName = validated.companyName;
+  const country = validated.country;
+  const industry = validated.industry;
 
   const supabase = await createRouteClient();
   const {
@@ -77,7 +92,11 @@ export async function POST(req: Request) {
     .single();
 
   if (wsError || !workspace) {
-    console.error('[api/workspace] workspace insert failed:', wsError);
+    logger.error(
+      'Workspace creation failed',
+      'WORKSPACE_INSERT_ERROR',
+      wsError
+    );
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace' },
       { status: 500 }
@@ -118,7 +137,11 @@ export async function POST(req: Request) {
     });
 
   if (memberError) {
-    console.error('[api/workspace] member insert failed:', memberError);
+    logger.error(
+      'Workspace membership creation failed',
+      'WORKSPACE_MEMBER_ERROR',
+      memberError
+    );
     await rollbackWorkspace();
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace membership' },
@@ -143,7 +166,11 @@ export async function POST(req: Request) {
     .single();
 
   if (companyError || !company) {
-    console.error('[api/workspace] company insert failed:', companyError);
+    logger.error(
+      'Company profile creation failed',
+      'WORKSPACE_COMPANY_ERROR',
+      companyError
+    );
     await rollbackWorkspace();
     return NextResponse.json(
       { ok: false, error: 'Could not create company profile' },
@@ -159,7 +186,13 @@ export async function POST(req: Request) {
     current_workspace_id: workspace.id,
   });
   if (profileError) {
-    console.warn('[api/workspace] profile upsert failed:', profileError);
+    logger.warn(
+      'Profile update failed (non-blocking)',
+      'WORKSPACE_PROFILE_WARN',
+      {
+        message: profileError.message,
+      }
+    );
   }
 
   return NextResponse.json({

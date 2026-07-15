@@ -3,6 +3,7 @@ import {
   detectAllBlockingConditions,
   formatBlockingConditionAlert,
 } from '@/lib/blocking-condition-detector';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,16 +21,16 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: Request) {
   const actionsToken = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER || 'mininglife7-dev';
-  const repo = process.env.GITHUB_REPO || 'newspulse-ai';
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
 
-  // Without a GitHub token, we can't check Actions
-  if (!actionsToken) {
+  // Require all GitHub configuration to be explicitly set
+  if (!actionsToken || !owner || !repo) {
     return NextResponse.json(
       {
         ok: false,
-        error: 'GITHUB_TOKEN not configured',
-        message: 'Set GITHUB_TOKEN in Vercel env to enable blocking detection',
+        error: 'GitHub configuration incomplete',
+        message: 'Set GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO in Vercel env',
         blockers: [],
       },
       { status: 503 }
@@ -37,7 +38,11 @@ export async function GET(req: Request) {
   }
 
   try {
-    const blockers = await detectAllBlockingConditions(owner, repo, actionsToken);
+    const blockers = await detectAllBlockingConditions(
+      owner,
+      repo,
+      actionsToken
+    );
 
     if (blockers.length === 0) {
       return NextResponse.json({
@@ -51,16 +56,24 @@ export async function GET(req: Request) {
     // Blockers found — format for Founder
     const alerts = blockers.map(formatBlockingConditionAlert);
 
-    // Log critical blockers
+    // Log blocking conditions (safe for production)
     if (blockers.some((b) => b.severity === 'critical')) {
-      console.error(
-        '[blocking-conditions] CRITICAL blockers detected:\n',
-        alerts.join('\n\n')
+      logger.error(
+        'Blocking conditions detected: critical',
+        'BLOCKER_CRITICAL',
+        {
+          totalBlockers: blockers.length,
+          criticalCount: blockers.filter((b) => b.severity === 'critical')
+            .length,
+        }
       );
     } else {
-      console.warn(
-        '[blocking-conditions] High-severity blockers detected:\n',
-        alerts.join('\n\n')
+      logger.warn(
+        'Blocking conditions detected: high severity',
+        'BLOCKER_WARNING',
+        {
+          totalBlockers: blockers.length,
+        }
       );
     }
 
@@ -83,14 +96,16 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[blocking-conditions] Detection failed:', message);
+    logger.error(
+      'Blocking condition detection failed',
+      'BLOCKER_DETECTION_ERROR',
+      error
+    );
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Detection failed',
-        message,
         blockers: [],
       },
       { status: 503 }

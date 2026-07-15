@@ -7,7 +7,13 @@ const state: {
   company: { id: string } | null;
   systems: any[];
   failInsert: boolean;
-} = { user: null, membership: null, company: null, systems: [], failInsert: false };
+} = {
+  user: null,
+  membership: null,
+  company: null,
+  systems: [],
+  failInsert: false,
+};
 
 function chain(result: any) {
   const c: any = {
@@ -50,6 +56,22 @@ vi.mock('@/lib/supabase-server', () => ({
 
 import { GET, POST } from '@/app/api/ai-systems/route';
 
+function get(params?: Record<string, string>) {
+  const url = new URL('http://localhost/api/ai-systems');
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+  }
+  const req = new Request(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  // Mock NextRequest properties
+  (req as any).nextUrl = url;
+  return GET(req as any);
+}
+
 function post(body: unknown) {
   return POST(
     new Request('http://localhost/api/ai-systems', {
@@ -71,19 +93,19 @@ beforeEach(() => {
 describe('GET /api/ai-systems', () => {
   it('requires authentication', async () => {
     state.user = null;
-    const res = await GET();
+    const res = await get();
     expect(res.status).toBe(401);
   });
 
   it('returns 409 before company setup', async () => {
     state.membership = null;
-    const res = await GET();
+    const res = await get();
     expect(res.status).toBe(409);
   });
 
   it('lists workspace systems', async () => {
     state.systems = [{ id: 's1', name: 'Chatbot' }];
-    const res = await GET();
+    const res = await get();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.systems).toHaveLength(1);

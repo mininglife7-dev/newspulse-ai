@@ -15,8 +15,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Monitor error rates
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ secrets.VERCEL_DEPLOYMENT_URL }}/api/error-rate")
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL secret not configured - monitor skipped (will activate once set)"
+            exit 0
+          fi
+          RESPONSE=$(curl -s -w "\n%{http_code}" "$DEPLOY_URL/api/error-rate")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
           BODY=$(echo "$RESPONSE" | head -n -1)
 

@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { scanDependencies, formatSecurityAlert, getSecuritySummary } from '@/lib/dependency-security-scanner';
+import {
+  scanDependencies,
+  formatSecurityAlert,
+  getSecuritySummary,
+} from '@/lib/dependency-security-scanner';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,15 +28,38 @@ export async function GET(req: Request) {
     const alert = formatSecurityAlert(result);
     const summary = getSecuritySummary(result);
 
-    // Log alerts for Founder visibility
+    // Log scan results (safe for production)
     if (result.scanStatus === 'critical-found') {
-      console.error('[security-scan] CRITICAL:\n', alert.message);
+      logger.error(
+        'Security scan detected critical vulnerabilities',
+        'SECURITY_CRITICAL',
+        {
+          critical: result.critical,
+          high: result.high,
+        }
+      );
     } else if (result.scanStatus === 'vulnerabilities-found') {
-      console.warn('[security-scan] WARNING:\n', alert.message);
+      logger.warn(
+        'Security scan detected vulnerabilities',
+        'SECURITY_WARNING',
+        {
+          total: result.total,
+          high: result.high,
+        }
+      );
     } else if (result.resolvedVulnerabilities.length > 0) {
-      console.log('[security-scan] RESOLVED:\n', alert.message);
+      logger.info(
+        'Security scan: vulnerabilities resolved',
+        'SECURITY_RESOLVED',
+        {
+          resolved: result.resolvedVulnerabilities.length,
+        }
+      );
     } else {
-      console.log('[security-scan] CLEAN:', summary);
+      logger.info(
+        'Security scan: no vulnerabilities detected',
+        'SECURITY_CLEAN'
+      );
     }
 
     return NextResponse.json(
@@ -62,14 +90,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[security-scan] Check failed:', message);
+    logger.error('Security scan failed', 'SECURITY_SCAN_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Security scan failed',
-        message,
         status: 'error',
       },
       { status: 503 }

@@ -33,7 +33,6 @@ for (const [path, name] of PAGES) {
     await page.addScriptTag({ content: AXE_SOURCE });
 
     const violations = await page.evaluate(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const axe = (window as any).axe;
       const results = await axe.run(document, {
         runOnly: {
@@ -41,7 +40,6 @@ for (const [path, name] of PAGES) {
           values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'],
         },
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return results.violations.map((v: any) => ({
         id: v.id,
         impact: v.impact,

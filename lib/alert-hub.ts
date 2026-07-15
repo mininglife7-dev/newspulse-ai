@@ -21,7 +21,7 @@ export type AlertSource =
   | 'error-rate' // DNA-GOV-004
   | 'security' // DNA-GOV-008
   | 'cost-anomaly' // DNA-GOV-011
-  | 'incident'; // DNA-GOV-014
+  | 'incident-commander'; // DNA-GOV-014
 
 export interface Alert {
   id: string; // UUID for deduplication
@@ -50,7 +50,11 @@ const alertStore = new Map<string, Alert>();
 /**
  * Generate deterministic alert ID from source and content
  */
-function generateAlertId(source: AlertSource, title: string, timestamp: string): string {
+function generateAlertId(
+  source: AlertSource,
+  title: string,
+  timestamp: string
+): string {
   // Simple hash of source + title for deduplication
   const content = `${source}:${title}`;
   let hash = 0;
@@ -128,8 +132,12 @@ export function getActiveAlerts(): Alert[] {
  */
 export function getAlertHubReport(): AlertHubReport {
   const activeAlerts = getActiveAlerts();
-  const criticalCount = activeAlerts.filter((a) => a.severity === 'critical').length;
-  const warningCount = activeAlerts.filter((a) => a.severity === 'warning').length;
+  const criticalCount = activeAlerts.filter(
+    (a) => a.severity === 'critical'
+  ).length;
+  const warningCount = activeAlerts.filter(
+    (a) => a.severity === 'warning'
+  ).length;
   const infoCount = activeAlerts.filter((a) => a.severity === 'info').length;
 
   let summary = '';

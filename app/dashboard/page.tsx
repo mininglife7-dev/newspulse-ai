@@ -17,6 +17,7 @@ export default async function DashboardPage() {
   let workspace: WorkspaceSummary | null = null;
   let firstName: string | null = null;
   let systemCount = 0;
+  let assessedCount = 0;
 
   try {
     const supabase = await createRouteClient();
@@ -43,6 +44,14 @@ export default async function DashboardPage() {
           .select('id', { count: 'exact', head: true })
           .eq('workspace_id', membership.workspace_id);
         systemCount = count ?? 0;
+
+        const { data: assessed } = await supabase
+          .from('risk_assessments')
+          .select('ai_system_id')
+          .eq('workspace_id', membership.workspace_id);
+        assessedCount = new Set(
+          (assessed ?? []).map((a: any) => a.ai_system_id)
+        ).size;
       }
     }
   } catch (err) {
@@ -67,15 +76,41 @@ export default async function DashboardPage() {
       </div>
 
       {hasWorkspace && (
-        <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/50 px-5 py-4">
-          <Building2 className="h-5 w-5 text-cyan-400" />
-          <div>
-            <div className="font-semibold text-white">{workspace!.name}</div>
-            <div className="text-xs text-slate-500">
-              Workspace · {workspace!.slug}
+        <>
+          <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/50 px-5 py-4">
+            <Building2 className="h-5 w-5 text-cyan-400" />
+            <div>
+              <div className="font-semibold text-white">{workspace!.name}</div>
+              <div className="text-xs text-slate-500">
+                Workspace · {workspace!.slug}
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <Link
+              href="/compliance"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-emerald-500/40"
+            >
+              View Compliance Status
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/obligations"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-purple-500/40"
+            >
+              Manage Obligations
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/team"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-indigo-500/40"
+            >
+              Manage Team
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </>
       )}
 
       {/* Onboarding Progress */}
@@ -131,7 +166,11 @@ export default async function DashboardPage() {
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${systemCount > 0 ? 'bg-green-600' : 'bg-blue-500 text-sm font-bold'}`}
                   >
-                    {systemCount > 0 ? <CheckCircle className="h-5 w-5" /> : '2'}
+                    {systemCount > 0 ? (
+                      <CheckCircle className="h-5 w-5" />
+                    ) : (
+                      '2'
+                    )}
                   </div>
                   <h3 className="font-semibold text-white">AI Inventory</h3>
                 </div>
@@ -163,21 +202,43 @@ export default async function DashboardPage() {
         )}
 
         {/* Step 3: Risk Assessment */}
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
-                  3
+        {hasWorkspace && systemCount > 0 ? (
+          <Link
+            href="/inventory"
+            className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
+                    3
+                  </div>
+                  <h3 className="font-semibold text-white">Risk Assessment</h3>
                 </div>
-                <h3 className="font-semibold text-white">Risk Assessment</h3>
+                <p className="text-sm text-slate-400">
+                  Classify risks for your AI systems
+                </p>
               </div>
-              <p className="text-sm text-slate-400">
-                Classify risks and obligations — coming soon
-              </p>
+              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
+            </div>
+          </Link>
+        ) : (
+          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                    3
+                  </div>
+                  <h3 className="font-semibold text-white">Risk Assessment</h3>
+                </div>
+                <p className="text-sm text-slate-400">
+                  Classify risks — unlocked after adding AI systems
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Next steps */}
@@ -202,11 +263,15 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle
+              className={`h-6 w-6 flex-shrink-0 ${hasWorkspace ? 'text-cyan-400' : 'text-slate-600'}`}
+            />
             <div>
               <h3 className="font-medium text-white">Add team members</h3>
               <p className="text-sm text-slate-400">
-                Invite colleagues to collaborate — coming soon
+                {hasWorkspace
+                  ? 'Invite colleagues to collaborate'
+                  : 'Unlocked after company setup'}
               </p>
             </div>
           </div>
@@ -226,11 +291,15 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle
+              className={`h-6 w-6 flex-shrink-0 ${systemCount > 0 ? 'text-cyan-400' : 'text-slate-600'}`}
+            />
             <div>
-              <h3 className="font-medium text-white">Start assessment</h3>
+              <h3 className="font-medium text-white">Start risk assessment</h3>
               <p className="text-sm text-slate-400">
-                Evaluate compliance gaps — coming soon
+                {systemCount > 0
+                  ? 'Classify risks for compliance'
+                  : 'Unlocked after adding AI systems'}
               </p>
             </div>
           </div>
@@ -244,8 +313,8 @@ export default async function DashboardPage() {
           <div>
             <h3 className="font-medium text-white">Need help?</h3>
             <p className="text-sm text-slate-400 mt-1">
-              In-app documentation and support are on the way. Until then,
-              your onboarding contact is happy to help directly.
+              In-app documentation and support are on the way. Until then, your
+              onboarding contact is happy to help directly.
             </p>
           </div>
         </div>

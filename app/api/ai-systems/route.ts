@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,8 +18,10 @@ interface CreateAiSystemBody {
   status?: 'active' | 'pilot' | 'deprecated';
 }
 
-/** GET /api/ai-systems — list the caller's workspace AI-system inventory. */
-export async function GET() {
+/** GET /api/ai-systems — list the caller's workspace AI-system inventory or fetch a single system. */
+export async function GET(request: NextRequest) {
+  const systemId = request.nextUrl.searchParams.get('id');
+
   const supabase = await createRouteClient();
   const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
@@ -27,19 +31,36 @@ export async function GET() {
     );
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('ai_systems')
-    .select('id, name, description, system_type, vendor, purpose, status, created_at')
-    .eq('workspace_id', ctx.workspaceId)
-    .order('created_at', { ascending: false });
+    .select(
+      'id, name, description, system_type, vendor, purpose, status, created_at'
+    )
+    .eq('workspace_id', ctx.workspaceId);
+
+  if (systemId) {
+    query = query.eq('id', systemId).limit(1);
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
-    console.error('[api/ai-systems] list failed:', error);
+    logger.error('AI systems list failed', 'AI_SYSTEMS_LIST_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Could not load AI systems' },
       { status: 500 }
     );
   }
+
+  if (systemId && (!data || data.length === 0)) {
+    return NextResponse.json(
+      { ok: false, error: 'System not found' },
+      { status: 404 }
+    );
+  }
+
   return NextResponse.json({ ok: true, systems: data ?? [] });
 }
 
@@ -55,26 +76,26 @@ export async function POST(req: Request) {
     );
   }
 
-  const name = body.name?.trim();
-  if (!name) {
+  // Validate input using schema
+  const validationResult = validate(body, {
+    name: validators.string({ minLength: 1, maxLength: 255 }),
+    description: validators.optional(validators.string({ maxLength: 2000 })),
+    systemType: validators.optional(validators.enum(SYSTEM_TYPES)),
+    vendor: validators.optional(validators.string({ maxLength: 255 })),
+    purpose: validators.optional(validators.string({ maxLength: 1000 })),
+    status: validators.optional(validators.enum(SYSTEM_STATUSES)),
+  });
+
+  if (!validationResult.ok) {
     return NextResponse.json(
-      { ok: false, error: 'name is required' },
+      { ok: false, error: 'Invalid input', errors: validationResult.errors },
       { status: 400 }
     );
   }
-  if (body.systemType && !SYSTEM_TYPES.includes(body.systemType as any)) {
-    return NextResponse.json(
-      { ok: false, error: `systemType must be one of: ${SYSTEM_TYPES.join(', ')}` },
-      { status: 400 }
-    );
-  }
-  const status = body.status ?? 'active';
-  if (!SYSTEM_STATUSES.includes(status as any)) {
-    return NextResponse.json(
-      { ok: false, error: 'status must be active, pilot or deprecated' },
-      { status: 400 }
-    );
-  }
+
+  const validated = validationResult.value as Record<string, unknown>;
+  const name = validated.name;
+  const status = validated.status ?? 'active';
 
   const supabase = await createRouteClient();
   const ctx = await resolveWorkspaceContext(supabase);
@@ -97,17 +118,17 @@ export async function POST(req: Request) {
       workspace_id: ctx.workspaceId,
       company_id: ctx.companyId,
       name,
-      description: body.description?.trim() || null,
-      system_type: body.systemType || null,
-      vendor: body.vendor?.trim() || null,
-      purpose: body.purpose?.trim() || null,
+      description: validated.description || null,
+      system_type: validated.systemType || null,
+      vendor: validated.vendor || null,
+      purpose: validated.purpose || null,
       status,
     })
     .select('id, name, system_type, vendor, purpose, status, created_at')
     .single();
 
   if (error || !data) {
-    console.error('[api/ai-systems] insert failed:', error);
+    logger.error('AI system creation failed', 'AI_SYSTEMS_CREATE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Could not save the AI system' },
       { status: 500 }
