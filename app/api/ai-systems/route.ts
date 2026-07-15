@@ -76,6 +76,16 @@ export async function POST(req: Request) {
     );
   }
 
+  // The inventory form submits unselected optional fields as '' (e.g. the
+  // "Select…" default for Type). `optional` only treats undefined/null as
+  // absent, so a bare '' would fail the enum/string check and reject an
+  // otherwise-valid create. Normalize blank optionals to undefined first.
+  if (body && typeof body === 'object') {
+    for (const key of ['description', 'systemType', 'vendor', 'purpose', 'status'] as const) {
+      if (body[key] === '') delete body[key];
+    }
+  }
+
   // Validate input using schema
   const validationResult = validate(body, {
     name: validators.string({ minLength: 1, maxLength: 255 }),
