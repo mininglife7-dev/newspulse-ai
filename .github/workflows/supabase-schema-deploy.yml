@@ -79,13 +79,15 @@ jobs:
           psql --version
 
       - name: Diagnostic - Verify configuration accessibility
+        env:
+          PROJECT_ID_INPUT: ${{ github.event.inputs.project_id }}
+          PROJECT_ID_VAR: ${{ vars.SUPABASE_PROJECT_ID }}
+          PROJECT_ID_SECRET: ${{ secrets.SUPABASE_PROJECT_ID }}
+          DB_PASSWORD_INPUT: ${{ github.event.inputs.db_password }}
+          DB_PASSWORD_SECRET: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          PROJECT_ID_INPUT="${{ github.event.inputs.project_id }}"
-          PROJECT_ID_VAR="${{ vars.SUPABASE_PROJECT_ID }}"
-          PROJECT_ID="${PROJECT_ID_INPUT:-$PROJECT_ID_VAR}"
-
-          DB_PASSWORD_INPUT="${{ github.event.inputs.db_password }}"
-          DB_PASSWORD_SECRET="${{ secrets.SUPABASE_DB_PASSWORD }}"
+          # Resolve values with fallback priority: input > var > secret
+          PROJECT_ID="${PROJECT_ID_INPUT:-${PROJECT_ID_VAR:-$PROJECT_ID_SECRET}}"
           DB_PASSWORD="${DB_PASSWORD_INPUT:-$DB_PASSWORD_SECRET}"
 
           echo "🔍 Configuration Accessibility Check"
@@ -101,6 +103,12 @@ jobs:
             echo "✅ SUPABASE_PROJECT_ID repository variable: ${#PROJECT_ID_VAR} characters"
           fi
 
+          if [ -z "$PROJECT_ID_SECRET" ]; then
+            echo "⚠️  SUPABASE_PROJECT_ID repository secret: NOT SET"
+          else
+            echo "✅ SUPABASE_PROJECT_ID repository secret: ${#PROJECT_ID_SECRET} characters"
+          fi
+
           if [ -n "$DB_PASSWORD_INPUT" ]; then
             echo "✅ DB_PASSWORD from workflow input: PRESENT"
           fi
@@ -112,7 +120,7 @@ jobs:
           fi
 
           echo "---"
-          echo "Final PROJECT_ID source: $([ -n "$PROJECT_ID_INPUT" ] && echo "INPUT" || echo "VARIABLE")"
+          echo "Final PROJECT_ID source: $([ -n "$PROJECT_ID_INPUT" ] && echo "INPUT" || ([ -n "$PROJECT_ID_VAR" ] && echo "VARIABLE" || echo "SECRET"))"
           echo "Final DB_PASSWORD source: $([ -n "$DB_PASSWORD_INPUT" ] && echo "INPUT" || echo "SECRET")"
           echo "Repository: ${{ github.repository }}"
           echo "Workflow SHA: ${{ github.sha }}"
@@ -176,7 +184,7 @@ jobs:
 
       - name: Deploy schema via PostgreSQL
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_PASSWORD: ${{ env.SUPABASE_DB_PASSWORD }}
         run: |
           set +e  # Don't exit on first error
 
@@ -231,7 +239,7 @@ jobs:
       - name: Run security tests
         if: success()
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_PASSWORD: ${{ env.SUPABASE_DB_PASSWORD }}
         run: |
           echo "🔐 Running security tests..."
 
