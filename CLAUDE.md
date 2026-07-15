@@ -29,12 +29,13 @@ Additional standing documents in [docs/governance/](docs/governance/) — consis
 
 ## Project overview
 
-NewsPulse AI is a Next.js 14 (App Router, TypeScript) news-intelligence app: Firecrawl `/v1/search` fetches articles for a keyword, OpenAI `gpt-4o-mini` summarizes each in parallel, and Supabase stores search history.
+EURO AI is a Next.js 14 (App Router, TypeScript) multi-tenant AI-governance platform for EU AI Act compliance. Customers sign up (Supabase auth via `@supabase/ssr` cookie sessions), create a workspace + company profile, and work from an onboarding dashboard; Row Level Security enforces tenant isolation at the database layer. (The product pivoted from the earlier "NewsPulse AI" news app — some `docs/` still reference the old product.)
 
-- `app/` — pages and API routes (`POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`)
+- `app/` — pages and API routes: landing, `/auth/*` (signin/signup/verify-email/confirm), `/workspace/setup`, `/dashboard`, `/governance`; API `POST /api/workspace`, `GET /api/health`, `GET /api/dashboard`
 - `components/` — React UI (Tailwind CSS, lucide-react)
-- `lib/` — clients for Firecrawl, OpenAI, Supabase, plus utils
-- `supabase/` — database schema
+- `lib/` — Supabase clients (`supabase.ts` browser/admin, `supabase-server.ts` cookie/RLS), `auth.ts`, `routes.ts` (route classification + open-redirect guard), `rate-limit.ts`, `workspace-validation.ts`, utils
+- `middleware.ts` — API rate limiting + session refresh + auth routing
+- `supabase/schema.sql` — tenant + governance tables with RLS policies
 - `scripts/check-env.mjs` — validates required env vars (see `.env.example`)
 
 ## Conventions

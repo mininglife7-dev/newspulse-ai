@@ -13,33 +13,21 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 ![Next.js](https://img.shields.io/badge/Next.js-14-000?logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-38BDF8?logo=tailwindcss&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o--mini-412991?logo=openai&logoColor=white)
-![Firecrawl](https://img.shields.io/badge/Firecrawl-%2Fv1%2Fsearch-FF7043)
+![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20Postgres%20%2B%20RLS-3FCF8E?logo=supabase&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-deploy-000?logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
-## 📸 Screenshots
+## ✨ What it does
 
-> Captured automatically by the E2E smoke suite (`npm run test:e2e`) against mocked APIs.
-
-| Search | History |
-|---|---|
-| ![Search UI](./public/screenshots/search.png) | ![History table](./public/screenshots/history.png) |
-
----
-
-## ✨ Features
-
-- 🔎 **Live web search** — Firecrawl `/v1/search` pulls fresh news for any keyword
-- 🧠 **AI summaries** — every article is summarized in parallel by OpenAI `gpt-4o-mini`
-- 💾 **Saved history** — every query and its results land in Supabase
-- 📋 **History table** — keyword, date, count, expand-to-view, re-run, clear all
-- 🎨 **Dark, polished UI** — Tailwind + lucide-react + Inter font
-- ⚡ **API-first** — `POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`
-- 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
+- 🔐 **Real authentication** — email/password sign-up, sign-in, and email confirmation via Supabase (`@supabase/ssr` cookie sessions). The middleware validates the JWT on every protected request.
+- 🏢 **Workspace onboarding** — a signed-in user creates a workspace, company profile, and owner membership in one step (`POST /api/workspace`).
+- 🛡️ **Multi-tenant by design** — Row Level Security is enforced at the database layer; API routes act as the signed-in user, never bypassing RLS.
+- 📊 **Onboarding dashboard** — reflects the real workspace state read back from the database, not hard-coded defaults.
+- 🧱 **Governance data model** — schema for AI systems, risk assessments, obligations, evidence, and remediation plans (the EU AI Act workflow).
+- 🚦 **Hardened edge** — per-IP rate limiting on the API, security response headers (HSTS, `X-Frame-Options`, …), open-redirect-safe post-auth redirects, and validated request bodies.
+- 📱 **Installable PWA** — web manifest + icons; add to the iOS Home Screen from Safari.
 
 ---
 
@@ -59,14 +47,14 @@ npm install
 cp .env.example .env.local
 ```
 
-Fill in `.env.local` with your keys:
+Fill in `.env.local` (see `.env.example`):
 
 ```bash
-FIRECRAWL_API_KEY=fc-...
-OPENAI_API_KEY=sk-proj-...
 NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+# Optional — absolute site URL for metadata/redirects:
+# NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ```
 
 Verify with the included script (it never prints full secrets):
@@ -75,9 +63,10 @@ Verify with the included script (it never prints full secrets):
 npm run check-env
 ```
 
-### 3. Run the Supabase schema
+### 3. Provision Supabase
 
-Open the **Supabase SQL editor** and paste the contents of [`supabase/schema.sql`](./supabase/schema.sql). It creates the `news_searches` table, indexes, and RLS policies.
+1. Open the **Supabase SQL editor** and run [`supabase/schema.sql`](./supabase/schema.sql). It is idempotent and creates the tenant tables (`workspaces`, `workspace_members`, `companies`, `profiles`) plus the governance tables (`ai_systems`, `risk_assessments`, `obligations`, `evidence`, `remediation_plans`) — all with RLS policies.
+2. Enable the **Email** auth provider in **Project Settings → Authentication** so sign-up confirmation emails are sent.
 
 ### 4. Start the dev server
 
@@ -91,81 +80,38 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## 🌐 Deploy to Vercel
 
-### Option A — One-click via CLI
-
-```bash
-npm install -g vercel
-vercel login
-vercel link            # creates a project named "newspulse-ai"
-vercel env add FIRECRAWL_API_KEY            # repeat for each var
-vercel env add OPENAI_API_KEY
-vercel env add NEXT_PUBLIC_SUPABASE_URL
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
-vercel env add SUPABASE_SERVICE_ROLE_KEY
-vercel --prod
-```
-
-### Option B — GitHub auto-deploy (active)
-
-Connect the repository to the Vercel project (Vercel Dashboard → Project → Settings → Git). Vercel then builds and deploys automatically: every push to `main` goes to production, and every pull request gets a preview deployment with its own URL commented on the PR.
-
----
-
-## 🔑 Where to get API keys
-
-| Service | Link | What you need |
-|---|---|---|
-| Firecrawl | https://firecrawl.dev | API key (Dashboard → API Keys) |
-| OpenAI | https://platform.openai.com/api-keys | API key |
-| Supabase | https://supabase.com | Project URL + publishable + secret keys (Settings → API) |
+Connect the repository to a Vercel project (Dashboard → Project → Settings → Git) and add the three Supabase environment variables. Vercel then builds automatically: every push to `main` goes to production, and every pull request gets its own preview deployment.
 
 ---
 
 ## 📂 Project structure
 
 ```
-newspulse-ai/
-├── app/
-│   ├── api/
-│   │   ├── health/route.ts          # GET /api/health
-│   │   ├── history/[id]/route.ts    # GET /api/history/:id, DELETE /api/history/:id
-│   │   ├── history/route.ts         # GET /api/history, DELETE /api/history (clear all)
-│   │   └── search/route.ts          # POST /api/search
-│   ├── history/[id]/page.tsx        # /history/:id — single saved search
-│   ├── history/page.tsx             # /history — table of all saved searches
-│   ├── error.tsx                    # global error boundary
-│   ├── globals.css                  # Tailwind + dark-theme tokens
-│   ├── icon.tsx                     # programmatic favicon
-│   ├── layout.tsx                   # root layout, header, footer, Inter font
-│   ├── loading.tsx                  # route-transition skeleton
-│   ├── not-found.tsx                # 404
-│   ├── opengraph-image.tsx          # 1200×630 social card
-│   ├── page.tsx                     # / — search UI
-│   ├── robots.ts                    # robots.txt
-│   └── sitemap.ts                   # sitemap.xml
-├── components/
-│   ├── EmptyState.tsx
-│   └── NewsCard.tsx
-├── lib/
-│   ├── firecrawl.ts                 # Firecrawl /v1/search wrapper
-│   ├── openai.ts                    # gpt-4o-mini summarizer
-│   ├── supabase.ts                  # supabase client + helpers
-│   └── utils.ts                     # cn() + date formatters
-├── scripts/
-│   └── check-env.mjs                # verify env vars without leaking values
-├── supabase/
-│   └── schema.sql                   # news_searches table + RLS
-├── types/
-│   └── index.ts                     # shared API types
-├── .github/workflows/
-│   └── ci.yml                       # lint, type-check, build
-├── .env.example
-├── middleware.ts                    # rate limit on /api/search
-├── next.config.js
-├── package.json
-├── tailwind.config.js
-├── tsconfig.json
-└── vercel.json
+app/
+├── api/
+│   ├── dashboard/route.ts        # GET  /api/dashboard — governance state
+│   ├── health/route.ts           # GET  /api/health
+│   └── workspace/route.ts        # POST /api/workspace — create workspace + company
+├── auth/
+│   ├── signin/page.tsx           # /auth/signin
+│   ├── signup/page.tsx           # /auth/signup
+│   ├── verify-email/page.tsx     # /auth/verify-email
+│   └── confirm/route.ts          # /auth/confirm — email link handler (PKCE / OTP)
+├── workspace/setup/page.tsx      # /workspace/setup — onboarding form
+├── dashboard/page.tsx            # /dashboard — onboarding dashboard (auth required)
+├── governance/page.tsx           # /governance
+├── privacy/ · terms/             # legal pages
+├── layout.tsx · page.tsx         # root layout + landing page
+lib/
+├── auth.ts                       # client auth helpers
+├── routes.ts                     # route classification + safeInternalPath guard
+├── rate-limit.ts                 # per-IP fixed-window limiter
+├── supabase.ts                   # browser + admin Supabase clients
+├── supabase-server.ts            # cookie-aware server client (RLS)
+└── workspace-validation.ts       # request-body validation for /api/workspace
+middleware.ts                     # rate limiting + session refresh + auth routing
+supabase/schema.sql               # tables + RLS policies
+tests/                            # vitest unit + Playwright e2e (mocked Supabase)
 ```
 
 ---
@@ -179,47 +125,20 @@ npm run start         # production server
 npm run lint          # next lint
 npm run type-check    # tsc --noEmit
 npm test              # unit/integration tests (vitest)
-npm run test:e2e      # Playwright smoke suite against mocked APIs (no secrets needed)
+npm run test:e2e      # Playwright e2e against a mocked Supabase (no secrets needed)
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
 ```
 
-### Optional hardening
-
-Set `ADMIN_TOKEN` in the deployment environment to protect the destructive
-endpoints (`DELETE /api/history`, `DELETE /api/history/:id`). When set, the
-UI prompts for the token before clearing history. When unset, behavior is
-unchanged (open deletes — fine for a private demo, not for a public URL).
+The e2e suite (`tests/e2e/`) mocks Supabase (including GoTrue auth) so it exercises the real customer journey — sign-in → workspace creation → dashboard — without live credentials.
 
 ---
 
-## 🧠 How it works
+## 🔒 Security
 
-```
-User keyword
-    │
-    ▼
-POST /api/search
-    │
-    ├─► 1. Firecrawl /v1/search       (web search + scrape, limit 10)
-    │       returns title, url, markdown content per article
-    │
-    ├─► 2. OpenAI gpt-4o-mini         (parallel summarization, concurrency=4)
-    │       returns 2–3 sentence neutral summary per article
-    │
-    ├─► 3. Supabase `news_searches`   (insert: keyword, results JSONB, count)
-    │
-    └─► returns { title, url, source, date, description, ai_summary }[]
-```
-
----
-
-## 🏆 Hackathon Notes
-
-- **Project:** NewsPulse AI
-- **Tagline:** *AI-Powered News Intelligence — Search. Scrape. Summarize.*
-- **Differentiator:** Real-time AI summaries + persistent search history
-- **Built for:** Outskill AI Generalist Accelerator Hackathon
+- **Auth:** `getUser()` (not `getSession()`) validates the JWT server-side on every protected request; sessions are refreshed via cookies in the middleware.
+- **Authorization:** Row Level Security in Postgres; user-scoped route client never bypasses it.
+- **Edge hardening:** API rate limiting (`middleware.ts` + `lib/rate-limit.ts`), security headers (`next.config.js`), open-redirect-safe redirects (`lib/routes.ts` `safeInternalPath`), and validated request bodies (`lib/workspace-validation.ts`).
 
 ---
 
