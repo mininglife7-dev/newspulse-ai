@@ -79,13 +79,21 @@ describe('Incident Detection (DNA-GOV-013)', () => {
         });
 
         if (incidents.length > 0) {
-          const failedCheckCount = report.checks.filter(
-            (c) => c.result === 'fail'
-          ).length;
-          // Failed checks may be correlated into separate incidents, so count
-          // signals across ALL incidents rather than just the first one.
           const allSignals = incidents.flatMap((inc) => inc.signals);
-          expect(allSignals.length).toBeGreaterThanOrEqual(failedCheckCount);
+          // The detector mirrors failed checks into signals only for
+          // ROLLBACK/ESCALATE decisions; on HOLD it reports *degraded*
+          // checks instead, so a one-to-one count only holds in the
+          // rollback/escalate case (see analyzeVerificationReport).
+          if (
+            report.decision === 'ROLLBACK' ||
+            report.decision === 'ESCALATE'
+          ) {
+            const failedCheckCount = report.checks.filter(
+              (c) => c.result === 'fail'
+            ).length;
+            expect(allSignals.length).toBeGreaterThanOrEqual(failedCheckCount);
+          }
+          expect(allSignals.length).toBeGreaterThan(0);
           allSignals.forEach((signal) => {
             expect(signal.type).toBeDefined();
             expect(['fail', 'degraded']).toContain(signal.value as string);

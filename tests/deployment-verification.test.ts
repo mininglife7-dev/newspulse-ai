@@ -28,8 +28,13 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       expect(report.deploymentId).toBe('deploy-001');
       expect(report.checks.length).toBe(10);
       expect(report.passedChecks).toBeGreaterThanOrEqual(7);
-      // With 7+ passed checks, we either PASS or RETRY, not ROLLBACK/ESCALATE
-      expect(['PASS', 'RETRY']).toContain(report.decision);
+      if (report.passedChecks >= 8) {
+        // >=80% pass rate: PASS (100%) or RETRY (80-99%)
+        expect(['PASS', 'RETRY']).toContain(report.decision);
+      } else {
+        // exactly 7/10 is a 70% pass rate, which is HOLD by design
+        expect(report.decision).toBe('HOLD');
+      }
     });
 
     it('should include all 10 check types in verification', async () => {
