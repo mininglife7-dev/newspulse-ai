@@ -154,6 +154,14 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 - Troubleshooting guide for common blockers
 - **When:** Before you deploy Supabase schema (10-15 minutes)
 
+**[LAUNCH_READINESS_SIGN_OFF.md](./LAUNCH_READINESS_SIGN_OFF.md)** (312 lines)
+- Template email for formalizing readiness handoff to Governor
+- Checklist to verify before sending sign-off
+- Governor's response template
+- Real example of completed sign-off
+- Establishes clear accountability and documentation
+- **When:** After verifying PRE_DEPLOYMENT_READINESS.md, before deploying (2 minutes)
+
 **[DEPLOYMENT_DAY_QUICK_REFERENCE.md](./DEPLOYMENT_DAY_QUICK_REFERENCE.md)** (280 lines)
 - One-page quick reference card for deployment day
 - Pre-deployment checklist (T-30min)
