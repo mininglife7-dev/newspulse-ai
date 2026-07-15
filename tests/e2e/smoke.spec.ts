@@ -63,3 +63,30 @@ test('auth pages render for signed-out visitors', async ({ page }) => {
     'Welcome back'
   );
 });
+
+test('API rate limiting returns 429 with headers once the write budget is exceeded', async ({
+  request,
+}) => {
+  // The write budget is 20/min per IP. Fire enough to exceed it and confirm
+  // the middleware starts rejecting with 429 + Retry-After, protecting the
+  // workspace-creation endpoint from abuse.
+  let sawRateLimit = false;
+  let retryAfter: string | null = null;
+  for (let i = 0; i < 30; i++) {
+    const res = await request.post('/api/workspace', {
+      data: { companyName: 'Flood GmbH', country: 'Germany', industry: 'Tech' },
+    });
+    if (res.status() === 429) {
+      sawRateLimit = true;
+      retryAfter = res.headers()['retry-after'];
+      const body = await res.json();
+      expect(body.ok).toBe(false);
+      expect(res.headers()['x-ratelimit-limit']).toBe('20');
+      break;
+    }
+    // Before the limit trips, unauthenticated requests are 401 (not 429).
+    expect(res.status()).toBe(401);
+  }
+  expect(sawRateLimit).toBe(true);
+  expect(retryAfter).toBeTruthy();
+});

@@ -1,16 +1,65 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { classifyRoute } from '@/lib/routes';
+import { createRateLimiter } from '@/lib/rate-limit';
 
 /**
- * EURO AI middleware: session refresh + auth routing.
+ * Per-IP rate limiters for the API surface. Instantiated at module scope so
+ * state survives across requests within an instance. Writes (/api/workspace)
+ * get a tighter budget than reads; /api/health is never limited (uptime
+ * probes). In-memory today; see lib/rate-limit.ts for the durable-backend seam.
+ */
+const WINDOW_MS = 60_000;
+const apiLimiter = createRateLimiter({ windowMs: WINDOW_MS, max: 60 });
+const writeLimiter = createRateLimiter({ windowMs: WINDOW_MS, max: 20 });
+
+function clientIp(req: NextRequest): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'anonymous'
+  );
+}
+
+function rateLimitHeaders(r: {
+  limit: number;
+  remaining: number;
+  resetMs: number;
+}): Headers {
+  const h = new Headers();
+  h.set('X-RateLimit-Limit', String(r.limit));
+  h.set('X-RateLimit-Remaining', String(r.remaining));
+  h.set('X-RateLimit-Reset', String(Math.ceil(r.resetMs / 1000)));
+  return h;
+}
+
+/**
+ * EURO AI middleware: rate limiting + session refresh + auth routing.
  *
  * Uses @supabase/ssr cookie sessions, so the session the browser client
  * establishes at sign-in is visible here. Route protection is a UX
  * concern — data security is enforced by RLS in the database.
  */
 export async function middleware(req: NextRequest) {
-  const kind = classifyRoute(req.nextUrl.pathname);
+  const pathname = req.nextUrl.pathname;
+  const kind = classifyRoute(pathname);
+
+  // --- Rate limit the API surface (except health) before any expensive work.
+  let rlHeaders: Headers | null = null;
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/health')) {
+    const scope = pathname.startsWith('/api/workspace') ? 'write' : 'api';
+    const limiter = scope === 'write' ? writeLimiter : apiLimiter;
+    const result = limiter.check(`${scope}:${clientIp(req)}`);
+    rlHeaders = rateLimitHeaders(result);
+    if (!result.allowed) {
+      const retry = Math.ceil(result.resetMs / 1000);
+      rlHeaders.set('Retry-After', String(retry));
+      return NextResponse.json(
+        { ok: false, error: `Rate limit exceeded. Try again in ${retry}s.` },
+        { status: 429, headers: rlHeaders }
+      );
+    }
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -19,7 +68,7 @@ export async function middleware(req: NextRequest) {
   // protected traffic goes to sign-in (which will explain the situation).
   if (!url || !key) {
     if (kind === 'protected') return redirectToSignIn(req);
-    return NextResponse.next();
+    return withHeaders(NextResponse.next(), rlHeaders);
   }
 
   let res = NextResponse.next({ request: req });
@@ -53,6 +102,12 @@ export async function middleware(req: NextRequest) {
   if (kind === 'auth' && user) {
     return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
   }
+  return withHeaders(res, rlHeaders);
+}
+
+/** Copy rate-limit headers (if any) onto a response without replacing it. */
+function withHeaders(res: NextResponse, headers: Headers | null): NextResponse {
+  if (headers) headers.forEach((value, name) => res.headers.set(name, value));
   return res;
 }
 
