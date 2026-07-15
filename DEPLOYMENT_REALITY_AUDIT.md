@@ -9,6 +9,14 @@
 > **Post-audit verification addendum (2026-07-11).** This audit was taken at `main` commit `31717ae` (Next 16.2.10). `main` is under **very active parallel development** (many concurrent Governor sessions; dozens of `DNA-GOV-*` commits/day) and has since advanced — it is now on **Next.js 15.5.20 LTS**. Two facts re-verified against the *latest* `main`:
 > - **Tests: 295 passing across 23 files** (`npm test`, green). This corrects the stale doc claims of "86" and "178 tests" — the suite is larger and green than the docs say.
 > - **`npm audit`: 7 vulnerabilities (1 critical, 1 high, 5 moderate) — but the critical and high are in the DEV/TEST toolchain, not production runtime.** The "critical" is `vitest`'s UI-server arbitrary-file-read and the "high" is `vite`'s dev-server path traversal — tools that run only when executing tests locally, never in CI-build or the deployed app. The only build-relevant item is a **moderate PostCSS XSS** (unescaped `</style>` in CSS stringify). So the deployed app is **not** exposed to the scary-sounding ones; the fix is a breaking `vitest@4` dev-dependency bump (low urgency), deliberately **not** applied here to avoid conflicting with the heavy parallel work on `package.json`.
+>
+> **P0 re-verification against the latest `main` (2026-07-15, ~169 commits past this audit's base).** Some findings have been fixed by parallel work; others persist:
+> - ✅ **P0-4 (rate limiting) — RESOLVED.** A real limiter now exists and is wired into `middleware.ts:48` (`checkRateLimit(req)` → `429`). The audit's "no rate limiting, despite self-attested claims" no longer holds. **Credit to parallel work.**
+> - ✅ **Multi-region-failover fabrication — likely resolved.** The `Math.random()`/`simulate` markers are gone from the current route/lib.
+> - 🔴 **STILL LIVE — `PATCH /api/ceis/proposals/[id]` remains completely unauthenticated** (no `getUser`/bearer/session check), and `/api/ceis` + `/evolution` are still not in the middleware protected list. The anonymous "approve/reject" writes to the knowledge genome persist 5 days and ~169 commits later. **This is the one confirmed-live security P0.**
+> - 🔴 **STILL LIVE — error-rate monitor is still blind:** `recordEndpointError` still has no callers, so `/api/error-rate` still reports "healthy / 0 errors" unconditionally.
+>
+> Net: the security/monitoring posture is genuinely improving under active development, but the **unauthenticated CEIS mutation endpoint is still a live hole** and the error monitor still reports fiction.
 
 ---
 
