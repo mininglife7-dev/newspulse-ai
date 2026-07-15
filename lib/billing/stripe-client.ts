@@ -1,14 +1,19 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is required');
-}
+const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+export const stripe = new Stripe(stripeKey, {
   typescript: true,
 });
 
+function ensureStripeKey() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is required');
+  }
+}
+
 export async function createStripeCustomer(email: string, customerId: string) {
+  ensureStripeKey();
   try {
     const customer = await stripe.customers.create({
       email,
@@ -29,6 +34,7 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ) {
+  ensureStripeKey();
   try {
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
@@ -50,6 +56,7 @@ export async function createCheckoutSession(
 }
 
 export async function getSubscription(subscriptionId: string) {
+  ensureStripeKey();
   try {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     return subscription;
@@ -63,6 +70,7 @@ export async function cancelSubscription(
   subscriptionId: string,
   atPeriodEnd: boolean = true
 ) {
+  ensureStripeKey();
   try {
     const subscription = await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: atPeriodEnd,
@@ -75,6 +83,7 @@ export async function cancelSubscription(
 }
 
 export async function getInvoices(customerId: string) {
+  ensureStripeKey();
   try {
     const invoices = await stripe.invoices.list({
       customer: customerId,
@@ -91,6 +100,7 @@ export function constructWebhookEvent(
   body: string,
   signature: string
 ): Stripe.Event {
+  ensureStripeKey();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     throw new Error('STRIPE_WEBHOOK_SECRET environment variable is required');
