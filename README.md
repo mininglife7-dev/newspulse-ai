@@ -166,6 +166,7 @@ newspulse-ai/
 ├── e2e/                             # Playwright suite (desktop + mobile)
 │   ├── fixtures.mjs                 # shared API fixtures
 │   ├── home.spec.ts
+│   ├── lib-units.spec.ts            # pure-helper unit coverage (TS via PW runner)
 │   ├── history.spec.ts
 │   └── navigation.spec.ts
 ├── lib/
@@ -210,7 +211,7 @@ npm run check-env     # verify .env.local without printing secrets
 npm run test:smoke    # boot the prod build with no credentials; assert every
                       # route responds and fails honestly (21 checks)
 npm run test:e2e      # Playwright e2e: desktop + mobile, real UI flows via
-                      # API fixtures — needs no credentials (40 checks)
+                      # API fixtures — needs no credentials (56 checks)
 npm run test          # smoke + e2e
 npm run screenshots   # regenerate docs/screenshots/*.png headlessly
 ```

@@ -27,6 +27,18 @@ test.describe('navigation & layout', () => {
     await expect(page.getByLabel('Search keyword')).toBeVisible();
   });
 
+  test('error boundary renders with working buttons on server failure', async ({
+    page,
+  }) => {
+    // No interception and no DB credentials → the detail page's server
+    // component throws and the client error boundary must take over.
+    await page.goto('/history/00000000-0000-4000-8000-000000000000');
+    await expect(page.getByText('Something went wrong')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+    await page.getByRole('link', { name: 'Back home' }).click();
+    await expect(page.getByLabel('Search keyword')).toBeVisible();
+  });
+
   test('unknown routes render the 404 page with working links', async ({
     page,
   }) => {
