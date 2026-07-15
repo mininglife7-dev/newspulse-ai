@@ -64,6 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: preflight-check
+    # Secrets/variables saved under a GitHub Environment (not repo-level)
+    # are only visible to jobs that declare that environment.
+    environment: ${{ inputs.environment || 'production' }}
 
     steps:
       - name: Checkout
