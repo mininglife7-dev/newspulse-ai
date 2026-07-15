@@ -6,6 +6,7 @@ import {
 } from '@/lib/cost-anomaly-detector';
 import { recordAlert } from '@/lib/alert-hub';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,12 @@ export const dynamic = 'force-dynamic';
  * Used by: DNA-005 (Alert Hub), GitHub Actions daily monitor, Founder dashboard
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   try {
     const report = await detectCostAnomalies();
 
@@ -52,15 +59,25 @@ export async function GET(req: Request) {
 
     // Log anomalies (safe for production)
     if (report.anomalies.length > 0) {
-      const hasCritical = report.anomalies.some((a) => a.severity === 'critical');
+      const hasCritical = report.anomalies.some(
+        (a) => a.severity === 'critical'
+      );
       if (hasCritical) {
-        logger.error('Cost anomalies detected: critical', 'COST_ANOMALY_CRITICAL', {
-          anomalyCount: report.anomalies.length,
-        });
+        logger.error(
+          'Cost anomalies detected: critical',
+          'COST_ANOMALY_CRITICAL',
+          {
+            anomalyCount: report.anomalies.length,
+          }
+        );
       } else {
-        logger.warn('Cost anomalies detected: high severity', 'COST_ANOMALY_WARNING', {
-          anomalyCount: report.anomalies.length,
-        });
+        logger.warn(
+          'Cost anomalies detected: high severity',
+          'COST_ANOMALY_WARNING',
+          {
+            anomalyCount: report.anomalies.length,
+          }
+        );
       }
     }
 

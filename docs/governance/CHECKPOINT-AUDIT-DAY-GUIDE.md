@@ -1,4 +1,5 @@
 # Checkpoint Audit Day Guide (2026-07-17)
+
 **Purpose:** Execute measurement window audit and make Phase 3 direction decision  
 **Audience:** Lalit (Founder)  
 **Timeline:** Morning (measurement) → Afternoon (decision)
@@ -13,12 +14,14 @@
 **You need to:** Nothing — Governor executes autonomously
 
 **Behind the scenes:**
+
 - Governor runs SQL queries from [CHECKPOINT-AUDIT-2026-07-17.md](./CHECKPOINT-AUDIT-2026-07-17.md)
 - Collects: Adoption metrics, engagement patterns, technical health, qualitative signals
 - Analyzes patterns and anomalies
 - Prepares findings and recommendations
 
 **Expected output by 10:00:** Audit report with:
+
 - ✅ Adoption metrics (signups, activations, usage patterns)
 - ✅ Engagement data (obligation imports, status updates, team activity)
 - ✅ Technical health (errors, performance, uptime)
@@ -32,6 +35,7 @@
 **You need to:** Nothing — Governor is drafting
 
 **Behind the scenes:**
+
 - Based on audit results, Governor selects best Phase 3 candidate
 - Pulls pre-researched implementation plan from [PHASE-3-CANDIDATES.md](./PHASE-3-CANDIDATES.md)
 - Prepares:
@@ -48,12 +52,14 @@
 ### Midday (11:00–12:00 UTC)
 
 **What:** Lalit (you) review findings and make decision  
-**You need to:** 
+**You need to:**
+
 1. Review audit report and Phase 3 proposal
 2. Decide: Approve Phase 3 feature? Alternative direction?
 3. Confirm timeline and any constraints
 
 **Governor's recommendation format:**
+
 ```
 AUDIT SUMMARY
 - Teams signed up: X
@@ -79,6 +85,7 @@ YOUR ACTION REQUIRED
 ```
 
 **Your decision options:**
+
 - ✅ **Approve Phase 3:** Governor begins implementation immediately
 - 🔀 **Modify Phase 3:** Approve with adjustments (different feature, different timeline)
 - ⏸️ **Pause Phase 3:** Continue measuring adoption longer (extend window to 2026-07-24)
@@ -91,12 +98,14 @@ YOUR ACTION REQUIRED
 **What:** Execution begins (if Phase 3 approved)
 
 **If approved:**
+
 - Governor creates feature branch and begins implementation
 - Daily standups on progress
 - Continuous testing and verification
 - Deployment when complete
 
 **If paused/pivoted:**
+
 - Governor documents decision in decision register
 - Continues measurement monitoring
 - Stands ready for next direction
@@ -126,15 +135,18 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 ## 📁 Key Reference Documents
 
 **What's deployed (verified):**
+
 - [MEASUREMENT-WINDOW-MONITORING.md](./MEASUREMENT-WINDOW-MONITORING.md) — What to watch during the week
 - [SUPABASE-DEPLOYMENT-VERIFICATION.md](../infra/SUPABASE-DEPLOYMENT-VERIFICATION.md) — Schema verification (Founder action item)
 
 **Audit & Decision:**
+
 - [CHECKPOINT-AUDIT-2026-07-17.md](./CHECKPOINT-AUDIT-2026-07-17.md) — Exact SQL queries and analysis framework
 - [CHECKPOINT-PRE-VERIFICATION.md](./CHECKPOINT-PRE-VERIFICATION.md) — System health check (2026-07-16)
 - [PHASE-3-CANDIDATES.md](./PHASE-3-CANDIDATES.md) — 4 pre-researched feature options with full specs
 
 **Governance & Decisions:**
+
 - [DECISION_REGISTER.md](./DECISION_REGISTER.md) — All decisions logged (including DR-0018: pause-and-measure)
 - [FOUNDER_BRIEF.md](./FOUNDER_BRIEF.md) — Rolling status and context
 
@@ -143,6 +155,7 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 ## 🎯 Measurement Window Recap (Days 1-7)
 
 **What we deployed (Phase 2):**
+
 - ✅ Risk assessment questionnaire (18 questions covering EU AI Act high-risk categories)
 - ✅ Risk classification engine (unacceptable/high/medium/low)
 - ✅ Obligation templates (28 pre-built obligations across all risk levels)
@@ -153,12 +166,14 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 - ✅ Bulk actions (import templates, update status)
 
 **Why we paused:**
+
 - Phase 3 ideas were speculative
 - Needed real adoption data to guide next-phase prioritization
 - Risk: Building features no one wants (low adoption means low ROI)
 - Benefit: Real data → confident decision → higher success probability
 
 **What we're measuring (Days 1-7):**
+
 - How many teams signed up?
 - How many started the assessment?
 - How many imported obligations?
@@ -168,6 +183,7 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 - What patterns emerge from real usage?
 
 **How we're measuring:**
+
 - SQL queries on Supabase data (direct, real-world signals)
 - Vercel logs (error patterns, performance)
 - Manual review of engagement patterns
@@ -177,10 +193,12 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 ## ⚠️ If Something Goes Wrong
 
 **On 2026-07-16 (day before):**
+
 - Pre-verification checklist fails → Fix issue → Re-check
 - If unfixable: Contact Lalit with diagnosis
 
 **On 2026-07-17 (audit day):**
+
 - Audit can't run (system down) → Restart/redeploy → Re-run audit
 - Audit runs but shows critical errors in data → Extend measurement window (2026-07-24 checkpoint)
 - Audit shows unexpected pattern → Governor investigates and reports findings
@@ -190,18 +208,21 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 ## 🚀 After Checkpoint (Sample Outcomes)
 
 ### Scenario A: Strong Adoption
+
 **Finding:** 15+ teams signed up, 80%+ completed assessment, 70%+ imported obligations  
 **Recommendation:** Phase 3 is justified; teams are actively using system  
 **Next:** Approve Phase 3 feature that addresses observed gaps (e.g., Evidence Linking if teams want to track proof documents)  
 **Timeline:** Deploy Phase 3 in 1-2 days; measure adoption again 2 weeks later
 
 ### Scenario B: Weak Adoption
+
 **Finding:** 3-5 teams signed up, 30% completed assessment  
 **Recommendation:** System isn't finding product-market fit yet  
 **Next:** Investigate why (confusing UI? Not distributed to right teams? Needs more education?)  
 **Timeline:** Pivot to improving onboarding/messaging before Phase 3 features
 
 ### Scenario C: Technical Blocker
+
 **Finding:** Audit data shows high error rates or RLS policy failures during measurement window  
 **Recommendation:** Measurement data is compromised; must extend window  
 **Next:** Fix technical issue; restart measurement from 2026-07-18  
@@ -212,6 +233,7 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 ## ✅ Success Criteria
 
 **Audit is successful if:**
+
 - ✅ All SQL queries run without errors
 - ✅ Data shows clear adoption patterns (or clear lack thereof)
 - ✅ System health metrics are clean (no data corruption)
@@ -219,6 +241,7 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 - ✅ Phase 3 proposal is ready for immediate implementation
 
 **Decision is successful if:**
+
 - ✅ You approve a Phase 3 direction (or explicitly choose pause/pivot)
 - ✅ Rationale is documented in decision register
 - ✅ Timeline and constraints are clear
@@ -229,12 +252,14 @@ Before the audit runs on 2026-07-17, verify the system is healthy:
 ## 📞 Escalation
 
 **If you need Governor during audit:**
+
 - Findings don't make sense → Ask for clarification
 - Want different Phase 3 candidate → Switch selection (all are pre-designed)
 - Want to extend measurement → Approve extension and Governor continues monitoring
 - Want to pivot entirely → New strategic direction needed from you (Governor researches)
 
 **If Governor encounters blockers:**
+
 - Supabase down → Vercel redeploy → Restart audit
 - Data missing → Investigate anomalies → Report findings
 - Phase 3 implementation needs clarification → Governor asks for decision

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,12 @@ export const dynamic = 'force-dynamic';
  * Called by: FOUNDER-VERIFICATION-CHECKLIST
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   const checks = {
     supabase_url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
     supabase_anon_key: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
@@ -23,7 +30,10 @@ export async function GET(req: Request) {
     decision_1_schema_deployed: {
       name: 'Deploy Supabase Schema',
       required: !checks.supabase_url || !checks.supabase_anon_key,
-      status: checks.supabase_url && checks.supabase_anon_key ? 'configured' : 'not_configured',
+      status:
+        checks.supabase_url && checks.supabase_anon_key
+          ? 'configured'
+          : 'not_configured',
       action: 'Run supabase/schema.sql in Supabase SQL editor',
       time_minutes: 2,
       risk_level: 'zero',
@@ -33,7 +43,10 @@ export async function GET(req: Request) {
     decision_2_email_auth: {
       name: 'Enable Email Authentication',
       required: !checks.supabase_url || !checks.supabase_anon_key,
-      status: checks.supabase_url && checks.supabase_anon_key ? 'check_manually' : 'blocked_no_config',
+      status:
+        checks.supabase_url && checks.supabase_anon_key
+          ? 'check_manually'
+          : 'blocked_no_config',
       action: 'Enable "Email" in Supabase Project Settings > Auth > Providers',
       time_minutes: 2,
       risk_level: 'zero',
@@ -44,7 +57,8 @@ export async function GET(req: Request) {
       name: 'Check GitHub Actions Billing',
       required: true,
       status: 'unknown', // Cannot verify from code
-      action: 'Check GitHub Settings > Billing > Actions for usage and spending cap',
+      action:
+        'Check GitHub Settings > Billing > Actions for usage and spending cap',
       time_minutes: 5,
       risk_level: 'low',
       link: 'https://github.com/mininglife7-dev/newspulse-ai/settings/billing/summary',
@@ -67,17 +81,26 @@ export async function GET(req: Request) {
       'Check GitHub Actions billing',
     ],
     estimated_total_time_minutes: 9,
-    then_test: 'Run signup flow → verify email → create workspace (end-to-end test)',
+    then_test:
+      'Run signup flow → verify email → create workspace (end-to-end test)',
     then_launch: 'Invite first customer to sign up',
   };
 
   const readiness = {
     timestamp: new Date().toISOString(),
     code_ready: true,
-    infrastructure_configured: checks.supabase_url && checks.supabase_anon_key && checks.supabase_service_key,
+    infrastructure_configured:
+      checks.supabase_url &&
+      checks.supabase_anon_key &&
+      checks.supabase_service_key,
     founder_actions_required: 3,
     estimated_time_to_launch: '30 minutes',
-    status: checks.supabase_url && checks.supabase_anon_key && checks.supabase_service_key ? 'ready' : 'awaiting_configuration',
+    status:
+      checks.supabase_url &&
+      checks.supabase_anon_key &&
+      checks.supabase_service_key
+        ? 'ready'
+        : 'awaiting_configuration',
 
     summary: {
       code: {
@@ -86,13 +109,19 @@ export async function GET(req: Request) {
         details: codeReady,
       },
       infrastructure: {
-        status: checks.supabase_url && checks.supabase_anon_key ? 'partially_configured' : 'not_configured',
-        description: checks.supabase_url && checks.supabase_anon_key ? 'Credentials set; verify schema and email auth in Supabase' : 'Supabase credentials missing from deployment',
+        status:
+          checks.supabase_url && checks.supabase_anon_key
+            ? 'partially_configured'
+            : 'not_configured',
+        description:
+          checks.supabase_url && checks.supabase_anon_key
+            ? 'Credentials set; verify schema and email auth in Supabase'
+            : 'Supabase credentials missing from deployment',
         checks,
       },
       founder_decisions: {
         status: 'awaiting_execution',
-        description: `${Object.values(decisions).filter(d => d.required).length} of 3 critical decisions required`,
+        description: `${Object.values(decisions).filter((d) => d.required).length} of 3 critical decisions required`,
         decisions,
       },
     },

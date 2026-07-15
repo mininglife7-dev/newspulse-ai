@@ -11,11 +11,19 @@ const PROTECTED_PREFIXES = [
   '/workspace',
   '/assessment',
   '/inventory',
+  // Internal governance/telemetry dashboards — not for anonymous visitors.
+  '/governance',
+  '/evolution',
   '/api/workspace',
   '/api/ai-systems',
   '/api/assessments',
   '/api/obligations',
   '/api/reports',
+  // Browser-consumed governance/telemetry data (launch readiness, CEIS).
+  // NOTE: exact sub-paths only — /api/ceis/run is cron-authenticated and must
+  // stay reachable by the scheduler, so we do NOT protect the /api/ceis root.
+  '/api/dashboard',
+  '/api/ceis/dashboard',
 ];
 
 /** Auth screens: send already-authenticated users to the dashboard. */

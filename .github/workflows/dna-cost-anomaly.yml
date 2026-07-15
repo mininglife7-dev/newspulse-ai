@@ -37,10 +37,14 @@ jobs:
             (async () => {
               try {
                 console.log('🔍 Running DNA-GOV-011: Cost Anomaly Detection...');
-                const response = await fetch(baseUrl + '/api/cost-anomaly');
+                const response = await fetch(baseUrl + '/api/cost-anomaly', { headers: { Authorization: 'Bearer ${{ secrets.ADMIN_TOKEN }}' } });
+                console.log('Response Status:', response.status);
+                if (!response.ok) {
+                  console.error('❌ Cost-anomaly endpoint returned ' + response.status + ' — monitor did NOT run (check ADMIN_TOKEN).');
+                  process.exit(1);
+                }
                 const data = await response.json();
 
-                console.log('Response Status:', response.status);
                 console.log('Alert Level:', data.alertLevel || 'unknown');
                 console.log('Summary:', data.summary);
 

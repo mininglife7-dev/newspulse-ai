@@ -1,4 +1,5 @@
 # Pre-Checkpoint Verification Checklist
+
 **Date:** 2026-07-16 (day before audit)  
 **Purpose:** Verify system health before 2026-07-17 checkpoint audit  
 **Owner:** Governor (Lalit to execute or delegate)
@@ -55,7 +56,7 @@ In Supabase SQL Editor, run:
 
 ```sql
 -- Check if measurement window data exists
-SELECT 
+SELECT
   COUNT(*) as total_obligations,
   COUNT(DISTINCT workspace_id) as workspace_count,
   MAX(created_at) as latest_obligation
@@ -64,6 +65,7 @@ WHERE created_at >= '2026-07-10';
 ```
 
 **Expected result:**
+
 - `total_obligations`: >0 (at least some obligations have been created/imported)
 - `workspace_count`: >0 (at least one workspace has used the system)
 - `latest_obligation`: Should be recent (within last 24h, ideally within last few hours)
@@ -80,6 +82,7 @@ WHERE created_at >= '2026-07-10';
 4. Verify: **0 critical errors** (validation errors are expected)
 
 **If you see error patterns:**
+
 - `RLS policy denied access` — RLS policy issue (check Supabase)
 - `database connection failed` — Supabase connectivity (check status page)
 - `timeout` (multiple entries) — Performance issue (check Monitoring tab)
@@ -95,6 +98,7 @@ npm run build
 ```
 
 Expected output:
+
 ```
 ✅ Test Files: 58 passed
 ✅ Tests: 1102 passed
@@ -111,6 +115,7 @@ If any fail: Run locally, diagnose, fix, and re-push.
 ### ✅ GO — System is Ready
 
 If all 6 checks pass:
+
 - ✅ Deployment is healthy
 - ✅ APIs are responsive
 - ✅ Database is healthy
@@ -120,12 +125,13 @@ If all 6 checks pass:
 ### 🔴 NO-GO — System Has Issues
 
 If ANY check fails:
+
 1. **Red flags to watch:**
    - Vercel deployment is red or building
    - API error rates >5%
    - Supabase CPU >70% or connections stuck
    - Code tests failing
-   
+
 2. **Action if no-go:**
    - Fix the issue (redeploy, check logs, restart Supabase if needed)
    - Re-run all 6 checks
@@ -138,6 +144,7 @@ If ANY check fails:
 **Period:** 2026-07-10 to 2026-07-17 (today is day 6)
 
 **What we're measuring:**
+
 - How many teams signed up and activated the compliance system
 - Which risk assessment questions teams answer
 - How many obligation templates they import
@@ -145,6 +152,7 @@ If ANY check fails:
 - System stability (errors, performance, uptime)
 
 **Why we're measuring:**
+
 - Validate product-market fit before investing in speculative Phase 3 features
 - Ensure deployed system works as designed
 - Collect baseline metrics to guide next phase decisions
