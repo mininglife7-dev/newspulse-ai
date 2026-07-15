@@ -1,5 +1,4 @@
 # Post-Deployment Operations Plan
-
 ## Cathedral/EURO AI — Phase Transition Framework
 
 **Authority:** Governor (Chief Advisor & Chief of Staff)  
@@ -14,7 +13,6 @@
 **Purpose:** Define the operational transition from "schema deployed" to "customer pilot ready."
 
 **Timeline:**
-
 - **Day 1 (4 hours):** Deployment completion + immediate health verification
 - **Week 1 (5 days):** Monitoring, baseline establishment, incident response readiness
 - **Week 2 (7 days):** Customer pilot onboarding begins
@@ -54,7 +52,6 @@
 **Governor Autonomous Actions:**
 
 1. **Automated Smoke Tests (SQL-based)**
-
    ```
    Create test workspace
    Create test company
@@ -99,10 +96,9 @@
 **Governor Autonomous Actions:**
 
 1. **Create Post-Deployment Status Report**
-
    ```
    DEPLOYMENT COMPLETE - 2026-07-12 14:00 UTC
-
+   
    ✅ Schema deployed successfully
    ✅ All object counts verified (15 tables, 26 indexes, 37 policies)
    ✅ Security tests passed (multi-tenant isolation confirmed)
@@ -110,7 +106,7 @@
    ✅ Trigger automation working
    ✅ Database backups enabled
    ✅ Monitoring baseline established
-
+   
    Current State: PRODUCTION READY
    Confidence: 8.2/10 (now VERIFIED at runtime)
    Next Phase: Week 1 Operational Monitoring
@@ -135,11 +131,10 @@
 **Autonomous Governor Tasks (Each morning 09:00 UTC):**
 
 1. **Database Health Query**
-
    ```sql
-   SELECT
-     schemaname,
-     tablename,
+   SELECT 
+     schemaname, 
+     tablename, 
      pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
      n_live_tup as row_count
    FROM pg_stat_user_tables
@@ -196,14 +191,12 @@
 ### Pre-Onboarding Checklist (Founder + Governor)
 
 **Founder Action Required:**
-
 - [ ] Customer contract signed (legal review complete)
 - [ ] Customer credentials prepared (email/SSO)
 - [ ] Compliance audit scheduled (regulatory requirements)
 - [ ] Support team trained (on incident response)
 
 **Governor Autonomous Actions:**
-
 1. Create dedicated workspace/company for pilot customer
 2. Pre-load sample AI systems (Cathedral, EURO)
 3. Create sandbox risk assessments (for testing)
@@ -212,12 +205,10 @@
 ### Onboarding Day (Week 2, Day 1)
 
 **Founder Action:**
-
 - Invite customer to platform
 - Conduct kickoff meeting
 
 **Governor Autonomous Actions:**
-
 1. Monitor: Customer signup process
 2. Verify: Profile auto-created (trigger working)
 3. Monitor: Initial workspace creation
@@ -226,12 +217,10 @@
 ### Week 2 Monitoring (Daily)
 
 **Founder Actions:**
-
 - Customer tests workflows
 - Reports issues/feedback
 
 **Governor Autonomous Actions:**
-
 1. Monitor: Database query patterns (customer behavior)
 2. Alert: If unusual access patterns detected
 3. Track: Customer data growth rate
@@ -244,21 +233,18 @@
 ### Daily Operations
 
 **Daily Health Check (Automated, 5 min):**
-
 - Database connectivity
 - Backup completion
 - Row count growth (normal?)
 - Active connections (<10?)
 
 **Weekly Review (Automated, 30 min):**
-
 - Metrics trend analysis
 - Performance baseline comparison
 - Incident review (if any)
 - Capacity planning (at current growth rate, when will we need scaling?)
 
 **Monthly Deep Review (Automated, 2 hours):**
-
 - Database optimization analysis
 - RLS policy efficiency review
 - Index usage analysis
@@ -267,20 +253,17 @@
 ### Escalation Triggers (Automatic to Founder)
 
 **CRITICAL (Immediate):**
-
 - [ ] Database connection failure (>5 min)
 - [ ] Backup failure (2+ consecutive days)
 - [ ] Security test failure (RLS policy violation)
 - [ ] Data corruption detected
 
 **HIGH (Within 1 hour):**
-
 - [ ] Query response time >1000ms (performance degradation)
 - [ ] Unexpected row growth (>100% in 1 day)
 - [ ] Error rate spike in application logs
 
 **MEDIUM (Within 8 hours):**
-
 - [ ] Unused indexes identified (optimization opportunity)
 - [ ] Storage growth trend concern (capacity planning needed)
 - [ ] Customer support issue requiring schema modification
@@ -296,7 +279,6 @@
 **Governance:** Founder leads; Governor provides evidence
 
 **Checklist:**
-
 - [ ] Data governance audit (audit_log table populated)
 - [ ] Privacy compliance (GDPR delete workflows)
 - [ ] Transparency requirements (customer data access logs)
@@ -305,13 +287,11 @@
 ### Post-Audit Actions
 
 **If Audit Passes:**
-
 - [ ] Publish compliance certificate
 - [ ] Update customer agreements
 - [ ] Begin next customer recruitment
 
 **If Issues Found:**
-
 - [ ] Work with customer on remediation
 - [ ] May delay next customer onboarding
 - [ ] Plan v1.1 fixes
@@ -325,25 +305,21 @@ While Week 1-4 operations proceed, engineering team works autonomously on v1.1:
 ### Scheduled v1.1 Deliverables
 
 **DNA-013: Feature Flags** (Estimated 3 days)
-
 - Enable gradual feature rollout
 - Reduce risk of production issues
 - Allow A/B testing
 
 **DNA-015: Deployment Canary** (Estimated 4 days)
-
 - Safe gradual database migrations
 - Rollback procedures
 - Zero-downtime deployments
 
 **HERCULES Workspace FK Migration** (Estimated 2 days)
-
 - Migrate enterprise_id from text to UUID
 - Add foreign key constraint to workspaces
 - Cascade delete behavior for HERCULES tables
 
 **Trigger-Based Audit Logging** (Estimated 3 days)
-
 - Implement database triggers for audit_log
 - Automatic logging of sensitive operations
 - Compliance audit ready
@@ -354,15 +330,15 @@ While Week 1-4 operations proceed, engineering team works autonomously on v1.1:
 
 ## DECISION MATRIX: WHEN TO ESCALATE TO FOUNDER
 
-| Situation                                 | Decision    | Action                                                               |
-| ----------------------------------------- | ----------- | -------------------------------------------------------------------- |
-| Daily health check passes                 | CONTINUE    | No founder action required                                           |
+| Situation | Decision | Action |
+|-----------|----------|--------|
+| Daily health check passes | CONTINUE | No founder action required |
 | Health check shows concern (slow queries) | INVESTIGATE | Governor analyzes; may auto-fix (index creation, query optimization) |
-| Customer onboarding succeeds              | PROCEED     | Begin Week 2 monitoring                                              |
-| Customer onboarding fails                 | ESCALATE    | Founder investigates; may require schema changes                     |
-| Compliance audit fails                    | ESCALATE    | Founder + customer review; plan remediation                          |
-| Database backup fails                     | ESCALATE    | Immediate founder attention (data protection issue)                  |
-| RLS policy violation detected             | ESCALATE    | Critical security issue; immediate action required                   |
+| Customer onboarding succeeds | PROCEED | Begin Week 2 monitoring |
+| Customer onboarding fails | ESCALATE | Founder investigates; may require schema changes |
+| Compliance audit fails | ESCALATE | Founder + customer review; plan remediation |
+| Database backup fails | ESCALATE | Immediate founder attention (data protection issue) |
+| RLS policy violation detected | ESCALATE | Critical security issue; immediate action required |
 
 ---
 
@@ -406,17 +382,14 @@ Per DNA-GOV-216, Governor executes all operational tasks autonomously:
 4. Founder: Continue with usual operations while Governor monitors
 
 **Week 1:**
-
 - Founder: Prepare customer onboarding materials
 - Governor: Run daily health checks and weekly review
 
 **Week 2:**
-
 - Founder: Conduct customer pilot onboarding
 - Governor: Intensive monitoring during customer ramp-up
 
 **Month 1:**
-
 - Founder: Customer success, feedback collection
 - Governor: Compliance audit support, v1.1 development
 
@@ -431,4 +404,4 @@ Per DNA-GOV-216, Governor executes all operational tasks autonomously:
 
 ---
 
-_This plan activates immediately upon Founder completing deployment verification. Governor operates autonomously per documented procedures; Founder intervenes only for strategic decisions._
+*This plan activates immediately upon Founder completing deployment verification. Governor operates autonomously per documented procedures; Founder intervenes only for strategic decisions.*

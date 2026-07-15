@@ -1,5 +1,4 @@
 # Customer Support SLA & Escalation Procedures
-
 ## EURO AI Platform — Support Commitment
 
 **Authority:** Governor (Chief Advisor & Chief of Staff)  
@@ -13,7 +12,6 @@
 EURO AI is committed to providing responsive, professional support during your pilot and production phases. This document defines response times, escalation procedures, and support channels.
 
 **Support Tiers:**
-
 - 🟢 **Pilot Customers:** Priority support during onboarding (Weeks 1-5)
 - 🔵 **Production Customers:** Standard support with SLA guarantees
 - 🟠 **Enterprise Customers:** Premium support (available post-pilot)
@@ -28,7 +26,6 @@ EURO AI is committed to providing responsive, professional support during your p
 **Response Time Target:** 4 hours (business hours, same business day)
 
 **What to include in support emails:**
-
 1. Issue title (one line)
 2. Severity level (CRITICAL / HIGH / MEDIUM / LOW)
 3. What happened (describe the issue)
@@ -38,11 +35,10 @@ EURO AI is committed to providing responsive, professional support during your p
 7. Browser/OS (Chrome, Safari, Firefox, etc.)
 
 **Example Email:**
-
 ```
 Subject: [MEDIUM] Cannot save risk assessment
 
-Issue: When I try to save a risk assessment as "In Review",
+Issue: When I try to save a risk assessment as "In Review", 
 I get a "permission denied" error.
 
 Expected: The assessment should save and move to "In Review" status.
@@ -70,7 +66,6 @@ Screenshot: [attached]
 **Response Time:** 15 minutes
 
 **CRITICAL definition only:**
-
 - System completely down (cannot log in, use core features)
 - Data loss or data corruption
 - Security incident
@@ -85,7 +80,6 @@ Screenshot: [attached]
 ### 🔴 CRITICAL Severity
 
 **Definition:**
-
 - System down or completely unusable
 - Data loss or corruption
 - Security incident
@@ -106,7 +100,6 @@ Screenshot: [attached]
 ### 🟠 HIGH Severity
 
 **Definition:**
-
 - Core feature broken (cannot add AI systems, assess risk, upload evidence)
 - Major functionality not working
 - Data inaccessible temporarily
@@ -127,7 +120,6 @@ Screenshot: [attached]
 ### 🟡 MEDIUM Severity
 
 **Definition:**
-
 - Non-core feature not working (reports, exports)
 - Performance degraded but usable
 - Workaround exists
@@ -148,7 +140,6 @@ Screenshot: [attached]
 ### 🟢 LOW Severity
 
 **Definition:**
-
 - Feature request or enhancement
 - Documentation gap
 - Minor UI issue
@@ -175,7 +166,6 @@ Screenshot: [attached]
 **Response Time:** Per SLA above
 
 **Common L1 Resolutions:**
-
 - Guide customer through troubleshooting steps
 - Provide documentation or training
 - Confirm browser/network issue vs. platform issue
@@ -189,7 +179,6 @@ Screenshot: [attached]
 ### Level 2: Founder (Customer Success Lead)
 
 **Escalation triggers:**
-
 - CRITICAL issue not resolving within 2 hours
 - HIGH issue not resolving within 8 hours
 - Customer requests direct contact
@@ -202,20 +191,19 @@ Screenshot: [attached]
 **Who contacts:** Founder directly (support@euro-ai.production marks ESCALATE: FOUNDER in subject)
 
 **Example escalation email:**
-
 ```
 Subject: ESCALATE: FOUNDER - HIGH ISSUE - Risk assessments failing to save
 
 Issue: Customer cannot save risk assessments (business-critical).
-Governor has spent 2 hours troubleshooting. Issue appears to be
+Governor has spent 2 hours troubleshooting. Issue appears to be 
 RLS policy configuration, not user error.
 
-Customer: [Name]
-Workspace: [ID]
-Impact: Customer cannot complete daily work
+Customer: [Name]  
+Workspace: [ID]  
+Impact: Customer cannot complete daily work  
 Blocker: Production onboarding delayed
 
-Request: Founder to review RLS policy logs and determine if
+Request: Founder to review RLS policy logs and determine if 
 schema deployment issue or permission grant issue.
 
 Recommendation: If schema issue, may need rollback + redeployment.
@@ -227,7 +215,6 @@ If permission issue, may need manual grant in database.
 ### Level 3: Engineering Deep Dive (Governor + Founder)
 
 **Escalation triggers:**
-
 - CRITICAL issue involving database/infrastructure
 - Potential data loss or corruption
 - Security incident
@@ -238,7 +225,6 @@ If permission issue, may need manual grant in database.
 **Response Time:** 15 minutes (CRITICAL)
 
 **Process:**
-
 1. Governor reports to Founder with full technical context
 2. Founder authorizes remediation approach
 3. Governor executes fix
@@ -252,7 +238,6 @@ If permission issue, may need manual grant in database.
 ### Step 1: Initial Email/Report
 
 You'll receive:
-
 - Confirmation that we received your report
 - Ticket number (for reference)
 - Preliminary severity assessment
@@ -263,7 +248,6 @@ You'll receive:
 ### Step 2: First Response
 
 Governor will:
-
 - Acknowledge the issue
 - Ask clarifying questions (if needed)
 - Provide initial troubleshooting steps OR
@@ -274,7 +258,6 @@ Governor will:
 ### Step 3: Investigation
 
 Governor will:
-
 - Review application logs
 - Check database state
 - Verify RLS policies
@@ -286,7 +269,6 @@ Governor will:
 ### Step 4: Resolution
 
 Governor will:
-
 - Fix the issue (code change, database fix, or configuration change)
 - Verify resolution in test environment
 - Prepare fix deployment procedure
@@ -295,13 +277,11 @@ Governor will:
 ### Step 5: Verification
 
 You will:
-
 - Test the fix in your workspace
 - Confirm the issue is resolved
 - Report any remaining issues
 
 Governor will:
-
 - Confirm resolution with you
 - Document the issue and fix (for future reference)
 - Close the ticket
@@ -315,11 +295,11 @@ Governor will:
 **SLA Relaxed:** We're partners optimizing EURO AI together.
 
 | Severity | Pilot Response | Production Response |
-| -------- | -------------- | ------------------- |
-| CRITICAL | 30 min         | 30 min              |
-| HIGH     | 4 hours        | 4 hours             |
-| MEDIUM   | 24 hours       | 24 hours            |
-| LOW      | 1 week         | 1 week              |
+|----------|---|---|
+| CRITICAL | 30 min | 30 min |
+| HIGH | 4 hours | 4 hours |
+| MEDIUM | 24 hours | 24 hours |
+| LOW | 1 week | 1 week |
 
 **Pilot focus:** Get you productive + identify product gaps
 
@@ -381,13 +361,11 @@ If EURO AI experiences an outage lasting >2 hours:
 We welcome feedback on support quality!
 
 **How to send feedback:**
-
 - Reply to any support email with: "FEEDBACK: [your comments]"
 - Annual customer survey (sends at end of year)
 - Direct email to: [founder email]
 
 **What we track:**
-
 - Support response times (actual vs. SLA target)
 - First-response resolution rate
 - Customer satisfaction scores
@@ -397,11 +375,11 @@ We welcome feedback on support quality!
 
 ## Support Team Directory
 
-| Role                            | Name     | Email                      | Response Time |
-| ------------------------------- | -------- | -------------------------- | ------------- |
-| Customer Success Lead (Founder) | [Name]   | [email]                    | 1-4 hours     |
-| Technical Support (Governor)    | Governor | support@euro-ai.production | Per SLA       |
-| Emergency Hotline               | [Name]   | +49-[number]               | 15 min        |
+| Role | Name | Email | Response Time |
+|------|------|-------|---|
+| Customer Success Lead (Founder) | [Name] | [email] | 1-4 hours |
+| Technical Support (Governor) | Governor | support@euro-ai.production | Per SLA |
+| Emergency Hotline | [Name] | +49-[number] | 15 min |
 
 ---
 
@@ -443,6 +421,6 @@ Signature (digital OK): ___________________________
 
 ---
 
-_Last updated: 2026-07-12_  
-_Version: 1.0_  
-_Next review: 2026-08-12 (one month post-pilot)_
+*Last updated: 2026-07-12*  
+*Version: 1.0*  
+*Next review: 2026-08-12 (one month post-pilot)*

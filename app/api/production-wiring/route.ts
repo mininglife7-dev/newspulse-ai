@@ -67,11 +67,7 @@ export async function POST(request: NextRequest) {
     }));
 
     // Process errors into incidents
-    const incidents = await wiring.processErrorsIntoIncidents(
-      deploymentId,
-      metrics,
-      patterns
-    );
+    const incidents = await wiring.processErrorsIntoIncidents(deploymentId, metrics, patterns);
 
     // Orchestrate response for each incident
     const orchestrations = await Promise.all(
@@ -118,7 +114,10 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: message },
+      { status: 500 }
+    );
   }
 }
 
@@ -161,7 +160,10 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: message },
+      { status: 500 }
+    );
   }
 }
 
@@ -200,6 +202,9 @@ export async function PUT(request: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: message },
+      { status: 500 }
+    );
   }
 }

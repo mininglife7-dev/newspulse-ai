@@ -1,5 +1,4 @@
 # Customer Pilot Communication Sequence
-
 ## EURO AI — Week 1 Through Week 5 Email Templates
 
 **Purpose:** Guide Founder through structured customer communication during the 5-week pilot onboarding phase. Each email reinforces weekly milestones, manages expectations, and guides next actions.
@@ -9,7 +8,6 @@
 ---
 
 ## WEEK 1: Pre-Kickoff & Setup
-
 **Send:** Monday of Week 1 (before any customer work begins)  
 **Audience:** Customer sponsor + technical lead  
 **Goal:** Build excitement, confirm readiness, deliver materials
@@ -47,7 +45,6 @@ Your team should complete these by end of week:
 **🎯 Governor's Role This Week**
 
 I'm here to help. Your point of contact is Governor (support@euro-ai.production). Expect:
-
 - ✅ Same-day Slack responses (pilot priority)
 - ✅ Daily check-in calls if you need them
 - ✅ Troubleshooting for any login or technical issues
@@ -62,7 +59,6 @@ I'm here to help. Your point of contact is Governor (support@euro-ai.production)
 **Attendees:** Your technical lead, [optional: your compliance officer], Governor
 
 **Agenda:**
-
 - 10 min: Quick platform overview
 - 20 min: Live demo (adding AI system, creating assessment)
 - 20 min: Your questions + troubleshooting
@@ -108,7 +104,6 @@ support@euro-ai.production
 ---
 
 ## WEEK 2: Onboarding Begins
-
 **Send:** Monday of Week 2  
 **Audience:** Customer sponsor + working team  
 **Goal:** Confirm Week 1 completion, launch guided workflow, set Week 2 expectations
@@ -132,20 +127,17 @@ Dear [Customer Name],
 **📋 Week 2 Daily Checklist**
 
 **Day 1 (Today) — Preparation**
-
 - 10 min: Review the Risk Assessment process (attached PDF)
 - 15 min: Identify your first pilot system (e.g., "Customer support chatbot")
 - Action: Assign one person to lead this assessment
 
 **Day 2-3 — Create Assessment**
-
 - 30 min: Complete the 10-question risk assessment questionnaire (in platform)
 - For each question, your team will answer: Yes / No / Partial / Not Applicable
 - Questions cover: purpose documentation, data protection, human oversight, transparency, etc.
 - Tips: Consult with your legal/compliance team; answers don't need to be perfect
 
 **Day 4-5 — Upload Evidence**
-
 - 20 min: Gather supporting documents (policies, diagrams, audit reports)
 - 15 min: Upload 2-3 key documents to link with your assessment
 - Examples: "Data Governance Policy.pdf", "AI Oversight Procedure.docx", "System Audit Report.pdf"
@@ -157,7 +149,6 @@ Dear [Customer Name],
 **🎯 Week 2 Deliverable**
 
 By end of Friday, I want to see:
-
 - ✅ Risk assessment "In Review" status (shows completion)
 - ✅ 2+ evidence documents uploaded and linked
 - ✅ Your legal/compliance team has reviewed and approved the assessment
@@ -181,7 +172,6 @@ Attendees: Sponsor + technical lead + Governor + Founder (joining for first revi
 Link: [Zoom/Meet]
 
 **Agenda for Friday Call:**
-
 - 10 min: Governor walks through your assessment
 - 10 min: Founder asks clarifying questions
 - 15 min: Your team shares feedback on usability/workflow
@@ -211,7 +201,6 @@ Link: [Zoom/Meet]
 **Escalation**
 
 Stuck? Don't wait. Reach out immediately:
-
 - **Quick question:** Slack #euro-ai-support-[customer-name] (target: 1 hour response)
 - **Blocker issue:** Email support@euro-ai.production with "URGENT" (target: 2 hour response)
 - **Critical:** Call Governor at +49-[phone] (15 min response, CRITICAL issues only)
@@ -229,7 +218,6 @@ EURO AI Customer Success
 ---
 
 ## WEEK 3: Feature Validation & Independence
-
 **Send:** Monday of Week 3  
 **Audience:** Customer sponsor + working team  
 **Goal:** Celebrate progress, shift to customer independence, monitor for issues
@@ -253,19 +241,16 @@ Week 3 is about scaling: add more systems, create more assessments, and get comf
 **📋 Week 3 Goals**
 
 **Goal 1: Inventory Expansion**
-
 - Add 4-6 more AI systems to your catalog (the ones you identified in Week 1)
 - 10 min per system; these can be done by any team member
 - Target: 8-10 systems total in inventory by end of week
 
 **Goal 2: Assessment Pipeline**
-
 - Create 3 additional risk assessments (one for each critical system)
 - Reuse the same process from Week 2; it should feel familiar now
 - Aim to complete by Wednesday/Thursday so Governor has time to review
 
 **Goal 3: Evidence Organization**
-
 - Categorize your evidence documents (policies, audits, diagrams, etc.)
 - Link evidence to the right assessments
 - Create a tracking spreadsheet: System → Assessment → Evidence Documents
@@ -277,7 +262,6 @@ Week 3 is about scaling: add more systems, create more assessments, and get comf
 **🎯 Governor's Role This Week**
 
 Stepping back, but not disappearing:
-
 - ✅ Daily Slack monitoring (response within 4 hours)
 - ✅ No scheduled calls (unless you request one)
 - ✅ Friday asynchronous check-in (Governor reviews your progress; no meeting required)
@@ -339,7 +323,6 @@ EURO AI Customer Success
 ---
 
 ## WEEK 4: Compliance Audit & Production Prep
-
 **Send:** Monday of Week 4  
 **Audience:** Customer sponsor + compliance owner + technical lead  
 **Goal:** Audit readiness, identify any gaps, prepare for production handoff
@@ -363,27 +346,23 @@ You've built a solid compliance model in Weeks 1-3. This week, we do the complia
 **📋 Week 4 Activities**
 
 **Day 1-2: Self-Audit**
-
 - Governor will send you a compliance checklist (attached)
 - Your team reviews each risk assessment against the checklist
 - 30 min per assessment; spot-check for completeness
 - Fix any gaps (missing evidence, incomplete answers, etc.)
 
 **Day 3: Governor Audit**
-
 - Governor conducts a formal review of all assessments
 - Checks: evidence quality, RLS policies, audit trail completeness
 - Prepares audit findings report
 
 **Day 4: Results Call**
-
 - Meet with Governor + your compliance sponsor
 - Review audit findings (typically no blockers at this stage)
 - Discuss any recommendations for improvement
 - Confirm production readiness
 
 **Day 5: Final Prep**
-
 - Governor prepares your workspace for production transition
 - You confirm all personal/test data is cleaned up
 - Set up backup/export schedule for Week 5 launch
@@ -398,7 +377,6 @@ You've built a solid compliance model in Weeks 1-3. This week, we do the complia
 When: [Day 4 of Week 4], [Time] (60 min)  
 Attendees: Your sponsor + compliance officer + technical lead + Governor + Founder (joining for compliance sign-off)  
 Agenda:
-
 - 15 min: Overview of audit scope
 - 20 min: Findings review (what looks good, what needs polish)
 - 15 min: Recommendations for scale-up to other systems
@@ -421,7 +399,6 @@ Meeting link: [Zoom/Meet]
 **💡 What to Expect**
 
 Typical audit findings are minor:
-
 - "Can you add a data-flow diagram to this assessment?" (30 min to fix)
 - "This policy doc is from 2023; do you have an updated version?" (clarification)
 - "Your audit trail shows 10 edits; document the changes in your notes." (documentation)
@@ -438,7 +415,7 @@ Your workspace is production-ready when:
 ✅ Audit trail shows consistent governance practices  
 ✅ Your team is comfortable using all core features  
 ✅ Compliance officer approves the model  
-✅ Governor confirms backup/export procedures are tested
+✅ Governor confirms backup/export procedures are tested  
 
 **Target:** All criteria met by end of Week 4.
 
@@ -461,7 +438,6 @@ EURO AI Customer Success
 ---
 
 ## WEEK 5: Production Handoff & Scale-Up
-
 **Send:** Monday of Week 5  
 **Audience:** Customer sponsor + all stakeholders  
 **Goal:** Celebrate success, transition to production, set long-term roadmap
@@ -485,7 +461,6 @@ This final week is about **celebration, handoff, and setting you up for long-ter
 **📋 Week 5 Transition Checklist**
 
 **Day 1-2: Knowledge Transfer**
-
 - Governor hands over operational documentation
 - Your IT/ops team receives:
   - Backup procedures (daily automatic backups via Supabase)
@@ -494,20 +469,17 @@ This final week is about **celebration, handoff, and setting you up for long-ter
   - Audit trail review process (monthly compliance check)
 
 **Day 3: Production Support SLA Activation**
-
 - Your support tier becomes "Production" (formally tracked SLA)
 - Email: support@euro-ai.production (4-hour response)
 - Slack: #euro-ai-support-[customer-name] (best effort, 8-hour response for non-urgent)
 - Hotline: Available for CRITICAL issues only (system down, data loss)
 
 **Day 4: Scale-Up Kickoff**
-
 - Governor assists you in adding remaining systems (not in pilot scope)
 - Batch-add process; 3-5 systems per week going forward
 - Estimated: All systems added by Week 8
 
 **Day 5: Stakeholder Celebration**
-
 - 30-minute celebration call with your executive sponsor and Founder
 - Recap of 5-week journey
 - Metrics: systems added, assessments completed, evidence organized
@@ -521,15 +493,15 @@ This final week is about **celebration, handoff, and setting you up for long-ter
 
 Here's what you've accomplished:
 
-| Metric                      | Target | Actual    |
-| --------------------------- | ------ | --------- |
-| AI Systems in Inventory     | 8-10   | [Fill in] |
-| Risk Assessments Completed  | 4-5    | [Fill in] |
-| Evidence Documents Uploaded | 10+    | [Fill in] |
-| Team Members Trained        | 3-5    | [Fill in] |
-| Audit Trail Events          | 50+    | [Fill in] |
-| Policy Documents Organized  | Yes    | [Fill in] |
-| Legal/Compliance Approval   | Yes    | [Fill in] |
+| Metric | Target | Actual |
+|--------|--------|--------|
+| AI Systems in Inventory | 8-10 | [Fill in] |
+| Risk Assessments Completed | 4-5 | [Fill in] |
+| Evidence Documents Uploaded | 10+ | [Fill in] |
+| Team Members Trained | 3-5 | [Fill in] |
+| Audit Trail Events | 50+ | [Fill in] |
+| Policy Documents Organized | Yes | [Fill in] |
+| Legal/Compliance Approval | Yes | [Fill in] |
 
 ---
 
@@ -539,7 +511,6 @@ Here's what you've accomplished:
 When: [Day 5 of Week 5], [Time] (45 min)  
 Attendees: Your executive sponsor + working team + Governor + Founder  
 Agenda:
-
 - 10 min: Recap of 5-week journey
 - 10 min: Your team shares 1-2 highlights
 - 10 min: Metrics review (what you built)
@@ -563,21 +534,18 @@ Meeting link: [Zoom/Meet]
 **💡 What's Next?**
 
 **Month 2 (Weeks 6-8): Scale-Up Phase**
-
 - Add remaining systems to inventory (batch-add, 3-5/week)
 - Create assessments for scale-up systems (reuse templates)
 - Governor provides guidance as needed; mostly hands-off
 - Expected effort: 5 hours/week
 
 **Month 3+: Steady State**
-
 - All systems in EURO AI
 - Monthly compliance reviews (your internal audit)
 - Quarterly business reviews with Governor (strategic discussion)
 - Optional: Upgrade to Enterprise support (more features, higher SLA)
 
 **Your Team Goes Independent**
-
 - You're now the expert. New team members? Train them using the playbook.
 - Support escalations only for real bugs or feature requests
 - Slack channel remains active for peer learning + occasional questions
@@ -656,3 +624,4 @@ Before sending each email, confirm:
 **Version:** 1.0  
 **Author:** Governor (EURO AI Customer Success)  
 **Status:** Ready for Founder customization and use
+

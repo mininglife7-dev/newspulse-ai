@@ -10,12 +10,8 @@ interface CreateEvidenceRequest {
   aiSystemId?: string;
 }
 
-async function resolveContext(
-  supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
   const { data: membership } = await supabase

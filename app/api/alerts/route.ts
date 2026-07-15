@@ -45,14 +45,10 @@ export async function GET(req: NextRequest) {
     // Log summary only (safe for production)
     if (report.alertCount > 0) {
       if (report.criticalCount > 0) {
-        logger.error(
-          'Alert hub critical conditions detected',
-          'ALERTS_CRITICAL',
-          {
-            total: report.alertCount,
-            critical: report.criticalCount,
-          }
-        );
+        logger.error('Alert hub critical conditions detected', 'ALERTS_CRITICAL', {
+          total: report.alertCount,
+          critical: report.criticalCount,
+        });
       } else if (report.warningCount > 0) {
         logger.warn('Alert hub warnings detected', 'ALERTS_WARNING', {
           total: report.alertCount,
@@ -80,12 +76,7 @@ export async function GET(req: NextRequest) {
       {
         status: 200,
         headers: {
-          'X-Alert-Level':
-            report.criticalCount > 0
-              ? 'critical'
-              : report.warningCount > 0
-                ? 'warning'
-                : 'info',
+          'X-Alert-Level': report.criticalCount > 0 ? 'critical' : report.warningCount > 0 ? 'warning' : 'info',
           'X-Alert-Count': String(report.alertCount),
           'X-Critical-Count': String(report.criticalCount),
         },

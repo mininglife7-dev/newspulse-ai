@@ -1,5 +1,4 @@
 # Data Retention & Deletion Policy
-
 ## EURO AI — GDPR & Compliance Framework
 
 **Authority:** Governor (Technical Operations)  
@@ -12,7 +11,6 @@
 ## Executive Summary
 
 EURO AI commits to:
-
 1. **Retaining customer data** only as long as necessary for service delivery
 2. **Deleting customer data** upon request within 30 days (GDPR compliance)
 3. **Automatic purging** of certain data based on age and activity
@@ -25,11 +23,9 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
 ## Data Classification & Retention Periods
 
 ### Category 1: Active Customer Data (Indefinite Retention)
-
 **Definition:** Data actively used by customer for compliance work
 
 **Examples:**
-
 - AI system inventory (name, vendor, risk classification)
 - Risk assessments (responses to compliance questions)
 - Evidence documents (uploaded compliance materials)
@@ -44,24 +40,20 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
 ---
 
 ### Category 2: Workspace Member Data (Conditional Retention)
-
 **Definition:** User profiles, roles, permissions, activity metadata
 
 **Examples:**
-
 - User email, name, role (Admin / Analyst / Viewer)
 - Workspace membership and permissions
 - Last login timestamp
 - Activity metadata (who created which assessment, when)
 
 **Retention Period:**
-
 - **While active:** Entire duration of workspace + 90 days post-cancellation
 - **If user leaves workspace:** User profile marked inactive, retained 30 days for audit trail, then deleted
 - **If user deletes own account:** Immediate deletion of personally identifiable information; evidence.uploaded_by set to NULL
 
 **Deletion Trigger:**
-
 1. User manually deletes account via Settings → Account
 2. Workspace admin removes user from team
 3. Workspace cancels and 90-day grace expires
@@ -71,11 +63,9 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
 ---
 
 ### Category 3: Audit & Compliance Logs (Fixed Retention)
-
 **Definition:** System-generated logs tracking actions for compliance
 
 **Examples:**
-
 - Audit log entries (who did what, when, from where)
 - IP address and user agent on each action
 - System event logs (login attempts, permission changes)
@@ -89,11 +79,9 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
 ---
 
 ### Category 4: Backup & Archive Data (Graduated Retention)
-
 **Definition:** Automated backups for disaster recovery
 
 **Backup Schedule:**
-
 - **Real-time backup:** Supabase continuous replication (3-region redundancy)
 - **Daily backup:** Full database snapshot at 2:00 AM UTC
 - **Weekly backup:** Long-term archive copy
@@ -101,12 +89,12 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
 
 **Retention by Backup Type:**
 
-| Backup Type | Frequency    | Retention    | Purpose              |
-| ----------- | ------------ | ------------ | -------------------- |
-| Real-time   | Continuous   | N/A (active) | Disaster recovery    |
-| Daily       | Every 24h    | 30 days      | Quick restore        |
-| Weekly      | Every 7 days | 12 weeks     | Medium-term recovery |
-| Monthly     | Every month  | 12 months    | Compliance archive   |
+| Backup Type | Frequency | Retention | Purpose |
+|---|---|---|---|
+| Real-time | Continuous | N/A (active) | Disaster recovery |
+| Daily | Every 24h | 30 days | Quick restore |
+| Weekly | Every 7 days | 12 weeks | Medium-term recovery |
+| Monthly | Every month | 12 months | Compliance archive |
 
 **Deletion Trigger:** Automatic based on retention schedule (no manual action needed)
 
@@ -115,11 +103,9 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
 ---
 
 ### Category 5: HERCULES System Data (Enterprise Retention)
-
 **Definition:** Internal EURO AI operational data (not customer-facing)
 
 **Examples:**
-
 - HERCULES workspace metadata
 - Enterprise workspace association
 - Living system status
@@ -170,7 +156,6 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
    - Backups older than 90 days automatically deleted by Supabase retention policy
 
 **Timeline:**
-
 - T+0: Deletion requested
 - T+0: Immediate confirmation email sent
 - T+1-90 days: 90-day grace period (restore available)
@@ -178,7 +163,6 @@ This policy covers all data types: AI systems, risk assessments, evidence, user 
 - T+90+30: Old backups purged by Supabase
 
 **Customer Communication:**
-
 ```
 Subject: Workspace Deletion Confirmation
 Body:
@@ -216,7 +200,6 @@ To restore your workspace, reply to this email before that date.
    - If user was member → simply remove from team
 
 **Timeline:**
-
 - T+0: Account deletion initiated
 - T+0: Immediate auth.users deletion (managed by Supabase)
 - T+0: Profile anonymization completed
@@ -225,7 +208,6 @@ To restore your workspace, reply to this email before that date.
 - T+30: Audit logs may be purged if beyond 7-year retention window
 
 **Customer Communication:**
-
 ```
 Subject: EURO AI Account Deletion Complete
 Body:
@@ -261,14 +243,12 @@ Historical audit records may remain for compliance purposes.
    - Send email to workspace admin: "User [Email] removed successfully"
 
 **Timeline:**
-
 - T+0: Removal requested by admin
 - T+0: Immediate access revocation
 - T+0: Confirmation emails sent
 - T+1+: User data preserved for audit trail
 
 **Customer Communication:**
-
 ```
 Subject: Removed from EURO AI Workspace
 Body:
@@ -283,7 +263,6 @@ If you have questions, contact the workspace admin or support@euro-ai.production
 **Trigger:** Automated nightly job (runs 2:00 AM UTC daily)
 
 **Conditions:**
-
 - Workspace has NO login activity for 180 days (6 months)
 - Workspace has NO changes to assessments, evidence, or configuration for 180 days
 - Workspace has NOT received support tickets for 180 days
@@ -322,13 +301,11 @@ If you have questions, contact the workspace admin or support@euro-ai.production
 EURO AI honors GDPR Article 17 "Right to be Forgotten" with the following implementation:
 
 **Applies to:**
-
 - User personal data (email, name, profile information)
 - Data that is no longer necessary for service delivery
 - Data where legal basis has expired
 
 **Does NOT apply to:**
-
 - Data required by law (tax records, audit logs kept for 7 years)
 - Data actively used for ongoing services (AI systems, risk assessments, if workspace is active)
 - Anonymized data (cannot identify individual)
@@ -343,7 +320,6 @@ Email: support@euro-ai.production
 Subject: GDPR Article 17 - Right to Erasure Request
 
 **Required Information:**
-
 - Your full name
 - Your email address
 - Workspace name (if applicable)
@@ -360,13 +336,13 @@ Subject: GDPR Article 17 - Right to Erasure Request
 
 ### Deletion Response by Data Type
 
-| Data Type                   | Action                                          | Timeline |
-| --------------------------- | ----------------------------------------------- | -------- |
-| User profile (email, name)  | Immediate deletion                              | Day 0-1  |
-| Workspace membership        | Immediate removal                               | Day 0-1  |
-| Active assessments/evidence | Delete if workspace inactive; archive if active | Day 1-7  |
-| Audit logs                  | Anonymize (remove name, keep ID)                | Day 1-7  |
-| Backups                     | Purge from backups (if <90 days old)            | Day 7-30 |
+| Data Type | Action | Timeline |
+|---|---|---|
+| User profile (email, name) | Immediate deletion | Day 0-1 |
+| Workspace membership | Immediate removal | Day 0-1 |
+| Active assessments/evidence | Delete if workspace inactive; archive if active | Day 1-7 |
+| Audit logs | Anonymize (remove name, keep ID) | Day 1-7 |
+| Backups | Purge from backups (if <90 days old) | Day 7-30 |
 
 ---
 
@@ -376,7 +352,6 @@ Subject: GDPR Article 17 - Right to Erasure Request
 Jane Doe works at Customer Inc. She leaves the company. She requests her personal data be deleted.
 
 **EURO AI Action:**
-
 1. Delete Jane's auth.users record (Supabase Auth)
 2. Delete Jane's profiles record
 3. Remove Jane from workspace_members (across all workspaces)
@@ -385,7 +360,6 @@ Jane Doe works at Customer Inc. She leaves the company. She requests her persona
 6. Send confirmation: "Your data has been deleted per GDPR Article 17"
 
 **Result:**
-
 - Jane has no personal data in EURO AI
 - Historical audit trail preserved (compliant with 7-year retention)
 - Evidence documents remain (ownership transferred)
@@ -400,7 +374,6 @@ Jane Doe works at Customer Inc. She leaves the company. She requests her persona
 **Standard:** AES-256
 
 **Implementation:**
-
 - Supabase PostgreSQL: Encrypted at storage layer
 - Backups: Encrypted (managed by Supabase)
 - Audit logs: Encrypted (same as primary database)
@@ -414,7 +387,6 @@ Jane Doe works at Customer Inc. She leaves the company. She requests her persona
 **Standard:** TLS 1.2+
 
 **Implementation:**
-
 - All API communications: HTTPS required
 - Database connections: Encrypted via Supabase connection string
 - Backups: Encrypted during transfer
@@ -424,7 +396,6 @@ Jane Doe works at Customer Inc. She leaves the company. She requests her persona
 ### Access Control
 
 **Database Layer:** Row-Level Security policies enforce workspace isolation
-
 - Authenticated users: Can see only their workspace data
 - Service role: Full access (used internally by Governor/automation)
 - Public anon key: No direct database access (API only)
@@ -467,26 +438,23 @@ Jane Doe works at Customer Inc. She leaves the company. She requests her persona
 ### Daily Tasks
 
 **2:00 AM UTC — Automated Backup**
-
 ```
 Managed by Supabase (no manual action)
 Verify: Check backup completion in Supabase dashboard
 ```
 
 **Nightly — Purge Old Audit Logs**
-
 ```sql
 DELETE FROM audit_log
 WHERE created_at < NOW() - '7 years'::interval;
 ```
 
 **Nightly — Mark Inactive Workspaces**
-
 ```sql
 UPDATE workspaces
 SET deleted_at = NOW()
-WHERE
-  deleted_at IS NULL
+WHERE 
+  deleted_at IS NULL 
   AND last_activity_at < NOW() - '180 days'::interval
   AND warned_at IS NOT NULL
   AND warned_at < NOW() - '30 days'::interval;
@@ -495,7 +463,6 @@ WHERE
 ### Weekly Tasks
 
 **Monday 10:00 AM UTC — Audit Report**
-
 - Verify: All automated purging jobs completed
 - Report: Workspaces deleted, users removed, audit logs purged
 - Check: No errors in deletion logs
@@ -503,7 +470,6 @@ WHERE
 ### Monthly Tasks
 
 **1st of month — Backup Verification**
-
 - Test: Restore from 30-day-old backup to test environment
 - Verify: Data integrity, all tables present
 - Report: Restoration time, data completeness
@@ -517,7 +483,6 @@ WHERE
 **Scenario:** Customer needs data retained longer than standard policy
 
 **Process:**
-
 1. Customer emails: support@euro-ai.production with "RETENTION EXCEPTION" in subject
 2. Governor reviews: Verifies legitimate business need
 3. Governor authorizes: Grants 6-month extension (if justified)
@@ -529,7 +494,6 @@ WHERE
 **Scenario:** Customer needs data deleted before standard retention period
 
 **Process:**
-
 1. Customer emails: support@euro-ai.production with "ACCELERATED DELETION" in subject
 2. Verify: Confirm customer identity + authority to request
 3. Execute: Immediate deletion (per GDPR compliance)
@@ -540,7 +504,6 @@ WHERE
 **Scenario:** Law enforcement or court order requires data retention
 
 **Process:**
-
 1. Governor receives: Court order or legal subpoena
 2. Escalate: Contact Founder immediately
 3. Preserve: Hold all deletion procedures for affected data
@@ -553,20 +516,19 @@ WHERE
 
 ### Metrics to Track
 
-| Metric                        | Frequency | Threshold     | Action            |
-| ----------------------------- | --------- | ------------- | ----------------- |
-| Workspace deletions per month | Monthly   | >5% of active | Investigate churn |
-| Average data retention age    | Monthly   | N/A           | Report trend      |
-| Right to erasure requests     | Monthly   | >2 per month  | Escalate if > 5   |
-| Backup restoration success    | Monthly   | 100%          | Alert if <100%    |
-| Audit log growth (GB/month)   | Monthly   | <50 GB        | Warn if >100 GB   |
+| Metric | Frequency | Threshold | Action |
+|---|---|---|---|
+| Workspace deletions per month | Monthly | >5% of active | Investigate churn |
+| Average data retention age | Monthly | N/A | Report trend |
+| Right to erasure requests | Monthly | >2 per month | Escalate if > 5 |
+| Backup restoration success | Monthly | 100% | Alert if <100% |
+| Audit log growth (GB/month) | Monthly | <50 GB | Warn if >100 GB |
 
 ### Annual Compliance Audit
 
 **Scope:** Verify policy compliance
 
 **Procedure:**
-
 1. Sample 10 random customer workspaces
 2. Verify: Correct data retention applied
 3. Verify: No unauthorized data remaining
@@ -587,7 +549,6 @@ WHERE
 **Approval Required From:** Founder (before deployment)
 
 **Change Log:**
-
 - 2026-07-12 v1.0: Initial policy created
 
 ---
@@ -595,20 +556,18 @@ WHERE
 ## Questions or Requests
 
 **For Customers:**
-
 - Email: support@euro-ai.production
 - Subject line: "DATA RETENTION" or "RIGHT TO ERASURE"
 
 **For Governor (Internal):**
-
 - Reference: `/docs/governance/DATA_RETENTION_DELETION_POLICY.md`
 - Automation location: `/scripts/` (scheduled jobs)
 - Database schema: `/supabase/schema.sql` (CASCADE rules, ON DELETE clauses)
 
 ---
 
-_This policy is binding on EURO AI and all customer agreements reference this document._
+*This policy is binding on EURO AI and all customer agreements reference this document.*
 
-_Last updated: 2026-07-12_  
-_Version: 1.0_  
-_Compliance Standard: GDPR (EU), ISO 27001_
+*Last updated: 2026-07-12*  
+*Version: 1.0*  
+*Compliance Standard: GDPR (EU), ISO 27001*

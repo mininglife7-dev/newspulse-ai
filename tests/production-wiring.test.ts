@@ -91,9 +91,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
       expect(incidents.length).toBeGreaterThan(0);
       incidents.forEach((incident) => {
         expect(incident.deploymentId).toBe('deploy-errors-001');
-        expect(['low', 'medium', 'high', 'critical']).toContain(
-          incident.severity
-        );
+        expect(['low', 'medium', 'high', 'critical']).toContain(incident.severity);
       });
     });
 
@@ -132,9 +130,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
         dbErrorPatterns
       );
 
-      const dataRiskIncidents = incidents.filter(
-        (i) => i.category === 'data-loss-risk'
-      );
+      const dataRiskIncidents = incidents.filter((i) => i.category === 'data-loss-risk');
       expect(dataRiskIncidents.length).toBeGreaterThan(0);
     });
   });
@@ -249,9 +245,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
         );
 
         expect(result.alerts.length).toBeGreaterThan(0);
-        const founderAlerts = result.alerts.filter(
-          (a) => a.channel === 'founder'
-        );
+        const founderAlerts = result.alerts.filter((a) => a.channel === 'founder');
         expect(founderAlerts.length).toBeGreaterThan(0);
       }
     });
@@ -276,9 +270,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
         dbPatterns
       );
 
-      const dataLossIncident = incidents.find(
-        (i) => i.category === 'data-loss-risk'
-      );
+      const dataLossIncident = incidents.find((i) => i.category === 'data-loss-risk');
       if (dataLossIncident) {
         const result = await wiring.orchestrateAndExecute(
           'deploy-escalate-001',
@@ -325,11 +317,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
       );
 
       if (incidents.length > 0) {
-        await wiring.orchestrateAndExecute(
-          'deploy-track-001',
-          incidents[0],
-          mockErrorMetrics
-        );
+        await wiring.orchestrateAndExecute('deploy-track-001', incidents[0], mockErrorMetrics);
 
         const history = wiring.getRemediationHistory('deploy-track-001');
         expect(history).toBeInstanceOf(Array);
@@ -344,11 +332,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
       );
 
       if (incidents.length > 0) {
-        await wiring.orchestrateAndExecute(
-          'deploy-success-001',
-          incidents[0],
-          mockErrorMetrics
-        );
+        await wiring.orchestrateAndExecute('deploy-success-001', incidents[0], mockErrorMetrics);
 
         const rate = wiring.getRemediationSuccessRate('deploy-success-001');
         expect(typeof rate).toBe('number');
@@ -452,9 +436,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
       wiring.updateConfig({ remediationCooldown: 5000 });
       const updated = wiring.getConfig();
 
-      expect(updated.enableAlertingFounder).toBe(
-        originalConfig.enableAlertingFounder
-      );
+      expect(updated.enableAlertingFounder).toBe(originalConfig.enableAlertingFounder);
       expect(updated.remediationCooldown).toBe(5000);
     });
   });
@@ -492,11 +474,7 @@ describe('Production Wiring (DNA-GOV-014)', () => {
 
       const results = await Promise.all(
         deployIds.map((id) =>
-          wireProductionIncidentResponse(
-            id,
-            mockErrorMetrics,
-            mockErrorPatterns
-          )
+          wireProductionIncidentResponse(id, mockErrorMetrics, mockErrorPatterns)
         )
       );
 

@@ -46,10 +46,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Unknown error during remediation cycle';
+    const message = error instanceof Error ? error.message : 'Unknown error during remediation cycle';
     return NextResponse.json(
       {
         status: 'error',
@@ -100,10 +97,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Unknown error processing remediation request';
+    const message = error instanceof Error ? error.message : 'Unknown error processing remediation request';
     return NextResponse.json(
       {
         status: 'error',

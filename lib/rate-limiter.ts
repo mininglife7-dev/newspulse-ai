@@ -74,9 +74,7 @@ export class RateLimiter {
       allowed: isAllowed,
       remaining,
       resetAt: record.resetAt,
-      retryAfter: !isAllowed
-        ? Math.ceil((record.resetAt - now) / 1000)
-        : undefined,
+      retryAfter: !isAllowed ? Math.ceil((record.resetAt - now) / 1000) : undefined,
     };
   }
 

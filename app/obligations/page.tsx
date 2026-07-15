@@ -57,9 +57,7 @@ export default function ObligationsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<string>('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [importingTemplates, setImportingTemplates] = useState<string | null>(
-    null
-  );
+  const [importingTemplates, setImportingTemplates] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [editingDueDateId, setEditingDueDateId] = useState<string | null>(null);
@@ -88,10 +86,7 @@ export default function ObligationsPage() {
     }
   };
 
-  const handleStatusChange = async (
-    obligationId: string,
-    newStatus: string
-  ) => {
+  const handleStatusChange = async (obligationId: string, newStatus: string) => {
     setUpdatingId(obligationId);
     try {
       const res = await fetch(`/api/obligations/${obligationId}`, {
@@ -126,9 +121,7 @@ export default function ObligationsPage() {
       if (!res.ok) throw new Error('Failed to import templates');
       const data = await res.json();
       if (data.ok) {
-        alert(
-          `${data.created} obligations imported${data.skipped > 0 ? ` (${data.skipped} already existed)` : ''}`
-        );
+        alert(`${data.created} obligations imported${data.skipped > 0 ? ` (${data.skipped} already existed)` : ''}`);
         loadObligations();
       } else {
         throw new Error(data.error);
@@ -188,10 +181,7 @@ export default function ObligationsPage() {
     }
   };
 
-  const handleUpdateDueDate = async (
-    obligationId: string,
-    newDueDate: string
-  ) => {
+  const handleUpdateDueDate = async (obligationId: string, newDueDate: string) => {
     setUpdatingId(obligationId);
     try {
       const res = await fetch(`/api/obligations/${obligationId}`, {
@@ -222,49 +212,29 @@ export default function ObligationsPage() {
   };
 
   const overdueCount = obligations.filter((o) => isOverdue(o.due_date)).length;
-  const criticalCount = obligations.filter(
-    (o) => o.priority === 'critical'
-  ).length;
-  const identifiedCount = obligations.filter(
-    (o) => o.status === 'identified'
-  ).length;
+  const criticalCount = obligations.filter((o) => o.priority === 'critical').length;
+  const identifiedCount = obligations.filter((o) => o.status === 'identified').length;
 
   const quickFilters = [
-    {
-      label: `Overdue (${overdueCount})`,
-      filter: () => {
-        setFilterStatus('');
-        setFilterPriority('');
-        setSearchQuery('');
-      },
-    },
-    {
-      label: `Critical Priority (${criticalCount})`,
-      filter: () => {
-        setFilterStatus('');
-        setFilterPriority('critical');
-        setSearchQuery('');
-      },
-    },
-    {
-      label: `Not Started (${identifiedCount})`,
-      filter: () => {
-        setFilterStatus('identified');
-        setFilterPriority('');
-        setSearchQuery('');
-      },
-    },
+    { label: `Overdue (${overdueCount})`, filter: () => {
+      setFilterStatus('');
+      setFilterPriority('');
+      setSearchQuery('');
+    }},
+    { label: `Critical Priority (${criticalCount})`, filter: () => {
+      setFilterStatus('');
+      setFilterPriority('critical');
+      setSearchQuery('');
+    }},
+    { label: `Not Started (${identifiedCount})`, filter: () => {
+      setFilterStatus('identified');
+      setFilterPriority('');
+      setSearchQuery('');
+    }},
   ];
 
   const handleExportCSV = () => {
-    const headers = [
-      'Title',
-      'Priority',
-      'Status',
-      'Due Date',
-      'Source',
-      'Description',
-    ];
+    const headers = ['Title', 'Priority', 'Status', 'Due Date', 'Source', 'Description'];
     const rows = filteredObligations.map((o) => [
       `"${o.title.replace(/"/g, '""')}"`,
       o.priority,
@@ -290,19 +260,12 @@ export default function ObligationsPage() {
     .filter((o) => {
       if (filterStatus && o.status !== filterStatus) return false;
       if (filterPriority && o.priority !== filterPriority) return false;
-      if (
-        searchQuery &&
-        !o.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-        return false;
+      if (searchQuery && !o.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     })
     .sort((a, b) => {
       const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      return (
-        (priorityOrder[a.priority as keyof typeof priorityOrder] ?? 99) -
-        (priorityOrder[b.priority as keyof typeof priorityOrder] ?? 99)
-      );
+      return (priorityOrder[a.priority as keyof typeof priorityOrder] ?? 99) - (priorityOrder[b.priority as keyof typeof priorityOrder] ?? 99);
     });
 
   if (loading) {
@@ -342,12 +305,8 @@ export default function ObligationsPage() {
             <ArrowLeft className="h-4 w-4" />
             Back to compliance
           </Link>
-          <h1 className="text-3xl font-bold text-white mt-2">
-            Compliance Obligations
-          </h1>
-          <p className="text-slate-400">
-            Manage EU AI Act obligations across your organization
-          </p>
+          <h1 className="text-3xl font-bold text-white mt-2">Compliance Obligations</h1>
+          <p className="text-slate-400">Manage EU AI Act obligations across your organization</p>
         </div>
         {obligations.length > 0 && (
           <button
@@ -391,39 +350,16 @@ export default function ObligationsPage() {
         <div className="flex items-start gap-3 mb-4">
           <Download className="h-5 w-5 text-purple-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-white mb-2">
-              Quick Import: Obligation Templates
-            </h3>
+            <h3 className="font-semibold text-white mb-2">Quick Import: Obligation Templates</h3>
             <p className="text-sm text-slate-400 mb-3">
-              Import pre-defined EU AI Act obligations based on your system risk
-              levels
+              Import pre-defined EU AI Act obligations based on your system risk levels
             </p>
             <div className="flex gap-2 flex-wrap">
               {[
-                {
-                  level: 'unacceptable',
-                  label: 'Unacceptable Risk',
-                  color:
-                    'bg-red-900/40 text-red-300 border-red-800/60 hover:bg-red-900/60',
-                },
-                {
-                  level: 'high',
-                  label: 'High Risk',
-                  color:
-                    'bg-orange-900/40 text-orange-300 border-orange-800/60 hover:bg-orange-900/60',
-                },
-                {
-                  level: 'medium',
-                  label: 'Medium Risk',
-                  color:
-                    'bg-amber-900/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/60',
-                },
-                {
-                  level: 'low',
-                  label: 'Low Risk',
-                  color:
-                    'bg-blue-900/40 text-blue-300 border-blue-800/60 hover:bg-blue-900/60',
-                },
+                { level: 'unacceptable', label: 'Unacceptable Risk', color: 'bg-red-900/40 text-red-300 border-red-800/60 hover:bg-red-900/60' },
+                { level: 'high', label: 'High Risk', color: 'bg-orange-900/40 text-orange-300 border-orange-800/60 hover:bg-orange-900/60' },
+                { level: 'medium', label: 'Medium Risk', color: 'bg-amber-900/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/60' },
+                { level: 'low', label: 'Low Risk', color: 'bg-blue-900/40 text-blue-300 border-blue-800/60 hover:bg-blue-900/60' },
               ].map((template) => (
                 <button
                   key={template.level}
@@ -431,9 +367,7 @@ export default function ObligationsPage() {
                   disabled={importingTemplates === template.level}
                   className={`px-3 py-1.5 text-xs font-medium rounded border transition ${template.color} disabled:opacity-50`}
                 >
-                  {importingTemplates === template.level
-                    ? 'Importing...'
-                    : `Import ${template.label}`}
+                  {importingTemplates === template.level ? 'Importing...' : `Import ${template.label}`}
                 </button>
               ))}
             </div>
@@ -451,17 +385,13 @@ export default function ObligationsPage() {
               <div className="flex items-center gap-2 pb-2 border-b border-slate-700">
                 <input
                   type="checkbox"
-                  checked={
-                    selectedIds.size === filteredObligations.length &&
-                    filteredObligations.length > 0
-                  }
+                  checked={selectedIds.size === filteredObligations.length && filteredObligations.length > 0}
                   onChange={toggleSelectAll}
                   className="h-4 w-4 rounded cursor-pointer"
                   aria-label="Select all obligations"
                 />
                 <label className="text-xs text-slate-400 cursor-pointer">
-                  {selectedIds.size === filteredObligations.length &&
-                  filteredObligations.length > 0
+                  {selectedIds.size === filteredObligations.length && filteredObligations.length > 0
                     ? `Deselect all (${filteredObligations.length})`
                     : `Select all (${filteredObligations.length})`}
                 </label>
@@ -482,9 +412,7 @@ export default function ObligationsPage() {
             {/* Status and Priority Filters */}
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">
-                  Status
-                </label>
+                <label className="block text-xs text-slate-400 mb-1">Status</label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
@@ -498,9 +426,7 @@ export default function ObligationsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">
-                  Priority
-                </label>
+                <label className="block text-xs text-slate-400 mb-1">Priority</label>
                 <select
                   value={filterPriority}
                   onChange={(e) => setFilterPriority(e.target.value)}
@@ -523,8 +449,7 @@ export default function ObligationsPage() {
         <div className="rounded-lg border border-cyan-800/60 bg-cyan-950/30 p-4 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-cyan-300">
-              {selectedIds.size} obligation{selectedIds.size !== 1 ? 's' : ''}{' '}
-              selected
+              {selectedIds.size} obligation{selectedIds.size !== 1 ? 's' : ''} selected
             </span>
             <div className="flex gap-2">
               <button
@@ -556,9 +481,7 @@ export default function ObligationsPage() {
       {/* Obligations List */}
       {filteredObligations.length === 0 ? (
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-8 text-center text-slate-400">
-          {obligations.length === 0
-            ? 'No obligations yet'
-            : 'No obligations match your filters'}
+          {obligations.length === 0 ? 'No obligations yet' : 'No obligations match your filters'}
         </div>
       ) : (
         <div className="space-y-3">
@@ -584,22 +507,15 @@ export default function ObligationsPage() {
                     <div
                       className={`px-2 py-1 rounded text-xs font-semibold border ${PRIORITY_COLORS[obligation.priority]}`}
                     >
-                      {obligation.priority.charAt(0).toUpperCase() +
-                        obligation.priority.slice(1)}
+                      {obligation.priority.charAt(0).toUpperCase() + obligation.priority.slice(1)}
                     </div>
-                    <StatusIcon
-                      className={`h-5 w-5 ${STATUS_COLORS[obligation.status]}`}
-                    />
+                    <StatusIcon className={`h-5 w-5 ${STATUS_COLORS[obligation.status]}`} />
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-white truncate">
-                      {obligation.title}
-                    </h3>
-                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
-                      {obligation.description}
-                    </p>
+                    <h3 className="font-semibold text-white truncate">{obligation.title}</h3>
+                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">{obligation.description}</p>
                     <div className="flex gap-4 text-xs text-slate-500 mt-2">
                       <span>Source: {obligation.source}</span>
                       {editingDueDateId === obligation.id ? (
@@ -612,9 +528,7 @@ export default function ObligationsPage() {
                             disabled={updatingId === obligation.id}
                           />
                           <button
-                            onClick={() =>
-                              handleUpdateDueDate(obligation.id, editingDueDate)
-                            }
+                            onClick={() => handleUpdateDueDate(obligation.id, editingDueDate)}
                             disabled={updatingId === obligation.id}
                             className="text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
                           >
@@ -632,13 +546,10 @@ export default function ObligationsPage() {
                         <button
                           onClick={() => {
                             setEditingDueDateId(obligation.id);
-                            setEditingDueDate(
-                              obligation.due_date?.split('T')[0] || ''
-                            );
+                            setEditingDueDate(obligation.due_date?.split('T')[0] || '');
                           }}
                           className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                            obligation.due_date &&
-                            isOverdue(obligation.due_date)
+                            obligation.due_date && isOverdue(obligation.due_date)
                               ? 'bg-red-900/30 text-red-300 hover:bg-red-900/50'
                               : obligation.due_date
                                 ? 'bg-amber-900/30 text-amber-300 hover:bg-amber-900/50'
@@ -655,56 +566,42 @@ export default function ObligationsPage() {
                   </div>
 
                   {/* Status Actions */}
-                  {obligation.status !== 'completed' &&
-                    obligation.status !== 'not_applicable' && (
-                      <div className="flex gap-2 flex-shrink-0">
-                        {obligation.status === 'identified' && (
+                  {obligation.status !== 'completed' && obligation.status !== 'not_applicable' && (
+                    <div className="flex gap-2 flex-shrink-0">
+                      {obligation.status === 'identified' && (
+                        <button
+                          onClick={() => handleStatusChange(obligation.id, 'in_progress')}
+                          disabled={updatingId === obligation.id}
+                          className="px-2 py-1 text-xs font-medium rounded bg-cyan-900/50 text-cyan-300 border border-cyan-800/60 hover:bg-cyan-900/70 disabled:opacity-50"
+                        >
+                          {updatingId === obligation.id ? 'Starting...' : 'Start'}
+                        </button>
+                      )}
+                      {obligation.status === 'in_progress' && (
+                        <>
                           <button
-                            onClick={() =>
-                              handleStatusChange(obligation.id, 'in_progress')
-                            }
+                            onClick={() => handleStatusChange(obligation.id, 'completed')}
                             disabled={updatingId === obligation.id}
-                            className="px-2 py-1 text-xs font-medium rounded bg-cyan-900/50 text-cyan-300 border border-cyan-800/60 hover:bg-cyan-900/70 disabled:opacity-50"
+                            className="px-2 py-1 text-xs font-medium rounded bg-green-900/50 text-green-300 border border-green-800/60 hover:bg-green-900/70 disabled:opacity-50"
                           >
-                            {updatingId === obligation.id
-                              ? 'Starting...'
-                              : 'Start'}
+                            {updatingId === obligation.id ? 'Completing...' : 'Complete'}
                           </button>
-                        )}
-                        {obligation.status === 'in_progress' && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(obligation.id, 'completed')
-                              }
-                              disabled={updatingId === obligation.id}
-                              className="px-2 py-1 text-xs font-medium rounded bg-green-900/50 text-green-300 border border-green-800/60 hover:bg-green-900/70 disabled:opacity-50"
-                            >
-                              {updatingId === obligation.id
-                                ? 'Completing...'
-                                : 'Complete'}
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(obligation.id, 'identified')
-                              }
-                              disabled={updatingId === obligation.id}
-                              className="px-2 py-1 text-xs font-medium rounded bg-slate-800/50 text-slate-300 border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
-                            >
-                              Revert
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                          <button
+                            onClick={() => handleStatusChange(obligation.id, 'identified')}
+                            disabled={updatingId === obligation.id}
+                            className="px-2 py-1 text-xs font-medium rounded bg-slate-800/50 text-slate-300 border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                          >
+                            Revert
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
 
                   {/* Completed/Not Applicable */}
-                  {(obligation.status === 'completed' ||
-                    obligation.status === 'not_applicable') && (
+                  {(obligation.status === 'completed' || obligation.status === 'not_applicable') && (
                     <div className="text-xs font-semibold text-slate-400 py-1 px-2">
-                      {obligation.status === 'completed'
-                        ? '✓ Completed'
-                        : 'N/A'}
+                      {obligation.status === 'completed' ? '✓ Completed' : 'N/A'}
                     </div>
                   )}
                 </div>

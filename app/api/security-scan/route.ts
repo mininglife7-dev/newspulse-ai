@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import {
-  scanDependencies,
-  formatSecurityAlert,
-  getSecuritySummary,
-} from '@/lib/dependency-security-scanner';
+import { scanDependencies, formatSecurityAlert, getSecuritySummary } from '@/lib/dependency-security-scanner';
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -30,36 +26,21 @@ export async function GET(req: Request) {
 
     // Log scan results (safe for production)
     if (result.scanStatus === 'critical-found') {
-      logger.error(
-        'Security scan detected critical vulnerabilities',
-        'SECURITY_CRITICAL',
-        {
-          critical: result.critical,
-          high: result.high,
-        }
-      );
+      logger.error('Security scan detected critical vulnerabilities', 'SECURITY_CRITICAL', {
+        critical: result.critical,
+        high: result.high,
+      });
     } else if (result.scanStatus === 'vulnerabilities-found') {
-      logger.warn(
-        'Security scan detected vulnerabilities',
-        'SECURITY_WARNING',
-        {
-          total: result.total,
-          high: result.high,
-        }
-      );
+      logger.warn('Security scan detected vulnerabilities', 'SECURITY_WARNING', {
+        total: result.total,
+        high: result.high,
+      });
     } else if (result.resolvedVulnerabilities.length > 0) {
-      logger.info(
-        'Security scan: vulnerabilities resolved',
-        'SECURITY_RESOLVED',
-        {
-          resolved: result.resolvedVulnerabilities.length,
-        }
-      );
+      logger.info('Security scan: vulnerabilities resolved', 'SECURITY_RESOLVED', {
+        resolved: result.resolvedVulnerabilities.length,
+      });
     } else {
-      logger.info(
-        'Security scan: no vulnerabilities detected',
-        'SECURITY_CLEAN'
-      );
+      logger.info('Security scan: no vulnerabilities detected', 'SECURITY_CLEAN');
     }
 
     return NextResponse.json(

@@ -33,15 +33,9 @@ export async function GET(request: NextRequest) {
 
       case 'events': {
         const table = request.nextUrl.searchParams.get('table');
-        const limit = parseInt(
-          request.nextUrl.searchParams.get('limit') || '50',
-          10
-        );
+        const limit = parseInt(request.nextUrl.searchParams.get('limit') || '50', 10);
         const events = getRecentEvents(table || undefined, limit);
-        return NextResponse.json(
-          { ok: true, timestamp, payload: events },
-          { status: 200 }
-        );
+        return NextResponse.json({ ok: true, timestamp, payload: events }, { status: 200 });
       }
 
       case 'conflicts':
@@ -61,8 +55,7 @@ export async function GET(request: NextRequest) {
           {
             ok: false,
             timestamp,
-            error:
-              'Invalid action. Valid actions: health, subscriptions, events, conflicts, status',
+            error: 'Invalid action. Valid actions: health, subscriptions, events, conflicts, status',
           },
           { status: 400 }
         );
@@ -138,11 +131,7 @@ export async function POST(request: NextRequest) {
         const subId = cmd.subscription_id as unknown;
         if (typeof subId !== 'string') {
           return NextResponse.json(
-            {
-              ok: false,
-              timestamp,
-              error: 'Missing or invalid subscription_id field',
-            },
+            { ok: false, timestamp, error: 'Missing or invalid subscription_id field' },
             { status: 400 }
           );
         }
@@ -179,8 +168,7 @@ export async function POST(request: NextRequest) {
             {
               ok: false,
               timestamp,
-              error:
-                'Missing or invalid fields: table, record_id, local_value, remote_value, operation',
+              error: 'Missing or invalid fields: table, record_id, local_value, remote_value, operation',
             },
             { status: 400 }
           );
@@ -205,11 +193,7 @@ export async function POST(request: NextRequest) {
         const strategy = cmd.strategy as unknown;
         const mergedValue = cmd.merged_value as unknown;
 
-        if (
-          typeof table !== 'string' ||
-          typeof recordId !== 'string' ||
-          typeof strategy !== 'string'
-        ) {
+        if (typeof table !== 'string' || typeof recordId !== 'string' || typeof strategy !== 'string') {
           return NextResponse.json(
             {
               ok: false,
@@ -224,9 +208,7 @@ export async function POST(request: NextRequest) {
           table,
           recordId,
           strategy as any,
-          typeof mergedValue === 'object'
-            ? (mergedValue as Record<string, unknown>)
-            : undefined
+          typeof mergedValue === 'object' ? (mergedValue as Record<string, unknown>) : undefined
         );
 
         if (!resolved) {
@@ -247,8 +229,7 @@ export async function POST(request: NextRequest) {
           {
             ok: false,
             timestamp,
-            error:
-              'Invalid command. Valid commands: init, disconnect, subscribe, unsubscribe, detect-conflict, resolve-conflict',
+            error: 'Invalid command. Valid commands: init, disconnect, subscribe, unsubscribe, detect-conflict, resolve-conflict',
           },
           { status: 400 }
         );

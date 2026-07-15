@@ -15,12 +15,8 @@ interface UpdateAssessmentRequest {
   answers?: Record<string, any>;
 }
 
-async function resolveContext(
-  supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
   const { data: membership } = await supabase
@@ -86,7 +82,10 @@ export async function GET(request: NextRequest) {
   }
 
   if (!data) {
-    return NextResponse.json({ ok: true, assessment: null }, { status: 200 });
+    return NextResponse.json(
+      { ok: true, assessment: null },
+      { status: 200 }
+    );
   }
 
   return NextResponse.json({ ok: true, assessment: data });
@@ -258,28 +257,20 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (createError || !created) {
-            console.warn(
-              '[api/assessments] failed to create obligation:',
-              createError
-            );
+            console.warn('[api/assessments] failed to create obligation:', createError);
             continue;
           }
           obligationId = created.id;
         }
 
         // Link obligation to assessment
-        const { error: linkError } = await supabase
-          .from('assessment_obligations')
-          .insert({
-            assessment_id: response.id,
-            obligation_id: obligationId,
-          });
+        const { error: linkError } = await supabase.from('assessment_obligations').insert({
+          assessment_id: response.id,
+          obligation_id: obligationId,
+        });
 
         if (linkError) {
-          console.warn(
-            '[api/assessments] failed to link obligation:',
-            linkError
-          );
+          console.warn('[api/assessments] failed to link obligation:', linkError);
         }
       }
     } catch (err) {

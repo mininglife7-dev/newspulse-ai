@@ -141,9 +141,7 @@ describe('Risk Assessment Classification', () => {
         ])
       );
 
-      expect(withTransparency.riskScore).toBeLessThan(
-        withoutTransparency.riskScore
-      );
+      expect(withTransparency.riskScore).toBeLessThan(withoutTransparency.riskScore);
     });
 
     it('should reduce risk for systems with human oversight', () => {

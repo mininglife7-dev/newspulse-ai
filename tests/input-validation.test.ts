@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  validators,
-  validate,
-  sanitizeString,
-  sanitizeStringArray,
-} from '@/lib/input-validation';
+import { validators, validate, sanitizeString, sanitizeStringArray } from '@/lib/input-validation';
 
 describe('Input Validation Framework', () => {
   describe('validators.string', () => {
@@ -78,9 +73,7 @@ describe('Input Validation Framework', () => {
     it('accepts valid emails', () => {
       const validator = validators.email();
       expect(validator.validate('user@example.com').ok).toBe(true);
-      expect(validator.validate('  user@example.com  ').value).toBe(
-        'user@example.com'
-      );
+      expect(validator.validate('  user@example.com  ').value).toBe('user@example.com');
     });
 
     it('converts to lowercase', () => {
@@ -257,9 +250,7 @@ describe('Input Validation Framework', () => {
 
   describe('sanitizeString', () => {
     it('removes angle brackets', () => {
-      expect(sanitizeString('<script>alert("xss")</script>')).toBe(
-        'scriptalert("xss")/script'
-      );
+      expect(sanitizeString('<script>alert("xss")</script>')).toBe('scriptalert("xss")/script');
     });
 
     it('trims whitespace', () => {
@@ -294,9 +285,7 @@ describe('Input Validation Framework', () => {
         country: validators.string({ minLength: 1, maxLength: 255 }),
         industry: validators.string({ minLength: 1, maxLength: 255 }),
         website: validators.optional(validators.url()),
-        description: validators.optional(
-          validators.string({ maxLength: 2000 })
-        ),
+        description: validators.optional(validators.string({ maxLength: 2000 })),
       };
 
       const valid = {
@@ -313,11 +302,7 @@ describe('Input Validation Framework', () => {
 
     it('validates incident trigger', () => {
       const schema = {
-        type: validators.enum([
-          'error_rate',
-          'latency',
-          'availability',
-        ] as const),
+        type: validators.enum(['error_rate', 'latency', 'availability'] as const),
         severity: validators.enum(['warning', 'critical'] as const),
         current: validators.number({ min: 0 }),
         threshold: validators.number({ min: 0 }),
@@ -336,13 +321,7 @@ describe('Input Validation Framework', () => {
 
     it('validates knowledge entry', () => {
       const schema = {
-        type: validators.enum([
-          'decision',
-          'learning',
-          'pattern',
-          'fix',
-          'risk',
-        ] as const),
+        type: validators.enum(['decision', 'learning', 'pattern', 'fix', 'risk'] as const),
         title: validators.string({ minLength: 1, maxLength: 255 }),
         description: validators.string({ minLength: 1, maxLength: 5000 }),
         evidence: validators.array(validators.string(), { minLength: 1 }),

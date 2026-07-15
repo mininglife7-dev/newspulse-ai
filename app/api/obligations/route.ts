@@ -3,9 +3,7 @@ import { createRouteClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
-async function resolveContext(
-  supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
+async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -90,16 +88,8 @@ export async function GET(request: NextRequest) {
         ?.map((item: any) => item.obligations)
         .filter(Boolean)
         .sort((a: any, b: any) => {
-          const priorityOrder: Record<string, number> = {
-            critical: 0,
-            high: 1,
-            medium: 2,
-            low: 3,
-          };
-          return (
-            (priorityOrder[a.priority as string] || 99) -
-            (priorityOrder[b.priority as string] || 99)
-          );
+          const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+          return (priorityOrder[a.priority as string] || 99) - (priorityOrder[b.priority as string] || 99);
         });
 
       return NextResponse.json({ ok: true, obligations: obligations || [] });
@@ -147,33 +137,20 @@ export async function GET(request: NextRequest) {
         ?.map((item: any) => item.obligations)
         .filter(Boolean)
         .sort((a: any, b: any) => {
-          const priorityOrder: Record<string, number> = {
-            critical: 0,
-            high: 1,
-            medium: 2,
-            low: 3,
-          };
-          return (
-            (priorityOrder[a.priority as string] || 99) -
-            (priorityOrder[b.priority as string] || 99)
-          );
+          const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+          return (priorityOrder[a.priority as string] || 99) - (priorityOrder[b.priority as string] || 99);
         });
 
       return NextResponse.json({ ok: true, obligations: obligations || [] });
     } else {
       // Fetch all company obligations
-      let query = supabase
-        .from('obligations')
-        .select('*')
-        .eq('workspace_id', ctx.workspaceId);
+      let query = supabase.from('obligations').select('*').eq('workspace_id', ctx.workspaceId);
 
       if (status) {
         query = query.eq('status', status);
       }
 
-      const { data, error } = await query.order('priority', {
-        ascending: true,
-      });
+      const { data, error } = await query.order('priority', { ascending: true });
 
       if (error) {
         console.error('[api/obligations] query failed:', error);
@@ -248,18 +225,10 @@ export async function PUT(request: NextRequest) {
     // Build update payload with only provided fields
     const updateData: Record<string, any> = {};
     if (body.status !== undefined) {
-      const validStatuses = [
-        'identified',
-        'in_progress',
-        'completed',
-        'not_applicable',
-      ];
+      const validStatuses = ['identified', 'in_progress', 'completed', 'not_applicable'];
       if (!validStatuses.includes(body.status)) {
         return NextResponse.json(
-          {
-            ok: false,
-            error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
-          },
+          { ok: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
           { status: 400 }
         );
       }
@@ -269,10 +238,7 @@ export async function PUT(request: NextRequest) {
       const validPriorities = ['critical', 'high', 'medium', 'low'];
       if (!validPriorities.includes(body.priority)) {
         return NextResponse.json(
-          {
-            ok: false,
-            error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}`,
-          },
+          { ok: false, error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}` },
           { status: 400 }
         );
       }

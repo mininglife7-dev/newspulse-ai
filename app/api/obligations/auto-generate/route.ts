@@ -27,21 +27,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const {
-    assessmentId,
-    workspaceId,
-    companyId,
-    riskLevel,
-    obligations: obligationTexts,
-  } = body;
+  const { assessmentId, workspaceId, companyId, riskLevel, obligations: obligationTexts } = body;
 
-  if (
-    !assessmentId ||
-    !workspaceId ||
-    !companyId ||
-    !riskLevel ||
-    !Array.isArray(obligationTexts)
-  ) {
+  if (!assessmentId || !workspaceId || !companyId || !riskLevel || !Array.isArray(obligationTexts)) {
     return NextResponse.json(
       { ok: false, error: 'Missing required fields' },
       { status: 400 }
@@ -126,12 +114,10 @@ export async function POST(req: Request) {
       }
 
       // Link obligation to assessment
-      const { error: linkError } = await supabase
-        .from('assessment_obligations')
-        .insert({
-          assessment_id: assessmentId,
-          obligation_id: obligationId,
-        });
+      const { error: linkError } = await supabase.from('assessment_obligations').insert({
+        assessment_id: assessmentId,
+        obligation_id: obligationId,
+      });
 
       if (linkError) {
         console.error('[obligations] failed to link obligation:', linkError);

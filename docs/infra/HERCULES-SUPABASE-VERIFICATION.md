@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-12  
 **Status:** ✅ SCHEMA UPDATED — Ready for Production Deployment  
-**Verification Level:** PRODUCTION GO
+**Verification Level:** PRODUCTION GO  
 
 ---
 
@@ -11,7 +11,6 @@
 Supabase schema has been updated with HERCULES Multi-Enterprise Persistence tables. All required tables, indexes, and configurations are documented and ready for production deployment.
 
 **Deployment Checklist:**
-
 - ✅ HERCULES persistence tables defined (6 tables)
 - ✅ Indexes created for optimal query performance
 - ✅ Schema compatible with checkpoint/restore cycle
@@ -23,7 +22,6 @@ Supabase schema has been updated with HERCULES Multi-Enterprise Persistence tabl
 ## Supabase Schema Changes
 
 ### 1. hercules_checkpoints
-
 **Purpose:** Full kernel state snapshots for recovery
 
 ```sql
@@ -41,9 +39,8 @@ create index if not exists hercules_checkpoints_created_idx on public.hercules_c
 ```
 
 **Capacity:** Can store full kernel state including:
-
 - All enterprises (metadata)
-- All missions and objectives
+- All missions and objectives  
 - All tasks in queue (1000s of tasks)
 - Event log (last 1000 events)
 - Audit log (last 10000 entries)
@@ -55,7 +52,6 @@ create index if not exists hercules_checkpoints_created_idx on public.hercules_c
 ---
 
 ### 2. hercules_enterprise_missions
-
 **Purpose:** Per-enterprise mission tracking
 
 ```sql
@@ -69,7 +65,7 @@ create table if not exists public.hercules_enterprise_missions (
     updated_at timestamptz default now()
 );
 
-create index if not exists hercules_missions_enterprise_idx
+create index if not exists hercules_missions_enterprise_idx 
   on public.hercules_enterprise_missions(enterprise_id);
 ```
 
@@ -78,7 +74,6 @@ create index if not exists hercules_missions_enterprise_idx
 ---
 
 ### 3. hercules_enterprise_tasks
-
 **Purpose:** Per-enterprise task queue persistence
 
 ```sql
@@ -93,21 +88,19 @@ create table if not exists public.hercules_enterprise_tasks (
     completed_at timestamptz
 );
 
-create index if not exists hercules_tasks_enterprise_idx
+create index if not exists hercules_tasks_enterprise_idx 
   on public.hercules_enterprise_tasks(enterprise_id);
-create index if not exists hercules_tasks_state_idx
+create index if not exists hercules_tasks_state_idx 
   on public.hercules_enterprise_tasks(state);
 ```
 
 **Query Patterns:**
-
 - SELECT * WHERE enterprise_id = ? AND state = 'QUEUED' ORDER BY priority
 - SELECT * WHERE enterprise_id = ? AND state = 'RUNNING'
 
 ---
 
 ### 4. hercules_enterprise_events
-
 **Purpose:** Per-enterprise event stream
 
 ```sql
@@ -120,21 +113,19 @@ create table if not exists public.hercules_enterprise_events (
     created_at timestamptz default now()
 );
 
-create index if not exists hercules_events_enterprise_idx
+create index if not exists hercules_events_enterprise_idx 
   on public.hercules_enterprise_events(enterprise_id);
-create index if not exists hercules_events_correlation_idx
+create index if not exists hercules_events_correlation_idx 
   on public.hercules_enterprise_events(correlation_id);
 ```
 
 **Query Patterns:**
-
 - SELECT * WHERE enterprise_id = ? ORDER BY created_at DESC LIMIT 100
 - SELECT * WHERE correlation_id = ? (trace single transaction)
 
 ---
 
 ### 5. hercules_enterprise_audit
-
 **Purpose:** Per-enterprise audit trail
 
 ```sql
@@ -146,7 +137,7 @@ create table if not exists public.hercules_enterprise_audit (
     created_at timestamptz default now()
 );
 
-create index if not exists hercules_audit_enterprise_idx
+create index if not exists hercules_audit_enterprise_idx 
   on public.hercules_enterprise_audit(enterprise_id);
 ```
 
@@ -155,7 +146,6 @@ create index if not exists hercules_audit_enterprise_idx
 ---
 
 ### 6. hercules_recovery_log
-
 **Purpose:** Track all kernel recovery events
 
 ```sql
@@ -168,7 +158,7 @@ create table if not exists public.hercules_recovery_log (
     event_count int
 );
 
-create index if not exists hercules_recovery_checkpoint_idx
+create index if not exists hercules_recovery_checkpoint_idx 
   on public.hercules_recovery_log(checkpoint_id);
 ```
 
@@ -210,15 +200,14 @@ After deployment, run this verification query in Supabase SQL Editor:
 
 ```sql
 -- Verify HERCULES tables exist
-select table_name
-from information_schema.tables
-where table_schema = 'public'
+select table_name 
+from information_schema.tables 
+where table_schema = 'public' 
   and table_name like 'hercules_%'
 order by table_name;
 ```
 
 Expected output (6 tables):
-
 - hercules_checkpoints
 - hercules_enterprise_audit
 - hercules_enterprise_events
@@ -230,14 +219,13 @@ Expected output (6 tables):
 
 ```sql
 -- Verify indexes created for performance
-select schemaname, tablename, indexname
-from pg_indexes
+select schemaname, tablename, indexname 
+from pg_indexes 
 where tablename like 'hercules_%'
 order by tablename, indexname;
 ```
 
 Expected indexes:
-
 - `hercules_checkpoints_created_idx` (for recent checkpoint queries)
 - `hercules_checkpoints_status_idx` (for status filtering)
 - `hercules_missions_enterprise_idx` (for per-enterprise queries)
@@ -278,19 +266,19 @@ To verify production readiness without making changes, run this SQL in Supabase:
 -- Non-destructive readiness check (SELECT only)
 with table_check as (
   select count(*) as table_count
-  from information_schema.tables
-  where table_schema = 'public'
+  from information_schema.tables 
+  where table_schema = 'public' 
     and table_name like 'hercules_%'
 ),
 index_check as (
   select count(*) as index_count
-  from pg_indexes
+  from pg_indexes 
   where tablename like 'hercules_%'
 )
-select
+select 
   tc.table_count as required_tables,
   ic.index_count as required_indexes,
-  case
+  case 
     when tc.table_count >= 6 and ic.index_count >= 9 then '✅ READY'
     else '❌ NOT READY'
   end as status
@@ -298,7 +286,6 @@ from table_check tc, index_check ic;
 ```
 
 Expected output:
-
 ```
 required_tables | required_indexes | status
         6       |        9         | ✅ READY
@@ -360,7 +347,7 @@ After deployment, monitor these key metrics:
 
 ```sql
 -- Monitor table sizes
-select
+select 
   schemaname,
   tablename,
   pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
@@ -373,7 +360,7 @@ order by pg_total_relation_size(schemaname||'.'||tablename) desc;
 
 ```sql
 -- Monitor checkpoint activity
-select
+select 
   status,
   count(*) as count,
   max(created_at) as last_checkpoint
@@ -386,10 +373,10 @@ group by status;
 ```sql
 -- Example: Verify checkpoint lookup is fast (should be <100ms)
 explain analyze
-select metadata
-from hercules_checkpoints
-where status = 'complete'
-order by created_at desc
+select metadata 
+from hercules_checkpoints 
+where status = 'complete' 
+order by created_at desc 
 limit 1;
 ```
 
@@ -398,7 +385,6 @@ limit 1;
 ## Success Criteria
 
 ✅ **Phase 7a (Supabase) COMPLETE when:**
-
 - [x] 6 HERCULES persistence tables exist in production
 - [x] 9 indexes created for performance
 - [x] Schema is idempotent (`if not exists` on all creates)
@@ -413,7 +399,7 @@ limit 1;
 1. **Row-Level Security (RLS):** Not implemented in Phase 1.0
    - HERCULES kernel manages enterprise isolation at application layer
    - RLS can be added in Phase 6+ for additional database-level security
-
+   
 2. **Encryption at Rest:** Relies on Supabase default encryption
    - Checkpoint state (JSON) not encrypted; consider encryption-at-rest for PII-sensitive data in Phase 2.0
 

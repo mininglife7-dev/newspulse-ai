@@ -20,11 +20,11 @@
 
 ### Root Causes (in order of likelihood)
 
-| Cause                        | Probability | How to Verify                                |
-| ---------------------------- | ----------- | -------------------------------------------- |
-| Supabase schema not deployed | 95%         | Check Supabase SQL Editor → No tables exist  |
-| RLS policies missing         | 4%          | Tables exist but `auth.users()` returns null |
-| Database connection failed   | 1%          | Supabase dashboard shows connection error    |
+| Cause | Probability | How to Verify |
+|---|---|---|
+| Supabase schema not deployed | 95% | Check Supabase SQL Editor → No tables exist |
+| RLS policies missing | 4% | Tables exist but `auth.users()` returns null |
+| Database connection failed | 1% | Supabase dashboard shows connection error |
 
 ### Fix Steps
 
@@ -42,7 +42,7 @@
 - Supabase dashboard → SQL Editor
 - Run this query:
   ```sql
-  SELECT table_name FROM information_schema.tables
+  SELECT table_name FROM information_schema.tables 
   WHERE table_schema = 'public';
   ```
 - Should return: profiles, workspaces, companies, workspace_members, etc.
@@ -54,7 +54,7 @@
 - Supabase dashboard → SQL Editor
 - Run this query:
   ```sql
-  SELECT tablename, policyname FROM pg_policies
+  SELECT tablename, policyname FROM pg_policies 
   WHERE schemaname = 'public';
   ```
 - Should return 10+ policies
@@ -70,19 +70,16 @@
 ### Recovery Actions
 
 **If Supabase is down (outage):**
-
 - Check status.supabase.com
 - If outage: Wait 10-30 min for recovery
 - Notify customer: "Brief outage, we're monitoring and should be back shortly"
 
 **If schema missing:**
-
 - Deploy schema immediately (15-30 min)
 - Test signup afterward
 - Notify customer: "We fixed an issue with our database. You can sign up now."
 
 **If something else:**
-
 - Do NOT guess
 - Save the error message
 - Contact Supabase support with full error details
@@ -108,11 +105,11 @@ curl -X POST https://newspulse-ai.vercel.app/auth/signup \
 
 ### Escalation
 
-| Condition                         | Action                       |
-| --------------------------------- | ---------------------------- |
-| Signup still failing after 15 min | Contact Supabase support     |
-| Multiple customers affected       | Post to status page          |
-| Data loss occurred                | Restore from Supabase backup |
+| Condition | Action |
+|---|---|
+| Signup still failing after 15 min | Contact Supabase support |
+| Multiple customers affected | Post to status page |
+| Data loss occurred | Restore from Supabase backup |
 
 ---
 
@@ -129,12 +126,12 @@ curl -X POST https://newspulse-ai.vercel.app/auth/signup \
 
 ### Most Common Causes
 
-| API                     | Likely Cause                | Fix                          |
-| ----------------------- | --------------------------- | ---------------------------- |
-| /api/workspace          | Supabase connection failed  | Restart connection pool      |
-| /api/health             | Missing env var             | Check Vercel env vars        |
-| /api/customer-retention | Memory leak                 | Restart Vercel deployment    |
-| Any                     | Code error in recent deploy | Rollback to previous version |
+| API | Likely Cause | Fix |
+|---|---|---|
+| /api/workspace | Supabase connection failed | Restart connection pool |
+| /api/health | Missing env var | Check Vercel env vars |
+| /api/customer-retention | Memory leak | Restart Vercel deployment |
+| Any | Code error in recent deploy | Rollback to previous version |
 
 ### Fix Steps (By Cause)
 
@@ -197,10 +194,10 @@ All should return valid JSON with no 500 errors.
 
 ### Escalation
 
-| Condition                  | Action                                     |
-| -------------------------- | ------------------------------------------ |
-| Still 500 after 10 min     | Rollback to last known good                |
-| Multiple endpoints failing | May be Vercel/Supabase outage              |
+| Condition | Action |
+|---|---|
+| Still 500 after 10 min | Rollback to last known good |
+| Multiple endpoints failing | May be Vercel/Supabase outage |
 | Specific customer affected | Check if it's customer-specific (bad data) |
 
 ---
@@ -273,10 +270,10 @@ curl -v https://newspulse-ai.vercel.app/api/health
 
 ### Escalation
 
-| Condition                   | Action                                         |
-| --------------------------- | ---------------------------------------------- |
+| Condition | Action |
+|---|---|
 | Errors persist after 30 min | Contact Supabase (may be their infrastructure) |
-| 100+ errors in last hour    | Urgent: Post status update + consider rollback |
+| 100+ errors in last hour | Urgent: Post status update + consider rollback |
 
 ---
 
@@ -293,13 +290,13 @@ curl -v https://newspulse-ai.vercel.app/api/health
 
 ### Root Causes (Order of likelihood)
 
-| Cause                           | Indicator                         | Fix                               |
-| ------------------------------- | --------------------------------- | --------------------------------- |
-| Database query is slow          | Vercel logs show DB wait time >3s | Add index to slow table           |
-| Network latency                 | All APIs slow, consistent delay   | Check ISP/CDN (likely Vercel)     |
-| Vercel function cold start      | First request slow, then fast     | Normal, not a problem             |
-| Memory leak                     | Gets slower over time             | Restart deployment                |
-| Heavy load (legitimate traffic) | Many concurrent users             | Scale Vercel (increase resources) |
+| Cause | Indicator | Fix |
+|---|---|---|
+| Database query is slow | Vercel logs show DB wait time >3s | Add index to slow table |
+| Network latency | All APIs slow, consistent delay | Check ISP/CDN (likely Vercel) |
+| Vercel function cold start | First request slow, then fast | Normal, not a problem |
+| Memory leak | Gets slower over time | Restart deployment |
+| Heavy load (legitimate traffic) | Many concurrent users | Scale Vercel (increase resources) |
 
 ### Fix Steps
 
@@ -307,14 +304,13 @@ curl -v https://newspulse-ai.vercel.app/api/health
 
 ```sql
 -- Check slow queries
-SELECT * FROM pg_stat_statements
-ORDER BY mean_time DESC
+SELECT * FROM pg_stat_statements 
+ORDER BY mean_time DESC 
 LIMIT 10;
 ```
 
 - Identify slow query
 - Add index:
-
 ```sql
 CREATE INDEX idx_name ON table_name (column);
 ```
@@ -404,10 +400,10 @@ curl https://newspulse-ai.vercel.app/api/health
 
 ### Escalation
 
-| Condition                      | Action                                              |
-| ------------------------------ | --------------------------------------------------- |
+| Condition | Action |
+|---|---|
 | Still disconnected after 5 min | Contact Supabase support (provide connection error) |
-| Recurring (happens daily)      | May be connection pool exhaustion, contact Supabase |
+| Recurring (happens daily) | May be connection pool exhaustion, contact Supabase |
 
 ---
 

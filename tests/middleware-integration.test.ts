@@ -1,15 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  checkRateLimit,
-  getRateLimitStatus,
-  getGlobalRateLimiter,
-} from '@/lib/global-rate-limiter';
-import {
-  corsHeaders,
-  handleCorsPrelight,
-  isCorsAllowed,
-  isOriginAllowed,
-} from '@/lib/cors-config';
+import { checkRateLimit, getRateLimitStatus, getGlobalRateLimiter } from '@/lib/global-rate-limiter';
+import { corsHeaders, handleCorsPrelight, isCorsAllowed, isOriginAllowed } from '@/lib/cors-config';
 import { getClientIp } from '@/lib/rate-limiter';
 
 describe('Middleware Integration', () => {
@@ -143,9 +134,7 @@ describe('Middleware Integration', () => {
       const headers = corsHeaders(mockRequest);
 
       expect(headers['Access-Control-Allow-Headers']).toContain('Content-Type');
-      expect(headers['Access-Control-Allow-Headers']).toContain(
-        'Authorization'
-      );
+      expect(headers['Access-Control-Allow-Headers']).toContain('Authorization');
     });
 
     it('handles preflight requests', () => {

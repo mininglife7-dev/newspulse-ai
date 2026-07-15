@@ -51,11 +51,7 @@ export type RemediationAction =
   | 'open-incident'
   | 'alert-founder';
 
-export type ActionClassification =
-  | 'safe-autonomous'
-  | 'reversible-verification-required'
-  | 'founder-gated'
-  | 'prohibited';
+export type ActionClassification = 'safe-autonomous' | 'reversible-verification-required' | 'founder-gated' | 'prohibited';
 
 export type FailureCategory =
   | 'unhealthy-service'
@@ -66,13 +62,7 @@ export type FailureCategory =
   | 'missing-config'
   | 'recurring-test-failure';
 
-export type ErrorCondition =
-  | 'not-found'
-  | 'unauthorized'
-  | 'already-attempted'
-  | 'cooldown-active'
-  | 'max-retries-exceeded'
-  | 'forbidden';
+export type ErrorCondition = 'not-found' | 'unauthorized' | 'already-attempted' | 'cooldown-active' | 'max-retries-exceeded' | 'forbidden';
 
 export interface DetectionEvidence {
   metric: string;
@@ -149,99 +139,98 @@ export interface RemediationGuardrail {
 }
 
 // Safe, pre-approved remediation guardrails
-const REMEDIATION_GUARDRAILS: Record<RemediationAction, RemediationGuardrail> =
-  {
-    'restart-service': {
-      action: 'restart-service',
-      classification: 'reversible-verification-required',
-      maxAttemptsPerIncident: 3,
-      cooldownSeconds: 60,
-      requiresDryRun: false,
-      requiresRecoveryProof: true,
-      forbiddenContexts: ['production-database'],
-    },
-    'clear-cache': {
-      action: 'clear-cache',
-      classification: 'safe-autonomous',
-      maxAttemptsPerIncident: 5,
-      cooldownSeconds: 30,
-      requiresDryRun: false,
-      requiresRecoveryProof: false,
-      forbiddenContexts: [],
-    },
-    'scale-up': {
-      action: 'scale-up',
-      classification: 'reversible-verification-required',
-      maxAttemptsPerIncident: 2,
-      cooldownSeconds: 120,
-      requiresDryRun: true,
-      requiresRecoveryProof: true,
-      forbiddenContexts: ['production-database'],
-    },
-    'circuit-break': {
-      action: 'circuit-break',
-      classification: 'safe-autonomous',
-      maxAttemptsPerIncident: 1,
-      cooldownSeconds: 300,
-      requiresDryRun: false,
-      requiresRecoveryProof: false,
-      forbiddenContexts: [],
-    },
-    'rollback-deployment': {
-      action: 'rollback-deployment',
-      classification: 'founder-gated',
-      maxAttemptsPerIncident: 1,
-      cooldownSeconds: 300,
-      requiresDryRun: true,
-      requiresRecoveryProof: true,
-      forbiddenContexts: ['production-database'],
-    },
-    'retry-failed-job': {
-      action: 'retry-failed-job',
-      classification: 'safe-autonomous',
-      maxAttemptsPerIncident: 3,
-      cooldownSeconds: 30,
-      requiresDryRun: false,
-      requiresRecoveryProof: false,
-      forbiddenContexts: [],
-    },
-    'restore-config': {
-      action: 'restore-config',
-      classification: 'reversible-verification-required',
-      maxAttemptsPerIncident: 2,
-      cooldownSeconds: 60,
-      requiresDryRun: true,
-      requiresRecoveryProof: true,
-      forbiddenContexts: [],
-    },
-    'disable-feature-flag': {
-      action: 'disable-feature-flag',
-      classification: 'safe-autonomous',
-      maxAttemptsPerIncident: 1,
-      cooldownSeconds: 120,
-      requiresDryRun: false,
-      requiresRecoveryProof: false,
-      forbiddenContexts: [],
-    },
-    'open-incident': {
-      action: 'open-incident',
-      classification: 'safe-autonomous',
-      maxAttemptsPerIncident: 1,
-      cooldownSeconds: 0,
-      requiresDryRun: false,
-      requiresRecoveryProof: false,
-      forbiddenContexts: [],
-    },
-    'alert-founder': {
-      action: 'alert-founder',
-      classification: 'safe-autonomous',
-      maxAttemptsPerIncident: 1,
-      cooldownSeconds: 0,
-      requiresDryRun: false,
-      requiresRecoveryProof: false,
-      forbiddenContexts: [],
-    },
-  };
+const REMEDIATION_GUARDRAILS: Record<RemediationAction, RemediationGuardrail> = {
+  'restart-service': {
+    action: 'restart-service',
+    classification: 'reversible-verification-required',
+    maxAttemptsPerIncident: 3,
+    cooldownSeconds: 60,
+    requiresDryRun: false,
+    requiresRecoveryProof: true,
+    forbiddenContexts: ['production-database'],
+  },
+  'clear-cache': {
+    action: 'clear-cache',
+    classification: 'safe-autonomous',
+    maxAttemptsPerIncident: 5,
+    cooldownSeconds: 30,
+    requiresDryRun: false,
+    requiresRecoveryProof: false,
+    forbiddenContexts: [],
+  },
+  'scale-up': {
+    action: 'scale-up',
+    classification: 'reversible-verification-required',
+    maxAttemptsPerIncident: 2,
+    cooldownSeconds: 120,
+    requiresDryRun: true,
+    requiresRecoveryProof: true,
+    forbiddenContexts: ['production-database'],
+  },
+  'circuit-break': {
+    action: 'circuit-break',
+    classification: 'safe-autonomous',
+    maxAttemptsPerIncident: 1,
+    cooldownSeconds: 300,
+    requiresDryRun: false,
+    requiresRecoveryProof: false,
+    forbiddenContexts: [],
+  },
+  'rollback-deployment': {
+    action: 'rollback-deployment',
+    classification: 'founder-gated',
+    maxAttemptsPerIncident: 1,
+    cooldownSeconds: 300,
+    requiresDryRun: true,
+    requiresRecoveryProof: true,
+    forbiddenContexts: ['production-database'],
+  },
+  'retry-failed-job': {
+    action: 'retry-failed-job',
+    classification: 'safe-autonomous',
+    maxAttemptsPerIncident: 3,
+    cooldownSeconds: 30,
+    requiresDryRun: false,
+    requiresRecoveryProof: false,
+    forbiddenContexts: [],
+  },
+  'restore-config': {
+    action: 'restore-config',
+    classification: 'reversible-verification-required',
+    maxAttemptsPerIncident: 2,
+    cooldownSeconds: 60,
+    requiresDryRun: true,
+    requiresRecoveryProof: true,
+    forbiddenContexts: [],
+  },
+  'disable-feature-flag': {
+    action: 'disable-feature-flag',
+    classification: 'safe-autonomous',
+    maxAttemptsPerIncident: 1,
+    cooldownSeconds: 120,
+    requiresDryRun: false,
+    requiresRecoveryProof: false,
+    forbiddenContexts: [],
+  },
+  'open-incident': {
+    action: 'open-incident',
+    classification: 'safe-autonomous',
+    maxAttemptsPerIncident: 1,
+    cooldownSeconds: 0,
+    requiresDryRun: false,
+    requiresRecoveryProof: false,
+    forbiddenContexts: [],
+  },
+  'alert-founder': {
+    action: 'alert-founder',
+    classification: 'safe-autonomous',
+    maxAttemptsPerIncident: 1,
+    cooldownSeconds: 0,
+    requiresDryRun: false,
+    requiresRecoveryProof: false,
+    forbiddenContexts: [],
+  },
+};
 
 // Default remediation policies
 const DEFAULT_REMEDIATION_POLICIES: RemediationPolicy[] = [
@@ -292,36 +281,23 @@ const DEFAULT_REMEDIATION_POLICIES: RemediationPolicy[] = [
   },
 ];
 
-export function generateFailureId(
-  category: FailureCategory,
-  service: string,
-  metric: string
-): string {
+export function generateFailureId(category: FailureCategory, service: string, metric: string): string {
   return `failure-${category}-${service}-${metric}`.substring(0, 100);
 }
 
-export function classifyRemediationAction(
-  action: RemediationAction
-): ActionClassification {
+export function classifyRemediationAction(action: RemediationAction): ActionClassification {
   return REMEDIATION_GUARDRAILS[action]?.classification || 'prohibited';
 }
 
-export function detectFailures(
-  metrics: Record<string, number>,
-  options?: {
-    previousFailures?: Map<string, DetectedFailure>;
-  }
-): DetectedFailure[] {
+export function detectFailures(metrics: Record<string, number>, options?: {
+  previousFailures?: Map<string, DetectedFailure>;
+}): DetectedFailure[] {
   const failures: DetectedFailure[] = [];
   const previousFailures = options?.previousFailures || new Map();
 
   // Check error rate
   if ((metrics.error_rate_percent || 0) > 5) {
-    const id = generateFailureId(
-      'error-rate-spike',
-      'api',
-      'error_rate_percent'
-    );
+    const id = generateFailureId('error-rate-spike', 'api', 'error_rate_percent');
     const isRecurring = previousFailures.has(id);
 
     failures.push({
@@ -341,19 +317,13 @@ export function detectFailures(
       ],
       suggestedActions: ['circuit-break', 'clear-cache'],
       isRecurring,
-      recurringCount: isRecurring
-        ? (previousFailures.get(id)?.recurringCount || 0) + 1
-        : 1,
+      recurringCount: isRecurring ? (previousFailures.get(id)?.recurringCount || 0) + 1 : 1,
     });
   }
 
   // Check response time
   if ((metrics.response_time_p99_ms || 0) > 5000) {
-    const id = generateFailureId(
-      'degraded-latency',
-      'api',
-      'response_time_p99_ms'
-    );
+    const id = generateFailureId('degraded-latency', 'api', 'response_time_p99_ms');
     const isRecurring = previousFailures.has(id);
 
     failures.push({
@@ -373,19 +343,13 @@ export function detectFailures(
       ],
       suggestedActions: ['clear-cache', 'scale-up'],
       isRecurring,
-      recurringCount: isRecurring
-        ? (previousFailures.get(id)?.recurringCount || 0) + 1
-        : 1,
+      recurringCount: isRecurring ? (previousFailures.get(id)?.recurringCount || 0) + 1 : 1,
     });
   }
 
   // Check deployment health
   if ((metrics.deployment_health_percent || 100) < 95) {
-    const id = generateFailureId(
-      'failed-deployment',
-      'deployment',
-      'deployment_health_percent'
-    );
+    const id = generateFailureId('failed-deployment', 'deployment', 'deployment_health_percent');
     const isRecurring = previousFailures.has(id);
 
     failures.push({
@@ -405,19 +369,13 @@ export function detectFailures(
       ],
       suggestedActions: ['rollback-deployment'],
       isRecurring,
-      recurringCount: isRecurring
-        ? (previousFailures.get(id)?.recurringCount || 0) + 1
-        : 1,
+      recurringCount: isRecurring ? (previousFailures.get(id)?.recurringCount || 0) + 1 : 1,
     });
   }
 
   // Check memory usage
   if ((metrics.memory_usage_percent || 0) >= 95) {
-    const id = generateFailureId(
-      'unhealthy-service',
-      'application',
-      'memory_usage_percent'
-    );
+    const id = generateFailureId('unhealthy-service', 'application', 'memory_usage_percent');
     const isRecurring = previousFailures.has(id);
 
     failures.push({
@@ -437,22 +395,18 @@ export function detectFailures(
       ],
       suggestedActions: ['restart-service', 'clear-cache'],
       isRecurring,
-      recurringCount: isRecurring
-        ? (previousFailures.get(id)?.recurringCount || 0) + 1
-        : 1,
+      recurringCount: isRecurring ? (previousFailures.get(id)?.recurringCount || 0) + 1 : 1,
     });
   }
 
   return failures;
 }
 
-export function determineRemediationActions(
-  failures: DetectedFailure[]
-): RemediationAction[] {
+export function determineRemediationActions(failures: DetectedFailure[]): RemediationAction[] {
   const actions: Set<RemediationAction> = new Set();
 
   for (const failure of failures) {
-    failure.suggestedActions.forEach((action) => {
+    failure.suggestedActions.forEach(action => {
       // Only add if not prohibited
       const classification = classifyRemediationAction(action);
       if (classification !== 'prohibited') {
@@ -565,9 +519,7 @@ export async function executeRemediationAction(
     error,
     errorCode,
     beforeState: options?.beforeState,
-    afterState: success
-      ? { service, remediated: true, timestamp: new Date().toISOString() }
-      : undefined,
+    afterState: success ? { service, remediated: true, timestamp: new Date().toISOString() } : undefined,
     recoveryProof,
   };
 }
@@ -576,25 +528,17 @@ export function generateRemediationReport(
   failures: DetectedFailure[],
   attempts: RemediationAttempt[]
 ): RemediationResult {
-  const successfulAttempts = attempts.filter((a) => a.success).length;
-  const successRate =
-    attempts.length > 0 ? (successfulAttempts / attempts.length) * 100 : 100;
+  const successfulAttempts = attempts.filter(a => a.success).length;
+  const successRate = attempts.length > 0 ? (successfulAttempts / attempts.length) * 100 : 100;
 
-  const founderGatedActions = attempts.filter(
-    (a) => a.classification === 'founder-gated'
-  );
-  const escalatedToFounder =
-    founderGatedActions.length > 0 ||
-    (failures.some((f) => f.severity === 'critical') &&
-      !failures.every((f) =>
-        attempts.some((a) => a.failureId === f.id && a.success)
-      ));
+  const founderGatedActions = attempts.filter(a => a.classification === 'founder-gated');
+  const escalatedToFounder = founderGatedActions.length > 0 ||
+    (failures.some(f => f.severity === 'critical') && !failures.every(f =>
+      attempts.some(a => a.failureId === f.id && a.success)
+    ));
 
-  const outageAvoided = failures.every(
-    (f) =>
-      f.severity !== 'critical' ||
-      attempts.some((a) => a.failureId === f.id && a.success)
-  );
+  const outageAvoided = failures.every(f => f.severity !== 'critical' ||
+    attempts.some(a => a.failureId === f.id && a.success));
 
   let summary = '';
   if (failures.length === 0) {
@@ -626,9 +570,8 @@ export function formatRemediationAlert(report: RemediationResult): string {
 
   if (report.detectedFailures.length > 0) {
     output += `Detected Failures (${report.detectedFailures.length}):\n`;
-    report.detectedFailures.forEach((f) => {
-      const icon =
-        f.severity === 'critical' ? '🔴' : f.severity === 'high' ? '🟠' : '🟡';
+    report.detectedFailures.forEach(f => {
+      const icon = f.severity === 'critical' ? '🔴' : f.severity === 'high' ? '🟠' : '🟡';
       output += `  ${icon} ${f.category}: ${f.description}\n`;
       if (f.isRecurring) {
         output += `     ⚠️ Recurring (${f.recurringCount}x)\n`;
@@ -639,7 +582,7 @@ export function formatRemediationAlert(report: RemediationResult): string {
 
   if (report.attempts.length > 0) {
     output += `Remediation Attempts (${report.successRate.toFixed(0)}% success):\n`;
-    report.attempts.forEach((a) => {
+    report.attempts.forEach(a => {
       const icon = a.success ? '✅' : '❌';
       const dryRunLabel = a.dryRun ? ' [DRY-RUN]' : '';
       output += `  ${icon} ${a.action}${dryRunLabel}: ${a.result}\n`;
@@ -653,8 +596,7 @@ export function formatRemediationAlert(report: RemediationResult): string {
   }
 
   if (report.escalatedToFounder) {
-    output +=
-      '\n⚠️ ESCALATION: Founder intervention required for critical decisions.\n';
+    output += '\n⚠️ ESCALATION: Founder intervention required for critical decisions.\n';
   }
 
   return output;
@@ -665,19 +607,16 @@ export class AutonomousRemediationEngine {
   private failureHistory: Map<string, DetectedFailure> = new Map();
   private lastAttemptTime: Map<string, number> = new Map();
 
-  async runRemediationCycle(
-    metrics: Record<string, number>,
-    options?: {
-      dryRun?: boolean;
-    }
-  ): Promise<RemediationResult> {
+  async runRemediationCycle(metrics: Record<string, number>, options?: {
+    dryRun?: boolean;
+  }): Promise<RemediationResult> {
     // Detect failures
     const failures = detectFailures(metrics, {
       previousFailures: this.failureHistory,
     });
 
     // Update failure history
-    failures.forEach((f) => this.failureHistory.set(f.id, f));
+    failures.forEach(f => this.failureHistory.set(f.id, f));
 
     // Determine actions
     const actions = determineRemediationActions(failures);

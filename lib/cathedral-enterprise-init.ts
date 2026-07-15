@@ -12,11 +12,7 @@
  * This is the integration point between Governor Omega and HERCULES.
  */
 
-import {
-  HerculesKernel,
-  type Enterprise,
-  type Objective,
-} from './hercules-kernel';
+import { HerculesKernel, type Enterprise, type Objective } from './hercules-kernel';
 
 export interface CathedralState {
   enterprise: Enterprise;
@@ -107,30 +103,20 @@ export function initializeCathedralEnterprise(): CathedralState {
     {
       id: 'obj-001-launch',
       title: 'Production Launch',
-      description:
-        'Achieve production-ready state with real customer onboarding',
+      description: 'Achieve production-ready state with real customer onboarding',
       status: 'ACTIVE',
       priority: 1,
       targetDate: '2026-08-15',
-      evidence: [
-        'Supabase schema deployed',
-        'Auth flow verified',
-        'Monitoring live',
-      ],
+      evidence: ['Supabase schema deployed', 'Auth flow verified', 'Monitoring live'],
     },
     {
       id: 'obj-001-customer',
       title: 'Customer Pilot',
-      description:
-        'Onboard and support first paying customer (German AI Act compliance)',
+      description: 'Onboard and support first paying customer (German AI Act compliance)',
       status: 'ACTIVE',
       priority: 1,
       targetDate: '2026-09-01',
-      evidence: [
-        'Customer contracts',
-        'Onboarding documentation',
-        'Support procedures',
-      ],
+      evidence: ['Customer contracts', 'Onboarding documentation', 'Support procedures'],
     },
     {
       id: 'obj-001-reliability',
@@ -138,24 +124,15 @@ export function initializeCathedralEnterprise(): CathedralState {
       description: 'Maintain 99.5% uptime with sub-2s response times',
       status: 'ACTIVE',
       priority: 2,
-      evidence: [
-        'Performance baseline tracking',
-        'Error rate monitoring',
-        'Incident response',
-      ],
+      evidence: ['Performance baseline tracking', 'Error rate monitoring', 'Incident response'],
     },
     {
       id: 'obj-001-security',
       title: 'Security & Compliance',
-      description:
-        'Maintain zero critical vulnerabilities and pass EU AI Act compliance audit',
+      description: 'Maintain zero critical vulnerabilities and pass EU AI Act compliance audit',
       status: 'ACTIVE',
       priority: 1,
-      evidence: [
-        'Dependency scanning',
-        'RLS policies',
-        'Legal review complete',
-      ],
+      evidence: ['Dependency scanning', 'RLS policies', 'Legal review complete'],
     },
     {
       id: 'obj-001-scaling',
@@ -164,11 +141,7 @@ export function initializeCathedralEnterprise(): CathedralState {
       status: 'ACTIVE',
       priority: 2,
       targetDate: '2026-12-31',
-      evidence: [
-        'Performance baselines',
-        'Load testing plan',
-        'Cost anomaly detection',
-      ],
+      evidence: ['Performance baselines', 'Load testing plan', 'Cost anomaly detection'],
     },
   ];
 

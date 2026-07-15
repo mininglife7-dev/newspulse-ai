@@ -9,8 +9,8 @@ export function getRequiredAppUrl(): string {
   if (!appUrl) {
     throw new Error(
       'NEXT_PUBLIC_APP_URL environment variable is required for production. ' +
-        'Set it to your production domain (e.g., https://yourapp.vercel.app). ' +
-        'Defaulting to localhost is not allowed in production.'
+      'Set it to your production domain (e.g., https://yourapp.vercel.app). ' +
+      'Defaulting to localhost is not allowed in production.'
     );
   }
 
@@ -31,7 +31,7 @@ export function getOptionalAppUrl(fallback?: string): string {
     if (fallback) return fallback;
     throw new Error(
       'NEXT_PUBLIC_APP_URL environment variable is required. ' +
-        'Set it to your production domain.'
+      'Set it to your production domain.'
     );
   }
 
@@ -50,7 +50,7 @@ export function validateEnvironment(requiredVars: string[]): void {
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}. ` +
-        'Set them in your Vercel/deployment environment.'
+      'Set them in your Vercel/deployment environment.'
     );
   }
 }

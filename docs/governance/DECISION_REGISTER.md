@@ -14,16 +14,16 @@ are never requested from the Founder.
 - **Alternatives considered:**
   1. Begin Phase 3 work now (evidence linking or audit logging) — risks building features with low adoption or that conflict with real user workflows.
   2. Declare Phase 2 complete and hand off to Founder for long-term roadmap — abandons the measurement window while the product is fresh.
-- **Evidence:**
+- **Evidence:** 
   - Compliance system verification: 589/589 unit tests green, 6/6 e2e smoke, lint/tsc clean, production build succeeds, deployed to main.
   - All 11 features verified in production: obligation templates import, template library covers 28 obligations, bulk actions work, due dates + visual alerts render, CSV export generates correct data, compliance dashboard metrics calculate correctly, assessment progress tracker updates correctly.
   - Measurement and planning frameworks documented: COMPLIANCE_USAGE_AUDIT_PLAN.md, CHECKPOINT-AUDIT-2026-07-17.md, PHASE-3-CANDIDATES.md
 - **Confidence:** High for the "pause" decision (one week is short, low-cost to reverse); Unknown for which Phase 3 feature will emerge as highest-value (depends on usage data not yet collected).
-- **Expected impact:**
+- **Expected impact:** 
   - Founders gain data-driven prioritization signal instead of design guesses.
   - Week 1 checkpoint (2026-07-17) produces a usage audit report that identifies whether adoption is high/medium/low and which user pain points are real.
   - Phase 3 feature recommendation comes with evidence, raising confidence of the next build.
-- **Risk assessment:**
+- **Risk assessment:** 
   - Minimal. A one-week pause is reversible; if adoption is immediate and high, we know to proceed. If low, the pause avoided wasted Phase 3 work.
   - Residual: If product design flaws surface during week 1 (e.g., bulk actions are confusing, template library is too generic), they exist now and would have existed after Phase 3 anyway. The pause allows us to fix actual problems instead of stacking new features on top of them.
 - **Timestamp:** 2026-07-10
@@ -130,18 +130,18 @@ are never requested from the Founder.
 
 - **Decision:** Develop DNA-GOV-012 independently while Founder addresses external blockers (Supabase deployment, GitHub Actions spending limit). Implement zero-downtime schema migration safety validation with pattern detection, risk classification, and execution guidance.
 - **Reason:** Autonomous next task with highest engineering impact. Unblocks safe schema evolution once Supabase deploys. No Founder action required; fits existing governance model. Test coverage (68 tests) enables confident CI integration.
-- **Alternatives considered:**
+- **Alternatives considered:** 
   1. Wait for Founder actions → loses velocity, extends idle time
   2. Start DNS-GOV-013 (Feature Flags) instead → lower priority; migration safety is prerequisite for schema evolution
   3. Refactor existing code → lower customer impact than new capability
-- **Evidence:**
+- **Evidence:** 
   - Library implemented: `lib/schema-migration-validator.ts` (280 LoC)
   - API endpoint: `app/api/schema-migrations/route.ts` (120 LoC)
   - Test coverage: 68/68 tests passing (47 library + 21 integration)
   - Detects 10+ dangerous patterns (ADD NOT NULL without DEFAULT, DROP COLUMN, etc.)
   - Provides zero-downtime execution guidance
 - **Confidence:** High (design validated against real-world schema scenarios)
-- **Expected impact:**
+- **Expected impact:** 
   - Prevents schema-related production outages (breaking changes blocked by CI)
   - Reduces migration review time from 5-10 min to <1 sec
   - Enables developer self-service; reduces Founder bottleneck on DB changes

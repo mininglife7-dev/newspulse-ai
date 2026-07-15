@@ -90,10 +90,7 @@ export function detectMigrationPatterns(
     }
 
     // Pattern 2: Dropping column
-    if (
-      trimmed.includes('DROP COLUMN') ||
-      trimmed.includes('DROP CONSTRAINT')
-    ) {
+    if (trimmed.includes('DROP COLUMN') || trimmed.includes('DROP CONSTRAINT')) {
       issues.push({
         pattern: 'drop-column',
         riskLevel: 'high-risk',
@@ -163,8 +160,7 @@ export function detectMigrationPatterns(
         pattern: 'drop-table',
         riskLevel: 'breaking',
         lineNumber,
-        description:
-          'Dropping table destroys all data — not recoverable without backup',
+        description: 'Dropping table destroys all data — not recoverable without backup',
         evidence: line,
         recommendation:
           'Export data first. Plan full rollback procedure. Verify no dependent features exist.',
@@ -191,8 +187,7 @@ export function detectMigrationPatterns(
         pattern: 'enable-rls',
         riskLevel: 'high-risk',
         lineNumber,
-        description:
-          'Enabling RLS may block existing queries that expect unrestricted access',
+        description: 'Enabling RLS may block existing queries that expect unrestricted access',
         evidence: line,
         recommendation:
           'Verify all RLS policies exist before enabling. Test against real app queries first.',

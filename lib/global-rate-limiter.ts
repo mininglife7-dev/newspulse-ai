@@ -3,11 +3,7 @@
  * Used by middleware.ts to enforce per-IP rate limits across all requests
  */
 
-import {
-  createRateLimiter,
-  type RateLimiterConfig,
-  getClientIp,
-} from '@/lib/rate-limiter';
+import { createRateLimiter, type RateLimiterConfig, getClientIp } from '@/lib/rate-limiter';
 
 let globalLimiter: ReturnType<typeof createRateLimiter> | null = null;
 

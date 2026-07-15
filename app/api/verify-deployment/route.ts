@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import {
-  verifyDeployment,
-  formatDeploymentAlert,
-} from '@/lib/deployment-verifier';
+import { verifyDeployment, formatDeploymentAlert } from '@/lib/deployment-verifier';
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -44,22 +41,14 @@ export async function GET(req: Request) {
 
     // Log deployment status (safe for production)
     if (result.status === 'critical') {
-      logger.error(
-        'Deployment verification: critical mismatch detected',
-        'DEPLOYMENT_CRITICAL',
-        {
-          hasDeployment: !!result.currentDeployment,
-          latestCommit: result.latestCommit?.sha?.substring(0, 7),
-        }
-      );
+      logger.error('Deployment verification: critical mismatch detected', 'DEPLOYMENT_CRITICAL', {
+        hasDeployment: !!result.currentDeployment,
+        latestCommit: result.latestCommit?.sha?.substring(0, 7),
+      });
     } else if (result.status === 'warning') {
-      logger.warn(
-        'Deployment verification: warning detected',
-        'DEPLOYMENT_WARNING',
-        {
-          mismatch: result.mismatch,
-        }
-      );
+      logger.warn('Deployment verification: warning detected', 'DEPLOYMENT_WARNING', {
+        mismatch: result.mismatch,
+      });
     } else {
       logger.info('Deployment verification: healthy', 'DEPLOYMENT_OK');
     }
@@ -83,11 +72,7 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    logger.error(
-      'Deployment verification check failed',
-      'DEPLOYMENT_CHECK_ERROR',
-      error
-    );
+    logger.error('Deployment verification check failed', 'DEPLOYMENT_CHECK_ERROR', error);
 
     return NextResponse.json(
       {

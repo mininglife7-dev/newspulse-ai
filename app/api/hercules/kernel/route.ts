@@ -81,11 +81,7 @@ export async function GET(request: NextRequest) {
       kernel: kernel.getSystemStatus(),
     });
   } catch (error) {
-    logger.error(
-      'HERCULES kernel GET request failed',
-      'KERNEL_GET_ERROR',
-      error
-    );
+    logger.error('HERCULES kernel GET request failed', 'KERNEL_GET_ERROR', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -141,8 +137,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'create-task') {
-      const { enterpriseId, title, description, priority, authorityRequired } =
-        body;
+      const {
+        enterpriseId,
+        title,
+        description,
+        priority,
+        authorityRequired,
+      } = body;
 
       const task = kernel.createTask(enterpriseId, {
         title,
@@ -224,13 +225,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
-  } catch (error) {
-    logger.error(
-      'HERCULES kernel POST request failed',
-      'KERNEL_POST_ERROR',
-      error
+    return NextResponse.json(
+      { error: 'Unknown action' },
+      { status: 400 }
     );
+  } catch (error) {
+    logger.error('HERCULES kernel POST request failed', 'KERNEL_POST_ERROR', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

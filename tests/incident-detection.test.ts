@@ -20,11 +20,7 @@ describe('Incident Detection (DNA-GOV-013)', () => {
 
       // Retry until we get a critical failure
       let attempts = 0;
-      while (
-        report.decision !== 'ROLLBACK' &&
-        report.decision !== 'ESCALATE' &&
-        attempts < 10
-      ) {
+      while (report.decision !== 'ROLLBACK' && report.decision !== 'ESCALATE' && attempts < 10) {
         report = await verifyDeployment('deploy-critical');
         attempts++;
       }
@@ -80,13 +76,9 @@ describe('Incident Detection (DNA-GOV-013)', () => {
 
         if (incidents.length > 0) {
           const incident = incidents[0];
-          const failedCheckCount = report.checks.filter(
-            (c) => c.result === 'fail'
-          ).length;
+          const failedCheckCount = report.checks.filter((c) => c.result === 'fail').length;
           // Allow for some variance in signal count due to incident correlation
-          expect(incident.signals.length).toBeGreaterThanOrEqual(
-            failedCheckCount
-          );
+          expect(incident.signals.length).toBeGreaterThanOrEqual(failedCheckCount);
           incident.signals.forEach((signal) => {
             expect(signal.type).toBeDefined();
             expect(['fail', 'degraded']).toContain(signal.value as string);
@@ -103,9 +95,7 @@ describe('Incident Detection (DNA-GOV-013)', () => {
         errorRate: 0.15,
       });
 
-      const errorIncidents = incidents.filter((inc) =>
-        inc.signals.some((s) => s.type === 'error-rate')
-      );
+      const errorIncidents = incidents.filter((inc) => inc.signals.some((s) => s.type === 'error-rate'));
       expect(errorIncidents.length).toBeGreaterThan(0);
     });
 
@@ -114,21 +104,16 @@ describe('Incident Detection (DNA-GOV-013)', () => {
         latency: 12000,
       });
 
-      const latencyIncidents = incidents.filter((inc) =>
-        inc.signals.some((s) => s.type === 'latency')
-      );
+      const latencyIncidents = incidents.filter((inc) => inc.signals.some((s) => s.type === 'latency'));
       expect(latencyIncidents.length).toBeGreaterThan(0);
       expect(latencyIncidents[0].category).toBe('performance-degradation');
     });
 
     it('should detect resource exhaustion', async () => {
-      const incidents = await detector.detectIncidents(
-        'deploy-resource-pressure',
-        {
-          memoryUsage: 0.97,
-          cpuUsage: 0.92,
-        }
-      );
+      const incidents = await detector.detectIncidents('deploy-resource-pressure', {
+        memoryUsage: 0.97,
+        cpuUsage: 0.92,
+      });
 
       const resourceIncidents = incidents.filter((inc) =>
         inc.signals.some((s) => s.type.includes('usage'))
@@ -172,11 +157,7 @@ describe('Incident Detection (DNA-GOV-013)', () => {
     it('should detect data loss risk from database errors', async () => {
       const incidents = await detector.detectIncidents('deploy-data-risk', {
         recentErrors: [
-          {
-            message: 'Database connection timeout',
-            category: 'database',
-            count: 200,
-          },
+          { message: 'Database connection timeout', category: 'database', count: 200 },
           { message: 'Transaction failed', category: 'database', count: 180 },
         ],
       });
@@ -189,42 +170,27 @@ describe('Incident Detection (DNA-GOV-013)', () => {
     });
 
     it('should estimate user impact based on incident category', async () => {
-      const cascadeIncidents = await detector.detectIncidents(
-        'deploy-impact-1',
-        {
-          recentErrors: [
-            { message: 'API timeout', category: 'api', count: 50 },
-            {
-              message: 'DB connection failed',
-              category: 'database',
-              count: 45,
-            },
-            { message: 'Cache miss', category: 'cache', count: 200 },
-            { message: 'Queue backlog', category: 'queue', count: 150 },
-          ],
-        }
-      );
+      const cascadeIncidents = await detector.detectIncidents('deploy-impact-1', {
+        recentErrors: [
+          { message: 'API timeout', category: 'api', count: 50 },
+          { message: 'DB connection failed', category: 'database', count: 45 },
+          { message: 'Cache miss', category: 'cache', count: 200 },
+          { message: 'Queue backlog', category: 'queue', count: 150 },
+        ],
+      });
 
-      const cascade = cascadeIncidents.find(
-        (inc) => inc.category === 'cascading-failure'
-      );
+      const cascade = cascadeIncidents.find((inc) => inc.category === 'cascading-failure');
       if (cascade) {
         expect(cascade.estimatedUserImpact).toBeGreaterThanOrEqual(0.9);
       }
 
       const dataIncidents = await detector.detectIncidents('deploy-impact-2', {
         recentErrors: [
-          {
-            message: 'Database connection timeout',
-            category: 'database',
-            count: 200,
-          },
+          { message: 'Database connection timeout', category: 'database', count: 200 },
         ],
       });
 
-      const dataRisk = dataIncidents.find(
-        (inc) => inc.category === 'data-loss-risk'
-      );
+      const dataRisk = dataIncidents.find((inc) => inc.category === 'data-loss-risk');
       if (dataRisk) {
         expect(dataRisk.estimatedUserImpact).toBe(1.0);
       }
@@ -233,18 +199,13 @@ describe('Incident Detection (DNA-GOV-013)', () => {
 
   describe('Incident severity classification', () => {
     it('should classify critical severity for critical incidents', async () => {
-      const incidents = await detector.detectIncidents(
-        'deploy-critical-class',
-        {
-          errorRate: 0.3,
-          latency: 20000,
-        }
-      );
+      const incidents = await detector.detectIncidents('deploy-critical-class', {
+        errorRate: 0.3,
+        latency: 20000,
+      });
 
       expect(incidents.length).toBeGreaterThan(0);
-      const criticalIncidents = incidents.filter(
-        (inc) => inc.severity === 'critical'
-      );
+      const criticalIncidents = incidents.filter((inc) => inc.severity === 'critical');
       expect(criticalIncidents.length).toBeGreaterThan(0);
     });
 
@@ -375,11 +336,7 @@ describe('Incident Detection (DNA-GOV-013)', () => {
 
       // Retry until we get a failure
       let attempts = 0;
-      while (
-        report.decision !== 'ROLLBACK' &&
-        report.decision !== 'ESCALATE' &&
-        attempts < 5
-      ) {
+      while (report.decision !== 'ROLLBACK' && report.decision !== 'ESCALATE' && attempts < 5) {
         report = await verifyDeployment('deploy-auto-fix');
         attempts++;
       }
@@ -390,9 +347,7 @@ describe('Incident Detection (DNA-GOV-013)', () => {
         });
 
         if (incidents.length > 0) {
-          const deployIncident = incidents.find(
-            (inc) => inc.category === 'deployment-failure'
-          );
+          const deployIncident = incidents.find((inc) => inc.category === 'deployment-failure');
           if (deployIncident) {
             expect(deployIncident.canAutoRemediate).toBe(report.canRollback);
           }
@@ -410,9 +365,7 @@ describe('Incident Detection (DNA-GOV-013)', () => {
         ],
       });
 
-      const cascade = incidents.find(
-        (inc) => inc.category === 'cascading-failure'
-      );
+      const cascade = incidents.find((inc) => inc.category === 'cascading-failure');
       if (cascade) {
         expect(cascade.canAutoRemediate).toBe(false);
       }
@@ -480,18 +433,13 @@ describe('Incident Detection (DNA-GOV-013)', () => {
     });
 
     it('should set requiresFounderNotification for critical incidents', async () => {
-      const incidents = await detector.detectIncidents(
-        'deploy-critical-notify',
-        {
-          errorRate: 0.5,
-          latency: 25000,
-          memoryUsage: 0.99,
-        }
-      );
+      const incidents = await detector.detectIncidents('deploy-critical-notify', {
+        errorRate: 0.5,
+        latency: 25000,
+        memoryUsage: 0.99,
+      });
 
-      const criticalIncidents = incidents.filter(
-        (inc) => inc.severity === 'critical'
-      );
+      const criticalIncidents = incidents.filter((inc) => inc.severity === 'critical');
       criticalIncidents.forEach((incident) => {
         expect(incident.requiresFounderNotification).toBe(true);
       });

@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-12  
 **Status:** ✅ TECHNICAL CONTROLS VERIFIED  
-**Legal Certification Level:** TECHNICAL CONTROLS ONLY (Legal certification required separately)
+**Legal Certification Level:** TECHNICAL CONTROLS ONLY (Legal certification required separately)  
 
 ---
 
@@ -11,14 +11,12 @@
 This document inventories HERCULES technical controls addressing EU AI Act requirements. **IMPORTANT:** This is a technical evidence inventory, not legal certification. Legal compliance determination requires evaluation by legal counsel in coordination with Cathedral's EU AI Act compliance program.
 
 **Technical Controls Status:**
-
 - ✅ 15 core technical controls implemented
 - ✅ 8 controls fully tested with regression tests
 - ✅ 7 controls verified through stress testing
 - ✅ 0 critical gaps identified
 
 **Legal Certification Status:**
-
 - ⚠️ PENDING — Requires legal counsel review (separate from this document)
 - ⚠️ PENDING — Requires Cathedral's formal EU AI Act assessment
 - ⚠️ PENDING — May require further technical controls depending on legal guidance
@@ -30,7 +28,6 @@ This document inventories HERCULES technical controls addressing EU AI Act requi
 ### Technical Controls (This Document)
 
 Technical controls are engineering implementations that address AI Act requirements. Examples:
-
 - **Transparency:** Logging and audit trails
 - **Human Review:** Checkpoints in decision processes
 - **Explainability:** Decision documentation and evidence chains
@@ -42,7 +39,6 @@ Technical controls are engineering implementations that address AI Act requireme
 ### Legal Certification (Separate Process)
 
 Legal certification involves:
-
 - Formal risk assessment by legal counsel
 - Mapping of technical controls to EU AI Act requirements
 - Gap analysis and remediation plan
@@ -60,7 +56,6 @@ Legal certification involves:
 **Requirement:** Enterprise decisions must be traceable and auditable
 
 **Technical Control:** Comprehensive Audit Log
-
 - **Implementation:** `lib/hercules-kernel.ts` - `auditLog` array and `recordAction()` method
 - **Evidence Chain:** Every enterprise action recorded with: timestamp, enterprise ID, action type, authority class, actor, details
 - **Audit Entry Structure:** {timestamp, enterpriseId, action, authorityClass, actor, details, correlationId}
@@ -68,7 +63,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category E: Dashboard Truthfulness)
 - Test coverage: 4 tests verify audit trail accuracy during stress
 - Regression test: `should display accurate audit activity` (test 4 of Category E)
@@ -80,7 +74,6 @@ Legal certification involves:
 **Requirement:** AI systems must implement role-based authorization and approval gates
 
 **Technical Control:** Multi-Class Authority System
-
 - **Implementation:** `lib/hercules-kernel.ts` - Authority matrix with three classes
 - **Authority Classes:**
   - **CLASS A (AUTONOMOUS):** Tasks executable by HERCULES without human review
@@ -91,7 +84,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category C: Authority Attacks, 6 tests)
 - Test coverage:
   - Reject unauthorized C_FOUNDER_ONLY tasks
@@ -109,7 +101,6 @@ Legal certification involves:
 **Requirement:** Critical decisions must have documented human review points
 
 **Technical Control:** Mission-Based Lifecycle with Explicit Gates
-
 - **Implementation:** `lib/hercules-kernel.ts` - Mission lifecycle: QUEUED → ACTIVE → PAUSED → COMPLETED
 - **Human Review Points:**
   - Mission creation: Founder defines mission + 5 objectives
@@ -121,7 +112,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED (partial)
 
 **Verification:**
-
 - Test file: `tests/cathedral-enterprise-init.test.ts` (Mission creation)
 - Test file: `tests/hercules-survival.test.ts` (Category D: Interruption recovery)
 - Coverage: 6 tests verify checkpoints are created/verified
@@ -133,7 +123,6 @@ Legal certification involves:
 **Requirement:** AI system decisions must be explainable with supporting evidence
 
 **Technical Control:** Evidence-Based Task Execution
-
 - **Implementation:** `lib/hercules-kernel.ts` - Task.evidence array and decision logging
 - **Evidence Structure:** Each task carries:
   - `preconditions[]` — requirements that must be met before execution
@@ -145,7 +134,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/enterprise-002-isolation.test.ts` (Task independence)
 - Test file: `tests/hercules-survival.test.ts` (Category E: Dashboard Truthfulness)
 - Coverage: Tasks display full evidence chain; audit shows reasoning for decisions
@@ -157,7 +145,6 @@ Legal certification involves:
 **Requirement:** Customer data must be completely isolated (data residency, no cross-contamination)
 
 **Technical Control:** Enterprise-Scoped State Separation
-
 - **Implementation:** `lib/hercules-kernel.ts` - Map-based isolation with enterpriseId enforcement
 - **Isolation Boundaries:**
   - Task creation: Tasks stored in `tasks` map with enterpriseId key component
@@ -170,7 +157,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/enterprise-002-isolation.test.ts` (22 tests)
 - Test coverage: 10 specific isolation criteria across 22 scenarios
 - Evidence: Enterprise 001 (Cathedral) and Enterprise 002 (Governance) operate with zero cross-contamination
@@ -183,7 +169,6 @@ Legal certification involves:
 **Requirement:** AI system state must survive failure/restart; no data loss on outage
 
 **Technical Control:** Checkpoint/Restore Persistence
-
 - **Implementation:** `lib/hercules-persistence.ts` - Supabase-backed durable storage
 - **Checkpoint Mechanism:**
   - `createCheckpoint()` — Serialize kernel state (enterprises, missions, tasks, events, audit) to Supabase
@@ -197,7 +182,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-persistence.test.ts` (16 tests)
 - Test coverage:
   - Checkpoint creation with metadata capture
@@ -214,7 +198,6 @@ Legal certification involves:
 **Requirement:** System must recover from failures deterministically without data corruption
 
 **Technical Control:** Interruption Recovery & Deterministic Restoration
-
 - **Implementation:** `lib/hercules-kernel.ts` - State serialization and recovery guarantee
 - **Recovery Scenarios Tested:**
   - Before task execution (QUEUED state preserved)
@@ -227,7 +210,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category D: Interruption Recovery, 8 tests)
 - Test coverage: All 8 recovery scenarios pass; deterministic restoration verified
 - Evidence: No state corruption detected across 45 survival tests
@@ -239,7 +221,6 @@ Legal certification involves:
 **Requirement:** AI system must operate within performance SLOs; resource usage bounded
 
 **Technical Control:** Performance Bounds & Baseline
-
 - **Implementation:** Benchmarked and tested performance limits
 - **Performance SLOs:**
   - Startup time: <1 second
@@ -251,7 +232,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category F: Performance, 5 tests)
 - Test coverage: All performance targets met in baseline
 - Evidence: 45 survival tests complete in <26 seconds total; no timeout failures
@@ -263,7 +243,6 @@ Legal certification involves:
 **Requirement:** System must prevent injection attacks, unauthorized access, and data manipulation
 
 **Technical Control:** Security Constraints & Input Validation
-
 - **Implementation:** `lib/hercules-kernel.ts` - Validation at all system boundaries
 - **Prevented Attack Vectors:**
   - Unsafe deserialization: JSON parsing doesn't execute code
@@ -275,7 +254,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category G: Security, 4 tests)
 - Test coverage:
   - Prevent unsafe deserialization
@@ -291,7 +269,6 @@ Legal certification involves:
 **Requirement:** Critical actions must be reversible; data must be recoverable
 
 **Technical Control:** Full State Serialization & Restoration
-
 - **Implementation:** `lib/hercules-kernel.ts` - `serializeState()` and `deserializeState()`
 - **Reversibility Guarantees:**
   - Complete state capture (no partial saves)
@@ -303,7 +280,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED (partial)
 
 **Verification:**
-
 - Test file: `tests/hercules-persistence.test.ts` (Checkpoint listing & cleanup)
 - Test file: `tests/hercules-survival.test.ts` (Category D: Recovery)
 - Coverage: Deterministic restoration tested; manual recovery capability available
@@ -315,7 +291,6 @@ Legal certification involves:
 **Requirement:** System behavior must be observable for debugging and audit
 
 **Technical Control:** Health Monitoring & Event Bus
-
 - **Implementation:** `lib/hercules-kernel.ts` - Health calculation and event emission
 - **Observable Metrics:**
   - Enterprise health: Aggregated from 6 DNA monitoring systems
@@ -328,7 +303,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category E: Dashboard Truthfulness)
 - Coverage: Health accuracy verified under stress; all observable metrics return correct values
 
@@ -339,7 +313,6 @@ Legal certification involves:
 **Requirement:** Queue operations must be fair; high-priority work doesn't starve low-priority
 
 **Technical Control:** Priority Queue Management
-
 - **Implementation:** `lib/hercules-kernel.ts` - Priority-based task queue (1-5 scale)
 - **Priority Ordering:** Priority 1 (critical) executed before Priority 5 (low)
 - **No Starvation:** FIFO within same priority level (no indefinite deferral)
@@ -347,7 +320,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category B: Queue Stress, 10 tests)
 - Test coverage: Priority ordering verified with 100+ concurrent tasks
 - Evidence: High-priority tasks complete first; all tasks eventually process
@@ -359,7 +331,6 @@ Legal certification involves:
 **Requirement:** Parallel operations must not corrupt shared state
 
 **Technical Control:** Concurrent Enterprise Operations
-
 - **Implementation:** `lib/hercules-kernel.ts` - Independent enterprise state maps
 - **Concurrency Tests:**
   - 100 concurrent task creations (no ID collisions)
@@ -369,7 +340,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category A & B: Concurrency tests)
 - Test file: `tests/hercules-persistence.test.ts` (Concurrent checkpoint creation)
 - Coverage: 100+ concurrent operations tested; zero race conditions detected
@@ -381,7 +351,6 @@ Legal certification involves:
 **Requirement:** Operations must be safe to retry; repeated execution produces same result
 
 **Technical Control:** Idempotent Operations
-
 - **Implementation:** Database operations designed for safe retry
 - **Idempotent Patterns:**
   - Task creation: Same task ID from same request produces same result
@@ -391,7 +360,6 @@ Legal certification involves:
 - **Status:** ✅ IMPLEMENTED | ✅ TESTED | ✅ VERIFIED
 
 **Verification:**
-
 - Test file: `tests/hercules-survival.test.ts` (Category A: Duplicate restoration)
 - Test file: `tests/cathedral-enterprise-init.test.ts` (Idempotent registration)
 - Coverage: Repeated operations verified safe; no unwanted side effects
@@ -403,7 +371,6 @@ Legal certification involves:
 **Requirement:** System design and operations must be documented and explainable
 
 **Technical Control:** Code Documentation & Design Records
-
 - **Implementation:**
   - Comprehensive code comments explaining design decisions
   - Inline documentation of authority matrix and recovery logic
@@ -420,38 +387,38 @@ Legal certification involves:
 
 ### Test Coverage Summary
 
-| Category                   | Test Count | Status                | Verification                       |
-| -------------------------- | ---------- | --------------------- | ---------------------------------- |
-| Multi-Enterprise Isolation | 22         | ✅ PASS               | 10 isolation criteria verified     |
-| Survival/Stress Testing    | 45         | ✅ PASS               | 7 hostile dimensions tested        |
-| Persistence                | 16         | ✅ PASS               | Checkpoint/restore cycle validated |
-| Authority Matrix           | 6          | ✅ PASS (in survival) | Zero privilege escalation          |
-| Recovery                   | 8          | ✅ PASS (in survival) | Deterministic restoration verified |
-| Performance                | 5          | ✅ PASS (in survival) | All SLOs met                       |
-| Security                   | 4          | ✅ PASS (in survival) | No injection/leakage/escalation    |
-| **TOTAL**                  | **420**    | **✅ ALL PASS**       | **Production baseline verified**   |
+| Category | Test Count | Status | Verification |
+|----------|-----------|--------|--------------|
+| Multi-Enterprise Isolation | 22 | ✅ PASS | 10 isolation criteria verified |
+| Survival/Stress Testing | 45 | ✅ PASS | 7 hostile dimensions tested |
+| Persistence | 16 | ✅ PASS | Checkpoint/restore cycle validated |
+| Authority Matrix | 6 | ✅ PASS (in survival) | Zero privilege escalation |
+| Recovery | 8 | ✅ PASS (in survival) | Deterministic restoration verified |
+| Performance | 5 | ✅ PASS (in survival) | All SLOs met |
+| Security | 4 | ✅ PASS (in survival) | No injection/leakage/escalation |
+| **TOTAL** | **420** | **✅ ALL PASS** | **Production baseline verified** |
 
 ---
 
 ## Implementation Status Matrix
 
-| Control               | Implemented | Tested     | Verified   | Regression Test | Notes                                    |
-| --------------------- | ----------- | ---------- | ---------- | --------------- | ---------------------------------------- |
-| 1. Audit Trail        | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/hercules-survival.test.ts:E4`     |
-| 2. Authority Matrix   | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/hercules-survival.test.ts:C*`     |
-| 3. Human Checkpoints  | ✅ YES      | ✅ PARTIAL | ⚠️ MANUAL  | ✅ YES          | Mission lifecycle gates                  |
-| 4. Evidence Chain     | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | Task preconditions/postconditions        |
-| 5. Isolation          | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/enterprise-002-isolation.test.ts` |
-| 6. Persistence        | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/hercules-persistence.test.ts`     |
-| 7. Recovery           | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/hercules-survival.test.ts:D*`     |
-| 8. Performance        | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/hercules-survival.test.ts:F*`     |
-| 9. Security           | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/hercules-survival.test.ts:G*`     |
-| 10. Reversibility     | ✅ YES      | ✅ YES     | ⚠️ PARTIAL | ✅ YES          | Point-in-time recovery possible          |
-| 11. Observability     | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | Event bus + health model                 |
-| 12. Priority/Fairness | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | `tests/hercules-survival.test.ts:B*`     |
-| 13. Concurrency       | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | 100+ concurrent tasks tested             |
-| 14. Idempotency       | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | Duplicate restoration safe               |
-| 15. Documentation     | ✅ YES      | ✅ YES     | ✅ YES     | ✅ YES          | Code comments + this inventory           |
+| Control | Implemented | Tested | Verified | Regression Test | Notes |
+|---------|-------------|--------|----------|-----------------|-------|
+| 1. Audit Trail | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/hercules-survival.test.ts:E4` |
+| 2. Authority Matrix | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/hercules-survival.test.ts:C*` |
+| 3. Human Checkpoints | ✅ YES | ✅ PARTIAL | ⚠️ MANUAL | ✅ YES | Mission lifecycle gates |
+| 4. Evidence Chain | ✅ YES | ✅ YES | ✅ YES | ✅ YES | Task preconditions/postconditions |
+| 5. Isolation | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/enterprise-002-isolation.test.ts` |
+| 6. Persistence | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/hercules-persistence.test.ts` |
+| 7. Recovery | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/hercules-survival.test.ts:D*` |
+| 8. Performance | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/hercules-survival.test.ts:F*` |
+| 9. Security | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/hercules-survival.test.ts:G*` |
+| 10. Reversibility | ✅ YES | ✅ YES | ⚠️ PARTIAL | ✅ YES | Point-in-time recovery possible |
+| 11. Observability | ✅ YES | ✅ YES | ✅ YES | ✅ YES | Event bus + health model |
+| 12. Priority/Fairness | ✅ YES | ✅ YES | ✅ YES | ✅ YES | `tests/hercules-survival.test.ts:B*` |
+| 13. Concurrency | ✅ YES | ✅ YES | ✅ YES | ✅ YES | 100+ concurrent tasks tested |
+| 14. Idempotency | ✅ YES | ✅ YES | ✅ YES | ✅ YES | Duplicate restoration safe |
+| 15. Documentation | ✅ YES | ✅ YES | ✅ YES | ✅ YES | Code comments + this inventory |
 
 **Summary:** 15/15 controls implemented, 14/15 fully tested, 13/15 fully verified, 15/15 have regression tests.
 
@@ -463,18 +430,18 @@ Legal certification involves:
 
 **Note:** This is a technical mapping only. Legal compliance determination requires legal counsel review.
 
-| EU AI Act Requirement            | HERCULES Control                  | Status         |
-| -------------------------------- | --------------------------------- | -------------- |
-| Risk assessment                  | Health model + monitoring         | ✅ IMPLEMENTED |
-| Human oversight capability       | Authority matrix + checkpoints    | ✅ IMPLEMENTED |
-| Transparency to deployer         | Audit trail + observability       | ✅ IMPLEMENTED |
-| Data quality & governance        | Task evidence + preconditions     | ✅ IMPLEMENTED |
-| Documentation                    | Decision register + code docs     | ✅ IMPLEMENTED |
-| Logging & traceability           | Complete audit log per enterprise | ✅ IMPLEMENTED |
-| Testing & validation             | 420 tests + stress testing        | ✅ IMPLEMENTED |
-| Performance monitoring           | Health monitoring + telemetry     | ✅ IMPLEMENTED |
+| EU AI Act Requirement | HERCULES Control | Status |
+|----------------------|------------------|--------|
+| Risk assessment | Health model + monitoring | ✅ IMPLEMENTED |
+| Human oversight capability | Authority matrix + checkpoints | ✅ IMPLEMENTED |
+| Transparency to deployer | Audit trail + observability | ✅ IMPLEMENTED |
+| Data quality & governance | Task evidence + preconditions | ✅ IMPLEMENTED |
+| Documentation | Decision register + code docs | ✅ IMPLEMENTED |
+| Logging & traceability | Complete audit log per enterprise | ✅ IMPLEMENTED |
+| Testing & validation | 420 tests + stress testing | ✅ IMPLEMENTED |
+| Performance monitoring | Health monitoring + telemetry | ✅ IMPLEMENTED |
 | Bias & discrimination prevention | Isolation + fair queue management | ✅ IMPLEMENTED |
-| Cybersecurity & robustness       | Security testing + recovery       | ✅ IMPLEMENTED |
+| Cybersecurity & robustness | Security testing + recovery | ✅ IMPLEMENTED |
 
 ---
 

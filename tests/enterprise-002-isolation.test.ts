@@ -33,21 +33,18 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
   });
 
   // Helper to create task with all required fields
-  function createTestTask(
-    overrides: {
-      title?: string;
-      description?: string;
-      priority?: 1 | 2 | 3 | 4 | 5;
-      authorityRequired?: 'A_AUTONOMOUS' | 'B_GUARDRAILS' | 'C_FOUNDER_ONLY';
-    } = {}
-  ) {
+  function createTestTask(overrides: {
+    title?: string;
+    description?: string;
+    priority?: 1 | 2 | 3 | 4 | 5;
+    authorityRequired?: 'A_AUTONOMOUS' | 'B_GUARDRAILS' | 'C_FOUNDER_ONLY';
+  } = {}) {
     return {
       title: overrides.title || 'Test Task',
       description: overrides.description || 'Test description',
       state: 'QUEUED' as const,
       priority: overrides.priority || (1 as const),
-      authorityRequired:
-        overrides.authorityRequired || ('A_AUTONOMOUS' as const),
+      authorityRequired: overrides.authorityRequired || ('A_AUTONOMOUS' as const),
       preconditions: [],
       postconditions: [],
       evidence: [],
@@ -83,12 +80,8 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeEnterprise002();
 
       // Create a task for Cathedral
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
-        createTestTask({
-          title: 'Cathedral Task',
-          description: 'Belongs to Cathedral only',
-        })
+      const cathedralTask = kernel.createTask('cathedral-001',
+        createTestTask({ title: 'Cathedral Task', description: 'Belongs to Cathedral only' })
       );
 
       // Try to get task from Enterprise 002's perspective
@@ -122,22 +115,14 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       // Create 10 tasks for each enterprise
       for (let i = 0; i < 10; i++) {
         cathedralTasks.push(
-          kernel.createTask(
-            'cathedral-001',
-            createTestTask({
-              title: `Cathedral Task ${i}`,
-              priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5,
-            })
+          kernel.createTask('cathedral-001',
+            createTestTask({ title: `Cathedral Task ${i}`, priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5 })
           )
         );
 
         enterprise2Tasks.push(
-          kernel.createTask(
-            'governance-002',
-            createTestTask({
-              title: `Enterprise 002 Task ${i}`,
-              priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5,
-            })
+          kernel.createTask('governance-002',
+            createTestTask({ title: `Enterprise 002 Task ${i}`, priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5 })
           )
         );
       }
@@ -163,13 +148,11 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeCathedralEnterprise();
       initializeEnterprise002();
 
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
+      const cathedralTask = kernel.createTask('cathedral-001',
         createTestTask({ title: 'Test', description: 'Test task' })
       );
 
-      const enterprise2Task = kernel.createTask(
-        'governance-002',
+      const enterprise2Task = kernel.createTask('governance-002',
         createTestTask({ title: 'Test', description: 'Test task' })
       );
 
@@ -208,9 +191,7 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       );
 
       // Verify correlation IDs are different
-      expect(cathedraleEvent1.correlationId).not.toBe(
-        enterprise2Event1.correlationId
-      );
+      expect(cathedraleEvent1.correlationId).not.toBe(enterprise2Event1.correlationId);
 
       // Verify each event is properly tagged with enterprise
       expect(cathedraleEvent1.enterpriseId).toBe('cathedral-001');
@@ -223,13 +204,21 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
 
       // Emit multiple events
       for (let i = 0; i < 5; i++) {
-        kernel.emitEvent('cathedral-001', 'task_started', 'kernel', 'INFO', {
-          message: `Cathedral event ${i}`,
-        });
+        kernel.emitEvent(
+          'cathedral-001',
+          'task_started',
+          'kernel',
+          'INFO',
+          { message: `Cathedral event ${i}` }
+        );
 
-        kernel.emitEvent('governance-002', 'task_started', 'kernel', 'INFO', {
-          message: `Enterprise 002 event ${i}`,
-        });
+        kernel.emitEvent(
+          'governance-002',
+          'task_started',
+          'kernel',
+          'INFO',
+          { message: `Enterprise 002 event ${i}` }
+        );
       }
 
       // Get correlation for one Cathedral event
@@ -252,20 +241,12 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeEnterprise002();
 
       // Create tasks and perform actions for both enterprises
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
-        createTestTask({
-          title: 'Cathedral Action',
-          description: 'Action for Cathedral',
-        })
+      const cathedralTask = kernel.createTask('cathedral-001',
+        createTestTask({ title: 'Cathedral Action', description: 'Action for Cathedral' })
       );
 
-      const enterprise2Task = kernel.createTask(
-        'governance-002',
-        createTestTask({
-          title: 'Enterprise 002 Action',
-          description: 'Action for governance',
-        })
+      const enterprise2Task = kernel.createTask('governance-002',
+        createTestTask({ title: 'Enterprise 002 Action', description: 'Action for governance' })
       );
 
       // Start tasks
@@ -339,13 +320,11 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeCathedralEnterprise();
       initializeEnterprise002();
 
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
+      const cathedralTask = kernel.createTask('cathedral-001',
         createTestTask({ title: 'Cathedral', description: 'Cathedral task' })
       );
 
-      const enterprise2Task = kernel.createTask(
-        'governance-002',
+      const enterprise2Task = kernel.createTask('governance-002',
         createTestTask({ title: 'Governance', description: 'Governance task' })
       );
 
@@ -354,12 +333,8 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       expect(enterprise2Task.enterpriseId).toBe('governance-002');
 
       // Verify retrieval
-      expect(kernel.getTask(cathedralTask.id)?.enterpriseId).toBe(
-        'cathedral-001'
-      );
-      expect(kernel.getTask(enterprise2Task.id)?.enterpriseId).toBe(
-        'governance-002'
-      );
+      expect(kernel.getTask(cathedralTask.id)?.enterpriseId).toBe('cathedral-001');
+      expect(kernel.getTask(enterprise2Task.id)?.enterpriseId).toBe('governance-002');
     });
 
     it('should route events to correct enterprise context', () => {
@@ -398,13 +373,11 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeEnterprise002();
 
       // Create tasks for both
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
+      const cathedralTask = kernel.createTask('cathedral-001',
         createTestTask({ title: 'Cathedral', description: 'Test' })
       );
 
-      const enterprise2Task = kernel.createTask(
-        'governance-002',
+      const enterprise2Task = kernel.createTask('governance-002',
         createTestTask({ title: 'Enterprise 002', description: 'Test' })
       );
 
@@ -458,13 +431,11 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       expect(enterprise2).toBeDefined();
 
       // Create tasks for both
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
+      const cathedralTask = kernel.createTask('cathedral-001',
         createTestTask({ title: 'Cathedral', description: 'Test' })
       );
 
-      const enterprise2Task = kernel.createTask(
-        'governance-002',
+      const enterprise2Task = kernel.createTask('governance-002',
         createTestTask({ title: 'Enterprise 002', description: 'Test' })
       );
 
@@ -484,8 +455,7 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeEnterprise002();
 
       // Try to create task with non-existent enterprise
-      const fakeTask = kernel.createTask(
-        'fake-enterprise-999',
+      const fakeTask = kernel.createTask('fake-enterprise-999',
         createTestTask({ title: 'Fake', description: 'Fake' })
       );
 
@@ -501,13 +471,11 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeCathedralEnterprise();
       initializeEnterprise002();
 
-      const task1 = kernel.createTask(
-        'cathedral-001',
+      const task1 = kernel.createTask('cathedral-001',
         createTestTask({ title: 'Test', description: 'Test' })
       );
 
-      const task2 = kernel.createTask(
-        'governance-002',
+      const task2 = kernel.createTask('governance-002',
         createTestTask({ title: 'Test', description: 'Test' })
       );
 
@@ -546,25 +514,15 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeEnterprise002();
 
       // Create autonomous task
-      const autoTask = kernel.createTask(
-        'cathedral-001',
-        createTestTask({
-          title: 'Auto',
-          description: 'Autonomous',
-          authorityRequired: 'A_AUTONOMOUS',
-        })
+      const autoTask = kernel.createTask('cathedral-001',
+        createTestTask({ title: 'Auto', description: 'Autonomous', authorityRequired: 'A_AUTONOMOUS' })
       );
 
       expect(autoTask.authorityRequired).toBe('A_AUTONOMOUS');
 
       // Create founder-only task
-      const founderTask = kernel.createTask(
-        'governance-002',
-        createTestTask({
-          title: 'Founder Only',
-          description: 'Founder action',
-          authorityRequired: 'C_FOUNDER_ONLY',
-        })
+      const founderTask = kernel.createTask('governance-002',
+        createTestTask({ title: 'Founder Only', description: 'Founder action', authorityRequired: 'C_FOUNDER_ONLY' })
       );
 
       expect(founderTask.authorityRequired).toBe('C_FOUNDER_ONLY');
@@ -589,9 +547,7 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       const enterprise2ObjIds = enterprise2State.objectives.map((o) => o.id);
 
       // No overlap
-      const overlap = cathedralObjIds.filter((id) =>
-        enterprise2ObjIds.includes(id)
-      );
+      const overlap = cathedralObjIds.filter((id) => enterprise2ObjIds.includes(id));
       expect(overlap.length).toBe(0);
     });
 
@@ -603,12 +559,8 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       const catTasks = [];
       for (let i = 0; i < 3; i++) {
         catTasks.push(
-          kernel.createTask(
-            'cathedral-001',
-            createTestTask({
-              title: `Cathedral ${i}`,
-              priority: (i + 1) as 1 | 2 | 3 | 4 | 5,
-            })
+          kernel.createTask('cathedral-001',
+            createTestTask({ title: `Cathedral ${i}`, priority: ((i + 1) as 1 | 2 | 3 | 4 | 5) })
           )
         );
       }
@@ -617,12 +569,8 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       const ent2Tasks = [];
       for (let i = 0; i < 3; i++) {
         ent2Tasks.push(
-          kernel.createTask(
-            'governance-002',
-            createTestTask({
-              title: `Enterprise 2 ${i}`,
-              priority: (i + 1) as 1 | 2 | 3 | 4 | 5,
-            })
+          kernel.createTask('governance-002',
+            createTestTask({ title: `Enterprise 2 ${i}`, priority: ((i + 1) as 1 | 2 | 3 | 4 | 5) })
           )
         );
       }
@@ -647,8 +595,7 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       initializeCathedralEnterprise();
       initializeEnterprise002();
 
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
+      const cathedralTask = kernel.createTask('cathedral-001',
         createTestTask({ title: 'Cathedral', description: 'Task' })
       );
 
@@ -676,20 +623,12 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       expect(enterprise2State.enterprise.status).toBe('ACTIVE');
 
       // Create and manage tasks for both
-      const cathedralTask = kernel.createTask(
-        'cathedral-001',
-        createTestTask({
-          title: 'Cathedral Primary',
-          description: 'Main cathedral task',
-        })
+      const cathedralTask = kernel.createTask('cathedral-001',
+        createTestTask({ title: 'Cathedral Primary', description: 'Main cathedral task' })
       );
 
-      const enterprise2Task = kernel.createTask(
-        'governance-002',
-        createTestTask({
-          title: 'Enterprise 002 Primary',
-          description: 'Main governance task',
-        })
+      const enterprise2Task = kernel.createTask('governance-002',
+        createTestTask({ title: 'Enterprise 002 Primary', description: 'Main governance task' })
       );
 
       // Start both
@@ -697,13 +636,21 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       kernel.startTask(enterprise2Task.id);
 
       // Emit events for both
-      kernel.emitEvent('cathedral-001', 'task_started', 'kernel', 'INFO', {
-        message: 'Cathedral task started',
-      });
+      kernel.emitEvent(
+        'cathedral-001',
+        'task_started',
+        'kernel',
+        'INFO',
+        { message: 'Cathedral task started' }
+      );
 
-      kernel.emitEvent('governance-002', 'task_started', 'kernel', 'INFO', {
-        message: 'Enterprise 002 task started',
-      });
+      kernel.emitEvent(
+        'governance-002',
+        'task_started',
+        'kernel',
+        'INFO',
+        { message: 'Enterprise 002 task started' }
+      );
 
       // Verify both are running
       expect(kernel.getTask(cathedralTask.id)?.state).toBe('RUNNING');
@@ -729,12 +676,12 @@ describe('HERCULES Multi-Enterprise Isolation (PHASE 3)', () => {
       expect(enterprise2ObjCount).toBeGreaterThan(0);
 
       // Verify retrieval
-      expect(
-        cathedraleState.enterprise.objectives?.length
-      ).toBeGreaterThanOrEqual(cathedralObjCount);
-      expect(
-        enterprise2State.enterprise.objectives?.length
-      ).toBeGreaterThanOrEqual(enterprise2ObjCount);
+      expect(cathedraleState.enterprise.objectives?.length).toBeGreaterThanOrEqual(
+        cathedralObjCount
+      );
+      expect(enterprise2State.enterprise.objectives?.length).toBeGreaterThanOrEqual(
+        enterprise2ObjCount
+      );
     });
   });
 });

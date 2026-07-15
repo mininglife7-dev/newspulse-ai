@@ -43,10 +43,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Unknown error retrieving error metrics';
+    const message = error instanceof Error ? error.message : 'Unknown error retrieving error metrics';
     return NextResponse.json(
       {
         status: 'error',
@@ -70,8 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Capture the error
-    const errorMessage =
-      typeof errorData === 'string' ? new Error(errorData) : errorData;
+    const errorMessage = typeof errorData === 'string' ? new Error(errorData) : errorData;
     const event = await captureError(errorMessage, {
       endpoint,
       userId,
@@ -107,10 +103,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Unknown error processing error event';
+    const message = error instanceof Error ? error.message : 'Unknown error processing error event';
     return NextResponse.json(
       {
         status: 'error',
@@ -133,10 +126,7 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Unknown error resetting tracker';
+    const message = error instanceof Error ? error.message : 'Unknown error resetting tracker';
     return NextResponse.json(
       {
         status: 'error',

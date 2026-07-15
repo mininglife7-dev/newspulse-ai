@@ -69,8 +69,7 @@ describe('DNA-GOV-012: Schema Migration Validator', () => {
     });
 
     it('detects adding unique constraints', () => {
-      const sql =
-        'ALTER TABLE users ADD CONSTRAINT unique_email UNIQUE(email);';
+      const sql = 'ALTER TABLE users ADD CONSTRAINT unique_email UNIQUE(email);';
       const issues = detectMigrationPatterns(sql, 'add_unique.sql');
       expect(issues).toHaveLength(1);
       expect(issues[0].pattern).toBe('add-unique-constraint');
@@ -135,9 +134,9 @@ describe('DNA-GOV-012: Schema Migration Validator', () => {
       const issues = detectMigrationPatterns(sql, 'multi_change.sql');
       expect(issues.length).toBeGreaterThan(1);
       expect(issues.some((i) => i.pattern === 'drop-column')).toBe(true);
-      expect(
-        issues.some((i) => i.pattern === 'add-column-not-null-no-default')
-      ).toBe(true);
+      expect(issues.some((i) => i.pattern === 'add-column-not-null-no-default')).toBe(
+        true
+      );
       expect(issues.some((i) => i.pattern === 'drop-index')).toBe(true);
     });
 
@@ -275,7 +274,7 @@ line5`;
         },
         {
           name: '002_add_email.sql',
-          sql: "ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT '';",
+          sql: 'ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT \'\';',
         },
       ];
       const batch = analyzeMigrationBatch(migrations);

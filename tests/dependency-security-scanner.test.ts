@@ -1,12 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import {
-  scanDependencies,
-  formatSecurityAlert,
-  getSecuritySummary,
-  SecurityScanResult,
-} from '@/lib/dependency-security-scanner';
+import { scanDependencies, formatSecurityAlert, getSecuritySummary, SecurityScanResult } from '@/lib/dependency-security-scanner';
 
 describe('DNA-GOV-008: Dependency Security Scanner', () => {
   const testCacheDir = path.join(process.cwd(), 'tests/.security-cache');
@@ -32,115 +27,79 @@ describe('DNA-GOV-008: Dependency Security Scanner', () => {
     if (fs.existsSync(testCachePath)) {
       fs.unlinkSync(testCachePath);
     }
-    if (
-      fs.existsSync(testCacheDir) &&
-      fs.readdirSync(testCacheDir).length === 0
-    ) {
+    if (fs.existsSync(testCacheDir) && fs.readdirSync(testCacheDir).length === 0) {
       fs.rmdirSync(testCacheDir);
     }
     delete process.env.SECURITY_SCAN_CACHE_PATH;
   });
 
-  test(
-    'scanDependencies returns result with expected structure',
-    { timeout: 60_000 },
-    async () => {
-      const result = await scanDependencies();
+  test('scanDependencies returns result with expected structure', { timeout: 60_000 }, async () => {
+    const result = await scanDependencies();
 
-      expect(result).toHaveProperty('timestamp');
-      expect(result).toHaveProperty('total');
-      expect(result).toHaveProperty('critical');
-      expect(result).toHaveProperty('high');
-      expect(result).toHaveProperty('moderate');
-      expect(result).toHaveProperty('low');
-      expect(result).toHaveProperty('info');
-      expect(result).toHaveProperty('vulnerabilities');
-      expect(result).toHaveProperty('newVulnerabilities');
-      expect(result).toHaveProperty('resolvedVulnerabilities');
-      expect(result).toHaveProperty('scanStatus');
+    expect(result).toHaveProperty('timestamp');
+    expect(result).toHaveProperty('total');
+    expect(result).toHaveProperty('critical');
+    expect(result).toHaveProperty('high');
+    expect(result).toHaveProperty('moderate');
+    expect(result).toHaveProperty('low');
+    expect(result).toHaveProperty('info');
+    expect(result).toHaveProperty('vulnerabilities');
+    expect(result).toHaveProperty('newVulnerabilities');
+    expect(result).toHaveProperty('resolvedVulnerabilities');
+    expect(result).toHaveProperty('scanStatus');
+  });
+
+  test('scanStatus is "clean" when no vulnerabilities', { timeout: 60_000 }, async () => {
+    const result = await scanDependencies();
+    // This test verifies logic; actual result depends on current dependencies
+    // At minimum, scanStatus should be one of the allowed values
+    expect(['clean', 'vulnerabilities-found', 'critical-found']).toContain(result.scanStatus);
+  });
+
+  test('total count equals sum of all severity counts', { timeout: 60_000 }, async () => {
+    const result = await scanDependencies();
+    const sum = result.critical + result.high + result.moderate + result.low + result.info;
+    expect(result.total).toBe(sum);
+  });
+
+  test('vulnerabilities array matches total count', { timeout: 60_000 }, async () => {
+    const result = await scanDependencies();
+    expect(result.vulnerabilities.length).toBe(result.total);
+  });
+
+  test('detected vulnerabilities have required fields', { timeout: 60_000 }, async () => {
+    const result = await scanDependencies();
+
+    if (result.vulnerabilities.length > 0) {
+      result.vulnerabilities.forEach(vuln => {
+        expect(vuln).toHaveProperty('package');
+        expect(vuln).toHaveProperty('severity');
+        expect(vuln).toHaveProperty('fixAvailable');
+        expect(vuln).toHaveProperty('description');
+        expect(vuln).toHaveProperty('affectedVersions');
+        expect(vuln).toHaveProperty('patchedVersions');
+        expect(['critical', 'high', 'moderate', 'low', 'info']).toContain(vuln.severity);
+        expect(typeof vuln.package).toBe('string');
+        expect(typeof vuln.description).toBe('string');
+        expect(typeof vuln.affectedVersions).toBe('string');
+        expect(typeof vuln.patchedVersions).toBe('string');
+      });
     }
-  );
+  });
 
-  test(
-    'scanStatus is "clean" when no vulnerabilities',
-    { timeout: 60_000 },
-    async () => {
-      const result = await scanDependencies();
-      // This test verifies logic; actual result depends on current dependencies
-      // At minimum, scanStatus should be one of the allowed values
-      expect(['clean', 'vulnerabilities-found', 'critical-found']).toContain(
-        result.scanStatus
-      );
-    }
-  );
+  test('cache tracks previous vulnerabilities', { timeout: 60_000 }, async () => {
+    // First scan
+    const result1 = await scanDependencies();
+    const initialVulnCount = result1.total;
 
-  test(
-    'total count equals sum of all severity counts',
-    { timeout: 60_000 },
-    async () => {
-      const result = await scanDependencies();
-      const sum =
-        result.critical +
-        result.high +
-        result.moderate +
-        result.low +
-        result.info;
-      expect(result.total).toBe(sum);
-    }
-  );
+    // Second scan with same state
+    const result2 = await scanDependencies();
 
-  test(
-    'vulnerabilities array matches total count',
-    { timeout: 60_000 },
-    async () => {
-      const result = await scanDependencies();
-      expect(result.vulnerabilities.length).toBe(result.total);
-    }
-  );
-
-  test(
-    'detected vulnerabilities have required fields',
-    { timeout: 60_000 },
-    async () => {
-      const result = await scanDependencies();
-
-      if (result.vulnerabilities.length > 0) {
-        result.vulnerabilities.forEach((vuln) => {
-          expect(vuln).toHaveProperty('package');
-          expect(vuln).toHaveProperty('severity');
-          expect(vuln).toHaveProperty('fixAvailable');
-          expect(vuln).toHaveProperty('description');
-          expect(vuln).toHaveProperty('affectedVersions');
-          expect(vuln).toHaveProperty('patchedVersions');
-          expect(['critical', 'high', 'moderate', 'low', 'info']).toContain(
-            vuln.severity
-          );
-          expect(typeof vuln.package).toBe('string');
-          expect(typeof vuln.description).toBe('string');
-          expect(typeof vuln.affectedVersions).toBe('string');
-          expect(typeof vuln.patchedVersions).toBe('string');
-        });
-      }
-    }
-  );
-
-  test(
-    'cache tracks previous vulnerabilities',
-    { timeout: 60_000 },
-    async () => {
-      // First scan
-      const result1 = await scanDependencies();
-      const initialVulnCount = result1.total;
-
-      // Second scan with same state
-      const result2 = await scanDependencies();
-
-      // With same codebase, same vulnerabilities should be present
-      expect(result2.total).toBe(initialVulnCount);
-      // New vulnerabilities should be 0 since nothing changed
-      expect(result2.newVulnerabilities.length).toBeGreaterThanOrEqual(0);
-    }
-  );
+    // With same codebase, same vulnerabilities should be present
+    expect(result2.total).toBe(initialVulnCount);
+    // New vulnerabilities should be 0 since nothing changed
+    expect(result2.newVulnerabilities.length).toBeGreaterThanOrEqual(0);
+  });
 
   test('formatSecurityAlert returns alert with correct structure', async () => {
     const mockResult: SecurityScanResult = {
@@ -317,18 +276,14 @@ describe('DNA-GOV-008: Dependency Security Scanner', () => {
     expect(alert.title).toContain('No Known Vulnerabilities');
   });
 
-  test(
-    'getSecuritySummary returns formatted summary string',
-    { timeout: 60_000 },
-    async () => {
-      const result = await scanDependencies();
-      const summary = getSecuritySummary(result);
+  test('getSecuritySummary returns formatted summary string', { timeout: 60_000 }, async () => {
+    const result = await scanDependencies();
+    const summary = getSecuritySummary(result);
 
-      expect(typeof summary).toBe('string');
-      expect(summary).toContain('Dependencies:');
-      expect(summary).toContain('vulnerabilities');
-    }
-  );
+    expect(typeof summary).toBe('string');
+    expect(summary).toContain('Dependencies:');
+    expect(summary).toContain('vulnerabilities');
+  });
 
   test('getSecuritySummary includes new vulnerabilities count when present', () => {
     const mockResult: SecurityScanResult = {

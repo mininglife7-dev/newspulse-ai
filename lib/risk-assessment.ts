@@ -65,8 +65,7 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'q1-prohibited-biometric',
     category: 'Prohibited Uses',
-    question:
-      'Does the system perform real-time remote biometric identification?',
+    question: 'Does the system perform real-time remote biometric identification?',
     description:
       'Real-time remote biometric identification (e.g., facial recognition in public spaces) is prohibited unless in specific law enforcement scenarios.',
     type: 'yes-no',
@@ -99,8 +98,7 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'q4-credit-decision',
     category: 'High-Risk Areas',
-    question:
-      'Does the system make decisions affecting creditworthiness or access to finance?',
+    question: 'Does the system make decisions affecting creditworthiness or access to finance?',
     description:
       'Credit scoring, loan approval, insurance pricing based on AI are high-risk applications.',
     type: 'yes-no',
@@ -110,8 +108,7 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'q5-recruitment',
     category: 'High-Risk Areas',
-    question:
-      'Does the system screen, filter, or make decisions in recruitment or employment?',
+    question: 'Does the system screen, filter, or make decisions in recruitment or employment?',
     description:
       'AI used for candidate screening, resume parsing, or hiring decisions is high-risk.',
     type: 'yes-no',
@@ -121,8 +118,7 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'q6-education',
     category: 'High-Risk Areas',
-    question:
-      'Does the system make decisions affecting educational access or outcomes?',
+    question: 'Does the system make decisions affecting educational access or outcomes?',
     description:
       'AI that determines student placement, eligibility, or evaluation is high-risk.',
     type: 'yes-no',
@@ -132,8 +128,7 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'q7-law-enforcement',
     category: 'High-Risk Areas',
-    question:
-      'Is the system used by law enforcement for profiling, risk assessment, or investigation?',
+    question: 'Is the system used by law enforcement for profiling, risk assessment, or investigation?',
     description:
       'AI used for predictive policing, criminal risk assessment, or suspect profiling is high-risk.',
     type: 'yes-no',
@@ -169,8 +164,7 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
     question: 'Does the system process personal data?',
     type: 'yes-no',
     riskWeight: 0.4,
-    showIf: (answers) =>
-      !answers.has('q10-personal-data') || answers.get('q10-personal-data'),
+    showIf: (answers) => !answers.has('q10-personal-data') || answers.get('q10-personal-data'),
   },
   {
     id: 'q11-sensitive-data',
@@ -227,8 +221,7 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'q16-oversight',
     category: 'Transparency',
-    question:
-      'Is there human oversight and ability to override system decisions?',
+    question: 'Is there human oversight and ability to override system decisions?',
     type: 'yes-no',
     riskWeight: 0.45,
   },
@@ -237,16 +230,14 @@ const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
   {
     id: 'q17-testing',
     category: 'Safety & Testing',
-    question:
-      'Has the system undergone conformity assessment and testing for bias?',
+    question: 'Has the system undergone conformity assessment and testing for bias?',
     type: 'yes-no',
     riskWeight: 0.35,
   },
   {
     id: 'q18-monitoring',
     category: 'Safety & Testing',
-    question:
-      'Is there ongoing monitoring and documentation of system performance?',
+    question: 'Is there ongoing monitoring and documentation of system performance?',
     type: 'yes-no',
     riskWeight: 0.4,
   },
@@ -271,9 +262,7 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
   let riskScore = 0;
 
   // Check for prohibited uses (triggers UNACCEPTABLE classification)
-  const prohibitedQuestions = ASSESSMENT_QUESTIONS.filter(
-    (q) => q.prohibitedIndicator
-  );
+  const prohibitedQuestions = ASSESSMENT_QUESTIONS.filter((q) => q.prohibitedIndicator);
   for (const q of prohibitedQuestions) {
     const answer = answers.get(q.id);
     if (answer === true || answer === 'yes') {
@@ -294,11 +283,7 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
     return {
       riskLevel: 'unacceptable',
       riskScore: 100,
-      score: {
-        prohibitedIndicators: prohibitedCount,
-        highRiskIndicators: 0,
-        mediumRiskIndicators: 0,
-      },
+      score: { prohibitedIndicators: prohibitedCount, highRiskIndicators: 0, mediumRiskIndicators: 0 },
       reasoning,
       affectedCategories,
       recommendations,
@@ -307,9 +292,7 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
   }
 
   // Check for high-risk indicators
-  const highRiskQuestions = ASSESSMENT_QUESTIONS.filter(
-    (q) => q.highRiskIndicator
-  );
+  const highRiskQuestions = ASSESSMENT_QUESTIONS.filter((q) => q.highRiskIndicator);
   for (const q of highRiskQuestions) {
     const answer = answers.get(q.id);
     if (answer === true || answer === 'yes') {
@@ -318,7 +301,10 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
       riskScore += 35;
 
       // Map to categories
-      if (q.id.includes('credit') || q.id.includes('finance')) {
+      if (
+        q.id.includes('credit') ||
+        q.id.includes('finance')
+      ) {
         affectedCategories.push('credit-scoring');
       } else if (q.id.includes('recruitment') || q.id.includes('employment')) {
         affectedCategories.push('recruitment');
@@ -341,9 +327,7 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
     if (answers.get('q11-sensitive-data') === true) {
       mediumRiskCount++;
       riskScore += 25;
-      reasoning.push(
-        'System processes special categories of personal data (sensitive)'
-      );
+      reasoning.push('System processes special categories of personal data (sensitive)');
     }
 
     if (answers.get('q12-vulnerable-groups') === true) {
@@ -369,9 +353,7 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
   // Transparency & oversight reduce risk (only meaningful for high-risk systems)
   if (answers.get('q15-transparency') === true) {
     riskScore -= 5;
-    recommendations.push(
-      'Strong transparency in decision-making is positive. Maintain this.'
-    );
+    recommendations.push('Strong transparency in decision-making is positive. Maintain this.');
   } else if (answers.get('q15-transparency') === false && highRiskCount > 0) {
     riskScore += 5;
     reasoning.push('Lack of transparency increases risk for high-risk systems');
@@ -379,39 +361,25 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
 
   if (answers.get('q16-oversight') === true) {
     riskScore -= 5;
-    recommendations.push(
-      'Human oversight is in place. Continue to monitor and document decisions.'
-    );
+    recommendations.push('Human oversight is in place. Continue to monitor and document decisions.');
   } else if (answers.get('q16-oversight') === false && highRiskCount > 0) {
     riskScore += 5;
-    reasoning.push(
-      'Lack of human oversight increases risk for high-risk systems'
-    );
+    reasoning.push('Lack of human oversight increases risk for high-risk systems');
   }
 
   // Testing & monitoring reduce risk (meaningful for high/medium-risk systems)
   if (answers.get('q17-testing') === true) {
     riskScore -= 4;
-    recommendations.push(
-      'Testing and conformity assessment have been completed.'
-    );
-  } else if (
-    answers.get('q17-testing') === false &&
-    (highRiskCount > 0 || mediumRiskCount > 0)
-  ) {
+    recommendations.push('Testing and conformity assessment have been completed.');
+  } else if (answers.get('q17-testing') === false && (highRiskCount > 0 || mediumRiskCount > 0)) {
     riskScore += 4;
     reasoning.push('No documented testing or conformity assessment');
   }
 
   if (answers.get('q18-monitoring') === true) {
     riskScore -= 4;
-    recommendations.push(
-      'Ongoing monitoring is in place. Maintain documentation.'
-    );
-  } else if (
-    answers.get('q18-monitoring') === false &&
-    (highRiskCount > 0 || mediumRiskCount > 0)
-  ) {
+    recommendations.push('Ongoing monitoring is in place. Maintain documentation.');
+  } else if (answers.get('q18-monitoring') === false && (highRiskCount > 0 || mediumRiskCount > 0)) {
     riskScore += 4;
     reasoning.push('No ongoing monitoring or performance documentation');
   }
@@ -447,9 +415,7 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
     riskLevel = 'low';
     recommendations.push('System appears to be low-risk.');
     if (mediumRiskCount === 0 && highRiskCount === 0) {
-      recommendations.push(
-        'Continue normal development and deployment practices.'
-      );
+      recommendations.push('Continue normal development and deployment practices.');
     }
   }
 
@@ -465,8 +431,7 @@ export function classifyRisk(answers: Map<string, any>): RiskAssessmentResult {
       mediumRiskIndicators: mediumRiskCount,
     },
     reasoning,
-    affectedCategories:
-      uniqueCategories.length > 0 ? uniqueCategories : ['other'],
+    affectedCategories: uniqueCategories.length > 0 ? uniqueCategories : ['other'],
     recommendations,
     timestamp: new Date().toISOString(),
   };

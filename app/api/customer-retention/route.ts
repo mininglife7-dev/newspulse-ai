@@ -123,19 +123,7 @@ export async function GET(request: NextRequest) {
 
       case 'segment-members': {
         const segmentName = request.nextUrl.searchParams.get('segment');
-        if (
-          !segmentName ||
-          ![
-            'champions',
-            'loyal-customers',
-            'at-risk',
-            'churn-warning',
-            'dormant',
-            'new-users',
-            'power-users',
-            'casual-users',
-          ].includes(segmentName)
-        ) {
+        if (!segmentName || !['champions', 'loyal-customers', 'at-risk', 'churn-warning', 'dormant', 'new-users', 'power-users', 'casual-users'].includes(segmentName)) {
           return NextResponse.json(
             { ok: false, timestamp, error: 'Invalid segment parameter' },
             { status: 400 }
@@ -153,8 +141,7 @@ export async function GET(request: NextRequest) {
           {
             ok: false,
             timestamp,
-            error:
-              'Invalid action. Valid actions: health, metrics, status, customer-health, segment, risk, health-score, triggers, high-risk, segment-members',
+            error: 'Invalid action. Valid actions: health, metrics, status, customer-health, segment, risk, health-score, triggers, high-risk, segment-members',
           },
           { status: 400 }
         );
@@ -191,17 +178,9 @@ export async function POST(request: NextRequest) {
         const userId = cmd.user_id as unknown;
         const metrics = cmd.metrics as unknown;
 
-        if (
-          typeof userId !== 'string' ||
-          typeof metrics !== 'object' ||
-          !metrics
-        ) {
+        if (typeof userId !== 'string' || typeof metrics !== 'object' || !metrics) {
           return NextResponse.json(
-            {
-              ok: false,
-              timestamp,
-              error: 'Missing or invalid user_id and metrics fields',
-            },
+            { ok: false, timestamp, error: 'Missing or invalid user_id and metrics fields' },
             { status: 400 }
           );
         }
@@ -286,8 +265,7 @@ export async function POST(request: NextRequest) {
           {
             ok: false,
             timestamp,
-            error:
-              'Invalid command. Valid commands: update-metrics, calculate-health, calculate-risk, segment, generate-triggers',
+            error: 'Invalid command. Valid commands: update-metrics, calculate-health, calculate-risk, segment, generate-triggers',
           },
           { status: 400 }
         );

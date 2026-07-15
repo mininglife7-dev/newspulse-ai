@@ -38,11 +38,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const blockers = await detectAllBlockingConditions(
-      owner,
-      repo,
-      actionsToken
-    );
+    const blockers = await detectAllBlockingConditions(owner, repo, actionsToken);
 
     if (blockers.length === 0) {
       return NextResponse.json({
@@ -58,23 +54,14 @@ export async function GET(req: Request) {
 
     // Log blocking conditions (safe for production)
     if (blockers.some((b) => b.severity === 'critical')) {
-      logger.error(
-        'Blocking conditions detected: critical',
-        'BLOCKER_CRITICAL',
-        {
-          totalBlockers: blockers.length,
-          criticalCount: blockers.filter((b) => b.severity === 'critical')
-            .length,
-        }
-      );
+      logger.error('Blocking conditions detected: critical', 'BLOCKER_CRITICAL', {
+        totalBlockers: blockers.length,
+        criticalCount: blockers.filter((b) => b.severity === 'critical').length,
+      });
     } else {
-      logger.warn(
-        'Blocking conditions detected: high severity',
-        'BLOCKER_WARNING',
-        {
-          totalBlockers: blockers.length,
-        }
-      );
+      logger.warn('Blocking conditions detected: high severity', 'BLOCKER_WARNING', {
+        totalBlockers: blockers.length,
+      });
     }
 
     return NextResponse.json(
@@ -96,11 +83,7 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    logger.error(
-      'Blocking condition detection failed',
-      'BLOCKER_DETECTION_ERROR',
-      error
-    );
+    logger.error('Blocking condition detection failed', 'BLOCKER_DETECTION_ERROR', error);
 
     return NextResponse.json(
       {

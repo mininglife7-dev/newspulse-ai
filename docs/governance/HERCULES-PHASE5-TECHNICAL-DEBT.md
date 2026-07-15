@@ -9,7 +9,6 @@
 ## Executive Summary
 
 HERCULES v1.0 certification requires evaluating:
-
 1. **DNA-012: Schema Migration Validator** — Zero-downtime database updates
 2. **DNA-013: Feature Flag Controller** — A/B testing, gradual rollouts
 3. **DNA-015: Deployment Canary** — Gradual rollout with automatic abort
@@ -29,24 +28,22 @@ Each item classified by certification requirement and implementation urgency.
 
 **Assessment:**
 
-| Criterion                  | Status   | Reasoning                                                                          |
-| -------------------------- | -------- | ---------------------------------------------------------------------------------- |
-| Required for v1.0          | ✅ YES   | Cathedral launches to German enterprise 2026-08-15; requires safe schema evolution |
-| Required before production | ✅ YES   | Any production database schema change without validation risks downtime            |
-| Implemented                | ❌ NO    | Currently only ad-hoc SQL in Supabase SQL editor                                   |
-| Complexity                 | MEDIUM   | Validates: backward compatibility, no implicit data loss, rollback safety          |
-| Risk if skipped            | CRITICAL | Silent data corruption, customer downtime, EU AI Act audit failure                 |
+| Criterion | Status | Reasoning |
+|-----------|--------|-----------|
+| Required for v1.0 | ✅ YES | Cathedral launches to German enterprise 2026-08-15; requires safe schema evolution |
+| Required before production | ✅ YES | Any production database schema change without validation risks downtime |
+| Implemented | ❌ NO | Currently only ad-hoc SQL in Supabase SQL editor |
+| Complexity | MEDIUM | Validates: backward compatibility, no implicit data loss, rollback safety |
+| Risk if skipped | CRITICAL | Silent data corruption, customer downtime, EU AI Act audit failure |
 
 **Decision:** **IMPLEMENT FOR V1.0**
 
 **Rationale:** Cathedral will need to evolve schema as it onboards German enterprise (compliance requirements, reporting structures, audit trails). Without Schema Migration Validator, any change risks:
-
 - Breaking running queries (downtime)
 - Silent data loss (compliance violation)
 - Impossible rollback (irreversible data change)
 
 **Implementation Plan:**
-
 1. Create `lib/schema-migration-validator.ts` with:
    - Backward compatibility checker (old queries still work)
    - Data loss detector (no `ALTER ... DROP COLUMN` without validation)
@@ -67,24 +64,22 @@ Each item classified by certification requirement and implementation urgency.
 
 **Assessment:**
 
-| Criterion                  | Status | Reasoning                                                                                   |
-| -------------------------- | ------ | ------------------------------------------------------------------------------------------- |
-| Required for v1.0          | ✅ YES | German enterprise will expect controlled feature rollout, not all-or-nothing deployments    |
+| Criterion | Status | Reasoning |
+|-----------|--------|-----------|
+| Required for v1.0 | ✅ YES | German enterprise will expect controlled feature rollout, not all-or-nothing deployments |
 | Required before production | ✅ YES | Enables safe gradual rollout and rapid incident response (feature disable ≈ quick rollback) |
-| Implemented                | ❌ NO  | All features always enabled on production                                                   |
-| Complexity                 | MEDIUM | Requires: runtime feature state, per-enterprise override, telemetry                         |
-| Risk if skipped            | HIGH   | Cannot do gradual rollouts, cannot isolate feature-specific incidents                       |
+| Implemented | ❌ NO | All features always enabled on production |
+| Complexity | MEDIUM | Requires: runtime feature state, per-enterprise override, telemetry |
+| Risk if skipped | HIGH | Cannot do gradual rollouts, cannot isolate feature-specific incidents |
 
 **Decision:** **IMPLEMENT FOR V1.0**
 
 **Rationale:** Cathedral's compliance mission requires:
-
 - Gradual feature rollout to new customer (don't destabilize with unvetted features)
 - Quick feature disable on incidents (faster than code rollback)
 - Per-customer feature control (different EU AI Act requirements by jurisdiction)
 
 **Implementation Plan:**
-
 1. Create `lib/feature-flags.ts` with:
    - Runtime feature registry (enterprise-scoped)
    - Per-enterprise toggle overrides
@@ -105,25 +100,23 @@ Each item classified by certification requirement and implementation urgency.
 
 **Assessment:**
 
-| Criterion                  | Status         | Reasoning                                                                                        |
-| -------------------------- | -------------- | ------------------------------------------------------------------------------------------------ |
-| Required for v1.0          | ✅ YES         | German enterprise will have production dependencies on Cathedral; cannot tolerate broken deploys |
-| Required before production | ⚠️ CONDITIONAL | Required if Vercel auto-deploys from main; can skip if manual deployment gating exists           |
-| Implemented                | ❌ NO          | All commits to main auto-deploy to production immediately                                        |
-| Complexity                 | MEDIUM-HIGH    | Requires: traffic shaping, error rate monitoring, automatic abort logic                          |
-| Risk if skipped            | HIGH           | Broken code reaches customer immediately; no safety net                                          |
+| Criterion | Status | Reasoning |
+|-----------|--------|-----------|
+| Required for v1.0 | ✅ YES | German enterprise will have production dependencies on Cathedral; cannot tolerate broken deploys |
+| Required before production | ⚠️ CONDITIONAL | Required if Vercel auto-deploys from main; can skip if manual deployment gating exists |
+| Implemented | ❌ NO | All commits to main auto-deploy to production immediately |
+| Complexity | MEDIUM-HIGH | Requires: traffic shaping, error rate monitoring, automatic abort logic |
+| Risk if skipped | HIGH | Broken code reaches customer immediately; no safety net |
 
 **Decision:** **IMPLEMENT FOR V1.0 (Conditional)**
 
 **Rationale:**
-
 - Vercel auto-deploys all commits to main
 - If a commit breaks the service, customer sees impact immediately
 - Canary deployment can catch this within seconds and auto-abort
 - Risk of skip: production outage during customer onboarding
 
 **Implementation Plan:**
-
 1. Create `lib/deployment-canary.ts` with:
    - Gradual traffic routing (10% → 25% → 50% → 100%)
    - Error rate monitoring during each phase
@@ -144,25 +137,23 @@ Each item classified by certification requirement and implementation urgency.
 
 **Assessment:**
 
-| Criterion                  | Status     | Reasoning                                                                    |
-| -------------------------- | ---------- | ---------------------------------------------------------------------------- |
-| Required for v1.0          | ✅ YES     | Kernel state (enterprises, missions, tasks) must survive server restart      |
-| Required before production | ✅ YES     | Without persistence, every server restart loses all task state               |
-| Implemented                | ⚠️ PARTIAL | State serialization implemented; durability to disk/database NOT implemented |
-| Complexity                 | MEDIUM     | Requires: database schema, transaction safety, recovery validation           |
-| Risk if skipped            | CRITICAL   | Server restart = complete mission loss, audit trail loss, all tasks lost     |
+| Criterion | Status | Reasoning |
+|-----------|--------|-----------|
+| Required for v1.0 | ✅ YES | Kernel state (enterprises, missions, tasks) must survive server restart |
+| Required before production | ✅ YES | Without persistence, every server restart loses all task state |
+| Implemented | ⚠️ PARTIAL | State serialization implemented; durability to disk/database NOT implemented |
+| Complexity | MEDIUM | Requires: database schema, transaction safety, recovery validation |
+| Risk if skipped | CRITICAL | Server restart = complete mission loss, audit trail loss, all tasks lost |
 
 **Decision:** **IMPLEMENT FOR V1.0 (IMMEDIATE)**
 
 **Rationale:**
-
 - HERCULES kernel currently stores state only in memory
 - If server restarts, all enterprise state is lost (missions, tasks, events, audit)
 - Cathedral customer onboarding will require persistent missions and task queues
 - Vercel deployments cause server restarts; state must survive this
 
 **Implementation Plan:**
-
 1. Extend Supabase schema with HERCULES tables:
    - `hercules_enterprises` (enterprise metadata)
    - `hercules_missions` (mission state)
@@ -189,12 +180,12 @@ Each item classified by certification requirement and implementation urgency.
 
 ## Summary Decision Matrix
 
-| Item                         | v1.0 | Production | Status              | Effort      | Start  |
-| ---------------------------- | ---- | ---------- | ------------------- | ----------- | ------ |
-| DNA-012 Schema Migrator      | ✅   | ✅         | NOT STARTED         | MEDIUM      | Now    |
-| DNA-013 Feature Flags        | ✅   | ✅         | NOT STARTED         | MEDIUM      | Now    |
-| DNA-015 Deployment Canary    | ✅   | ✅         | NOT STARTED         | MEDIUM-HIGH | Now    |
-| Multi-Enterprise Persistence | ✅   | ✅         | PARTIAL (in-memory) | MEDIUM      | URGENT |
+| Item | v1.0 | Production | Status | Effort | Start |
+|------|------|-----------|--------|--------|-------|
+| DNA-012 Schema Migrator | ✅ | ✅ | NOT STARTED | MEDIUM | Now |
+| DNA-013 Feature Flags | ✅ | ✅ | NOT STARTED | MEDIUM | Now |
+| DNA-015 Deployment Canary | ✅ | ✅ | NOT STARTED | MEDIUM-HIGH | Now |
+| Multi-Enterprise Persistence | ✅ | ✅ | PARTIAL (in-memory) | MEDIUM | URGENT |
 
 ---
 
@@ -239,7 +230,6 @@ Each item classified by certification requirement and implementation urgency.
 ## Risk Mitigation
 
 If any implementation falls behind:
-
 1. **Schema Migrator (DNA-012):** Can defer non-breaking schema changes to Phase 6; customer pilot may not require DB schema evolution
 2. **Feature Flags (DNA-013):** Can simulate with URL parameters; full rollout control deferred to Phase 6
 3. **Deployment Canary (DNA-015):** Can implement manual gating (require approval before 100% traffic); automatic abort deferred to Phase 6
@@ -250,7 +240,6 @@ If any implementation falls behind:
 ## Next Phase Gate
 
 **PHASE 5 COMPLETE when:**
-
 - ✅ 4/4 items classified and decision documented
 - ✅ 3/3 critical items (Persistence, Schema, Feature Flags) implemented
 - ✅ Deployment Canary implemented OR manual gating confirmed sufficient

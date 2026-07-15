@@ -26,7 +26,6 @@ The original `supabase/schema.sql` had multiple safety and idempotency violation
 **Severity:** CRITICAL — Schema cannot be redeployed.
 
 **Affected Policies (13):**
-
 1. "Users can read their own profile" (profiles, select)
 2. "Authenticated users can create workspaces" (workspaces, insert)
 3. "Workspace members can read their workspace" (workspaces, select)
@@ -42,7 +41,6 @@ The original `supabase/schema.sql` had multiple safety and idempotency violation
 13. "Members can update workspace ai_systems" (ai_systems, update)
 
 **Error Example:**
-
 ```
 ERROR: policy "Users can read their own profile" for table "profiles" already exists
 ```
@@ -58,7 +56,6 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 **Analysis:** The trigger name `on_auth_user_created` is specific and unique. Drop IF EXISTS is safe and intentional for idempotency. However, missing documentation.
 
 **Repair:** Added detailed comment explaining:
-
 - Trigger is Cathedral-specific and safe to drop
 - Idempotency rationale
 - Impact limited to this auth flow
@@ -69,19 +66,16 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 ### 3. ❌ Verification Counts Hard-Coded and WRONG
 
 **Original Claims:**
-
 - 14 tables
 - 17 indexes
 - 10 RLS policies
 
 **Actual Counts in Current Schema:**
-
 - **15 tables** (9 application + 6 HERCULES)
 - **25 indexes** (16 application + 9 HERCULES)
 - **13 policies** (13 application + 0 HERCULES)
 
 **Defects in Counts:**
-
 - Off by 1 table
 - Off by 8 indexes
 - Off by 3 policies
@@ -97,7 +91,6 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 **Issue:** 6 HERCULES tables created with RLS enabled but NO policies.
 
 **Tables Affected:**
-
 1. hercules_checkpoints
 2. hercules_enterprise_missions
 3. hercules_enterprise_tasks
@@ -107,8 +100,7 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 
 **Security Gap:** Without explicit policies, RLS-enabled tables default to DENY ALL, which is correct fail-closed behavior. However, no documentation explains this intentional design or service-role-only access model.
 
-**Repair:**
-
+**Repair:** 
 - Added explicit documentation: "HERCULES tables are service-role-only (internal system)"
 - Enabled RLS on all HERCULES tables (already enabled, now explicit)
 - Added comment block explaining security model
@@ -122,22 +114,21 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 
 **Policy Coverage Matrix (Before):**
 
-| Table             | SELECT | INSERT | UPDATE | DELETE |
-| ----------------- | ------ | ------ | ------ | ------ |
-| profiles          | ✅     | ✅     | ✅     | ❌     |
-| workspaces        | ✅     | ✅     | ❌     | ❌     |
-| workspace_members | ✅     | ✅     | ❌     | ❌     |
-| companies         | ✅     | ✅     | ❌     | ❌     |
-| ai_systems        | ✅     | ✅     | ✅     | ❌     |
-| risk_assessments  | ❌     | ❌     | ❌     | ❌     |
-| obligations       | ❌     | ❌     | ❌     | ❌     |
-| evidence          | ❌     | ❌     | ❌     | ❌     |
-| remediation_plans | ❌     | ❌     | ❌     | ❌     |
+| Table | SELECT | INSERT | UPDATE | DELETE |
+|-------|--------|--------|--------|--------|
+| profiles | ✅ | ✅ | ✅ | ❌ |
+| workspaces | ✅ | ✅ | ❌ | ❌ |
+| workspace_members | ✅ | ✅ | ❌ | ❌ |
+| companies | ✅ | ✅ | ❌ | ❌ |
+| ai_systems | ✅ | ✅ | ✅ | ❌ |
+| risk_assessments | ❌ | ❌ | ❌ | ❌ |
+| obligations | ❌ | ❌ | ❌ | ❌ |
+| evidence | ❌ | ❌ | ❌ | ❌ |
+| remediation_plans | ❌ | ❌ | ❌ | ❌ |
 
 **Impact:** Customers cannot update or delete their own data. Customer workflows blocked.
 
-**Repair:**
-
+**Repair:** 
 - Added UPDATE and DELETE policies for all application tables
 - Policies follow same workspace membership + active status pattern as SELECT/INSERT
 - Ensures customer can only modify within their workspace
@@ -151,8 +142,7 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 
 **Scenario:** If schema runs twice and second run is incomplete (network timeout, partial execution), schema could be left in inconsistent state.
 
-**Repair:**
-
+**Repair:** 
 - Created separate PREFLIGHT verification query
 - Preflight runs BEFORE any changes and detects existing objects
 - Provides clear go/no-go decision
@@ -167,7 +157,6 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 **Risk:** Running on a database with old/corrupt schema could produce silent failures.
 
 **Repair:** Created comprehensive preflight SQL that:
-
 - Lists all existing tables, indexes, functions, triggers, policies
 - Detects naming conflicts
 - Reports object counts
@@ -178,17 +167,15 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 ### 8. ❌ Incomplete RLS for Passive Tables (risk_assessments, etc.)
 
 **Issue:** 5 tables completely lack RLS policies:
-
 - risk_assessments
 - obligations
 - evidence
 - remediation_plans
-  (plus workspace_members missing full CRUD)
+(plus workspace_members missing full CRUD)
 
 **Impact:** Authenticated users can access all data in these tables across all workspaces — massive multi-tenant breach.
 
 **Repair:** Added full CRUD policies for all tables:
-
 - risk_assessments: SELECT, INSERT, UPDATE, DELETE
 - obligations: SELECT, INSERT, UPDATE, DELETE
 - evidence: SELECT, INSERT, UPDATE, DELETE
@@ -201,12 +188,10 @@ All policies verify user is active member of workspace owning the data.
 ## Repairs Applied
 
 ### Repair 1: Idempotent Policy Creation
-
 **Before:** 13 CREATE POLICY statements with no error handling.  
 **After:** Each policy wrapped with DROP POLICY IF EXISTS first.
 
 **Pattern:**
-
 ```sql
 DROP POLICY IF EXISTS "Policy Name" ON table_name;
 CREATE POLICY "Policy Name" ...
@@ -217,12 +202,10 @@ CREATE POLICY "Policy Name" ...
 ---
 
 ### Repair 2: Complete CRUD Policy Coverage
-
 **Before:** Partial policies (SELECT + INSERT only for most tables).  
 **After:** Full CRUD (SELECT, INSERT, UPDATE, DELETE) for all application tables.
 
 **Example (ai_systems):**
-
 - ✅ SELECT members can read
 - ✅ INSERT members can create
 - ✅ UPDATE members can modify
@@ -231,7 +214,6 @@ CREATE POLICY "Policy Name" ...
 ---
 
 ### Repair 3: HERCULES Service-Role-Only Access
-
 **Before:** 6 HERCULES tables with RLS enabled but no policies (confusing).  
 **After:** Explicit documentation + verification approach.
 
@@ -241,15 +223,12 @@ CREATE POLICY "Policy Name" ...
 ---
 
 ### Repair 4: Dynamic Verification (No Hard-Coded Counts)
-
 **Before:**
-
 ```
 Expected 14 tables, 17 indexes, 10 policies
 ```
 
 **After:**
-
 ```sql
 -- Verification query returns ACTUAL counts
 SELECT 'TABLES' as type, count(*) FROM pg_tables WHERE schemaname='public'
@@ -262,11 +241,9 @@ SELECT 'POLICIES', count(*) FROM pg_policies WHERE schemaname='public'
 ---
 
 ### Repair 5: Preflight Inventory Query
-
 **New File:** `PREFLIGHT_CHECK.sql`
 
 Runs BEFORE deployment to detect:
-
 - Existing tables (will be skipped by CREATE IF NOT EXISTS)
 - Existing indexes (will be skipped by CREATE IF NOT EXISTS)
 - Existing policies (will cause CREATE POLICY to fail)
@@ -278,10 +255,8 @@ Returns go/no-go recommendation.
 ---
 
 ### Repair 6: DROP TRIGGER IF EXISTS Documentation
-
 **Before:** Bare DROP TRIGGER with minimal comment.  
 **After:** Multi-line explanation:
-
 ```sql
 -- Drop existing trigger if it exists (idempotent deployment safety)
 -- This trigger is Cathedral-specific and only manages auth.users → profiles sync
@@ -293,11 +268,9 @@ drop trigger if exists on_auth_user_created on auth.users;
 ---
 
 ### Repair 7: Complete Security Model Documentation
-
 **New Section:** "Security Model & Access Control"
 
 Explains:
-
 - Application tables: multi-tenant isolation via workspace membership
 - HERCULES tables: service-role-only, no public access
 - RLS default: deny all, grant specific access per policy
@@ -306,11 +279,9 @@ Explains:
 ---
 
 ### Repair 8: Post-Deployment Security Tests
-
 **New File:** `SECURITY_TESTS.sql`
 
 Validates:
-
 - Tenant A cannot see Tenant B data
 - Anonymous users cannot access protected tables
 - Signup trigger works (auth.users → profiles sync)
@@ -322,7 +293,6 @@ Validates:
 ## Actual Object Counts (Corrected)
 
 ### Application Tables (9)
-
 1. profiles
 2. workspaces
 3. workspace_members
@@ -334,7 +304,6 @@ Validates:
 9. remediation_plans
 
 ### HERCULES Tables (6)
-
 10. hercules_checkpoints
 11. hercules_enterprise_missions
 12. hercules_enterprise_tasks
@@ -345,7 +314,6 @@ Validates:
 **TOTAL: 15 tables**
 
 ### Application Indexes (16)
-
 1. profiles_email_idx
 2. workspaces_owner_id_idx
 3. workspaces_slug_idx
@@ -364,7 +332,6 @@ Validates:
 16. remediation_plans_status_idx
 
 ### HERCULES Indexes (9)
-
 17. hercules_checkpoints_status_idx
 18. hercules_checkpoints_created_idx
 19. hercules_missions_enterprise_idx
@@ -380,14 +347,12 @@ Validates:
 ### RLS Policies (31 total)
 
 **Profiles (4):**
-
 - Users can read their own profile (SELECT)
 - Users can insert their own profile (INSERT)
 - Users can update their own profile (UPDATE)
 - Users can delete their own profile (DELETE)
 
 **Workspaces (6):**
-
 - Authenticated users can create workspaces (INSERT)
 - Workspace members can read their workspace (SELECT)
 - Owners can read their own workspaces (SELECT)
@@ -395,56 +360,48 @@ Validates:
 - Workspace owners can delete their workspaces (DELETE)
 
 **Workspace Members (4):**
-
 - Users can read their own memberships (SELECT)
 - Owners can add themselves as members (INSERT)
 - Active members can update memberships (UPDATE)
 - Active members can remove members (DELETE)
 
 **Companies (4):**
-
 - Members can read workspace companies (SELECT)
 - Members can insert workspace companies (INSERT)
 - Members can update workspace companies (UPDATE)
 - Members can delete workspace companies (DELETE)
 
 **AI Systems (4):**
-
 - Members can read workspace ai_systems (SELECT)
 - Members can insert workspace ai_systems (INSERT)
 - Members can update workspace ai_systems (UPDATE)
 - Members can delete workspace ai_systems (DELETE)
 
 **Risk Assessments (4):**
-
 - Members can read workspace risk_assessments (SELECT)
 - Members can insert workspace risk_assessments (INSERT)
 - Members can update workspace risk_assessments (UPDATE)
 - Members can delete workspace risk_assessments (DELETE)
 
 **Obligations (4):**
-
 - Members can read workspace obligations (SELECT)
 - Members can insert workspace obligations (INSERT)
 - Members can update workspace obligations (UPDATE)
 - Members can delete workspace obligations (DELETE)
 
 **Evidence (4):**
-
 - Members can read workspace evidence (SELECT)
 - Members can insert workspace evidence (INSERT)
 - Members can update workspace evidence (UPDATE)
 - Members can delete workspace evidence (DELETE)
 
 **Remediation Plans (4):**
-
 - Members can read workspace remediation_plans (SELECT)
 - Members can insert workspace remediation_plans (INSERT)
 - Members can update workspace remediation_plans (UPDATE)
 - Members can delete workspace remediation_plans (DELETE)
 
 **HERCULES (0 — service-role-only):**
-
 - (All HERCULES tables explicitly deny public access)
 
 **TOTAL: 31 policies (9 application tables × 4 CRUD ops - 5 partial = 31)**
@@ -454,7 +411,6 @@ Validates:
 ## Testing Protocol
 
 ### Double-Run Idempotency Test
-
 1. **Run 1:** Deploy schema to clean database
    - Expected: All statements succeed
    - Result: ✅ (Will verify)
@@ -464,9 +420,7 @@ Validates:
    - Result: ✅ (Will verify)
 
 ### Security Test Suite
-
 Validates multi-tenant isolation:
-
 1. Create Tenant A (user-a, workspace-a, company-a)
 2. Create Tenant B (user-b, workspace-b, company-b)
 3. Verify: User A cannot see User B's data

@@ -40,8 +40,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       description: 'Stress test task',
       state: 'QUEUED' as const,
       priority: overrides?.priority || (3 as const),
-      authorityRequired:
-        overrides?.authorityRequired || ('A_AUTONOMOUS' as const),
+      authorityRequired: overrides?.authorityRequired || ('A_AUTONOMOUS' as const),
       preconditions: [],
       postconditions: [],
       evidence: [],
@@ -73,10 +72,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       for (let i = 0; i < 100; i++) {
         const task = kernel.createTask(
           'cathedral-001',
-          createSurvivalTask('cathedral-001', {
-            title: `Task ${i}`,
-            priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5,
-          })
+          createSurvivalTask('cathedral-001', { title: `Task ${i}`, priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5 })
         );
         taskIds.push(task.id);
       }
@@ -94,9 +90,13 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
 
       // Emit 50 events
       for (let i = 0; i < 50; i++) {
-        kernel.emitEvent('cathedral-001', `event.${i}`, 'test', 'INFO', {
-          index: i,
-        });
+        kernel.emitEvent(
+          'cathedral-001',
+          `event.${i}`,
+          'test',
+          'INFO',
+          { index: i }
+        );
       }
 
       const serialized = kernel.serializeState();
@@ -119,10 +119,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should recover from partial serialization (corrupted json recovery)', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       const taskId = task.id;
 
       // Get valid state
@@ -159,9 +156,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
         tasks.push(
           kernel.createTask(
             'cathedral-001',
-            createSurvivalTask('cathedral-001', {
-              priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5,
-            })
+            createSurvivalTask('cathedral-001', { priority: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5 })
           )
         );
       }
@@ -178,10 +173,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
 
       // Create tasks and audit entries
       for (let i = 0; i < 20; i++) {
-        const task = kernel.createTask(
-          'cathedral-001',
-          createSurvivalTask('cathedral-001')
-        );
+        const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
         kernel.startTask(task.id);
         kernel.completeTask(task.id, ['evidence']);
       }
@@ -195,10 +187,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should handle duplicate restoration without side effects', () => {
       initializeCathedralEnterprise();
 
-      const task1 = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task1 = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
 
       const serialized = kernel.serializeState();
 
@@ -241,9 +230,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
         const priority = (i % 5) + 1;
         const task = kernel.createTask(
           'cathedral-001',
-          createSurvivalTask('cathedral-001', {
-            priority: priority as 1 | 2 | 3 | 4 | 5,
-          })
+          createSurvivalTask('cathedral-001', { priority: priority as 1 | 2 | 3 | 4 | 5 })
         );
         taskIds.push(task.id);
         expect(task.state).toBe('QUEUED');
@@ -261,22 +248,12 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
 
       // Add p5 first
       for (let i = 0; i < 5; i++) {
-        p5.push(
-          kernel.createTask(
-            'cathedral-001',
-            createSurvivalTask('cathedral-001', { priority: 5 })
-          )
-        );
+        p5.push(kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001', { priority: 5 })));
       }
 
       // Then add p1
       for (let i = 0; i < 5; i++) {
-        p1.push(
-          kernel.createTask(
-            'cathedral-001',
-            createSurvivalTask('cathedral-001', { priority: 1 })
-          )
-        );
+        p1.push(kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001', { priority: 1 })));
       }
 
       // P1 tasks were added after P5 but should be processed first due to priority
@@ -290,12 +267,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       // Create 50 tasks with same priority
       const tasks = [];
       for (let i = 0; i < 50; i++) {
-        tasks.push(
-          kernel.createTask(
-            'cathedral-001',
-            createSurvivalTask('cathedral-001', { priority: 3 })
-          )
-        );
+        tasks.push(kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001', { priority: 3 })));
       }
 
       // All should have unique IDs
@@ -313,12 +285,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
 
       const tasks = [];
       for (let i = 0; i < 20; i++) {
-        tasks.push(
-          kernel.createTask(
-            'cathedral-001',
-            createSurvivalTask('cathedral-001')
-          )
-        );
+        tasks.push(kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001')));
       }
 
       // Transition all to RUNNING
@@ -339,10 +306,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should handle task retry logic under stress', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
 
       // Start and fail multiple times
       for (let i = 0; i < 3; i++) {
@@ -358,10 +322,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       initializeCathedralEnterprise();
 
       // Create dependent tasks
-      const task1 = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task1 = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       const task2 = kernel.createTask('cathedral-001', {
         ...createSurvivalTask('cathedral-001', { title: 'Dependent Task' }),
         dependsOn: [task1.id],
@@ -375,14 +336,8 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       initializeCathedralEnterprise();
       initializeEnterprise002();
 
-      const catTask = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
-      const ent2Task = kernel.createTask(
-        'governance-002',
-        createSurvivalTask('governance-002')
-      );
+      const catTask = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
+      const ent2Task = kernel.createTask('governance-002', createSurvivalTask('governance-002'));
 
       // Both should remain in their enterprises
       expect(kernel.getTask(catTask.id)?.enterpriseId).toBe('cathedral-001');
@@ -392,10 +347,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should handle poison tasks (never-completing) without deadlock', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001', { title: 'Poison Task' })
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001', { title: 'Poison Task' }));
 
       // Start but never complete
       kernel.startTask(task.id);
@@ -403,10 +355,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       expect(running?.state).toBe('RUNNING');
 
       // Should still be able to create new tasks
-      const newTask = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const newTask = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       expect(newTask.id).toBeDefined();
     });
 
@@ -415,12 +364,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
 
       const tasks = [];
       for (let i = 0; i < 10; i++) {
-        tasks.push(
-          kernel.createTask(
-            'cathedral-001',
-            createSurvivalTask('cathedral-001')
-          )
-        );
+        tasks.push(kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001')));
       }
 
       // Cancel some
@@ -430,10 +374,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       expect(running?.state).toBe('RUNNING');
 
       // Others should still be creatable
-      const newTask = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const newTask = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       expect(newTask).toBeDefined();
     });
   });
@@ -486,10 +427,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should prevent forged identity in audit trail', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       kernel.startTask(task.id);
 
       const audit = kernel.getAuditLog('cathedral-001');
@@ -506,39 +444,27 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       initializeEnterprise002();
 
       // Try to create Cathedral task but request Enterprise 002
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
 
       // Should be tagged with cathedral
       expect(task.enterpriseId).toBe('cathedral-001');
 
       // Independent enterprise task should not interfere
-      const ent2Task = kernel.createTask(
-        'governance-002',
-        createSurvivalTask('governance-002')
-      );
+      const ent2Task = kernel.createTask('governance-002', createSurvivalTask('governance-002'));
       expect(ent2Task.enterpriseId).toBe('governance-002');
     });
 
     it('should prevent audit log tampering via replay attacks', () => {
       initializeCathedralEnterprise();
 
-      const task1 = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task1 = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       kernel.startTask(task1.id);
       kernel.completeTask(task1.id, ['evidence']);
 
       const audit1 = kernel.getAuditLog('cathedral-001');
 
       // Replay: create and complete another task
-      const task2 = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task2 = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       kernel.startTask(task2.id);
       kernel.completeTask(task2.id, ['evidence']);
 
@@ -557,10 +483,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should recover from interruption before task execution', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       const taskId = task.id;
 
       // Serialize before execution
@@ -577,10 +500,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should recover from interruption during task execution', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       kernel.startTask(task.id);
 
       // Serialize during execution
@@ -597,14 +517,9 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should recover from interruption after side effects', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       kernel.startTask(task.id);
-      kernel.emitEvent('cathedral-001', 'task.progress', 'kernel', 'INFO', {
-        progress: 50,
-      });
+      kernel.emitEvent('cathedral-001', 'task.progress', 'kernel', 'INFO', { progress: 50 });
 
       // Serialize after side effects
       const checkpoint = kernel.serializeState();
@@ -620,20 +535,14 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should recover deterministically (same state, same behavior)', () => {
       initializeCathedralEnterprise();
 
-      const task1 = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001', { title: 'Test 1' })
-      );
+      const task1 = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001', { title: 'Test 1' }));
 
       const checkpoint1 = kernel.serializeState();
 
       kernel.deserializeState(checkpoint1);
 
       // Create same task in restored state
-      const task2 = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001', { title: 'Test 1' })
-      );
+      const task2 = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001', { title: 'Test 1' }));
 
       // Both should behave identically
       expect(task1.priority).toBe(task2.priority);
@@ -662,14 +571,8 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       const enterprise2 = initializeEnterprise002();
 
       // Create tasks for both
-      const catTask = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
-      const ent2Task = kernel.createTask(
-        'governance-002',
-        createSurvivalTask('governance-002')
-      );
+      const catTask = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
+      const ent2Task = kernel.createTask('governance-002', createSurvivalTask('governance-002'));
 
       // Serialize with both enterprises
       const checkpoint = kernel.serializeState();
@@ -689,10 +592,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should handle dashboard updates during recovery', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       kernel.startTask(task.id);
 
       // Simulate dashboard read during interruption
@@ -715,14 +615,8 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       initializeEnterprise002();
 
       // Create concurrent work
-      const catTask = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
-      const ent2Task = kernel.createTask(
-        'governance-002',
-        createSurvivalTask('governance-002')
-      );
+      const catTask = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
+      const ent2Task = kernel.createTask('governance-002', createSurvivalTask('governance-002'));
 
       kernel.startTask(catTask.id);
       kernel.startTask(ent2Task.id);
@@ -755,10 +649,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should display accurate task state', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       expect(task.state).toBe('QUEUED');
 
       kernel.startTask(task.id);
@@ -776,13 +667,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       const health = kernel.calculateHealth('cathedral-001');
       expect(health).toBeDefined();
       expect(health.status).toBeDefined();
-      expect([
-        'HEALTHY',
-        'DEGRADED',
-        'AT_RISK',
-        'CRITICAL',
-        'UNKNOWN',
-      ]).toContain(health.status);
+      expect(['HEALTHY', 'DEGRADED', 'AT_RISK', 'CRITICAL', 'UNKNOWN']).toContain(health.status);
     });
 
     it('should display accurate audit activity', () => {
@@ -791,10 +676,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       const beforeCount = kernel.getAuditLog('cathedral-001')?.length || 0;
 
       // Perform action
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
       kernel.startTask(task.id);
 
       const afterCount = kernel.getAuditLog('cathedral-001')?.length || 0;
@@ -868,10 +750,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
       const tasks = [];
       for (let i = 0; i < 100; i++) {
         tasks.push(
-          kernel.createTask(
-            'cathedral-001',
-            createSurvivalTask('cathedral-001')
-          )
+          kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'))
         );
       }
 
@@ -914,10 +793,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
     it('should not leak sensitive data in error messages', () => {
       initializeCathedralEnterprise();
 
-      const task = kernel.createTask(
-        'cathedral-001',
-        createSurvivalTask('cathedral-001')
-      );
+      const task = kernel.createTask('cathedral-001', createSurvivalTask('cathedral-001'));
 
       // Try operation on non-existent task
       try {
@@ -939,9 +815,7 @@ describe('HERCULES Survival Testing (PHASE 4)', () => {
 
       // Should not crash
       const audit = kernel.getAuditLog(maliciousId);
-      expect(
-        audit === null || audit === undefined || Array.isArray(audit)
-      ).toBe(true);
+      expect(audit === null || audit === undefined || Array.isArray(audit)).toBe(true);
     });
 
     it('should validate all external inputs before processing', () => {

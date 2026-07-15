@@ -73,7 +73,6 @@
    - If "Failed": Click previous deployment → "Promote to Production"
 
 2. **Check health endpoint** (1 min)
-
    ```
    curl https://newspulse-ai.vercel.app/api/health
    ```
@@ -98,11 +97,9 @@
    - Did customer do their first search?
 
 ### If Everything is ✅ Green
-
 → You're done! Continue your day.
 
 ### If Something is 🔴 Red
-
 → Go to INCIDENT_RESPONSE_RUNBOOKS.md and follow the procedure
 
 ---
@@ -110,25 +107,21 @@
 ## SUPPORT RESPONSE TIMES (Week 1 SLAs)
 
 ### 🔴 CRITICAL (Site down, no searches work)
-
 - Response: Within 15 minutes
 - Resolution: Within 2 hours
 - **Your action:** Drop everything, fix immediately
 
 ### 🟠 HIGH (Feature broken, customer can't complete workflow)
-
 - Response: Within 1 hour
 - Resolution: Within 8 hours
 - **Your action:** High priority, fix same day
 
 ### 🟡 MEDIUM (Confusing UX, wrong data, performance slow)
-
 - Response: Within 2 hours
 - Resolution: Within 24 hours
 - **Your action:** Normal priority, fix within day
 
 ### 🟢 LOW (Question, feature request, minor bug)
-
 - Response: Next business day
 - Resolution: Within 48 hours
 - **Your action:** Add to backlog, fix when you can
@@ -172,7 +165,6 @@
    - Target: <$50/week for 1-5 customers
 
 ### Action Items
-
 - [ ] Document metrics in METRICS_TRACKING_SPECIFICATION.md
 - [ ] File any support tickets in SUPPORT_TICKET_SYSTEM.md
 - [ ] Add feature requests to roadmap
@@ -183,7 +175,6 @@
 ## EMERGENCY PROCEDURES
 
 ### Site is down (GET requests fail)
-
 ```
 1. Check Vercel dashboard (is "Ready" or "Failed"?)
 2. If "Failed": Click previous deployment → "Promote to Production"
@@ -193,7 +184,6 @@
 ```
 
 ### Customer can't sign up (403 error)
-
 ```
 1. Go to Supabase → SQL Editor
 2. Run: SELECT table_name FROM information_schema.tables
@@ -204,7 +194,6 @@
 ```
 
 ### Performance slow (>1 second response time)
-
 ```
 1. Check what's slow: Each request or all requests?
 2. All slow: Database issue
@@ -216,7 +205,6 @@
 ```
 
 ### High error rate (>5% of requests failing)
-
 ```
 1. Go to Vercel Logs → Search for "error"
 2. What's the error? (500? timeout? etc)
@@ -229,7 +217,6 @@
 ## WEEK 1 CHECKLIST
 
 ### Day 1 (Launch day)
-
 - [ ] Supabase schema deployed
 - [ ] GitHub Actions limit increased
 - [ ] First customer signed up
@@ -237,21 +224,18 @@
 - [ ] First customer logged in
 
 ### Day 2-3
-
 - [ ] First customer did first search
 - [ ] Response times normal (<500ms)
 - [ ] No errors in logs
 - [ ] Customer still actively using product
 
 ### Day 4-5
-
 - [ ] Monitoring workflows running (if GitHub limit restored)
 - [ ] All SLAs met (100% on-time responses)
 - [ ] Customer engagement score >50
 - [ ] No critical issues
 
 ### Day 6-7
-
 - [ ] Complete first week metrics review (WEEKLY CHECK above)
 - [ ] Schedule customer interview (next week)
 - [ ] Document learnings for Week 2
@@ -262,7 +246,6 @@
 ## USEFUL LINKS (Bookmark these)
 
 **Monitoring & Status:**
-
 - Vercel: https://vercel.com/lalit-kumar-d-s-projects/newspulse-ai
 - Supabase: https://app.supabase.com
 - GitHub Actions: https://github.com/mininglife7-dev/newspulse-ai/actions
@@ -270,7 +253,6 @@
 - Alerts endpoint: https://newspulse-ai.vercel.app/api/alerts
 
 **Documentation (Save as favorites in your docs folder):**
-
 - FIRST_CUSTOMER_PLAYBOOK.md — 7-step customer journey
 - INCIDENT_RESPONSE_RUNBOOKS.md — How to fix problems
 - SUPPORT_TICKET_SYSTEM.md — Support SLAs and tickets
@@ -310,14 +292,12 @@
 - ✅ Week 1 is about establishing rhythm. By end of week, it's smooth.
 
 **Your job in Week 1:**
-
 1. Respond to customer within SLAs
 2. Track daily metrics
 3. Monitor for issues
 4. Gather feedback for improvement
 
 **My job (Governor):**
-
 - Monitor 24/7 via automated workflows
 - Detect issues before they affect customer
 - Maintain infrastructure
@@ -328,3 +308,4 @@
 ---
 
 **Print this. Keep it visible. Reference daily. You got this. 💪**
+

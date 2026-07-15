@@ -9,7 +9,6 @@
 ## Overview
 
 Track every customer support interaction. This gives visibility into:
-
 - Response time (SLA compliance)
 - Issue type patterns (product feedback)
 - Resolution time (efficiency)
@@ -63,21 +62,18 @@ TIME TO RESOLVE: [X hours Y minutes]
 **Definition:** System is down, data is lost, or customer cannot use the product at all.
 
 **Examples:**
-
 - "Signup not working, getting 403 error"
 - "Dashboard won't load"
 - "My workspace data disappeared"
 - "Can't access my account"
 
 **Response Protocol:**
-
 1. Acknowledge immediately (within 5 min)
 2. Start investigation immediately
 3. Provide update every 10 min until resolved
 4. If unfixable in 1 hour, escalate and provide workaround
 
 **Communication Template:**
-
 ```
 Hi [Customer],
 
@@ -99,21 +95,18 @@ I'll stay on this until we fix it.
 **Definition:** A feature doesn't work, but there's a temporary workaround. Customer is blocked but not completely stopped.
 
 **Examples:**
-
 - "Search isn't returning results"
 - "History page is loading slowly"
 - "Email verification link expired"
 - "Feature X keeps timing out"
 
 **Response Protocol:**
-
 1. Acknowledge within 1 hour
 2. Identify workaround if possible
 3. Reproduce and fix OR provide timeline to fix
 4. Follow up with solution within 8 hours
 
 **Communication Template:**
-
 ```
 Hi [Customer],
 
@@ -136,21 +129,18 @@ I'm prioritizing this and will update you by [time/date].
 **Definition:** Feature behaves unexpectedly but customer can work around it. Not blocking productivity.
 
 **Examples:**
-
 - "Why does this metric show X instead of Y?"
 - "The UI is confusing here, how do I..."
 - "Is there a way to export data?"
 - "This seems slow, is that normal?"
 
 **Response Protocol:**
-
 1. Acknowledge within 2 hours
 2. Explain expected behavior OR accept as feature request
 3. If feature request: note for roadmap, set expectations
 4. Resolve or close within 24 hours
 
 **Communication Template:**
-
 ```
 Hi [Customer],
 
@@ -171,24 +161,21 @@ Would that be helpful?
 **Definition:** General question, feedback, or non-urgent feature request.
 
 **Examples:**
-
 - "How do I...?"
 - "Can you add feature X?"
 - "I have feedback about..."
 - "Can I do bulk operations?"
 
 **Response Protocol:**
-
 1. Respond within next business day
 2. Answer thoroughly to prevent follow-ups
 3. Close when customer satisfied
 
 **Communication Template:**
-
 ```
 Hi [Customer],
 
-Thanks for reaching out!
+Thanks for reaching out! 
 
 [Direct answer to their question]
 
@@ -202,18 +189,15 @@ Let me know if you need anything else.
 ## Support Channels & Intake
 
 ### Email (Primary)
-
 - **Address:** founder@euroai.com (or personal email for now)
 - **Ideal For:** All customer issues
 - **SLA:** Acknowledge within response-time window above
 
 ### In-App (Future)
-
 - Modal form or chat widget
 - Not implemented yet (Phase 2)
 
 ### Slack (Future)
-
 - Direct message if customer has Slack integration
 - Not implemented yet (Phase 2)
 
@@ -224,42 +208,36 @@ Let me know if you need anything else.
 When logging a ticket, assign a TYPE:
 
 ### 🐛 BUG
-
 - Something doesn't work as documented
 - Unexpected error or behavior
 - Data loss or corruption
 - Performance regression
 
 ### 🎯 FEATURE-REQUEST
-
 - Customer wants new capability
 - Wants to change existing behavior
 - Wants integration with tool X
 - Asks "Can you add...?"
 
 ### ❓ QUESTION
-
 - "How do I...?"
 - "Is this normal?"
 - Product clarification
 - Account or usage question
 
 ### 👤 ACCOUNT
-
 - Password reset
 - Account access issues
 - Email change
 - Team member management (Phase 2)
 
 ### 💳 BILLING (Phase 2)
-
 - Invoice questions
 - Upgrade/downgrade
 - Refund requests
 - Usage-based billing questions
 
 ### 🔧 OTHER
-
 - Feedback or suggestions
 - Configuration requests
 - Custom integrations
@@ -271,13 +249,12 @@ When logging a ticket, assign a TYPE:
 
 Create a simple Google Sheet with columns:
 
-| Ticket ID             | Date       | Customer  | Type     | Severity | Status | First Response | Resolved   | TTR (hours) | Notes                                    |
-| --------------------- | ---------- | --------- | -------- | -------- | ------ | -------------- | ---------- | ----------- | ---------------------------------------- |
-| TICKET-2026-07-13-001 | 2026-07-13 | Company A | BUG      | 🟠 HIGH  | CLOSED | 0.5h           | 2026-07-13 | 4.5h        | Signup 403 error, schema deployed, fixed |
-| TICKET-2026-07-14-001 | 2026-07-14 | Company A | QUESTION | 🟢 LOW   | CLOSED | 24h            | 2026-07-14 | 24h         | How to export data, explained feature    |
+| Ticket ID | Date | Customer | Type | Severity | Status | First Response | Resolved | TTR (hours) | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| TICKET-2026-07-13-001 | 2026-07-13 | Company A | BUG | 🟠 HIGH | CLOSED | 0.5h | 2026-07-13 | 4.5h | Signup 403 error, schema deployed, fixed |
+| TICKET-2026-07-14-001 | 2026-07-14 | Company A | QUESTION | 🟢 LOW | CLOSED | 24h | 2026-07-14 | 24h | How to export data, explained feature |
 
 **Metrics to track:**
-
 - Average first response time (goal: meet SLA)
 - Average resolution time (goal: <1 day for non-critical)
 - Ticket volume (goal: <1 per day initially)
@@ -470,7 +447,6 @@ If you can't resolve a support issue:
 ### For Bugs You Can't Fix Immediately
 
 Email customer:
-
 ```
 Hi [Customer],
 
@@ -499,7 +475,6 @@ Every support ticket informs the product roadmap:
 - **Questions** → May indicate UX confusion, update docs or UI
 
 When closing a ticket, note in DECISION_REGISTER.md:
-
 ```
 Product Impact: BUG-FIX / FEATURE-REQUEST / UX-IMPROVEMENT
 Ticket: TICKET-[ID]
@@ -511,7 +486,6 @@ Action: [What you did / will do]
 ## Phase 2: CRM Integration
 
 Automate this system with:
-
 - Dedicated support email (support@euroai.com)
 - CRM dashboard (e.g., Helpdesk, Zendesk, or custom)
 - Auto-ticket creation from email
@@ -529,3 +503,4 @@ For now: Manual spreadsheet + email is sufficient for 1 customer.
 - Incident response: INCIDENT_RESPONSE_RUNBOOKS.md
 - Customer success: FIRST_CUSTOMER_PLAYBOOK.md
 - Product roadmap: docs/governance/DNA-REGISTRY.md
+

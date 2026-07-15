@@ -49,14 +49,10 @@ export async function GET(req: Request) {
     // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.critical > 0) {
-        logger.error(
-          'Production health: critical issues detected',
-          'HEALTH_CRITICAL',
-          {
-            critical: report.summary.critical,
-            degraded: report.summary.degraded,
-          }
-        );
+        logger.error('Production health: critical issues detected', 'HEALTH_CRITICAL', {
+          critical: report.summary.critical,
+          degraded: report.summary.degraded,
+        });
       } else {
         logger.warn('Production health: warnings detected', 'HEALTH_WARNING', {
           degraded: report.summary.degraded,

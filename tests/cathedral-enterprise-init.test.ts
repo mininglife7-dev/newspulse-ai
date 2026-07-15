@@ -60,12 +60,8 @@ describe('Cathedral Enterprise Initialization', () => {
 
       expect(initState.objectives.length).toBeGreaterThanOrEqual(5);
 
-      const launchObj = initState.objectives.find(
-        (o) => o.title === 'Production Launch'
-      );
-      const customerObj = initState.objectives.find(
-        (o) => o.title === 'Customer Pilot'
-      );
+      const launchObj = initState.objectives.find((o) => o.title === 'Production Launch');
+      const customerObj = initState.objectives.find((o) => o.title === 'Customer Pilot');
 
       expect(launchObj).toBeDefined();
       expect(customerObj).toBeDefined();
@@ -133,9 +129,7 @@ describe('Cathedral Enterprise Initialization', () => {
       expect(state).toBeDefined();
       expect(state!.risks.length).toBeGreaterThan(0);
 
-      const criticalRisks = state!.risks.filter(
-        (r) => r.severity === 'critical'
-      );
+      const criticalRisks = state!.risks.filter((r) => r.severity === 'critical');
       expect(criticalRisks.length).toBeGreaterThan(0);
     });
 
@@ -197,9 +191,7 @@ describe('Cathedral Enterprise Initialization', () => {
       const state = getCathedralState();
       // If not registered, should be null (unless previous test registered it)
       // This test is exploratory based on state
-      expect(state === null || state?.enterprise.id === 'cathedral-001').toBe(
-        true
-      );
+      expect(state === null || state?.enterprise.id === 'cathedral-001').toBe(true);
     });
   });
 

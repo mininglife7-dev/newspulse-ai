@@ -10,7 +10,6 @@
 ## Executive Summary
 
 After deploying the schema to production Supabase, use these exact SQL queries to verify:
-
 1. ✅ All required tables exist
 2. ✅ Row-Level Security (RLS) is enabled
 3. ✅ Profile auto-creation trigger is installed
@@ -25,7 +24,6 @@ Do not consider deployment successful until ALL verification queries pass.
 ## Pre-Verification Checklist
 
 Before running verification:
-
 - [ ] Schema deployment completed successfully (Supabase showed "Success!")
 - [ ] No error messages in Supabase SQL Editor output
 - [ ] You're logged into the correct Supabase project
@@ -43,10 +41,10 @@ Before running verification:
 
 ```sql
 -- Check that all required tables exist
-select
-  table_schema,
+select 
+  table_schema, 
   table_name,
-  case
+  case 
     when table_schema = 'auth' then '✓ Auth System'
     when table_name = 'profiles' then '✓ User Profiles'
     when table_name = 'workspaces' then '✓ Organizations'
@@ -78,7 +76,6 @@ order by table_schema, table_name;
 ```
 
 **Expected Output:**
-
 ```
 table_schema │ table_name              │ purpose
 ─────────────┼────────────────────────┼───────────────────────
@@ -105,7 +102,7 @@ public       │ workspaces             │ ✓ Organizations
 
 ```sql
 -- Check RLS status on all public tables
-select
+select 
   table_name,
   case when rowsecurity = true then '✓ ENABLED' else '❌ DISABLED' end as rls_status,
   row_number() over (order by table_name) as seq
@@ -115,7 +112,6 @@ order by table_name;
 ```
 
 **Expected Output (RLS ENABLED on all):**
-
 ```
 table_name              │ rls_status
 ────────────────────────┼───────────
@@ -141,7 +137,7 @@ workspaces              │ ✓ ENABLED
 
 ```sql
 -- List all RLS policies
-select
+select 
   schemaname,
   tablename,
   policyname,
@@ -154,7 +150,6 @@ order by tablename, policyname;
 ```
 
 **Expected Output (Sample):**
-
 ```
 schemaname │ tablename │ policyname                          │ permissive │ roles  │ policy_condition_short
 ────────────┼───────────┼────────────────────────────────────┼────────────┼────────┼──────────────────────────
@@ -179,7 +174,7 @@ public     │ workspaces│ Owners can add themselves as...     │ true      �
 
 ```sql
 -- Check for profile auto-creation trigger
-select
+select 
   tgname as trigger_name,
   relname as table_name,
   proname as function_name,
@@ -196,7 +191,7 @@ order by tgname;
 
 ```sql
 -- Check if the profile creation function exists
-select
+select 
   proname as function_name,
   pg_catalog.pg_get_functiondef(oid) as function_definition
 from pg_proc
@@ -205,7 +200,6 @@ and pg_catalog.pg_get_namespace(pronamespace) = 'public';
 ```
 
 **Expected Output:**
-
 ```
 function_name │ status
 ───────────────┼──────────────
@@ -216,7 +210,6 @@ handle_new_user│ ✓ ENABLED
 **✅ Pass Criteria:** `handle_new_user` function exists and trigger is active
 
 **If trigger NOT found:**
-
 - Manually verify the trigger exists:
   ```sql
   select * from pg_trigger where tgname = 'on_auth_user_created';
@@ -231,7 +224,7 @@ handle_new_user│ ✓ ENABLED
 
 ```sql
 -- List all foreign key relationships
-select
+select 
   constraint_name,
   table_schema || '.' || table_name as from_table,
   column_name as from_column,
@@ -245,7 +238,6 @@ order by table_name, constraint_name;
 ```
 
 **Expected Output (Sample):**
-
 ```
 constraint_name                │ from_table           │ from_column  │ to_table      │ to_column │ delete_rule │ update_rule
 ────────────────────────────────┼──────────────────────┼──────────────┼───────────────┼───────────┼─────────────┼────────────
@@ -268,7 +260,7 @@ workspace_members_workspace_id │ public.workspace_mem │ workspace_id │ pub
 
 ```sql
 -- Check all indexes on public tables
-select
+select 
   tablename,
   indexname,
   indexdef
@@ -278,7 +270,6 @@ order by tablename, indexname;
 ```
 
 **Expected Indexes (Minimum):**
-
 - `profiles_email_idx` on profiles(email)
 - `workspaces_owner_id_idx` on workspaces(owner_id)
 - `workspaces_slug_idx` on workspaces(slug)
@@ -294,12 +285,10 @@ order by tablename, indexname;
 Once all SQL queries pass, test the actual signup flow:
 
 ### Step 1: Clear Browser Cache
-
 1. Open http://localhost:3000 in a **new incognito/private window**
 2. Or manually clear cookies for localhost
 
 ### Step 2: Sign Up (Don't Use test@example.com)
-
 1. Go to http://localhost:3000/auth/signup
 2. Enter a **real or disposable email** (not test@example.com):
    - Real: your.email@gmail.com
@@ -310,14 +299,12 @@ Once all SQL queries pass, test the actual signup flow:
 6. Expected: "Check your email to confirm your account"
 
 ### Step 3: Confirm Email
-
 1. Check the email inbox for Supabase confirmation link
 2. Click the confirmation link
 3. Expected: Redirected to http://localhost:3000/dashboard
 4. Expected: Dashboard loads (or sign-in if session not established)
 
 ### Step 4: Verify Profile Was Created
-
 1. In Supabase, go to **Table Editor** → **profiles**
 2. Look for a row with the email you used
 3. Expected columns:
@@ -354,7 +341,6 @@ Before declaring deployment complete, verify:
 **Problem:** Tables didn't create
 
 **Solutions:**
-
 1. Check Supabase SQL Editor output for errors
 2. Re-run `supabase/schema.sql` (it's idempotent)
 3. Contact Supabase support with exact error message
@@ -366,7 +352,6 @@ Before declaring deployment complete, verify:
 **Problem:** RLS enforcement didn't activate
 
 **Solutions:**
-
 ```sql
 -- Manually enable RLS on a table
 alter table public.profiles enable row level security;
@@ -381,7 +366,6 @@ Then re-run Query 2 to verify.
 **Problem:** Profile creation trigger didn't install
 
 **Solutions:**
-
 1. Manually re-run trigger section from schema:
    ```sql
    create or replace function public.handle_new_user()
@@ -402,7 +386,7 @@ Then re-run Query 2 to verify.
      return new;
    end;
    $$ language plpgsql security definer;
-
+   
    create trigger on_auth_user_created
      after insert on auth.users
      for each row
@@ -417,7 +401,6 @@ Then re-run Query 2 to verify.
 **Problem:** Trigger exists but isn't firing
 
 **Solutions:**
-
 1. Check Supabase logs for trigger errors
 2. Verify trigger is enabled: Query 4
 3. Check if profile was inserted manually by workspace API (upsert)

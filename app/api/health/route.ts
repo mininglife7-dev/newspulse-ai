@@ -34,8 +34,7 @@ export async function GET() {
       }
     } catch (err) {
       dbOk = false;
-      dbStatus =
-        err instanceof Error ? `error: ${err.message}` : 'unknown error';
+      dbStatus = err instanceof Error ? `error: ${err.message}` : 'unknown error';
     }
   }
 
@@ -46,8 +45,7 @@ export async function GET() {
       ok: allOk,
       status: allOk ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
-      uptime_s:
-        typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
+      uptime_s: typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
       db: dbStatus,
       checks,
     },

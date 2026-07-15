@@ -18,7 +18,6 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 ## What It Enables
 
 ### For Your Customers
-
 - **Self-service tiers:** Free → Pro ($49/month) → Enterprise (custom)
 - **Transparent usage tracking:** API calls, storage, active users, all visible in dashboard
 - **Graceful limits:** Rate limiting instead of hard block (Free tier slows down instead of stops)
@@ -26,7 +25,6 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 - **Flexible payment:** Monthly or annual billing with 20% discount for annual
 
 ### For Your Business
-
 - **Automatic invoicing:** Monthly usage-based charges generated and sent automatically
 - **Revenue per workspace:** No manual tracking or customer-by-customer setup
 - **Tier-based feature gating:** Pro customers unlock advanced features (custom integrations, Slack)
@@ -34,7 +32,6 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 - **Unit economics tracking:** Foundation for revenue forecasting and growth decisions
 
 ### For Your Operations
-
 - **Founder hours:** $0 post-launch (Stripe webhooks handle everything)
 - **Payment handling:** Stripe integration with automatic retry for failed cards
 - **Overage protection:** Spending cap per workspace prevents surprise bills
@@ -44,11 +41,11 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 
 ## Pricing Model (Proposed)
 
-| Tier           | Monthly | Annual | API Requests | Storage | Active Users | Feature Set                                      |
-| -------------- | ------- | ------ | ------------ | ------- | ------------ | ------------------------------------------------ |
-| **Free**       | $0      | —      | 10K/mo       | 5 GB    | 1            | Core search, basic reports                       |
-| **Pro**        | $49     | $490   | 100K/mo      | 50 GB   | 5            | ↑ + custom integrations, Slack, priority support |
-| **Enterprise** | Custom  | Custom | Custom       | Custom  | Custom       | ↑ + dedicated account manager, SLA               |
+| Tier | Monthly | Annual | API Requests | Storage | Active Users | Feature Set |
+|------|---------|--------|--------------|---------|--------------|-------------|
+| **Free** | $0 | — | 10K/mo | 5 GB | 1 | Core search, basic reports |
+| **Pro** | $49 | $490 | 100K/mo | 50 GB | 5 | ↑ + custom integrations, Slack, priority support |
+| **Enterprise** | Custom | Custom | Custom | Custom | Custom | ↑ + dedicated account manager, SLA |
 
 **Overage pricing:** $0.001 per 100 API requests, $5/GB storage, $10/extra active user
 
@@ -72,7 +69,6 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 ## Technical Highlights
 
 ### What's New
-
 - **Billing schema:** `workspace_billing`, `usage_meters`, `billing_invoices`, `billing_alerts` tables
 - **Usage tracking:** Middleware captures API calls, storage operations, active logins
 - **Cost calculation:** Tier-based + usage-based overages + annual discounts
@@ -81,7 +77,6 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 - **Retention hook:** Connects to DNS-GOV-018 to identify upgrade opportunities
 
 ### Implementation
-
 - **Core library:** `lib/billing.ts` (tier definitions, cost calculation, enforcement)
 - **Payment integration:** `lib/stripe-integration.ts` (Stripe API wrapper)
 - **Usage tracking:** `lib/usage-tracker.ts` (middleware hooks)
@@ -94,14 +89,12 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 ## Launch Prerequisites
 
 **Before DNS-GOV-019 implementation:**
-
 1. ✅ DNS-GOV-018 (Customer Intelligence) — COMPLETE
 2. ✅ DNS-GOV-017 (Analytics Pipeline) — COMPLETE (provides usage data)
 3. 📖 Stripe account setup — Founder action (5 min): Create account at stripe.com, get API keys
 4. 📖 Billing configuration — Founder decision: Confirm tier pricing and limits (use proposal above or customize)
 
 **After DNS-GOV-019 implementation:**
-
 1. 📖 Supabase schema deployment — Founder action: Deploy `billing_*` tables (copy-paste SQL)
 2. 📖 Stripe API keys → .env — Founder action: Add STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY
 3. 📖 Billing email template — Founder decision: Customize invoice email (default provided)
@@ -113,7 +106,6 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 **Launch blocker:** Without billing, EURO AI is not a business—it's a free product.
 
 **Revenue urgency:** First German customer (already interested) needs pricing transparency. Current options:
-
 - Option A (Recommended): Ship DNS-GOV-019 before launch → customer sees pricing, can upgrade immediately
 - Option B (Risky): Launch free-only → customer never converts, replicates NewsPulse failure mode
 - Option C (Manual): Launch without automation → Founder manually invoices each customer (doesn't scale)
@@ -138,7 +130,6 @@ DNS-GOV-019 implements autonomous usage-based billing with per-workspace meterin
 ## Next Steps
 
 **If approved:**
-
 1. Governor implements DNS-GOV-019 (60-80 hours)
 2. 54 tests verify functionality
 3. All GitHub Actions green

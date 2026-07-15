@@ -130,10 +130,11 @@ export class IncidentDetector {
         canAutoRemediate: report.canRollback,
         requiresFounderNotification: severity === 'critical',
       });
-    } else if (report.decision === 'HOLD' && report.degradedChecks > 0) {
-      const degradedChecks = report.checks.filter(
-        (c) => c.result === 'degraded'
-      );
+    } else if (
+      report.decision === 'HOLD' &&
+      report.degradedChecks > 0
+    ) {
+      const degradedChecks = report.checks.filter((c) => c.result === 'degraded');
 
       const signals: IncidentSignal[] = degradedChecks.map((check) => ({
         type: check.type,
@@ -217,10 +218,7 @@ export class IncidentDetector {
     }
 
     // Check database latency
-    if (
-      context.databaseLatency !== undefined &&
-      context.databaseLatency > 5000
-    ) {
+    if (context.databaseLatency !== undefined && context.databaseLatency > 5000) {
       signals.push({
         type: 'database-latency',
         value: context.databaseLatency,
@@ -244,8 +242,7 @@ export class IncidentDetector {
         detectedAt: new Date().toISOString(),
         description: `Performance degradation detected: ${signals.map((s) => s.type).join(', ')}`,
         affectedServices: signals.map((s) => s.component),
-        estimatedUserImpact:
-          severity === 'critical' ? 0.9 : severity === 'high' ? 0.6 : 0.2,
+        estimatedUserImpact: severity === 'critical' ? 0.9 : severity === 'high' ? 0.6 : 0.2,
         canAutoRemediate: false,
         requiresFounderNotification: severity === 'critical',
       });
@@ -265,9 +262,7 @@ export class IncidentDetector {
     }
 
     // Detect cascading failures
-    const errorCategories = new Set(
-      context.recentErrors.map((e) => e.category)
-    );
+    const errorCategories = new Set(context.recentErrors.map((e) => e.category));
     if (errorCategories.size >= 3) {
       const signals: IncidentSignal[] = context.recentErrors.map((error) => ({
         type: error.category,
@@ -294,9 +289,8 @@ export class IncidentDetector {
 
     // Detect data loss risk
     const hasDataErrors = context.recentErrors.some(
-      (e) =>
-        e.category.toLowerCase().includes('database') ||
-        e.category.toLowerCase().includes('storage')
+      (e) => e.category.toLowerCase().includes('database') ||
+             e.category.toLowerCase().includes('storage')
     );
     const highErrorCount = context.recentErrors.some((e) => e.count > 100);
 
@@ -392,8 +386,9 @@ export class IncidentDetector {
     incidents: DetectedIncident[],
     deploymentId: string
   ): void {
-    const recentIncidents =
-      this.incidentHistory.get(deploymentId)?.filter((inc) => {
+    const recentIncidents = this.incidentHistory
+      .get(deploymentId)
+      ?.filter((inc) => {
         const incTime = new Date(inc.detectedAt).getTime();
         const now = Date.now();
         return now - incTime < 30 * 60 * 1000; // 30 minutes
@@ -415,10 +410,7 @@ export class IncidentDetector {
   }
 
   clearOldIncidents(maxAgeMinutes = 60): void {
-    const cutoff =
-      maxAgeMinutes === 0
-        ? Date.now() + 1000
-        : Date.now() - maxAgeMinutes * 60 * 1000;
+    const cutoff = maxAgeMinutes === 0 ? Date.now() + 1000 : Date.now() - maxAgeMinutes * 60 * 1000;
     const idsToDelete: string[] = [];
 
     this.detectedIncidents.forEach((incident, id) => {

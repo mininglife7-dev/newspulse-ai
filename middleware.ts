@@ -1,11 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { classifyRoute } from '@/lib/routes';
-import {
-  corsHeaders,
-  handleCorsPrelight,
-  isCorsAllowed,
-} from '@/lib/cors-config';
+import { corsHeaders, handleCorsPrelight, isCorsAllowed } from '@/lib/cors-config';
 import { checkRateLimit, getRateLimitStatus } from '@/lib/global-rate-limiter';
 
 /**
@@ -93,7 +89,9 @@ export async function middleware(req: NextRequest) {
         return req.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+        cookiesToSet.forEach(({ name, value }) =>
+          req.cookies.set(name, value)
+        );
         res = NextResponse.next({ request: req });
         cookiesToSet.forEach(({ name, value, options }) =>
           res.cookies.set(name, value, options)

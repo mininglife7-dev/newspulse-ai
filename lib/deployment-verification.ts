@@ -20,8 +20,7 @@ export type DeploymentCheckType =
 
 export type CheckResult = 'pass' | 'fail' | 'timeout' | 'degraded';
 
-export type RollbackDecision =
-  'PASS' | 'RETRY' | 'HOLD' | 'ROLLBACK' | 'ESCALATE';
+export type RollbackDecision = 'PASS' | 'RETRY' | 'HOLD' | 'ROLLBACK' | 'ESCALATE';
 
 export interface DeploymentCheck {
   type: DeploymentCheckType;
@@ -98,31 +97,20 @@ export interface RollbackAuditEntry {
   details: Record<string, unknown>;
 }
 
-const DEPLOYMENT_CHECK_DEFAULTS: Record<
-  DeploymentCheckType,
-  {
-    timeout: number;
-    retries: number;
-    warningThreshold: number;
-  }
-> = {
+const DEPLOYMENT_CHECK_DEFAULTS: Record<DeploymentCheckType, {
+  timeout: number;
+  retries: number;
+  warningThreshold: number;
+}> = {
   'build-success': { timeout: 5000, retries: 0, warningThreshold: 1000 },
   'health-endpoint': { timeout: 3000, retries: 3, warningThreshold: 2000 },
   'api-availability': { timeout: 5000, retries: 2, warningThreshold: 3000 },
   'startup-complete': { timeout: 30000, retries: 0, warningThreshold: 20000 },
-  'database-connectivity': {
-    timeout: 10000,
-    retries: 3,
-    warningThreshold: 5000,
-  },
+  'database-connectivity': { timeout: 10000, retries: 3, warningThreshold: 5000 },
   'customer-journey': { timeout: 15000, retries: 2, warningThreshold: 10000 },
   'latency-threshold': { timeout: 5000, retries: 1, warningThreshold: 4000 },
   'error-rate-threshold': { timeout: 5000, retries: 1, warningThreshold: 4000 },
-  'environment-validation': {
-    timeout: 3000,
-    retries: 0,
-    warningThreshold: 2000,
-  },
+  'environment-validation': { timeout: 3000, retries: 0, warningThreshold: 2000 },
   'feature-flags': { timeout: 5000, retries: 1, warningThreshold: 4000 },
 };
 
@@ -199,11 +187,7 @@ export async function verifyDeployment(
   }
 
   // Decide rollback action
-  const decision = determineRollbackDecision(
-    overallHealth,
-    checks.length,
-    passedChecks
-  );
+  const decision = determineRollbackDecision(overallHealth, checks.length, passedChecks);
 
   return {
     deploymentId,
@@ -251,10 +235,7 @@ export function determineRollbackDecision(
   return 'ESCALATE';
 }
 
-export function getRecommendedAction(
-  decision: RollbackDecision,
-  checks: DeploymentCheck[]
-): string {
+export function getRecommendedAction(decision: RollbackDecision, checks: DeploymentCheck[]): string {
   switch (decision) {
     case 'PASS':
       return 'Deployment successful. No action required.';
@@ -269,9 +250,7 @@ export function getRecommendedAction(
   }
 }
 
-async function runBuildSuccessCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runBuildSuccessCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: Check if build artifact exists and is valid
@@ -283,9 +262,7 @@ async function runBuildSuccessCheck(
       result: isValid ? 'pass' : 'fail',
       timestamp,
       duration: Date.now() - startTime,
-      message: isValid
-        ? 'Build artifact verified'
-        : 'Build artifact missing or corrupted',
+      message: isValid ? 'Build artifact verified' : 'Build artifact missing or corrupted',
       metrics: { buildSize: '4.2MB', buildTime: '45s' },
     };
   } catch (error) {
@@ -301,9 +278,7 @@ async function runBuildSuccessCheck(
   }
 }
 
-async function runHealthEndpointCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runHealthEndpointCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: GET /api/health endpoint
@@ -317,10 +292,7 @@ async function runHealthEndpointCheck(
       timestamp,
       duration: Date.now() - startTime,
       message: isHealthy ? 'Health check passed' : 'Health check slow',
-      metrics: {
-        responseTime: Math.round(responseTime) + 'ms',
-        status: '200 OK',
-      },
+      metrics: { responseTime: Math.round(responseTime) + 'ms', status: '200 OK' },
     };
   } catch (error) {
     return {
@@ -335,9 +307,7 @@ async function runHealthEndpointCheck(
   }
 }
 
-async function runApiAvailabilityCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runApiAvailabilityCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: Test critical API endpoints
@@ -349,9 +319,7 @@ async function runApiAvailabilityCheck(
       result: available ? 'pass' : 'fail',
       timestamp,
       duration: Date.now() - startTime,
-      message: available
-        ? 'All API endpoints available'
-        : 'Some endpoints unavailable',
+      message: available ? 'All API endpoints available' : 'Some endpoints unavailable',
       metrics: { endpointsChecked: 8, endpointsAvailable: available ? 8 : 6 },
     };
   } catch (error) {
@@ -367,9 +335,7 @@ async function runApiAvailabilityCheck(
   }
 }
 
-async function runStartupCompleteCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runStartupCompleteCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: Verify application startup completed
@@ -381,9 +347,7 @@ async function runStartupCompleteCheck(
       result: isComplete ? 'pass' : 'fail',
       timestamp,
       duration: Date.now() - startTime,
-      message: isComplete
-        ? 'Startup completed'
-        : 'Startup still in progress or failed',
+      message: isComplete ? 'Startup completed' : 'Startup still in progress or failed',
       metrics: { startupTime: '12s', modulesLoaded: '156' },
     };
   } catch (error) {
@@ -399,9 +363,7 @@ async function runStartupCompleteCheck(
   }
 }
 
-async function runDatabaseConnectivityCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runDatabaseConnectivityCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: Read-only database check
@@ -413,13 +375,8 @@ async function runDatabaseConnectivityCheck(
       result: isConnected ? 'pass' : 'fail',
       timestamp,
       duration: Date.now() - startTime,
-      message: isConnected
-        ? 'Database connected'
-        : 'Database connection failed',
-      metrics: {
-        connectionPoolSize: 10,
-        activeConnections: isConnected ? 3 : 0,
-      },
+      message: isConnected ? 'Database connected' : 'Database connection failed',
+      metrics: { connectionPoolSize: 10, activeConnections: isConnected ? 3 : 0 },
     };
   } catch (error) {
     return {
@@ -434,9 +391,7 @@ async function runDatabaseConnectivityCheck(
   }
 }
 
-async function runCustomerJourneyCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runCustomerJourneyCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: Execute critical customer journey (search)
@@ -448,13 +403,8 @@ async function runCustomerJourneyCheck(
       result: isSuccessful ? 'pass' : 'fail',
       timestamp,
       duration: Date.now() - startTime,
-      message: isSuccessful
-        ? 'Search journey successful'
-        : 'Search journey failed',
-      metrics: {
-        journeyTime: '1200ms',
-        resultsReturned: isSuccessful ? 42 : 0,
-      },
+      message: isSuccessful ? 'Search journey successful' : 'Search journey failed',
+      metrics: { journeyTime: '1200ms', resultsReturned: isSuccessful ? 42 : 0 },
     };
   } catch (error) {
     return {
@@ -475,8 +425,7 @@ async function runLatencyThresholdCheck(
 ): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
-    const latencyP99 =
-      (metrics?.latency_p99_ms as number) || Math.random() * 6000;
+    const latencyP99 = (metrics?.latency_p99_ms as number) || Math.random() * 6000;
     const isAcceptable = latencyP99 < 5000;
     return {
       type: 'latency-threshold',
@@ -486,10 +435,7 @@ async function runLatencyThresholdCheck(
       timestamp,
       duration: Date.now() - startTime,
       message: isAcceptable ? 'Latency within SLO' : 'Latency exceeds SLO',
-      metrics: {
-        latencyP99: Math.round(latencyP99) + 'ms',
-        threshold: '5000ms',
-      },
+      metrics: { latencyP99: Math.round(latencyP99) + 'ms', threshold: '5000ms' },
     };
   } catch (error) {
     return {
@@ -510,8 +456,7 @@ async function runErrorRateThresholdCheck(
 ): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
-    const errorRate =
-      (metrics?.error_rate_percent as number) || Math.random() * 15;
+    const errorRate = (metrics?.error_rate_percent as number) || Math.random() * 15;
     const isAcceptable = errorRate < 5;
     return {
       type: 'error-rate-threshold',
@@ -536,9 +481,7 @@ async function runErrorRateThresholdCheck(
   }
 }
 
-async function runEnvironmentValidationCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runEnvironmentValidationCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: Verify environment variables set correctly
@@ -550,9 +493,7 @@ async function runEnvironmentValidationCheck(
       result: isValid ? 'pass' : 'fail',
       timestamp,
       duration: Date.now() - startTime,
-      message: isValid
-        ? 'Environment valid'
-        : 'Missing required environment variables',
+      message: isValid ? 'Environment valid' : 'Missing required environment variables',
       metrics: { variablesChecked: 15, variablesValid: isValid ? 15 : 12 },
     };
   } catch (error) {
@@ -568,9 +509,7 @@ async function runEnvironmentValidationCheck(
   }
 }
 
-async function runFeatureFlagsCheck(
-  timestamp: string
-): Promise<DeploymentCheck> {
+async function runFeatureFlagsCheck(timestamp: string): Promise<DeploymentCheck> {
   const startTime = Date.now();
   try {
     // Simulated: Verify feature flags consistent across regions
@@ -582,14 +521,8 @@ async function runFeatureFlagsCheck(
       result: isConsistent ? 'pass' : 'degraded',
       timestamp,
       duration: Date.now() - startTime,
-      message: isConsistent
-        ? 'Feature flags consistent'
-        : 'Feature flag inconsistency detected',
-      metrics: {
-        flagsChecked: 24,
-        regionsChecked: 3,
-        consistent: isConsistent ? 3 : 2,
-      },
+      message: isConsistent ? 'Feature flags consistent' : 'Feature flag inconsistency detected',
+      metrics: { flagsChecked: 24, regionsChecked: 3, consistent: isConsistent ? 3 : 2 },
     };
   } catch (error) {
     return {

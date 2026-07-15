@@ -7,5 +7,9 @@ export default function HerculesLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div>{children}</div>;
+  return (
+    <div>
+      {children}
+    </div>
+  );
 }

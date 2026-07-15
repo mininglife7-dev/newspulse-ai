@@ -1,5 +1,4 @@
 # Compliance System Checkpoint Audit
-
 **Scheduled:** 2026-07-17  
 **Baseline Date:** 2026-07-10 (System deployed to production)  
 **Measurement Window:** 1 week
@@ -32,82 +31,75 @@ SELECT COUNT(DISTINCT workspace_id) as workspaces_with_obligations FROM obligati
 ### Adoption Metrics
 
 **Total obligations created (post-deploy)**
-
 ```sql
-SELECT
+SELECT 
   COUNT(*) as total_created,
   COUNT(DISTINCT workspace_id) as workspaces_using_feature,
   MIN(created_at) as first_created,
   MAX(created_at) as latest_created
-FROM obligations
+FROM obligations 
 WHERE created_at >= '2026-07-10T00:00:00Z';
 ```
 
 **Obligation status distribution**
-
 ```sql
-SELECT
+SELECT 
   status,
   COUNT(*) as count,
   COUNT(DISTINCT workspace_id) as workspaces
-FROM obligations
+FROM obligations 
 WHERE created_at >= '2026-07-10T00:00:00Z'
 GROUP BY status
 ORDER BY count DESC;
 ```
 
 **Obligation priority distribution**
-
 ```sql
-SELECT
+SELECT 
   priority,
   COUNT(*) as count
-FROM obligations
+FROM obligations 
 WHERE created_at >= '2026-07-10T00:00:00Z'
 GROUP BY priority
 ORDER BY count DESC;
 ```
 
 **Template import tracking** (if available in logs)
-
 - Check application logs or database for import events
 - Track: Which risk levels were imported, how many times each, which workspaces
 
 ### Engagement Metrics
 
 **Obligation status updates (bulk actions)**
-
 ```sql
-SELECT
+SELECT 
   DATE(updated_at) as date,
   COUNT(*) as status_updates
-FROM obligations
-WHERE updated_at > created_at
+FROM obligations 
+WHERE updated_at > created_at 
   AND updated_at >= '2026-07-10T00:00:00Z'
 GROUP BY DATE(updated_at)
 ORDER BY date;
 ```
 
 **Obligations with due dates set**
-
 ```sql
-SELECT
+SELECT 
   COUNT(*) as total_with_due_dates,
   COUNT(CASE WHEN due_date < NOW() THEN 1 END) as overdue,
   COUNT(CASE WHEN due_date BETWEEN NOW() AND NOW() + INTERVAL '7 days' THEN 1 END) as upcoming_7_days,
   AVG(EXTRACT(DAY FROM (due_date - created_at))) as avg_days_to_due
-FROM obligations
+FROM obligations 
 WHERE due_date IS NOT NULL
   AND created_at >= '2026-07-10T00:00:00Z';
 ```
 
 **Obligations marked completed**
-
 ```sql
-SELECT
+SELECT 
   COUNT(*) as completed_count,
   AVG(EXTRACT(DAY FROM (updated_at - created_at))) as avg_days_to_completion
-FROM obligations
+FROM obligations 
 WHERE status = 'completed'
   AND created_at >= '2026-07-10T00:00:00Z';
 ```
@@ -115,19 +107,16 @@ WHERE status = 'completed'
 ### Technical Health
 
 **Error rates in obligation endpoints** (check Vercel logs)
-
 - `/api/obligations*`: Look for 4xx/5xx responses
 - `/api/compliance-dashboard`: Query success rate
 - `/api/obligations/import-templates`: Import success rate
 
 **Performance metrics**
-
 - Obligations page load time (median, p95) — check Vercel Analytics
 - Filter/search responsiveness — check Network tab in staging
 - CSV export generation time — check backend logs
 
 **RLS Policy Rejections** (if logged)
-
 ```sql
 -- Check if any permission-denied errors occurred
 -- Look in application error logs for RLS rejection patterns
@@ -136,7 +125,6 @@ WHERE status = 'completed'
 ### Qualitative Feedback
 
 **Slack/Support Search** (manual)
-
 - Search for: "obligation", "compliance", "template", "assessment", "risk"
 - Categorize mentions as:
   - Feature requests (what teams want next)
@@ -145,7 +133,6 @@ WHERE status = 'completed'
   - Appreciation (positive feedback)
 
 **Team Outreach** (optional, if adoption is high)
-
 - Ping 1-2 teams with heavy usage
 - Ask: "What would make obligations management even more useful?"
 
@@ -189,7 +176,7 @@ WHERE status = 'completed'
   - Is the onboarding clear? (Check if teams found it)
   - Is the workflow intuitive? (Check support messages)
   - Is it the wrong tool for the job? (Check alternative solutions teams are using)
-- **Action:**
+- **Action:** 
   - If discoverability issue: Promote feature in launch email or dashboard banner
   - If UX issue: Iterate on the 3-5 most confusing elements
   - If product-market issue: Pause; gather team feedback first
@@ -209,13 +196,11 @@ WHERE status = 'completed'
 **Period:** 2026-07-10 to 2026-07-17
 
 ## Adoption Summary
-
 - Obligations created: [X]
 - Workspaces with obligations: [X]
 - Template imports: [X by level]
 
 ## Engagement Summary
-
 - Status updates: [X]
 - Due dates used: [X%]
 - Overdue obligations: [X]
@@ -223,19 +208,16 @@ WHERE status = 'completed'
 - CSV exports: [Y/N]
 
 ## Technical Health
-
 - Error rate: [X%]
 - Performance (p95 load time): [Xms]
 - Critical issues: [List or None]
 
 ## Feedback Summary
-
 - Feature requests: [List top 3]
 - Confusion points: [List]
 - Bugs reported: [List]
 
 ## Recommendation
-
 **Phase 3 feature:** [Evidence Linking / Audit Logging / Template Iteration / Advanced Analytics]
 **Reasoning:** [Based on data + pattern discovered]
 **Confidence:** [High / Medium / Low]

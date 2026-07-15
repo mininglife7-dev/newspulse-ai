@@ -33,7 +33,11 @@ export type TaskState =
   | 'CANCELLED';
 
 export type HealthStatus =
-  'HEALTHY' | 'DEGRADED' | 'AT_RISK' | 'CRITICAL' | 'UNKNOWN';
+  | 'HEALTHY'
+  | 'DEGRADED'
+  | 'AT_RISK'
+  | 'CRITICAL'
+  | 'UNKNOWN';
 
 export type EventSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
 
@@ -199,9 +203,7 @@ export class HerculesKernel {
   // ENTERPRISE MANAGEMENT
   // ========================================================================
 
-  registerEnterprise(
-    enterprise: Omit<Enterprise, 'createdAt' | 'lastActiveAt'>
-  ): Enterprise {
+  registerEnterprise(enterprise: Omit<Enterprise, 'createdAt' | 'lastActiveAt'>): Enterprise {
     const now = new Date().toISOString();
     const registeredEnterprise: Enterprise = {
       ...enterprise,
@@ -294,10 +296,7 @@ export class HerculesKernel {
   // TASK MANAGEMENT (Priority Queue)
   // ========================================================================
 
-  createTask(
-    enterpriseId: string,
-    task: Omit<Task, 'id' | 'createdAt' | 'retryCount' | 'enterpriseId'>
-  ): Task {
+  createTask(enterpriseId: string, task: Omit<Task, 'id' | 'createdAt' | 'retryCount' | 'enterpriseId'>): Task {
     const now = new Date().toISOString();
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -492,8 +491,7 @@ export class HerculesKernel {
     // TODO: Connect to actual monitoring systems
 
     const healthyFactors = factors.filter((f) => f.status === 'HEALTHY').length;
-    const percentage =
-      factors.length > 0 ? (healthyFactors / factors.length) * 100 : 0;
+    const percentage = factors.length > 0 ? (healthyFactors / factors.length) * 100 : 0;
 
     let status: HealthStatus = 'UNKNOWN';
     if (percentage >= 90) status = 'HEALTHY';

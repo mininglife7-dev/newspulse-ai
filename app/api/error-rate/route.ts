@@ -26,14 +26,10 @@ export async function GET(req: Request) {
     // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.criticalEndpoints.length > 0) {
-        logger.error(
-          'Error rate: critical endpoints detected',
-          'ERROR_RATE_CRITICAL',
-          {
-            criticalEndpoints: report.summary.criticalEndpoints.length,
-            totalErrors: report.summary.totalErrors,
-          }
-        );
+        logger.error('Error rate: critical endpoints detected', 'ERROR_RATE_CRITICAL', {
+          criticalEndpoints: report.summary.criticalEndpoints.length,
+          totalErrors: report.summary.totalErrors,
+        });
       } else {
         logger.warn('Error rate: warnings detected', 'ERROR_RATE_WARNING', {
           alertCount: report.alerts.length,
@@ -44,12 +40,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         ok: report.ok,
-        status:
-          report.summary.criticalEndpoints.length > 0
-            ? 'critical'
-            : report.alerts.length > 0
-              ? 'warning'
-              : 'healthy',
+        status: report.summary.criticalEndpoints.length > 0 ? 'critical' : report.alerts.length > 0 ? 'warning' : 'healthy',
         timestamp: report.timestamp,
         alert,
         summary: report.summary,
@@ -61,9 +52,7 @@ export async function GET(req: Request) {
         headers: {
           'X-Error-Status': report.ok ? 'healthy' : 'degraded',
           'X-Total-Errors': String(report.summary.totalErrors),
-          'X-Critical-Endpoints': String(
-            report.summary.criticalEndpoints.length
-          ),
+          'X-Critical-Endpoints': String(report.summary.criticalEndpoints.length),
         },
       }
     );

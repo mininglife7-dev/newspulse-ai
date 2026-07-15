@@ -36,22 +36,21 @@ The first customer is critical. They don't know what to expect. Every friction p
 ### Day 2: Customer Communication (1 hour)
 
 - [ ] Send first customer welcome email:
-
   ```
   Subject: Welcome to EURO AI — Your governance platform is ready
-
+  
   Hi [Customer Name],
-
+  
   We're thrilled to have you on board! EURO AI is now live and ready for your team.
-
+  
   Getting started:
   1. Create your account at https://newspulse-ai.vercel.app/auth/signup
   2. Verify your email (check spam folder if needed)
   3. Set up your workspace with company info
   4. Explore the governance dashboard
-
+  
   Need help? Reply to this email anytime.
-
+  
   Welcome,
   [Founder Name]
   ```
@@ -81,12 +80,12 @@ The first customer is critical. They don't know what to expect. Every friction p
 
 **If customer gets stuck:**
 
-| Problem                | Solution                                                                         |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| "Password too short"   | Passwords must be 8+ characters. Offer password manager suggestion.              |
-| "Email already exists" | Account already created. Send password reset link or help them log in.           |
-| "Form won't submit"    | Clear browser cache/cookies. Try incognito mode. Check if JavaScript enabled.    |
-| "Email not received"   | Check spam folder. Wait 2-3 minutes. Resend link via "Didn't get email?" button. |
+Problem | Solution
+---|---
+"Password too short" | Passwords must be 8+ characters. Offer password manager suggestion.
+"Email already exists" | Account already created. Send password reset link or help them log in.
+"Form won't submit" | Clear browser cache/cookies. Try incognito mode. Check if JavaScript enabled.
+"Email not received" | Check spam folder. Wait 2-3 minutes. Resend link via "Didn't get email?" button.
 
 ---
 
@@ -102,11 +101,11 @@ The first customer is critical. They don't know what to expect. Every friction p
 
 **If verification email doesn't arrive:**
 
-| Problem                               | Solution                                                                                    |
-| ------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Email never arrives (1 hour later)    | Check Supabase settings. Verify email auth is enabled. Check outbound email config.         |
-| Email arrives but link is broken      | Check /auth/confirm route in code. Test with different email. May need to resend.           |
-| Customer clicks link, nothing happens | Browser may have cached old version. Clear cache and retry. Or paste the full URL manually. |
+Problem | Solution
+---|---
+Email never arrives (1 hour later) | Check Supabase settings. Verify email auth is enabled. Check outbound email config.
+Email arrives but link is broken | Check /auth/confirm route in code. Test with different email. May need to resend.
+Customer clicks link, nothing happens | Browser may have cached old version. Clear cache and retry. Or paste the full URL manually.
 
 **Recommended:** Founder sends welcome email BEFORE customer tries to sign up (reduce confusion, set expectations).
 
@@ -123,11 +122,11 @@ The first customer is critical. They don't know what to expect. Every friction p
 
 **If login fails:**
 
-| Problem                        | Solution                                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------------ |
-| "Invalid email or password"    | Confirm correct credentials. Password is case-sensitive. Reset if needed (forgot password link). |
-| "Session expired"              | Refresh page. Log out and back in. Browser cache issue—clear cookies.                            |
-| Login succeeds but no redirect | Refresh page manually. Middleware should redirect automatically within 2s.                       |
+Problem | Solution
+---|---
+"Invalid email or password" | Confirm correct credentials. Password is case-sensitive. Reset if needed (forgot password link).
+"Session expired" | Refresh page. Log out and back in. Browser cache issue—clear cookies.
+Login succeeds but no redirect | Refresh page manually. Middleware should redirect automatically within 2s.
 
 ---
 
@@ -145,12 +144,12 @@ The first customer is critical. They don't know what to expect. Every friction p
 
 **If workspace setup fails:**
 
-| Problem                        | Solution                                                                                                                                  |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| "Server error" when submitting | Check /api/workspace in browser console (Network tab). If 403, Supabase schema not deployed. If 401, session expired (refresh and retry). |
-| Form won't accept company name | Some special characters forbidden (@ # $ etc). Try alphanumeric only.                                                                     |
-| Country not in list            | Only EU countries + UK/Norway supported. If customer needs other region, note for Phase 2.                                                |
-| After submit, stuck on form    | Refresh page. Dashboard load may be slow (Supabase cold start, ~2-3 sec).                                                                 |
+Problem | Solution
+---|---
+"Server error" when submitting | Check /api/workspace in browser console (Network tab). If 403, Supabase schema not deployed. If 401, session expired (refresh and retry).
+Form won't accept company name | Some special characters forbidden (@ # $ etc). Try alphanumeric only.
+Country not in list | Only EU countries + UK/Norway supported. If customer needs other region, note for Phase 2.
+After submit, stuck on form | Refresh page. Dashboard load may be slow (Supabase cold start, ~2-3 sec).
 
 **Recommended:** Founder completes workspace setup test before customer to ensure it works.
 
@@ -249,16 +248,16 @@ Best,
 
 ## Common Friction Points & Prevention
 
-| Friction Point                         | Why It Happens                     | Prevention                                |
-| -------------------------------------- | ---------------------------------- | ----------------------------------------- |
-| "Email confirmation link doesn't work" | Supabase email auth not configured | Test email flow before customer signup    |
-| "I forgot my password"                 | New account, complex setup         | Include password reset link prominently   |
-| "Form rejected my company name"        | Special characters forbidden       | Accept most characters, show clear error  |
-| "Dashboard is slow"                    | Supabase cold start                | Warn customer first load is 2-3 sec       |
-| "I'm confused what to do"              | No onboarding UX                   | Send email guide (this playbook, step 6)  |
-| "Nothing happened after I submitted"   | Network error, silent fail         | Show clear success message and next steps |
-| "I can't see my data"                  | Workspace not created properly     | Verify workspace in Supabase console      |
-| "Mobile doesn't work"                  | Responsive design issue            | Test signup/login on mobile before launch |
+| Friction Point | Why It Happens | Prevention |
+|---|---|---|
+| "Email confirmation link doesn't work" | Supabase email auth not configured | Test email flow before customer signup |
+| "I forgot my password" | New account, complex setup | Include password reset link prominently |
+| "Form rejected my company name" | Special characters forbidden | Accept most characters, show clear error |
+| "Dashboard is slow" | Supabase cold start | Warn customer first load is 2-3 sec |
+| "I'm confused what to do" | No onboarding UX | Send email guide (this playbook, step 6) |
+| "Nothing happened after I submitted" | Network error, silent fail | Show clear success message and next steps |
+| "I can't see my data" | Workspace not created properly | Verify workspace in Supabase console |
+| "Mobile doesn't work" | Responsive design issue | Test signup/login on mobile before launch |
 
 ---
 
@@ -267,7 +266,6 @@ Best,
 Watch these numbers closely:
 
 **Signup Funnel:**
-
 - [ ] Signup page views
 - [ ] Signup attempts (form submits)
 - [ ] Verification email sent
@@ -277,7 +275,6 @@ Watch these numbers closely:
 - [ ] **Goal:** >80% completion through all steps
 
 **Engagement:**
-
 - [ ] Workspace created
 - [ ] Dashboard visited
 - [ ] Features used (which features, how often)
@@ -285,7 +282,6 @@ Watch these numbers closely:
 - [ ] **Goal:** Customer returns on day 2, 3, 7
 
 **Technical:**
-
 - [ ] Error rate (should be ~0%)
 - [ ] API response time (should be <1 sec)
 - [ ] Database query latency (should be <200ms)
@@ -299,12 +295,12 @@ Watch these numbers closely:
 
 ### Response SLAs
 
-| Severity                     | First Response    | Resolution |
-| ---------------------------- | ----------------- | ---------- |
-| 🔴 Critical (system down)    | 15 min            | 2 hours    |
-| 🟠 High (feature broken)     | 1 hour            | 8 hours    |
-| 🟡 Medium (unclear behavior) | 2 hours           | 24 hours   |
-| 🟢 Low (question)            | Next business day | 48 hours   |
+| Severity | First Response | Resolution |
+|---|---|---|
+| 🔴 Critical (system down) | 15 min | 2 hours |
+| 🟠 High (feature broken) | 1 hour | 8 hours |
+| 🟡 Medium (unclear behavior) | 2 hours | 24 hours |
+| 🟢 Low (question) | Next business day | 48 hours |
 
 ### Support Channels
 
@@ -313,7 +309,6 @@ Watch these numbers closely:
 **Ideal for:** Feature questions, feedback, bug reports, account issues
 
 **Response template:**
-
 ```
 Hi [Customer],
 
@@ -333,34 +328,31 @@ Best,
 
 ### Escalation Path
 
-| Issue                   | Action                                             | Owner   |
-| ----------------------- | -------------------------------------------------- | ------- |
-| "Can't sign up"         | Immediate investigation (blocker)                  | Founder |
-| "Feature doesn't work"  | Reproduce, check error logs, fix or workaround     | Founder |
-| "How do I...?"          | Provide tutorial/video, update docs                | Founder |
-| "Can I have feature X?" | Note for roadmap, explain timeline                 | Founder |
-| "Bill is wrong"         | Check usage, adjust if needed (Phase 2: automatic) | Founder |
+| Issue | Action | Owner |
+|---|---|---|
+| "Can't sign up" | Immediate investigation (blocker) | Founder |
+| "Feature doesn't work" | Reproduce, check error logs, fix or workaround | Founder |
+| "How do I...?" | Provide tutorial/video, update docs | Founder |
+| "Can I have feature X?" | Note for roadmap, explain timeline | Founder |
+| "Bill is wrong" | Check usage, adjust if needed (Phase 2: automatic) | Founder |
 
 ---
 
 ## Post-Launch Checklist (Week 1)
 
 **Every day:**
-
 - [ ] Check /api/alerts for any critical issues
 - [ ] Review error logs in Vercel
 - [ ] Monitor customer email for feedback/issues
 - [ ] Note any friction in onboarding
 
 **End of week 1:**
-
 - [ ] Summarize customer feedback
 - [ ] Fix any onboarding friction discovered
 - [ ] Document what worked and what didn't
 - [ ] Plan improvements for Phase 2
 
 **Example notes:**
-
 ```
 Week 1 Learnings:
 
@@ -413,13 +405,13 @@ If all 5 are true after week 1: Launch to more customers (Phase 2).
 
 If something breaks during customer onboarding:
 
-| Issue              | Action                                           | Time   |
-| ------------------ | ------------------------------------------------ | ------ |
-| Signup not working | Check /api/health + Supabase status              | 5 min  |
-| Email not sending  | Check Supabase email settings                    | 5 min  |
-| Dashboard crashes  | Check Vercel logs + rollback if needed           | 10 min |
-| Data disappeared   | Restore from Supabase backup                     | 30 min |
-| Customer upset     | Reply to email immediately, explain + next steps | 15 min |
+| Issue | Action | Time |
+|---|---|---|
+| Signup not working | Check /api/health + Supabase status | 5 min |
+| Email not sending | Check Supabase email settings | 5 min |
+| Dashboard crashes | Check Vercel logs + rollback if needed | 10 min |
+| Data disappeared | Restore from Supabase backup | 30 min |
+| Customer upset | Reply to email immediately, explain + next steps | 15 min |
 
 If you're stuck and don't know what to do:
 

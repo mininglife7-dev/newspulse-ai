@@ -54,8 +54,7 @@ export default function EvidencePage() {
         return;
       }
       const systemData = await systemRes.json();
-      if (!systemRes.ok || !systemData.ok)
-        throw new Error('Failed to load system');
+      if (!systemRes.ok || !systemData.ok) throw new Error('Failed to load system');
       setSystem(systemData.systems?.[0] || null);
 
       // Load evidence
@@ -104,9 +103,7 @@ export default function EvidencePage() {
   const handleDelete = async (evidenceId: string) => {
     if (!confirm('Delete this evidence? This cannot be undone.')) return;
     try {
-      const res = await fetch(`/api/evidence/${evidenceId}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(`/api/evidence/${evidenceId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
       await loadData();
     } catch (err: any) {
@@ -135,8 +132,7 @@ export default function EvidencePage() {
         <h1 className="text-3xl font-bold text-white">Evidence Collection</h1>
         {system && (
           <p className="text-slate-400">
-            Upload compliance documentation and evidence for{' '}
-            <strong>{system.name}</strong>
+            Upload compliance documentation and evidence for <strong>{system.name}</strong>
           </p>
         )}
       </div>
@@ -174,10 +170,7 @@ export default function EvidencePage() {
             </div>
           )}
           <div>
-            <label
-              htmlFor="title"
-              className="mb-1 block text-sm text-slate-300"
-            >
+            <label htmlFor="title" className="mb-1 block text-sm text-slate-300">
               Title <span className="text-red-400">*</span>
             </label>
             <input
@@ -189,18 +182,13 @@ export default function EvidencePage() {
             />
           </div>
           <div>
-            <label
-              htmlFor="description"
-              className="mb-1 block text-sm text-slate-300"
-            >
+            <label htmlFor="description" className="mb-1 block text-sm text-slate-300">
               Description
             </label>
             <textarea
               id="description"
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="What does this evidence demonstrate?"
               rows={3}
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
@@ -233,8 +221,8 @@ export default function EvidencePage() {
             No evidence submitted yet
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-            Upload audit reports, testing results, security certifications, and
-            other documentation that demonstrates compliance.
+            Upload audit reports, testing results, security certifications, and other
+            documentation that demonstrates compliance.
           </p>
         </div>
       ) : (
@@ -251,24 +239,19 @@ export default function EvidencePage() {
                     <span className="font-medium text-white">{e.title}</span>
                   </div>
                   {e.description && (
-                    <p className="text-sm text-slate-400 mb-2">
-                      {e.description}
-                    </p>
+                    <p className="text-sm text-slate-400 mb-2">{e.description}</p>
                   )}
                   <div className="text-xs text-slate-500">
-                    <span
-                      className={`rounded-full border px-2 py-0.5 ${
-                        e.status === 'approved'
-                          ? 'bg-green-950/50 text-green-300 border-green-800/60'
-                          : e.status === 'rejected'
-                            ? 'bg-red-950/50 text-red-300 border-red-800/60'
-                            : e.status === 'under_review'
-                              ? 'bg-amber-950/50 text-amber-300 border-amber-800/60'
-                              : 'bg-slate-800/60 text-slate-400 border-slate-700'
-                      }`}
-                    >
-                      {e.status.charAt(0).toUpperCase() +
-                        e.status.slice(1).replace('_', ' ')}
+                    <span className={`rounded-full border px-2 py-0.5 ${
+                      e.status === 'approved'
+                        ? 'bg-green-950/50 text-green-300 border-green-800/60'
+                        : e.status === 'rejected'
+                        ? 'bg-red-950/50 text-red-300 border-red-800/60'
+                        : e.status === 'under_review'
+                        ? 'bg-amber-950/50 text-amber-300 border-amber-800/60'
+                        : 'bg-slate-800/60 text-slate-400 border-slate-700'
+                    }`}>
+                      {e.status.charAt(0).toUpperCase() + e.status.slice(1).replace('_', ' ')}
                     </span>
                     <span className="ml-3 text-slate-600">
                       {new Date(e.created_at).toLocaleDateString()}

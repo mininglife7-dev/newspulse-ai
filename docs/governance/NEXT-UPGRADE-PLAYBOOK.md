@@ -4,34 +4,30 @@
 **Reason:** Fix 10 npm vulnerabilities (1 CRITICAL DoS, 5 HIGH, 4 MODERATE)  
 **Timeline:** 2-4 hours (actual upgrade: 30 min, testing: 90-180 min)  
 **Risk Level:** MEDIUM (breaking changes, but limited scope changes needed)  
-**Status:** READY FOR EXECUTION (awaiting Founder approval)
+**Status:** READY FOR EXECUTION (awaiting Founder approval)  
 
 ---
 
 ## Executive Summary
 
 ### Vulnerabilities Addressed
-
 - ✅ **CRITICAL**: Next.js Server Components DoS (CVSS 7.5) → FIXED in Next.js 15.5.15+
 - ✅ **5 HIGH**: HTTP smuggling, deserialization DoS, cache exhaustion, image optimizer DoS → FIXED in 15.5.15+
 - ✅ **4 MODERATE**: Advisory noise → FIXED in 15.5.15+
 
 ### What's Changing
-
 1. **Next.js**: 14.2.35 → 15.5.15 (or 16.x if available)
 2. **React**: 18.3.1 → 19.x
 3. **React DOM**: 18.3.1 → 19.x
 4. **TypeScript types**: Update @types/react, @types/react-dom
 
 ### What's NOT Changing
-
 - ✅ No dynamic route params to refactor (this codebase has none)
 - ✅ No layout.tsx migration needed (already using App Router)
 - ✅ No async ServerComponent changes required (not used here)
 - ✅ No breaking configuration changes needed
 
 ### Expected Outcome
-
 - All 255 tests passing
 - Zero critical/high vulnerabilities
 - Same functionality, better security
@@ -62,7 +58,6 @@
 Edit `package.json` and update these versions:
 
 **Before:**
-
 ```json
 {
   "dependencies": {
@@ -79,7 +74,6 @@ Edit `package.json` and update these versions:
 ```
 
 **After (Next.js 15):**
-
 ```json
 {
   "dependencies": {
@@ -96,7 +90,6 @@ Edit `package.json` and update these versions:
 ```
 
 **OR (Next.js 16 if preferred):**
-
 ```json
 {
   "dependencies": {
@@ -129,7 +122,6 @@ npm ls next react
 ```
 
 **Expected output:**
-
 ```
 newspulse-ai@1.0.0
 ├── next@15.5.15
@@ -186,7 +178,6 @@ npm run test
 ```
 
 **If tests fail:**
-
 - Re-read error messages carefully
 - Check if issue is React 19 related (see "Breaking Changes")
 - Verify no test setup changed (e.g., vitest config)
@@ -290,7 +281,6 @@ git push -u origin $(git branch --show-current)
 - Visit preview URL and test functionality
 
 **Test checklist on preview:**
-
 - [ ] Landing page loads
 - [ ] Sign-in page renders
 - [ ] Dashboard loads
@@ -343,16 +333,13 @@ git push origin main
 ### React 19 Changes
 
 #### 1. Deprecation Warnings (Non-breaking)
-
 React 19 may show deprecation warnings for:
-
 - Old-style context consumers (still work, but warned)
 - Unsafe lifecycle methods (if any used — none in this codebase)
 
 **Action:** None required. Run code as-is.
 
 #### 2. Component Ref Handling
-
 If any components use refs, verify they're using proper forwarding:
 
 ```typescript
@@ -368,11 +355,9 @@ const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => (
 **Action:** Grep for forwardRef, check types are correct.
 
 #### 3. useDeferredValue / useTransition Changes
-
 If code uses these hooks, check they're called at top-level of component.
 
 **Check:**
-
 ```bash
 grep -r "useDeferredValue\|useTransition" app/
 # This codebase: no matches
@@ -382,30 +367,25 @@ grep -r "useDeferredValue\|useTransition" app/
 ### Next.js 15 Changes
 
 #### 1. Caching Behavior Changes
-
 Next.js 15 changes default caching for route handlers.
 
 **This means:** Route handlers now cache GET requests by default (30 min TTL).
 
 **Check our API routes:**
-
 ```bash
 grep -r "export.*GET\|export const GET" app/api/
 # Most routes have explicit revalidation or no caching needed
 ```
 
 **Action:** If any API route needs no caching, add:
-
 ```typescript
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 ```
 
 #### 2. Self-referential Redirects
-
 Redirects to same URL now error.
 
 **Check:**
-
 ```bash
 grep -r "redirect(" app/
 # This codebase: no redirect() calls found
@@ -414,11 +394,9 @@ grep -r "redirect(" app/
 **Action:** None needed.
 
 #### 3. Middleware Changes
-
 If using middleware, verify it still works.
 
 **Check:**
-
 ```bash
 ls middleware.ts middleware.js
 # This codebase: no middleware file
@@ -462,21 +440,21 @@ After merging to main:
 
 ## Effort Breakdown & Timing
 
-| Phase     | Task              | Effort     | Notes                     |
-| --------- | ----------------- | ---------- | ------------------------- |
-| 1.1       | Edit package.json | 5 min      | Straightforward changes   |
-| 1.2       | npm install       | 10 min     | Can take time, just wait  |
-| 1.3       | Verify deps       | 5 min      | Check audit output        |
-| 2.1       | Type-check        | 10 min     | May need type fixes       |
-| 2.2       | Lint              | 5 min      | Usually no changes        |
-| 2.3       | Run tests         | 5 min      | 255 tests, usually passes |
-| 2.4       | Build             | 10 min     | Production build          |
-| 3.1       | Check audit       | 5 min      | Verify fix                |
-| 3.2       | Compare results   | 5 min      | Verify 10→0               |
-| 4.1-4.2   | Commit            | 5 min      | Standard git              |
-| 4.3-4.4   | Deploy & verify   | 15 min     | Wait for Vercel           |
-| 4.5       | Merge             | 5 min      | GitHub merge              |
-| **TOTAL** |                   | **90 min** | Mostly waiting for builds |
+| Phase | Task | Effort | Notes |
+|-------|------|--------|-------|
+| 1.1 | Edit package.json | 5 min | Straightforward changes |
+| 1.2 | npm install | 10 min | Can take time, just wait |
+| 1.3 | Verify deps | 5 min | Check audit output |
+| 2.1 | Type-check | 10 min | May need type fixes |
+| 2.2 | Lint | 5 min | Usually no changes |
+| 2.3 | Run tests | 5 min | 255 tests, usually passes |
+| 2.4 | Build | 10 min | Production build |
+| 3.1 | Check audit | 5 min | Verify fix |
+| 3.2 | Compare results | 5 min | Verify 10→0 |
+| 4.1-4.2 | Commit | 5 min | Standard git |
+| 4.3-4.4 | Deploy & verify | 15 min | Wait for Vercel |
+| 4.5 | Merge | 5 min | GitHub merge |
+| **TOTAL** | | **90 min** | Mostly waiting for builds |
 
 **Critical Path:** 30 min (dependencies) + 30 min (testing) + 30 min (deployment) = **~90 minutes total**
 
@@ -488,25 +466,23 @@ After merging to main:
 
 **Recommendation:** Start with 15.5.15 (stable, proven, long-term support track record)
 
-| Aspect    | 15.5.15             | 16.x                      |
-| --------- | ------------------- | ------------------------- |
-| Stability | ✅ Stable, proven   | ⏳ Newer, less field data |
-| Security  | ✅ Fixes all vulns  | ✅ Fixes all vulns        |
-| Support   | ✅ LTS track record | ⏳ TBD                    |
-| Features  | ✅ Sufficient       | ✅ Latest features        |
+| Aspect | 15.5.15 | 16.x |
+|--------|---------|------|
+| Stability | ✅ Stable, proven | ⏳ Newer, less field data |
+| Security | ✅ Fixes all vulns | ✅ Fixes all vulns |
+| Support | ✅ LTS track record | ⏳ TBD |
+| Features | ✅ Sufficient | ✅ Latest features |
 
 **Action:** Use 15.5.15 unless you have specific need for 16.x features.
 
 ### 2. Timing: Pre-Launch vs Post-Launch?
 
 **Current Status:**
-
 - 1 CRITICAL vulnerability (DoS attack risk)
 - 5 HIGH vulnerabilities (data integrity/confidentiality risk)
 - No live customers yet (internal only, but still concerning)
 
 **Arguments for Pre-Launch Upgrade:**
-
 - ✅ Eliminates security risk before customers see it
 - ✅ Production-ready security posture from day 1
 - ✅ No customer data at risk
@@ -514,7 +490,6 @@ After merging to main:
 - ⚠️ Deployment risk (but fully testable before launch)
 
 **Arguments for Post-Launch Upgrade:**
-
 - ✅ Get to market faster
 - ✅ Validate market fit first
 - ⚠️ Security vulnerabilities live in production (internal only for now)
@@ -528,31 +503,24 @@ After merging to main:
 ## FAQ
 
 ### Q: Will this break my data?
-
 **A:** No. This is a framework upgrade, not a database change. All data persists safely in Supabase.
 
 ### Q: Can I upgrade incrementally?
-
 **A:** Not really. React 18 and 19 are incompatible; both must upgrade together. Incremental is not viable.
 
 ### Q: What if tests fail?
-
 **A:** Check breaking changes section above. Most failures are type errors (easily fixed). Rollback is always available.
 
 ### Q: How long does npm install take?
-
 **A:** Depends on network and machine. Usually 30-60 seconds. Clean install (rm node_modules) may take longer (2-3 min).
 
 ### Q: What if build fails?
-
 **A:** Check console output for errors. Usually TypeScript or bundler issues. Rollback and investigate.
 
 ### Q: Do I need to restart anything?
-
 **A:** After `npm install`, restart dev server (`npm run dev`) for changes to take effect.
 
 ### Q: Is this a breaking change for users?
-
 **A:** No. This is completely invisible to users. Same functionality, better security.
 
 ---
@@ -583,7 +551,6 @@ If upgrade blocks or errors occur:
 4. **Check breaking changes** section above
 
 If still stuck:
-
 - Rollback: `git revert` the upgrade commit
 - Investigate: Read error messages, Google the exact error
 - Ask: Document what failed and request help
@@ -594,4 +561,5 @@ If still stuck:
 **Effort:** ~90 minutes  
 **Risk Level:** MEDIUM (mitigated by comprehensive testing)  
 **Benefit:** Eliminates all 10 vulnerabilities, improves security posture  
-**Recommendation:** Execute pre-launch
+**Recommendation:** Execute pre-launch  
+

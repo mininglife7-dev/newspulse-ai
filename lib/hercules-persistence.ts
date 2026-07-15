@@ -82,10 +82,7 @@ export class HerculesPersistence {
       // if (error) throw error;
 
       metadata.checkpointDurationMs = Date.now() - start;
-      console.log('[Persistence] Checkpoint created', {
-        id: checkpointId,
-        duration: metadata.checkpointDurationMs,
-      });
+      console.log('[Persistence] Checkpoint created', { id: checkpointId, duration: metadata.checkpointDurationMs });
 
       return metadata;
     } catch (error) {
@@ -100,10 +97,7 @@ export class HerculesPersistence {
    * Loads the most recent complete checkpoint.
    * If no checkpoint exists, returns null (kernel will initialize fresh).
    */
-  async restoreCheckpoint(): Promise<{
-    state: string;
-    metadata: CheckpointMetadata;
-  } | null> {
+  async restoreCheckpoint(): Promise<{ state: string; metadata: CheckpointMetadata } | null> {
     try {
       // In production, this would read from Supabase:
       // const { data, error } = await supabase
@@ -187,10 +181,7 @@ export class HerculesPersistence {
    *
    * Helps track if recent checkpoints are unreliable.
    */
-  async markCheckpointFailed(
-    checkpointId: string,
-    reason: string
-  ): Promise<void> {
+  async markCheckpointFailed(checkpointId: string, reason: string): Promise<void> {
     try {
       // In production:
       // const { error } = await supabase
@@ -200,10 +191,7 @@ export class HerculesPersistence {
       //
       // if (error) throw error;
 
-      console.log('[Persistence] Marked checkpoint as failed', {
-        checkpointId,
-        reason,
-      });
+      console.log('[Persistence] Marked checkpoint as failed', { checkpointId, reason });
     } catch (error) {
       console.error('[Persistence] Mark failed failed:', error);
     }

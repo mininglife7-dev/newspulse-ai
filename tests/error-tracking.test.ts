@@ -63,11 +63,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     });
 
     it('marks database errors as high', () => {
-      const severity = calculateSeverity(
-        'db query failed',
-        undefined,
-        'database'
-      );
+      const severity = calculateSeverity('db query failed', undefined, 'database');
       expect(severity).toBe('high');
     });
 
@@ -82,11 +78,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     });
 
     it('marks validation errors as medium', () => {
-      const severity = calculateSeverity(
-        'validation error',
-        undefined,
-        'validation'
-      );
+      const severity = calculateSeverity('validation error', undefined, 'validation');
       expect(severity).toBe('medium');
     });
 
@@ -115,18 +107,12 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     });
 
     it('generates deterministic fingerprint for deduplication', async () => {
-      const error1 = await captureError(
-        new Error('database connection failed'),
-        {
-          endpoint: '/api/search',
-        }
-      );
-      const error2 = await captureError(
-        new Error('database connection failed'),
-        {
-          endpoint: '/api/search',
-        }
-      );
+      const error1 = await captureError(new Error('database connection failed'), {
+        endpoint: '/api/search',
+      });
+      const error2 = await captureError(new Error('database connection failed'), {
+        endpoint: '/api/search',
+      });
 
       expect(error1.fingerprint).toBe(error2.fingerprint);
     });
@@ -175,9 +161,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
 
     it('counts errors by severity', async () => {
       const errors: ErrorEvent[] = [
-        await captureError(new Error('fatal database error'), {
-          context: { statusCode: 500 },
-        }),
+        await captureError(new Error('fatal database error'), { context: { statusCode: 500 } }),
         await captureError(new Error('validation failed')),
         await captureError(new Error('minor issue')),
       ];
@@ -189,12 +173,8 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     });
 
     it('tracks error patterns', async () => {
-      const error1 = await captureError(new Error('connection timeout'), {
-        endpoint: '/api/search',
-      });
-      const error2 = await captureError(new Error('connection timeout'), {
-        endpoint: '/api/search',
-      });
+      const error1 = await captureError(new Error('connection timeout'), { endpoint: '/api/search' });
+      const error2 = await captureError(new Error('connection timeout'), { endpoint: '/api/search' });
       const error3 = await captureError(new Error('different error'));
 
       const metrics = aggregateErrorMetrics([error1, error2, error3]);
@@ -207,18 +187,10 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     it('identifies top patterns by occurrence count', async () => {
       const errors: ErrorEvent[] = [];
       for (let i = 0; i < 5; i++) {
-        errors.push(
-          await captureError(new Error('common error'), {
-            endpoint: '/api/search',
-          })
-        );
+        errors.push(await captureError(new Error('common error'), { endpoint: '/api/search' }));
       }
       for (let i = 0; i < 2; i++) {
-        errors.push(
-          await captureError(new Error('rare error'), {
-            endpoint: '/api/workspace',
-          })
-        );
+        errors.push(await captureError(new Error('rare error'), { endpoint: '/api/workspace' }));
       }
 
       const metrics = aggregateErrorMetrics(errors);
@@ -234,9 +206,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
       // Create 10 errors over 2 minutes
       for (let i = 0; i < 10; i++) {
         const event = await captureError(new Error('test error'));
-        event.timestamp = new Date(
-          now - (2 - i / 10) * 60 * 1000
-        ).toISOString();
+        event.timestamp = new Date(now - (2 - i / 10) * 60 * 1000).toISOString();
         errors.push(event);
       }
 
@@ -257,9 +227,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
 
   describe('formatErrorAlert', () => {
     it('creates critical alert for critical errors', async () => {
-      const error = await captureError(new Error('critical failure'), {
-        context: { statusCode: 500 },
-      });
+      const error = await captureError(new Error('critical failure'), { context: { statusCode: 500 } });
       const metrics = aggregateErrorMetrics([error]);
 
       const alert = formatErrorAlert(metrics);
@@ -295,9 +263,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
 
     it('includes affected services in alert', async () => {
       const errors: ErrorEvent[] = [
-        await captureError(new Error('api error'), {
-          context: { statusCode: 500 },
-        }),
+        await captureError(new Error('api error'), { context: { statusCode: 500 } }),
       ];
       errors[0].affectedService = 'search-service';
 
@@ -321,12 +287,8 @@ describe('Error Tracking (DNA-GOV-003)', () => {
   describe('getErrorSummary', () => {
     it('returns formatted summary string', async () => {
       const errors: ErrorEvent[] = [
-        await captureError(new Error('error 1'), {
-          context: { statusCode: 500 },
-        }),
-        await captureError(new Error('error 2'), {
-          context: { statusCode: 500 },
-        }),
+        await captureError(new Error('error 1'), { context: { statusCode: 500 } }),
+        await captureError(new Error('error 2'), { context: { statusCode: 500 } }),
         await captureError(new Error('error 3')),
       ];
 
@@ -380,9 +342,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     });
 
     it('filters errors by severity', async () => {
-      const criticalError = await captureError(new Error('critical'), {
-        context: { statusCode: 500 },
-      });
+      const criticalError = await captureError(new Error('critical'), { context: { statusCode: 500 } });
       const lowError = await captureError(new Error('minor issue'));
 
       tracker.captureError(criticalError);
@@ -402,12 +362,8 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     });
 
     it('tracks pattern occurrence count', async () => {
-      const error1 = await captureError(new Error('repeated error'), {
-        endpoint: '/api/search',
-      });
-      const error2 = await captureError(new Error('repeated error'), {
-        endpoint: '/api/search',
-      });
+      const error1 = await captureError(new Error('repeated error'), { endpoint: '/api/search' });
+      const error2 = await captureError(new Error('repeated error'), { endpoint: '/api/search' });
 
       tracker.captureError(error1);
       tracker.captureError(error2);
@@ -476,11 +432,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
     it('deduplicates identical error patterns', async () => {
       const errors: ErrorEvent[] = [];
       for (let i = 0; i < 100; i++) {
-        errors.push(
-          await captureError(new Error('identical error'), {
-            endpoint: '/api/same',
-          })
-        );
+        errors.push(await captureError(new Error('identical error'), { endpoint: '/api/same' }));
       }
 
       const metrics = aggregateErrorMetrics(errors);
@@ -494,9 +446,7 @@ describe('Error Tracking (DNA-GOV-003)', () => {
 
       for (let i = 0; i < 50; i++) {
         promises.push(
-          captureError(new Error(`concurrent error ${i}`)).then((e) =>
-            tracker.captureError(e)
-          )
+          captureError(new Error(`concurrent error ${i}`)).then(e => tracker.captureError(e))
         );
       }
 

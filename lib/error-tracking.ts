@@ -7,14 +7,7 @@
  */
 
 export type ErrorSeverity = 'critical' | 'high' | 'medium' | 'low';
-export type ErrorCategory =
-  | 'runtime'
-  | 'api'
-  | 'database'
-  | 'auth'
-  | 'validation'
-  | 'external-service'
-  | 'unknown';
+export type ErrorCategory = 'runtime' | 'api' | 'database' | 'auth' | 'validation' | 'external-service' | 'unknown';
 
 export interface ErrorEvent {
   id: string;
@@ -79,11 +72,7 @@ function getPatternCachePath(): string {
   return process.env.ERROR_PATTERN_CACHE_PATH || ERROR_PATTERN_CACHE_PATH;
 }
 
-function generateFingerprint(
-  message: string,
-  category: ErrorCategory,
-  endpoint?: string
-): string {
+function generateFingerprint(message: string, category: ErrorCategory, endpoint?: string): string {
   // Create a deterministic hash for error deduplication
   // Pattern: category:endpoint:first-line-of-message
   const messageLine = message.split('\n')[0];
@@ -91,68 +80,34 @@ function generateFingerprint(
   return `${category}:${endpointPart}:${messageLine}`.substring(0, 200);
 }
 
-export function classifyError(
-  error: unknown,
-  context?: Record<string, unknown>
-): ErrorCategory {
+export function classifyError(error: unknown, context?: Record<string, unknown>): ErrorCategory {
   const message = error instanceof Error ? error.message : String(error);
   const stack = error instanceof Error ? error.stack : '';
 
-  if (
-    message.toLowerCase().includes('database') ||
-    message.includes('db ') ||
-    message.includes('db_') ||
-    message.includes('connection pool')
-  ) {
+  if (message.toLowerCase().includes('database') || message.includes('db ') || message.includes('db_') || message.includes('connection pool')) {
     return 'database';
   }
-  if (
-    message.includes('auth') ||
-    message.includes('unauthorized') ||
-    message.includes('403') ||
-    message.includes('401')
-  ) {
+  if (message.includes('auth') || message.includes('unauthorized') || message.includes('403') || message.includes('401')) {
     return 'auth';
   }
-  if (
-    message.includes('validation') ||
-    message.includes('invalid') ||
-    message.includes('required')
-  ) {
+  if (message.includes('validation') || message.includes('invalid') || message.includes('required')) {
     return 'validation';
   }
-  if (
-    message.includes('external') ||
-    message.includes('timeout') ||
-    message.includes('ECONNREFUSED')
-  ) {
+  if (message.includes('external') || message.includes('timeout') || message.includes('ECONNREFUSED')) {
     return 'external-service';
   }
-  if (
-    message.includes('api') ||
-    message.includes('endpoint') ||
-    stack?.includes('api/')
-  ) {
+  if (message.includes('api') || message.includes('endpoint') || stack?.includes('api/')) {
     return 'api';
   }
   return 'runtime';
 }
 
-export function calculateSeverity(
-  message: string,
-  statusCode?: number,
-  category?: ErrorCategory
-): ErrorSeverity {
+export function calculateSeverity(message: string, statusCode?: number, category?: ErrorCategory): ErrorSeverity {
   // Critical: 500, 503, pool exhaustion, fatal/critical keywords
   if (statusCode === 500 || statusCode === 503) {
     return 'critical';
   }
-  if (
-    message.includes('pool') ||
-    message.includes('fatal') ||
-    message.includes('critical') ||
-    message.includes('catastrophic')
-  ) {
+  if (message.includes('pool') || message.includes('fatal') || message.includes('critical') || message.includes('catastrophic')) {
     return 'critical';
   }
 
@@ -160,12 +115,7 @@ export function calculateSeverity(
   if (category === 'database' || category === 'auth') {
     return 'high';
   }
-  if (
-    statusCode === 400 ||
-    statusCode === 401 ||
-    statusCode === 403 ||
-    statusCode === 429
-  ) {
+  if (statusCode === 400 || statusCode === 401 || statusCode === 403 || statusCode === 429) {
     return 'high';
   }
   if (message.includes('timeout') || message.includes('retry')) {
@@ -180,20 +130,14 @@ export function calculateSeverity(
   return 'low';
 }
 
-export async function captureError(
-  error: unknown,
-  options?: {
-    endpoint?: string;
-    userId?: string;
-    context?: Record<string, unknown>;
-  }
-): Promise<ErrorEvent> {
+export async function captureError(error: unknown, options?: {
+  endpoint?: string;
+  userId?: string;
+  context?: Record<string, unknown>;
+}): Promise<ErrorEvent> {
   const message = error instanceof Error ? error.message : String(error);
   const stack = error instanceof Error ? error.stack : undefined;
-  const statusCode =
-    error instanceof Error && 'statusCode' in error
-      ? (error as any).statusCode
-      : undefined;
+  const statusCode = (error instanceof Error && 'statusCode' in error) ? (error as any).statusCode : undefined;
 
   const category = classifyError(error, options?.context);
   const severity = calculateSeverity(message, statusCode, category);
@@ -241,8 +185,7 @@ export function aggregateErrorMetrics(errors: ErrorEvent[]): ErrorMetrics {
   for (const error of errors) {
     byCategory[error.category]++;
     bySeverity[error.severity]++;
-    byService[error.affectedService] =
-      (byService[error.affectedService] || 0) + 1;
+    byService[error.affectedService] = (byService[error.affectedService] || 0) + 1;
 
     if (!patterns.has(error.fingerprint)) {
       patterns.set(error.fingerprint, {
@@ -269,10 +212,8 @@ export function aggregateErrorMetrics(errors: ErrorEvent[]): ErrorMetrics {
   if (errors.length > 0) {
     const oldestError = new Date(errors[errors.length - 1].timestamp);
     const newestError = new Date(errors[0].timestamp);
-    const minutesDiff =
-      (newestError.getTime() - oldestError.getTime()) / (1000 * 60);
-    errorRatePerMinute =
-      minutesDiff > 0 ? errors.length / minutesDiff : errors.length;
+    const minutesDiff = (newestError.getTime() - oldestError.getTime()) / (1000 * 60);
+    errorRatePerMinute = minutesDiff > 0 ? errors.length / minutesDiff : errors.length;
   }
 
   const topPatterns = Array.from(patterns.values())
@@ -296,26 +237,20 @@ export function aggregateErrorMetrics(errors: ErrorEvent[]): ErrorMetrics {
 
 export function formatErrorAlert(metrics: ErrorMetrics): ErrorAlert {
   if (metrics.criticalErrors > 0) {
-    const criticalPatterns = metrics.topPatterns.filter(
-      (p) => p.severity === 'critical'
-    );
+    const criticalPatterns = metrics.topPatterns.filter(p => p.severity === 'critical');
     return {
       timestamp: metrics.timestamp,
       severity: 'critical',
       title: `🔴 CRITICAL: ${metrics.criticalErrors} Critical Errors Detected`,
-      message: `${metrics.criticalErrors} critical-severity errors affecting ${new Set(metrics.topPatterns.flatMap((p) => Array.from(p.affectedServices))).size} services. Error rate: ${metrics.errorRate.toFixed(2)}/min`,
+      message: `${metrics.criticalErrors} critical-severity errors affecting ${new Set(metrics.topPatterns.flatMap(p => Array.from(p.affectedServices))).size} services. Error rate: ${metrics.errorRate.toFixed(2)}/min`,
       affectedPatterns: criticalPatterns,
       recommendedAction: `Review critical error patterns immediately. Consider auto-remediation (restart service, circuit-break affected endpoint).`,
-      affectedServices: Array.from(
-        new Set(criticalPatterns.flatMap((p) => Array.from(p.affectedServices)))
-      ),
+      affectedServices: Array.from(new Set(criticalPatterns.flatMap(p => Array.from(p.affectedServices)))),
     };
   }
 
   if (metrics.errorsByCategory.database > 0) {
-    const dbPatterns = metrics.topPatterns.filter(
-      (p) => p.category === 'database'
-    );
+    const dbPatterns = metrics.topPatterns.filter(p => p.category === 'database');
     return {
       timestamp: metrics.timestamp,
       severity: 'warning',
@@ -323,9 +258,7 @@ export function formatErrorAlert(metrics: ErrorMetrics): ErrorAlert {
       message: `${metrics.errorsByCategory.database} database-related errors in last hour. Check connection pool, query performance, and data integrity.`,
       affectedPatterns: dbPatterns,
       recommendedAction: `Investigate database health. Consider connection pool restart or query optimization.`,
-      affectedServices: Array.from(
-        new Set(dbPatterns.flatMap((p) => Array.from(p.affectedServices)))
-      ),
+      affectedServices: Array.from(new Set(dbPatterns.flatMap(p => Array.from(p.affectedServices)))),
     };
   }
 
@@ -334,19 +267,10 @@ export function formatErrorAlert(metrics: ErrorMetrics): ErrorAlert {
       timestamp: metrics.timestamp,
       severity: 'warning',
       title: `⚠️ WARNING: ${metrics.errorsBySeverity.high} High-Severity Errors`,
-      message: `${metrics.errorsBySeverity.high} high-severity errors detected. Top patterns: ${metrics.topPatterns
-        .slice(0, 3)
-        .map((p) => `${p.category}:${p.occurrenceCount}x`)
-        .join(', ')}`,
-      affectedPatterns: metrics.topPatterns
-        .filter((p) => p.severity === 'high')
-        .slice(0, 5),
+      message: `${metrics.errorsBySeverity.high} high-severity errors detected. Top patterns: ${metrics.topPatterns.slice(0, 3).map(p => `${p.category}:${p.occurrenceCount}x`).join(', ')}`,
+      affectedPatterns: metrics.topPatterns.filter(p => p.severity === 'high').slice(0, 5),
       recommendedAction: `Review error patterns and implement targeted fixes. Consider circuit-breaking affected services.`,
-      affectedServices: Array.from(
-        new Set(
-          metrics.topPatterns.flatMap((p) => Array.from(p.affectedServices))
-        )
-      ),
+      affectedServices: Array.from(new Set(metrics.topPatterns.flatMap(p => Array.from(p.affectedServices)))),
     };
   }
 
@@ -356,8 +280,7 @@ export function formatErrorAlert(metrics: ErrorMetrics): ErrorAlert {
     title: `✅ Error tracking: system healthy`,
     message: `No critical errors. ${metrics.totalErrors} total errors across ${metrics.uniquePatterns} unique patterns. Error rate: ${metrics.errorRate.toFixed(2)}/min`,
     affectedPatterns: [],
-    recommendedAction:
-      'Continue monitoring. Review high-occurrence patterns for optimization opportunities.',
+    recommendedAction: 'Continue monitoring. Review high-occurrence patterns for optimization opportunities.',
     affectedServices: Object.keys(metrics.errorsByService),
   };
 }
@@ -407,15 +330,15 @@ export class ErrorTracker {
   }
 
   getErrorsByCategory(category: ErrorCategory): ErrorEvent[] {
-    return this.errors.filter((e) => e.category === category);
+    return this.errors.filter(e => e.category === category);
   }
 
   getErrorsBySeverity(severity: ErrorSeverity): ErrorEvent[] {
-    return this.errors.filter((e) => e.severity === severity);
+    return this.errors.filter(e => e.severity === severity);
   }
 
   getErrorsByService(service: string): ErrorEvent[] {
-    return this.errors.filter((e) => e.affectedService === service);
+    return this.errors.filter(e => e.affectedService === service);
   }
 
   getPattern(fingerprint: string): ErrorPattern | undefined {
@@ -424,7 +347,7 @@ export class ErrorTracker {
 
   clearOldErrors(olderThanMinutes: number): void {
     const cutoffTime = new Date(Date.now() - olderThanMinutes * 60 * 1000);
-    this.errors = this.errors.filter((e) => new Date(e.timestamp) > cutoffTime);
+    this.errors = this.errors.filter(e => new Date(e.timestamp) > cutoffTime);
   }
 
   reset(): void {

@@ -11,8 +11,7 @@
  * A/B test variants, and instant kill-switches for bugs.
  */
 
-export type FlagTargetingRule =
-  'percentage' | 'user' | 'company' | 'email' | 'tag' | 'all';
+export type FlagTargetingRule = 'percentage' | 'user' | 'company' | 'email' | 'tag' | 'all';
 
 export interface FeatureFlag {
   id: string;
@@ -95,10 +94,7 @@ export function listFlags(): FeatureFlag[] {
 /**
  * Update a flag
  */
-export function updateFlag(
-  flagId: string,
-  updates: Partial<FeatureFlag>
-): FeatureFlag | undefined {
+export function updateFlag(flagId: string, updates: Partial<FeatureFlag>): FeatureFlag | undefined {
   const flag = flags.get(flagId);
   if (!flag) return undefined;
 
@@ -117,10 +113,7 @@ export function updateFlag(
 /**
  * Evaluate if a flag is enabled for a given context
  */
-export function evaluateFlag(
-  flagId: string,
-  context: FlagContext
-): FlagEvaluation {
+export function evaluateFlag(flagId: string, context: FlagContext): FlagEvaluation {
   const flag = flags.get(flagId);
   const now = new Date().toISOString();
 
@@ -256,10 +249,7 @@ export function evaluateFlag(
 /**
  * Get variant for A/B testing
  */
-export function getVariant(
-  flagId: string,
-  context: FlagContext
-): FlagEvaluation & { variant?: string } {
+export function getVariant(flagId: string, context: FlagContext): FlagEvaluation & { variant?: string } {
   const evaluation = evaluateFlag(flagId, context);
   const flag = flags.get(flagId);
 
@@ -301,32 +291,21 @@ export function startGradualRollout(
   startPercentage: number,
   targetPercentage: number
 ): FeatureFlag | undefined {
-  if (
-    startPercentage < 0 ||
-    startPercentage > 100 ||
-    targetPercentage < 0 ||
-    targetPercentage > 100
-  ) {
+  if (startPercentage < 0 || startPercentage > 100 || targetPercentage < 0 || targetPercentage > 100) {
     throw new Error('Percentages must be between 0 and 100');
   }
 
   return updateFlag(flagId, {
     enabled: true,
     percentage: startPercentage,
-    tags: [
-      ...(flags.get(flagId)?.tags || []),
-      `rollout-target-${targetPercentage}%`,
-    ],
+    tags: [...(flags.get(flagId)?.tags || []), `rollout-target-${targetPercentage}%`],
   });
 }
 
 /**
  * Increment rollout percentage
  */
-export function incrementRollout(
-  flagId: string,
-  increment: number
-): FeatureFlag | undefined {
+export function incrementRollout(flagId: string, increment: number): FeatureFlag | undefined {
   const flag = flags.get(flagId);
   if (!flag) return undefined;
 
@@ -340,8 +319,7 @@ export function incrementRollout(
 export function formatFlagStatus(flag: FeatureFlag): string {
   const status = flag.enabled ? '✅ ENABLED' : '❌ DISABLED';
   const rollout = flag.percentage > 0 ? ` (${flag.percentage}% rollout)` : '';
-  const ruleCount =
-    flag.rules.length > 0 ? ` [${flag.rules.length} rules]` : '';
+  const ruleCount = flag.rules.length > 0 ? ` [${flag.rules.length} rules]` : '';
 
   return `${status}${rollout}${ruleCount}`;
 }
@@ -349,16 +327,14 @@ export function formatFlagStatus(flag: FeatureFlag): string {
 /**
  * Get flag statistics
  */
-export function getFlagStats(flagId: string):
-  | {
-      flagName: string;
-      enabled: boolean;
-      percentage: number;
-      ruleCount: number;
-      variants: string[];
-      tags: string[];
-    }
-  | undefined {
+export function getFlagStats(flagId: string): {
+  flagName: string;
+  enabled: boolean;
+  percentage: number;
+  ruleCount: number;
+  variants: string[];
+  tags: string[];
+} | undefined {
   const flag = flags.get(flagId);
   if (!flag) return undefined;
 

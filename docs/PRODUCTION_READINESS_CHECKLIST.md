@@ -1,5 +1,4 @@
 # Cathedral/EURO AI Production Readiness Checklist
-
 ## Final Verification Before Customer Pilot (Week 2)
 
 **Authority:** Governor (Chief Advisor & Chief of Staff)  
@@ -535,17 +534,16 @@ Date: ________________________________
 
 ## Historical Record
 
-| Date       | Founder              | Status  | Notes                     |
-| ---------- | -------------------- | ------- | ------------------------- |
+| Date | Founder | Status | Notes |
+|------|---------|--------|-------|
 | 2026-07-12 | [Review in progress] | PENDING | Initial checklist created |
-|            |                      |         |                           |
+| | | | |
 
 ---
 
 **This checklist must be completed and signed by Founder before customer pilot onboarding begins (Week 2).**
 
 **Questions about items on this checklist? Refer to the relevant documentation:**
-
 - Supabase: `docs/infra/DEPLOYMENT_FINAL_CHECKLIST.md`
 - Operations: `docs/infra/OPERATIONAL_RUNBOOK.md`
 - Customer: `docs/customer/PILOT_ONBOARDING_PLAYBOOK.md`
@@ -553,5 +551,5 @@ Date: ________________________________
 
 ---
 
-_Last updated: 2026-07-12_  
-_Version: 1.0_
+*Last updated: 2026-07-12*  
+*Version: 1.0*

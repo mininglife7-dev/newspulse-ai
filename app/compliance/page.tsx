@@ -143,8 +143,8 @@ export default function CompliancePage() {
     summary.readinessPercentage >= 80
       ? 'text-green-400'
       : summary.readinessPercentage >= 50
-        ? 'text-amber-400'
-        : 'text-red-400';
+      ? 'text-amber-400'
+      : 'text-red-400';
 
   return (
     <div className="space-y-8">
@@ -158,9 +158,7 @@ export default function CompliancePage() {
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">
-              Compliance Dashboard
-            </h1>
+            <h1 className="text-3xl font-bold text-white">Compliance Dashboard</h1>
             <p className="text-slate-400">
               Your organization's AI governance compliance status and readiness
             </p>
@@ -199,10 +197,10 @@ export default function CompliancePage() {
               {summary.complianceHealth === 'critical'
                 ? 'Immediate action required: unacceptable-risk systems detected'
                 : summary.complianceHealth === 'warning'
-                  ? 'Action needed: high-risk systems and incomplete assessments'
-                  : summary.complianceHealth === 'good'
-                    ? 'On track: most systems assessed, evidence in review'
-                    : 'Excellent: all systems assessed and evidence approved'}
+                ? 'Action needed: high-risk systems and incomplete assessments'
+                : summary.complianceHealth === 'good'
+                ? 'On track: most systems assessed, evidence in review'
+                : 'Excellent: all systems assessed and evidence approved'}
             </p>
           </div>
           <div className="text-4xl font-bold opacity-30">
@@ -219,12 +217,9 @@ export default function CompliancePage() {
             <h3 className="text-sm text-slate-400">AI Systems</h3>
             <Cpu className="h-5 w-5 text-cyan-400" />
           </div>
-          <div className="text-3xl font-bold text-white">
-            {summary.totalSystems}
-          </div>
+          <div className="text-3xl font-bold text-white">{summary.totalSystems}</div>
           <p className="text-xs text-slate-500 mt-2">
-            {summary.assessedSystems} assessed · {summary.unassessedSystems}{' '}
-            pending
+            {summary.assessedSystems} assessed · {summary.unassessedSystems} pending
           </p>
         </div>
 
@@ -235,16 +230,10 @@ export default function CompliancePage() {
             <CheckCircle className="h-5 w-5 text-green-400" />
           </div>
           <div className="text-3xl font-bold text-white">
-            {summary.totalSystems > 0
-              ? Math.round(
-                  (summary.assessedSystems / summary.totalSystems) * 100
-                )
-              : 0}
-            %
+            {summary.totalSystems > 0 ? Math.round((summary.assessedSystems / summary.totalSystems) * 100) : 0}%
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            {summary.assessmentStatus.finalized} finalized ·{' '}
-            {summary.assessmentStatus.draft} draft
+            {summary.assessmentStatus.finalized} finalized · {summary.assessmentStatus.draft} draft
           </p>
         </div>
 
@@ -255,12 +244,10 @@ export default function CompliancePage() {
             <AlertTriangle className="h-5 w-5 text-amber-400" />
           </div>
           <div className="text-3xl font-bold text-white">
-            {summary.riskDistribution.high +
-              summary.riskDistribution.unacceptable}
+            {summary.riskDistribution.high + summary.riskDistribution.unacceptable}
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            {summary.riskDistribution.unacceptable} unacceptable ·{' '}
-            {summary.riskDistribution.high} high
+            {summary.riskDistribution.unacceptable} unacceptable · {summary.riskDistribution.high} high
           </p>
         </div>
 
@@ -274,8 +261,7 @@ export default function CompliancePage() {
             {summary.evidenceMetrics.approved}
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            {summary.evidenceMetrics.under_review} in review ·{' '}
-            {summary.evidenceMetrics.submitted} submitted
+            {summary.evidenceMetrics.under_review} in review · {summary.evidenceMetrics.submitted} submitted
           </p>
         </div>
 
@@ -289,8 +275,7 @@ export default function CompliancePage() {
             {summary.obligationMetrics.completed}
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            {summary.obligationMetrics.total} total ·{' '}
-            {summary.obligationMetrics.in_progress} in progress
+            {summary.obligationMetrics.total} total · {summary.obligationMetrics.in_progress} in progress
           </p>
         </div>
       </div>
@@ -302,31 +287,12 @@ export default function CompliancePage() {
           <h3 className="font-semibold text-white mb-4">Risk Classification</h3>
           <div className="space-y-3">
             {[
-              {
-                label: 'Unacceptable',
-                count: summary.riskDistribution.unacceptable,
-                color: 'bg-red-500',
-              },
-              {
-                label: 'High',
-                count: summary.riskDistribution.high,
-                color: 'bg-orange-500',
-              },
-              {
-                label: 'Medium',
-                count: summary.riskDistribution.medium,
-                color: 'bg-amber-500',
-              },
-              {
-                label: 'Low',
-                count: summary.riskDistribution.low,
-                color: 'bg-green-500',
-              },
+              { label: 'Unacceptable', count: summary.riskDistribution.unacceptable, color: 'bg-red-500' },
+              { label: 'High', count: summary.riskDistribution.high, color: 'bg-orange-500' },
+              { label: 'Medium', count: summary.riskDistribution.medium, color: 'bg-amber-500' },
+              { label: 'Low', count: summary.riskDistribution.low, color: 'bg-green-500' },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between"
-              >
+              <div key={item.label} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`h-3 w-3 rounded-full ${item.color}`}></div>
                   <span className="text-sm text-slate-400">{item.label}</span>
@@ -342,26 +308,11 @@ export default function CompliancePage() {
           <h3 className="font-semibold text-white mb-4">Assessment Status</h3>
           <div className="space-y-3">
             {[
-              {
-                label: 'Finalized',
-                count: summary.assessmentStatus.finalized,
-                color: 'text-green-400',
-              },
-              {
-                label: 'In Review',
-                count: summary.assessmentStatus.in_review,
-                color: 'text-amber-400',
-              },
-              {
-                label: 'Draft',
-                count: summary.assessmentStatus.draft,
-                color: 'text-slate-400',
-              },
+              { label: 'Finalized', count: summary.assessmentStatus.finalized, color: 'text-green-400' },
+              { label: 'In Review', count: summary.assessmentStatus.in_review, color: 'text-amber-400' },
+              { label: 'Draft', count: summary.assessmentStatus.draft, color: 'text-slate-400' },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between"
-              >
+              <div key={item.label} className="flex items-center justify-between">
                 <span className={`text-sm ${item.color}`}>{item.label}</span>
                 <span className="font-semibold text-white">{item.count}</span>
               </div>
@@ -377,31 +328,12 @@ export default function CompliancePage() {
           <h3 className="font-semibold text-white mb-4">Obligation Status</h3>
           <div className="space-y-3">
             {[
-              {
-                label: 'Completed',
-                count: summary.obligationMetrics.completed,
-                color: 'text-green-400',
-              },
-              {
-                label: 'In Progress',
-                count: summary.obligationMetrics.in_progress,
-                color: 'text-cyan-400',
-              },
-              {
-                label: 'Identified',
-                count: summary.obligationMetrics.identified,
-                color: 'text-amber-400',
-              },
-              {
-                label: 'Not Applicable',
-                count: summary.obligationMetrics.not_applicable,
-                color: 'text-slate-400',
-              },
+              { label: 'Completed', count: summary.obligationMetrics.completed, color: 'text-green-400' },
+              { label: 'In Progress', count: summary.obligationMetrics.in_progress, color: 'text-cyan-400' },
+              { label: 'Identified', count: summary.obligationMetrics.identified, color: 'text-amber-400' },
+              { label: 'Not Applicable', count: summary.obligationMetrics.not_applicable, color: 'text-slate-400' },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between"
-              >
+              <div key={item.label} className="flex items-center justify-between">
                 <span className={`text-sm ${item.color}`}>{item.label}</span>
                 <span className="font-semibold text-white">{item.count}</span>
               </div>
@@ -414,29 +346,11 @@ export default function CompliancePage() {
           <h3 className="font-semibold text-white mb-4">Obligation Priority</h3>
           <div className="space-y-3">
             {[
-              {
-                label: 'Critical',
-                count: summary.obligationMetrics.critical_priority,
-                color: 'text-red-400',
-              },
-              {
-                label: 'High',
-                count: summary.obligationMetrics.high_priority,
-                color: 'text-orange-400',
-              },
-              {
-                label: 'Other',
-                count:
-                  summary.obligationMetrics.total -
-                  summary.obligationMetrics.critical_priority -
-                  summary.obligationMetrics.high_priority,
-                color: 'text-slate-400',
-              },
+              { label: 'Critical', count: summary.obligationMetrics.critical_priority, color: 'text-red-400' },
+              { label: 'High', count: summary.obligationMetrics.high_priority, color: 'text-orange-400' },
+              { label: 'Other', count: summary.obligationMetrics.total - summary.obligationMetrics.critical_priority - summary.obligationMetrics.high_priority, color: 'text-slate-400' },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between"
-              >
+              <div key={item.label} className="flex items-center justify-between">
                 <span className={`text-sm ${item.color}`}>{item.label}</span>
                 <span className="font-semibold text-white">{item.count}</span>
               </div>
@@ -447,36 +361,15 @@ export default function CompliancePage() {
 
       {/* Evidence Approval Status */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-        <h3 className="font-semibold text-white mb-4">
-          Evidence Approval Status
-        </h3>
+        <h3 className="font-semibold text-white mb-4">Evidence Approval Status</h3>
         <div className="grid gap-4 md:grid-cols-4">
           {[
-            {
-              label: 'Approved',
-              count: summary.evidenceMetrics.approved,
-              color: 'bg-green-950/50 text-green-300 border-green-800/60',
-            },
-            {
-              label: 'Under Review',
-              count: summary.evidenceMetrics.under_review,
-              color: 'bg-amber-950/50 text-amber-300 border-amber-800/60',
-            },
-            {
-              label: 'Submitted',
-              count: summary.evidenceMetrics.submitted,
-              color: 'bg-blue-950/50 text-blue-300 border-blue-800/60',
-            },
-            {
-              label: 'Rejected',
-              count: summary.evidenceMetrics.rejected,
-              color: 'bg-red-950/50 text-red-300 border-red-800/60',
-            },
+            { label: 'Approved', count: summary.evidenceMetrics.approved, color: 'bg-green-950/50 text-green-300 border-green-800/60' },
+            { label: 'Under Review', count: summary.evidenceMetrics.under_review, color: 'bg-amber-950/50 text-amber-300 border-amber-800/60' },
+            { label: 'Submitted', count: summary.evidenceMetrics.submitted, color: 'bg-blue-950/50 text-blue-300 border-blue-800/60' },
+            { label: 'Rejected', count: summary.evidenceMetrics.rejected, color: 'bg-red-950/50 text-red-300 border-red-800/60' },
           ].map((item) => (
-            <div
-              key={item.label}
-              className={`rounded-lg border p-4 ${item.color}`}
-            >
+            <div key={item.label} className={`rounded-lg border p-4 ${item.color}`}>
               <div className="text-sm opacity-75 mb-2">{item.label}</div>
               <div className="text-2xl font-bold">{item.count}</div>
             </div>
@@ -498,8 +391,8 @@ export default function CompliancePage() {
                   summary.readinessPercentage >= 80
                     ? 'bg-green-500'
                     : summary.readinessPercentage >= 50
-                      ? 'bg-amber-500'
-                      : 'bg-red-500'
+                    ? 'bg-amber-500'
+                    : 'bg-red-500'
                 }`}
                 style={{ width: `${summary.readinessPercentage}%` }}
               ></div>
@@ -519,8 +412,7 @@ export default function CompliancePage() {
             <li className="flex gap-3 text-sm">
               <span className="text-cyan-400">→</span>
               <span className="text-slate-400">
-                Complete assessments for {summary.unassessedSystems} system
-                {summary.unassessedSystems !== 1 ? 's' : ''}
+                Complete assessments for {summary.unassessedSystems} system{summary.unassessedSystems !== 1 ? 's' : ''}
               </span>
             </li>
           )}
@@ -528,8 +420,7 @@ export default function CompliancePage() {
             <li className="flex gap-3 text-sm">
               <span className="text-amber-400">→</span>
               <span className="text-slate-400">
-                Finalize {summary.assessmentStatus.draft} draft assessment
-                {summary.assessmentStatus.draft !== 1 ? 's' : ''}
+                Finalize {summary.assessmentStatus.draft} draft assessment{summary.assessmentStatus.draft !== 1 ? 's' : ''}
               </span>
             </li>
           )}
@@ -537,8 +428,7 @@ export default function CompliancePage() {
             <li className="flex gap-3 text-sm">
               <span className="text-amber-400">→</span>
               <span className="text-slate-400">
-                Review {summary.evidenceMetrics.submitted} submitted evidence
-                item{summary.evidenceMetrics.submitted !== 1 ? 's' : ''}
+                Review {summary.evidenceMetrics.submitted} submitted evidence item{summary.evidenceMetrics.submitted !== 1 ? 's' : ''}
               </span>
             </li>
           )}
@@ -546,8 +436,7 @@ export default function CompliancePage() {
             <li className="flex gap-3 text-sm">
               <span className="text-orange-400">→</span>
               <span className="text-slate-400">
-                Create mitigation plans for {summary.riskDistribution.high}{' '}
-                high-risk system{summary.riskDistribution.high !== 1 ? 's' : ''}
+                Create mitigation plans for {summary.riskDistribution.high} high-risk system{summary.riskDistribution.high !== 1 ? 's' : ''}
               </span>
             </li>
           )}
@@ -555,10 +444,7 @@ export default function CompliancePage() {
             <li className="flex gap-3 text-sm">
               <span className="text-red-400">⚠</span>
               <span className="text-red-400 font-medium">
-                URGENT: {summary.riskDistribution.unacceptable}{' '}
-                unacceptable-risk system
-                {summary.riskDistribution.unacceptable !== 1 ? 's' : ''}{' '}
-                requires immediate action
+                URGENT: {summary.riskDistribution.unacceptable} unacceptable-risk system{summary.riskDistribution.unacceptable !== 1 ? 's' : ''} requires immediate action
               </span>
             </li>
           )}
@@ -566,10 +452,7 @@ export default function CompliancePage() {
             <li className="flex gap-3 text-sm">
               <span className="text-red-400">⚠</span>
               <span className="text-red-400 font-medium">
-                CRITICAL: {summary.obligationMetrics.critical_priority} critical
-                obligation
-                {summary.obligationMetrics.critical_priority !== 1 ? 's' : ''}{' '}
-                need immediate attention
+                CRITICAL: {summary.obligationMetrics.critical_priority} critical obligation{summary.obligationMetrics.critical_priority !== 1 ? 's' : ''} need immediate attention
               </span>
             </li>
           )}
@@ -577,9 +460,7 @@ export default function CompliancePage() {
             <li className="flex gap-3 text-sm">
               <span className="text-amber-400">→</span>
               <span className="text-slate-400">
-                Start tracking {summary.obligationMetrics.identified} identified
-                obligation
-                {summary.obligationMetrics.identified !== 1 ? 's' : ''}
+                Start tracking {summary.obligationMetrics.identified} identified obligation{summary.obligationMetrics.identified !== 1 ? 's' : ''}
               </span>
             </li>
           )}

@@ -166,11 +166,7 @@ export default async function DashboardPage() {
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${systemCount > 0 ? 'bg-green-600' : 'bg-blue-500 text-sm font-bold'}`}
                   >
-                    {systemCount > 0 ? (
-                      <CheckCircle className="h-5 w-5" />
-                    ) : (
-                      '2'
-                    )}
+                    {systemCount > 0 ? <CheckCircle className="h-5 w-5" /> : '2'}
                   </div>
                   <h3 className="font-semibold text-white">AI Inventory</h3>
                 </div>
@@ -313,8 +309,8 @@ export default async function DashboardPage() {
           <div>
             <h3 className="font-medium text-white">Need help?</h3>
             <p className="text-sm text-slate-400 mt-1">
-              In-app documentation and support are on the way. Until then, your
-              onboarding contact is happy to help directly.
+              In-app documentation and support are on the way. Until then,
+              your onboarding contact is happy to help directly.
             </p>
           </div>
         </div>
