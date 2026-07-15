@@ -10,7 +10,7 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 
 ## 🛠️ Tech Stack
 
-![Next.js](https://img.shields.io/badge/Next.js-14-000?logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-15.5.20-000?logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-38BDF8?logo=tailwindcss&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
@@ -27,6 +27,14 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 - ✅ **Remediation Tracking** — Plan and execute compliance actions
 - 🔐 **Multi-tenant** — Workspace isolation with role-based access control (RBAC)
 - 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
+
+---
+
+## 📋 Quick Links
+
+- **[Deployment Checklist](./docs/DEPLOYMENT-CHECKLIST.md)** — Step-by-step guide for production launch
+- **[Supabase Setup Guide](./docs/infra/SUPABASE-PRODUCTION-SETUP.md)** — Detailed database deployment instructions
+- **[Founder Brief](./docs/governance/FOUNDER_BRIEF.md)** — Current system status and priorities
 
 ---
 
