@@ -26,6 +26,15 @@ function slugify(name: string): string {
   return base ? `${base}-${suffix}` : suffix;
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 25000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
+
 /**
  * POST /api/workspace — create the customer's workspace, company profile,
  * and owner membership in one call. Runs as the signed-in user, so every
@@ -64,16 +73,30 @@ export async function POST(req: Request) {
   }
 
   // 1. Workspace (tenant boundary)
-  const { data: workspace, error: wsError } = await supabase
-    .from('workspaces')
-    .insert({
-      slug: slugify(companyName),
-      name: companyName,
-      description: body.description?.trim() || null,
-      owner_id: user.id,
-    })
-    .select('id, slug, name')
-    .single();
+  let workspace;
+  let wsError;
+  try {
+    const result = await withTimeout(
+      supabase
+        .from('workspaces')
+        .insert({
+          slug: slugify(companyName),
+          name: companyName,
+          description: body.description?.trim() || null,
+          owner_id: user.id,
+        })
+        .select('id, slug, name')
+        .single()
+    );
+    workspace = result.data;
+    wsError = result.error;
+  } catch (error) {
+    console.error('[api/workspace] workspace insert timeout/error:', error);
+    return NextResponse.json(
+      { ok: false, error: 'Workspace creation timed out or failed. Please try again.' },
+      { status: 500 }
+    );
+  }
 
   if (wsError || !workspace) {
     console.error('[api/workspace] workspace insert failed:', wsError);
@@ -84,16 +107,28 @@ export async function POST(req: Request) {
   }
 
   // 2. Owner membership (activates RLS access to the workspace)
-  const { error: memberError } = await supabase
-    .from('workspace_members')
-    .insert({
-      workspace_id: workspace.id,
-      user_id: user.id,
-      role: 'owner',
-      email: user.email ?? '',
-      status: 'active',
-      joined_at: new Date().toISOString(),
-    });
+  let memberError;
+  try {
+    const result = await withTimeout(
+      supabase
+        .from('workspace_members')
+        .insert({
+          workspace_id: workspace.id,
+          user_id: user.id,
+          role: 'owner',
+          email: user.email ?? '',
+          status: 'active',
+          joined_at: new Date().toISOString(),
+        })
+    );
+    memberError = result.error;
+  } catch (error) {
+    console.error('[api/workspace] member insert timeout/error:', error);
+    return NextResponse.json(
+      { ok: false, error: 'Membership creation timed out or failed. Please try again.' },
+      { status: 500 }
+    );
+  }
 
   if (memberError) {
     console.error('[api/workspace] member insert failed:', memberError);
@@ -104,20 +139,34 @@ export async function POST(req: Request) {
   }
 
   // 3. Company profile (the governed entity)
-  const { data: company, error: companyError } = await supabase
-    .from('companies')
-    .insert({
-      workspace_id: workspace.id,
-      name: companyName,
-      legal_name: body.legalName?.trim() || null,
-      country,
-      industry,
-      employees_range: body.employees?.trim() || null,
-      website: body.website?.trim() || null,
-      governance_priorities: body.description?.trim() || null,
-    })
-    .select('id')
-    .single();
+  let company;
+  let companyError;
+  try {
+    const result = await withTimeout(
+      supabase
+        .from('companies')
+        .insert({
+          workspace_id: workspace.id,
+          name: companyName,
+          legal_name: body.legalName?.trim() || null,
+          country,
+          industry,
+          employees_range: body.employees?.trim() || null,
+          website: body.website?.trim() || null,
+          governance_priorities: body.description?.trim() || null,
+        })
+        .select('id')
+        .single()
+    );
+    company = result.data;
+    companyError = result.error;
+  } catch (error) {
+    console.error('[api/workspace] company insert timeout/error:', error);
+    return NextResponse.json(
+      { ok: false, error: 'Company creation timed out or failed. Please try again.' },
+      { status: 500 }
+    );
+  }
 
   if (companyError || !company) {
     console.error('[api/workspace] company insert failed:', companyError);
@@ -129,13 +178,17 @@ export async function POST(req: Request) {
 
   // 4. Point the user's profile at their new workspace (best effort —
   // profile row may not exist if the signup trigger isn't installed).
-  const { error: profileError } = await supabase.from('profiles').upsert({
-    id: user.id,
-    email: user.email ?? '',
-    current_workspace_id: workspace.id,
-  });
-  if (profileError) {
-    console.warn('[api/workspace] profile upsert failed:', profileError);
+  try {
+    await withTimeout(
+      supabase.from('profiles').upsert({
+        id: user.id,
+        email: user.email ?? '',
+        current_workspace_id: workspace.id,
+      })
+    );
+  } catch (error) {
+    console.warn('[api/workspace] profile upsert timeout/error:', error);
+    // Non-fatal: continue anyway, workspace is already created
   }
 
   return NextResponse.json({
