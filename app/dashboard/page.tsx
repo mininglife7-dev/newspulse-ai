@@ -255,7 +255,7 @@ export default function DashboardPage() {
           </Link>
 
           <Link
-            href="/workspace/setup"
+            href="/team/members"
             className="group flex gap-4 p-4 rounded-lg border border-slate-700 hover:border-blue-500/50 bg-slate-900/50 hover:bg-slate-900/80 transition"
           >
             <div className="flex-1">
