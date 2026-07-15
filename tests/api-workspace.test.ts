@@ -117,6 +117,30 @@ describe('POST /api/workspace', () => {
     expect(res.status).toBe(401);
   });
 
+  it('creates workspace when optional fields (e.g. website) are left blank', async () => {
+    // The setup form submits untouched optional inputs as ''. website is
+    // validated with optional(url()); a blank '' must be treated as absent,
+    // not run through url() (which rejects '') and block onboarding.
+    const res = await POST(
+      request({
+        companyName: 'Blank Co',
+        country: 'Germany',
+        industry: 'Manufacturing',
+        legalName: '',
+        employees: '',
+        website: '',
+        description: '',
+      })
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(state.inserts.companies?.[0]).toMatchObject({
+      website: null,
+      employees_range: null,
+    });
+  });
+
   it('creates workspace, owner membership, company and profile', async () => {
     const res = await POST(request(validBody));
     expect(res.status).toBe(200);

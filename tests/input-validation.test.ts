@@ -199,6 +199,22 @@ describe('Input Validation Framework', () => {
       expect(validator.validate('hello').value).toBe('hello');
       expect(validator.validate(123).ok).toBe(false);
     });
+
+    it('treats an empty/blank string as absent (forms submit "" for untouched fields)', () => {
+      // A blank optional URL/enum must not be run through the inner validator —
+      // e.g. leaving the optional website blank used to fail workspace creation
+      // because url() rejects ''.
+      const url = validators.optional(validators.url());
+      expect(url.validate('').ok).toBe(true);
+      expect(url.validate('').value).toBeUndefined();
+      expect(url.validate('   ').value).toBeUndefined();
+
+      const choice = validators.optional(validators.enum(['a', 'b'] as const));
+      expect(choice.validate('').ok).toBe(true);
+      expect(choice.validate('').value).toBeUndefined();
+      // A non-empty invalid value is still rejected.
+      expect(choice.validate('z').ok).toBe(false);
+    });
   });
 
   describe('validate (schema validation)', () => {
