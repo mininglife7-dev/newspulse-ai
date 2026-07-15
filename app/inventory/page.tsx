@@ -21,6 +21,13 @@ interface AiSystem {
   created_at: string;
 }
 
+interface RiskAssessment {
+  id: string;
+  risk_level: 'unacceptable' | 'high' | 'medium' | 'low';
+  risk_score: number;
+  status: string;
+}
+
 const SYSTEM_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'large_language_model', label: 'Large Language Model' },
   { value: 'generative_ai', label: 'Generative AI' },
@@ -38,8 +45,16 @@ const STATUS_BADGE: Record<string, string> = {
   deprecated: 'bg-slate-800/60 text-slate-400 border-slate-700',
 };
 
+const RISK_LEVEL_BADGE: Record<string, string> = {
+  unacceptable: 'bg-red-950/50 text-red-300 border-red-800/60',
+  high: 'bg-orange-950/50 text-orange-300 border-orange-800/60',
+  medium: 'bg-amber-950/50 text-amber-300 border-amber-800/60',
+  low: 'bg-green-950/50 text-green-300 border-green-800/60',
+};
+
 export default function InventoryPage() {
   const [systems, setSystems] = useState<AiSystem[] | null>(null);
+  const [assessments, setAssessments] = useState<Map<string, RiskAssessment>>(new Map());
   const [loadError, setLoadError] = useState<string | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
 
@@ -70,6 +85,27 @@ export default function InventoryPage() {
       }
       if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to load');
       setSystems(data.systems);
+
+      // Fetch assessments for each system
+      if (data.systems && data.systems.length > 0) {
+        const assessmentMap = new Map<string, RiskAssessment>();
+        await Promise.all(
+          data.systems.map(async (system: AiSystem) => {
+            try {
+              const assessmentRes = await fetch(`/api/assessments?systemId=${system.id}`);
+              if (assessmentRes.ok) {
+                const assessmentData = await assessmentRes.json();
+                if (assessmentData.assessment) {
+                  assessmentMap.set(system.id, assessmentData.assessment);
+                }
+              }
+            } catch {
+              // Skip individual assessment fetch failures
+            }
+          })
+        );
+        setAssessments(assessmentMap);
+      }
     } catch (err: any) {
       setLoadError(err?.message || 'Could not load your AI systems');
       setSystems([]);
@@ -276,35 +312,62 @@ export default function InventoryPage() {
             </div>
           ) : (
             <ul className="space-y-3">
-              {systems.map((s) => (
-                <li
-                  key={s.id}
-                  className="rounded-lg border border-slate-800 bg-slate-900/50 p-5"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <Cpu className="h-5 w-5 text-cyan-400" />
-                      <span className="font-semibold text-white">{s.name}</span>
-                      {s.system_type && (
-                        <span className="rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-0.5 text-xs text-slate-300">
-                          {SYSTEM_TYPE_OPTIONS.find((o) => o.value === s.system_type)?.label ?? s.system_type}
-                        </span>
-                      )}
+              {systems.map((s) => {
+                const assessment = assessments.get(s.id);
+                return (
+                  <li
+                    key={s.id}
+                    className="rounded-lg border border-slate-800 bg-slate-900/50 p-5"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Cpu className="h-5 w-5 text-cyan-400" />
+                          <span className="font-semibold text-white">{s.name}</span>
+                          {s.system_type && (
+                            <span className="rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-0.5 text-xs text-slate-300">
+                              {SYSTEM_TYPE_OPTIONS.find((o) => o.value === s.system_type)?.label ?? s.system_type}
+                            </span>
+                          )}
+                        </div>
+                        {(s.vendor || s.purpose) && (
+                          <div className="text-sm text-slate-400">
+                            {s.vendor && <span className="mr-4">Vendor: {s.vendor}</span>}
+                            {s.purpose && <span>{s.purpose}</span>}
+                          </div>
+                        )}
+                        {assessment && (
+                          <div className="text-xs text-slate-400 mt-2">
+                            Risk Score: {assessment.risk_score}/100 · Status: {assessment.status}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-2">
+                          {assessment && (
+                            <span
+                              className={`rounded-full border px-2.5 py-0.5 text-xs ${RISK_LEVEL_BADGE[assessment.risk_level]}`}
+                            >
+                              {assessment.risk_level.charAt(0).toUpperCase() + assessment.risk_level.slice(1)} Risk
+                            </span>
+                          )}
+                          <span
+                            className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_BADGE[s.status] ?? STATUS_BADGE.deprecated}`}
+                          >
+                            {s.status}
+                          </span>
+                        </div>
+                        <Link
+                          href={`/assessment/${s.id}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-700/50 bg-blue-950/30 px-3 py-2 text-xs font-medium text-blue-300 transition hover:bg-blue-950/50 hover:border-blue-600/50"
+                        >
+                          {assessment ? 'View Assessment' : 'Assess Risk'}
+                        </Link>
+                      </div>
                     </div>
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_BADGE[s.status] ?? STATUS_BADGE.deprecated}`}
-                    >
-                      {s.status}
-                    </span>
-                  </div>
-                  {(s.vendor || s.purpose) && (
-                    <div className="mt-2 text-sm text-slate-400">
-                      {s.vendor && <span className="mr-4">Vendor: {s.vendor}</span>}
-                      {s.purpose && <span>{s.purpose}</span>}
-                    </div>
-                  )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </>
