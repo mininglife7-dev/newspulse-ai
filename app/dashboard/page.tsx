@@ -163,18 +163,23 @@ export default async function DashboardPage() {
         )}
 
         {/* Step 3: Risk Assessment */}
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 hover:border-slate-700 transition">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-bold">
                   3
                 </div>
                 <h3 className="font-semibold text-white">Risk Assessment</h3>
               </div>
               <p className="text-sm text-slate-400">
-                Classify risks and obligations — coming soon
+                Classify AI system risks and regulatory obligations
               </p>
+            </div>
+            <div className="text-right">
+              <span className="inline-block px-3 py-1 text-xs font-medium text-blue-300 bg-blue-950/50 rounded-full">
+                Available
+              </span>
             </div>
           </div>
         </div>
