@@ -52,9 +52,10 @@ export async function GET(req: Request) {
     const anyHighRisk = reports.some((r) => r.riskLevel === 'high-risk');
 
     // Generate batch report
+    const overallRisk = (anyBreaking ? 'breaking' : anyHighRisk ? 'high-risk' : 'safe') as const;
     const batchReport = {
       files: reports,
-      overallRisk: anyBreaking ? 'breaking' : anyHighRisk ? 'high-risk' : 'safe',
+      overallRisk,
       blocksCI: anyBreaking,
       timestamp: new Date().toISOString(),
     };
