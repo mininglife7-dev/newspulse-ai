@@ -122,6 +122,26 @@ describe('POST /api/ai-systems', () => {
     expect(res.status).toBe(400);
   });
 
+  it('creates a system when optional fields are left blank', async () => {
+    // The inventory form submits unselected optionals as '' (e.g. the Type
+    // "Select…" default). Those must be treated as absent, not rejected.
+    const res = await post({
+      name: 'Minimal system',
+      systemType: '',
+      vendor: '',
+      purpose: '',
+      status: 'active',
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(state.systems[0]).toMatchObject({
+      name: 'Minimal system',
+      system_type: null,
+      status: 'active',
+    });
+  });
+
   it('creates a system scoped to the workspace and company', async () => {
     const res = await post({
       name: 'Support chatbot',
