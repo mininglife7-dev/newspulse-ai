@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     // Convert anomalies to alert hub format and record
     const alerts = anomaliesToAlerts(report);
     for (const alert of alerts) {
-      recordAlert(alert);
+      recordAlert(alert.source as 'dna-011', alert.severity, alert.title, alert.message);
     }
 
     // Determine response status based on severity

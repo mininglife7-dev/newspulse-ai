@@ -19,7 +19,9 @@ export type AlertSource =
   | 'production-health' // DNA-GOV-002
   | 'deployment' // DNA-GOV-003
   | 'error-rate' // DNA-GOV-004
-  | 'security'; // DNA-GOV-008
+  | 'security' // DNA-GOV-008
+  | 'dna-011' // DNA-GOV-011: Cost Anomaly Detection
+  | 'dna-014'; // DNA-GOV-014: Incident Commander
 
 export interface Alert {
   id: string; // UUID for deduplication
