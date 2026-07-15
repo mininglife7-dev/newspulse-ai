@@ -3,11 +3,12 @@
 Welcome to the NewsPulse AI documentation. This index helps you find the right guide for any task.
 
 **Quick Links:**
-- 🚀 Ready to launch? → [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures)
+- 🚀 Ready to deploy Supabase? → [`PRE_DEPLOYMENT_READINESS.md`](#pre-deployment-readiness)
+- 📋 Quick reference card? → [`DEPLOYMENT_DAY_QUICK_REFERENCE.md`](#deployment-day-quick-reference)
 - 🔒 Supabase just deployed? → [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps)
 - ✅ Pre-launch verification? → [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification)
+- 🚀 Ready to launch customers? → [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures)
 - 📊 First week tracking? → [`FIRST_WEEK_TRACKING.md`](#first-week-tracking)
-- 📋 Security audit? → [`SECURITY_AUDIT_CHECKLIST.md`](#security-audit-checklist)
 - 🆘 Something broken? → [`TROUBLESHOOTING_GUIDE.md`](#troubleshooting-guide)
 
 ---
@@ -18,11 +19,13 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 
 **Start here for launch:**
 1. [`LAUNCH_READINESS_SUMMARY.md`](#launch-readiness-summary) — Executive summary of production readiness
-2. [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps) — What to do immediately after Supabase deployment
-3. [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification) — Verify Supabase deployment succeeded
-4. [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures) — Hour-by-hour checklist for Day 1
-5. [`FIRST_WEEK_TRACKING.md`](#first-week-tracking) — Daily metrics tracking for first week
-6. [`POST_LAUNCH_MONITORING.md`](#post-launch-monitoring) — Ongoing operations post-launch
+2. [`FOUNDER_ACTION_BOARD.md`](#founder-action-board) — Your 6-step action checklist (start here!)
+3. [`PRE_DEPLOYMENT_READINESS.md`](#pre-deployment-readiness) — Verify you're ready before deploying Supabase
+4. [`DEPLOYMENT_DAY_QUICK_REFERENCE.md`](#deployment-day-quick-reference) — Print this and keep it handy
+5. [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps) — What to do immediately after Supabase deployment
+6. [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification) — Verify Supabase deployment succeeded
+7. [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures) — Hour-by-hour checklist for Day 1
+8. [`FIRST_WEEK_TRACKING.md`](#first-week-tracking) — Daily metrics tracking for first week
 
 **For ongoing operations:**
 - [`OPERATIONS_RUNBOOK.md`](#operations-runbook) — Daily operations checklist
@@ -129,6 +132,24 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 - Production health check validation
 - End-to-end signup flow test
 - **When:** After Supabase deployment, before enabling customer signup (20 minutes)
+
+**[PRE_DEPLOYMENT_READINESS.md](./PRE_DEPLOYMENT_READINESS.md)** (318 lines)
+- 10-item pre-deployment verification checklist
+- Supabase project access verification
+- Environment variable preparation
+- Local code and deployment verification
+- Troubleshooting guide for common blockers
+- **When:** Before you deploy Supabase schema (10-15 minutes)
+
+**[DEPLOYMENT_DAY_QUICK_REFERENCE.md](./DEPLOYMENT_DAY_QUICK_REFERENCE.md)** (280 lines)
+- One-page quick reference card for deployment day
+- Pre-deployment checklist (T-30min)
+- Schema deployment steps (T+0)
+- Email auth enablement (T+5)
+- Environment variable setup (T+7)
+- Pre-flight verification wait (T+15)
+- Critical contacts and escalation procedures
+- **When:** Print and keep next to you during deployment (reference only)
 
 ### Operations & Monitoring
 
