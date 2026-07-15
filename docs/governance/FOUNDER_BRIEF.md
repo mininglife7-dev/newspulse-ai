@@ -57,8 +57,18 @@ All engineering work for production launch is now complete and deployed to main 
 
 **Blocking Items (Founder Actions Required):**
 
-1. **Deploy Supabase Schema** (15-30 min) — Follow FOUNDER_IMMEDIATE_ACTIONS.md
+1. **Deploy Supabase Schema — now one click (~7 min total, was 15-30 min).**
+   Since #118 the "Deploy Supabase Schema" workflow works end-to-end and
+   provisions the complete database (base + CEIS schema) in a single manual
+   dispatch:
+   - Set repo secret `SUPABASE_DB_PASSWORD` plus variable or secret
+     `SUPABASE_PROJECT_ID` (or `NEXT_PUBLIC_SUPABASE_URL`)
+     — GitHub → Settings → Secrets and variables → Actions.
+   - Run **Actions → Deploy Supabase Schema → Run workflow**.
 2. **Increase GitHub Actions Spending Limit to $50+/month** (5 min) — GitHub Settings → Billing → Actions
+3. **Optional, pairs with #1: enable weekly encrypted DB backups** (#122, ~5 min) —
+   set secrets `SUPABASE_DB_URL` + `BACKUP_PASSPHRASE`; see
+   `docs/infra/BACKUP_RESTORE_RUNBOOK.md`. Inert until enabled.
 
 **After Founder Actions Complete:**
 
