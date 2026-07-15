@@ -8,39 +8,45 @@
  * Never rate-limited (exempt endpoint, like /api/health)
  */
 
-import { scanDependencies, formatDependencySecurityAlert, isCriticalSecurityIssue } from '@/lib/dependency-security-scanner'
+import { scanDependencies, formatSecurityAlert, getSecuritySummary } from '@/lib/dependency-security-scanner'
 
 export const maxDuration = 60
 
 export async function GET() {
   try {
-    const report = scanDependencies()
-    const formatted = formatDependencySecurityAlert(report)
-    const isCritical = isCriticalSecurityIssue(report)
+    const report = await scanDependencies()
+    const alert = formatSecurityAlert(report)
+    const summary = getSecuritySummary(report)
+    const isCritical = report.critical > 0
 
     // Log alert to console for Founder visibility
-    if (isCritical || !report.ok) {
-      console.error('[dependency-security] Vulnerabilities detected:\n' + formatted)
+    if (isCritical || report.scanStatus !== 'clean') {
+      console.error('[dependency-security] Vulnerabilities detected:\n' + summary)
     } else {
       console.log('[dependency-security] ✅ All clear')
     }
 
     return Response.json(
       {
-        ok: report.ok,
+        ok: report.scanStatus === 'clean',
         timestamp: report.timestamp,
         isCritical,
-        vulnerabilityCount: report.vulnerabilityCount,
+        vulnerabilityCount: {
+          critical: report.critical,
+          high: report.high,
+          moderate: report.moderate,
+          low: report.low,
+          total: report.total,
+        },
         vulnerabilities: report.vulnerabilities,
-        alerts: report.alerts,
-        recommendation: report.recommendation,
-        formatted,
+        alert,
+        summary,
       },
       {
-        status: report.ok ? 200 : isCritical ? 500 : 200,
+        status: isCritical ? 500 : 200,
         headers: {
           'cache-control': 'no-store',
-          'x-scan-severity': isCritical ? 'critical' : report.ok ? 'healthy' : 'warning',
+          'x-scan-severity': isCritical ? 'critical' : 'healthy',
         },
       }
     )

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { validateAllMigrations, generatePRReport, isSafeForDeploy } from '@/lib/schema-migration-validator';
+import fs from 'fs';
+import path from 'path';
+import { analyzeMigration, formatBatchReport } from '@/lib/schema-migration-validator';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,19 +33,37 @@ export async function GET(req: Request) {
   try {
     const migrationsDir = './supabase/migrations';
 
-    // Validate all migrations
-    const reports = validateAllMigrations(migrationsDir);
+    // Scan migrations directory
+    let migrationFiles: Array<{ name: string; sql: string; timestamp?: string }> = [];
+    if (fs.existsSync(migrationsDir)) {
+      const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql'));
+      migrationFiles = files.map((file) => ({
+        name: file,
+        sql: fs.readFileSync(path.join(migrationsDir, file), 'utf-8'),
+        timestamp: file.split('_').slice(0, 2).join('_'),
+      }));
+    }
+
+    // Analyze all migrations
+    const reports = migrationFiles.map((m) => analyzeMigration(m.sql, m.name, m.timestamp));
 
     // Determine if safe for deployment
-    const allSafe = reports.every((r) => isSafeForDeploy(r, false)); // strictMode=false allows warnings
-    const anyDangerous = reports.some((r) => r.riskLevel === 'dangerous');
+    const anyBreaking = reports.some((r) => r.riskLevel === 'breaking');
+    const anyHighRisk = reports.some((r) => r.riskLevel === 'high-risk');
 
-    // Generate markdown report
-    const markdown = generatePRReport(reports);
+    // Generate batch report
+    const batchReport = {
+      files: reports,
+      overallRisk: anyBreaking ? 'breaking' : anyHighRisk ? 'high-risk' : 'safe',
+      blocksCI: anyBreaking,
+      timestamp: new Date().toISOString(),
+    };
+
+    const markdown = formatBatchReport(batchReport);
 
     // Determine response status
-    const status = anyDangerous ? 400 : 200;
-    const ok = !anyDangerous;
+    const status = anyBreaking ? 400 : 200;
+    const ok = !anyBreaking;
 
     console.log(`[schema-validator] Scanned ${reports.length} migration(s): ${ok ? 'SAFE' : 'BLOCKED'}`);
 
@@ -51,11 +71,11 @@ export async function GET(req: Request) {
       {
         ok,
         timestamp: new Date().toISOString(),
-        summary: `${reports.length} migration(s) scanned: ${reports.filter((r) => r.riskLevel === 'safe').length} safe, ${reports.filter((r) => r.riskLevel === 'warning').length} warning, ${reports.filter((r) => r.riskLevel === 'dangerous').length} dangerous`,
+        summary: `${reports.length} migration(s) scanned: ${reports.filter((r) => r.riskLevel === 'safe').length} safe, ${reports.filter((r) => r.riskLevel === 'low-risk').length} low-risk, ${reports.filter((r) => r.riskLevel === 'high-risk').length} high-risk, ${reports.filter((r) => r.riskLevel === 'breaking').length} breaking`,
         migrations: reports.map((r) => ({
-          filename: r.filename,
+          name: r.name,
           riskLevel: r.riskLevel,
-          valid: r.valid,
+          canAutoMerge: r.canAutoMerge,
           summary: r.summary,
           issueCount: r.issues.length,
         })),
