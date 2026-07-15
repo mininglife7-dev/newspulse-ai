@@ -263,3 +263,148 @@ export const AUTONOMY_LEVEL_OPTIONS = [
     description: 'System provides information only; human makes final decision',
   },
 ];
+
+export function getRiskLevelLabel(riskLevel: RiskLevel): string {
+  const labels: Record<RiskLevel, string> = {
+    unacceptable: 'Prohibited',
+    high: 'High Risk',
+    medium: 'Medium Risk',
+    low: 'Low Risk',
+  };
+  return labels[riskLevel] || 'Unknown';
+}
+
+export function getRiskLevelColor(riskLevel: RiskLevel): string {
+  const colors: Record<RiskLevel, string> = {
+    unacceptable: '#dc2626',
+    high: '#f97316',
+    medium: '#eab308',
+    low: '#22c55e',
+  };
+  return colors[riskLevel] || '#6b7280';
+}
+
+export interface AssessmentQuestion {
+  id: string;
+  category: string;
+  question: string;
+  description: string;
+  risk_indicator: RiskLevel;
+}
+
+export function getAssessmentQuestions(): AssessmentQuestion[] {
+  return [
+    {
+      id: 'q1-prohibited-biometric',
+      category: 'Fundamental Rights',
+      question: 'Does your system perform real-time remote biometric identification?',
+      description: 'Real-time identification in public spaces',
+      risk_indicator: 'unacceptable',
+    },
+    {
+      id: 'q2-emotion-recognition',
+      category: 'Fundamental Rights',
+      question: 'Does your system recognize or infer emotions or intentions?',
+      description: 'Emotion or psychological analysis',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q3-social-scoring',
+      category: 'Fundamental Rights',
+      question: 'Does your system create social credit scores or rankings?',
+      description: 'Systematic social or behavioral scoring',
+      risk_indicator: 'unacceptable',
+    },
+    {
+      id: 'q4-credit-decision',
+      category: 'High-Risk Use Cases',
+      question: 'Is the system used for credit or financial decisions?',
+      description: 'Loan approval, insurance pricing, or financial eligibility',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q5-recruitment',
+      category: 'High-Risk Use Cases',
+      question: 'Is the system used for employment decisions?',
+      description: 'Hiring, promotion, or termination decisions',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q6-education',
+      category: 'High-Risk Use Cases',
+      question: 'Is the system used for education or training assessment?',
+      description: 'Student grading, educational assessment, or school admission',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q7-law-enforcement',
+      category: 'High-Risk Use Cases',
+      question: 'Is the system used by law enforcement or criminal justice?',
+      description: 'Policing, crime prediction, or court decisions',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q8-sensitive-data',
+      category: 'Data Sensitivity',
+      question: 'Does your system process special category (sensitive) data?',
+      description: 'Race, ethnicity, political views, religious beliefs, health, sex life, etc.',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q9-autonomy-high',
+      category: 'System Autonomy',
+      question: 'Does the system make decisions with minimal human involvement?',
+      description: 'Fully autonomous decision-making without human review',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q10-rights-impact',
+      category: 'Impact Scope',
+      question: 'Can the system significantly affect fundamental rights?',
+      description: 'Impact on privacy, freedoms, or legal status',
+      risk_indicator: 'high',
+    },
+    {
+      id: 'q11-personal-data',
+      category: 'Data Sensitivity',
+      question: 'Does your system process personal data?',
+      description: 'Any identifiable personal information',
+      risk_indicator: 'medium',
+    },
+    {
+      id: 'q12-public-facing',
+      category: 'Deployment Context',
+      question: 'Is the system deployed in public-facing context?',
+      description: 'Directly accessible to citizens or affected individuals',
+      risk_indicator: 'medium',
+    },
+    {
+      id: 'q13-llm-generative',
+      category: 'System Type',
+      question: 'Is the system a Large Language Model or Generative AI?',
+      description: 'ChatGPT-like, code generation, image generation, etc.',
+      risk_indicator: 'medium',
+    },
+    {
+      id: 'q14-recommendations',
+      category: 'System Type',
+      question: 'Does your system provide personalized recommendations?',
+      description: 'Content, product, or service recommendations to individuals',
+      risk_indicator: 'low',
+    },
+    {
+      id: 'q15-transparency',
+      category: 'Mitigating Factors',
+      question: 'Does your system provide transparency to affected individuals?',
+      description: 'Users are informed they interact with AI and can understand decisions',
+      risk_indicator: 'low',
+    },
+    {
+      id: 'q16-oversight',
+      category: 'Mitigating Factors',
+      question: 'Is there human review or override capability?',
+      description: 'Human decision-makers can review and override system decisions',
+      risk_indicator: 'low',
+    },
+  ];
+}

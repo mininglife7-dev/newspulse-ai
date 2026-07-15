@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
-import { classifyRisk, getAssessmentQuestions } from '@/lib/risk-assessment';
+import { assessRisk, getAssessmentQuestions } from '@/lib/risk-assessment';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,8 +144,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Classify risk based on answers
-  const answersMap = new Map(Object.entries(body.answers));
-  const result = classifyRisk(answersMap);
+  // Convert answers to RiskAssessmentInput format
+  const riskInput = {
+    systemType: body.answers.systemType || 'other',
+    dataCategories: body.answers.dataCategories || [],
+    useCases: body.answers.useCases || [],
+    autonomyLevel: body.answers.autonomyLevel || 'low',
+    affectsRights: body.answers.affectsRights || false,
+    publicFacing: body.answers.publicFacing || false,
+  };
+  const result = assessRisk(riskInput);
 
   // Check if assessment already exists
   const { data: existing } = await supabase
@@ -221,8 +229,8 @@ export async function POST(request: NextRequest) {
 
       // Generate obligation texts from recommendations and categories
       const obligationTexts: string[] = [];
-      if (result.recommendations && result.recommendations.length > 0) {
-        obligationTexts.push(...result.recommendations);
+      if (result.obligations && result.obligations.length > 0) {
+        obligationTexts.push(...result.obligations);
       }
 
       for (const obligationText of obligationTexts) {
@@ -322,8 +330,15 @@ export async function PUT(request: NextRequest) {
   // Re-classify if answers updated
   let updateData: any = {};
   if (body.answers) {
-    const answersMap = new Map(Object.entries(body.answers));
-    const result = classifyRisk(answersMap);
+    const riskInput = {
+      systemType: body.answers.systemType || 'other',
+      dataCategories: body.answers.dataCategories || [],
+      useCases: body.answers.useCases || [],
+      autonomyLevel: body.answers.autonomyLevel || 'low',
+      affectsRights: body.answers.affectsRights || false,
+      publicFacing: body.answers.publicFacing || false,
+    };
+    const result = assessRisk(riskInput);
     updateData.assessment_data = {
       answers: body.answers,
       classification: result,
