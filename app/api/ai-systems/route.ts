@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { resolveContext, contextError } from '@/lib/api-context';
+import { SYSTEM_TYPES, SYSTEM_STATUSES, SystemType, SystemStatus } from '@/lib/ai-systems';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-import { SYSTEM_TYPES, SYSTEM_STATUSES, SystemType, SystemStatus } from '@/lib/ai-systems';
 
 interface CreateAiSystemBody {
   name: string;
@@ -15,54 +15,12 @@ interface CreateAiSystemBody {
   status?: SystemStatus;
 }
 
-/**
- * Resolve the caller's active workspace (and company) or explain why not.
- * All queries run as the signed-in user, so RLS applies.
- */
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
-
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
-    return {
-      status: 409 as const,
-      error: 'No workspace yet — complete company setup first',
-    };
-  }
-
-  const { data: company } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('workspace_id', membership.workspace_id)
-    .limit(1)
-    .maybeSingle();
-
-  return {
-    status: 200 as const,
-    workspaceId: membership.workspace_id as string,
-    companyId: (company?.id as string) ?? null,
-  };
-}
-
 /** GET /api/ai-systems — list the caller's workspace AI-system inventory. */
 export async function GET() {
   const supabase = createRouteClient();
-  const ctx = await resolveContext(supabase);
+  const ctx = await resolveContext(supabase, { includeCompany: false });
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   const { data, error } = await supabase
@@ -115,12 +73,9 @@ export async function POST(req: Request) {
   }
 
   const supabase = createRouteClient();
-  const ctx = await resolveContext(supabase);
+  const ctx = await resolveContext(supabase, { includeCompany: true });
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
   if (!ctx.companyId) {
     return NextResponse.json(

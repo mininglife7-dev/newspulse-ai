@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { resolveContext, contextError } from '@/lib/api-context';
 import { calculateRiskScore, AssessmentResponse } from '@/lib/risk-assessment';
 
 export const runtime = 'nodejs';
@@ -15,63 +16,6 @@ interface UpdateAssessmentBody {
   status?: 'draft' | 'in_review' | 'finalized';
 }
 
-/**
- * Resolve the caller's workspace and verify access to AI system.
- */
-async function resolveContext(
-  supabase: ReturnType<typeof createRouteClient>,
-  ai_system_id?: string
-) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
-
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
-    return {
-      status: 409 as const,
-      error: 'No workspace — complete company setup first',
-    };
-  }
-
-  // If AI system specified, verify user has access
-  if (ai_system_id) {
-    const { data: system } = await supabase
-      .from('ai_systems')
-      .select('workspace_id, company_id')
-      .eq('id', ai_system_id)
-      .eq('workspace_id', membership.workspace_id)
-      .maybeSingle();
-
-    if (!system) {
-      return {
-        status: 404 as const,
-        error: 'AI system not found',
-      };
-    }
-
-    return {
-      status: 200 as const,
-      workspaceId: membership.workspace_id as string,
-      aiSystemId: ai_system_id,
-      companyId: system.company_id as string,
-    };
-  }
-
-  return {
-    status: 200 as const,
-    workspaceId: membership.workspace_id as string,
-  };
-}
-
 /** GET /api/risk-assessments?ai_system_id=X or ?assessment_id=Y — get or list assessments */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -79,12 +23,9 @@ export async function GET(req: Request) {
   const assessmentId = searchParams.get('assessment_id');
 
   const supabase = createRouteClient();
-  const ctx = await resolveContext(supabase, aiSystemId ?? undefined);
+  const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   if (assessmentId) {
@@ -170,11 +111,23 @@ export async function POST(req: Request) {
   }
 
   const supabase = createRouteClient();
-  const ctx = await resolveContext(supabase, body.ai_system_id);
+  const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
+    return contextError(ctx);
+  }
+
+  // Verify access to AI system and get company_id
+  const { data: system, error: systemError } = await supabase
+    .from('ai_systems')
+    .select('workspace_id, company_id')
+    .eq('id', body.ai_system_id)
+    .eq('workspace_id', ctx.workspaceId)
+    .maybeSingle();
+
+  if (systemError || !system) {
     return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
+      { ok: false, error: 'AI system not found' },
+      { status: 404 }
     );
   }
 
@@ -184,7 +137,7 @@ export async function POST(req: Request) {
     .from('risk_assessments')
     .insert({
       workspace_id: ctx.workspaceId,
-      company_id: ctx.companyId,
+      company_id: system.company_id,
       ai_system_id: body.ai_system_id,
       risk_score: score,
       risk_level: level,
@@ -230,10 +183,7 @@ export async function PATCH(req: Request) {
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   // Verify user has access to this assessment

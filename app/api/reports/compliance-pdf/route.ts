@@ -1,37 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { resolveContext, contextError } from '@/lib/api-context';
 import { generateComplianceReport } from '@/lib/pdf-report';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
-
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('workspace_id, workspaces(name)')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
-    return {
-      status: 409 as const,
-      error: 'No workspace — complete company setup first',
-    };
-  }
-
-  return {
-    status: 200 as const,
-    workspaceId: (membership as any).workspace_id as string,
-    workspaceName: ((membership as any).workspaces?.name as string) || 'Unknown',
-  };
-}
 
 /**
  * GET /api/reports/compliance-pdf
@@ -41,13 +14,19 @@ export async function GET(req: Request) {
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   try {
+    // Fetch workspace name
+    const { data: workspace } = await supabase
+      .from('workspaces')
+      .select('name')
+      .eq('id', ctx.workspaceId)
+      .maybeSingle();
+
+    const workspaceName = workspace?.name || 'Unknown';
+
     // Fetch AI systems
     const { data: systems } = await supabase
       .from('ai_systems')
@@ -72,7 +51,7 @@ export async function GET(req: Request) {
 
     // Build report data
     const reportData = {
-      workspaceName: ctx.workspaceName,
+      workspaceName,
       generatedDate: new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -132,7 +111,7 @@ export async function GET(req: Request) {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="compliance-report-${ctx.workspaceName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf"`,
+        'Content-Disposition': `attachment; filename="compliance-report-${workspaceName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf"`,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     });

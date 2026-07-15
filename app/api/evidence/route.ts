@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { resolveContext, contextError } from '@/lib/api-context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,34 +14,6 @@ interface EvidenceItem {
   uploaded_by_name: string;
   uploaded_at: string;
   notes?: string;
-}
-
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
-
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
-    return {
-      status: 409 as const,
-      error: 'No workspace — complete company setup first',
-    };
-  }
-
-  return {
-    status: 200 as const,
-    workspaceId: membership.workspace_id as string,
-    userId: user.id,
-  };
 }
 
 /**
@@ -61,10 +34,7 @@ export async function GET(req: Request) {
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   try {
@@ -120,13 +90,20 @@ export async function POST(req: Request) {
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const formData = await req.formData();
     const obligationId = formData.get('obligation_id') as string;
     const file = formData.get('file') as File;
@@ -218,7 +195,7 @@ export async function POST(req: Request) {
           file_size: file.size,
           file_type: file.type,
           storage_path: storagePath,
-          uploaded_by: ctx.userId,
+          uploaded_by: user.id,
           notes: notes,
         },
       ])
@@ -266,13 +243,20 @@ export async function DELETE(req: Request) {
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     // Verify ownership and get storage path
     const { data: evidence } = await supabase
       .from('obligation_evidence')
@@ -288,7 +272,7 @@ export async function DELETE(req: Request) {
       );
     }
 
-    if (evidence.uploaded_by !== ctx.userId) {
+    if (evidence.uploaded_by !== user.id) {
       return NextResponse.json(
         { ok: false, error: 'You can only delete evidence you uploaded' },
         { status: 403 }

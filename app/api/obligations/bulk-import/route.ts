@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { resolveContext, contextError } from '@/lib/api-context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,33 +55,6 @@ function parseCSV(csvContent: string): BulkUpdateRow[] {
   return rows;
 }
 
-async function resolveContext(supabase: ReturnType<typeof createRouteClient>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
-
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
-    return {
-      status: 409 as const,
-      error: 'No workspace — complete company setup first',
-    };
-  }
-
-  return {
-    status: 200 as const,
-    workspaceId: membership.workspace_id as string,
-  };
-}
-
 /**
  * POST /api/obligations/bulk-import — bulk update obligations from CSV
  * CSV format: obligation_id, status, priority, notes
@@ -89,10 +63,7 @@ export async function POST(req: Request) {
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
+    return contextError(ctx);
   }
 
   try {
