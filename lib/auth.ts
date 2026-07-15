@@ -33,6 +33,27 @@ export async function signUp(
   return data;
 }
 
+/**
+ * Resend the signup confirmation email. Used by the "resend verification link"
+ * action when the first email never arrived. Mirrors signUp's redirect so the
+ * new link lands on the same /auth/confirm handler.
+ */
+export async function resendVerification(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    ...(typeof window !== 'undefined'
+      ? {
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          },
+        }
+      : {}),
+  });
+
+  if (error) throw error;
+}
+
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -64,8 +85,17 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 }
 
 export async function resetPassword(email: string) {
+  // Route the recovery link through /auth/confirm — the same handler signup
+  // uses — so the code is exchanged for a session server-side, then forwarded
+  // to the set-new-password page. Using window.location.origin keeps this
+  // correct across preview/prod deploys without relying on NEXT_PUBLIC_SITE_URL.
+  const redirectTo =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/auth/confirm?next=/auth/reset-password`
+      : undefined;
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+    ...(redirectTo ? { redirectTo } : {}),
   });
 
   if (error) throw error;

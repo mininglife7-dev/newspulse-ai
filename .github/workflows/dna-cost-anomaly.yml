@@ -31,7 +31,8 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           node -e "
-            const fetch = require('node-fetch');
+            // Node 20 has a global fetch; node-fetch was never a dependency,
+            // so requiring it threw MODULE_NOT_FOUND and failed this job every run.
             const baseUrl = 'https://newspulse-ai-git-main.vercel.app';
 
             (async () => {

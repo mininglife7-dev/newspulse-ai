@@ -6,6 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege by default; the alert job below elevates only what it needs.
+permissions:
+  contents: read
+
+# Cancel superseded runs for the same pull request to save Actions minutes.
+# Scoped so pushes to main are NEVER cancelled — every main commit is verified
+# to completion (an unverified commit must not be treated as healthy).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     name: Lint & Build
@@ -66,8 +77,87 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Cache the browser binaries (~100 MB) so E2E doesn't re-download them
+      # every run — the single biggest Actions-minute cost in this workflow.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E smoke suite
         run: npm run test:e2e
+
+  # ── Governance safeguards ───────────────────────────────────────────────────
+  # Repo-level only. Preventing direct pushes / requiring these checks to pass
+  # before merge is branch-protection (a GitHub setting the Founder controls).
+
+  detect-direct-push:
+    name: Flag direct pushes to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Warn when main advances outside a PR merge
+        run: |
+          parents=$(git rev-list --parents -n1 HEAD | wc -w)
+          committer=$(git show -s --format='%cn' HEAD)
+          short=$(git rev-parse --short HEAD)
+          if [ "$parents" -lt 3 ] && [ "$committer" != "GitHub" ]; then
+            echo "::warning title=Direct push to main::$short landed on main outside a PR merge (single parent, committer '$committer'). Direct pushes bypass the pull_request merge-check that verifies the merged result — prefer merging via PR so CI runs first."
+          else
+            echo "$short looks like a PR merge (committer=$committer, parents=$parents)."
+          fi
+
+  main-health-alert:
+    name: Alert on broken main
+    needs: [build, e2e]
+    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Open or update a high-priority "main is broken" issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `🔴 CI failed on \`main\` at \`${context.sha}\`.`,
+              ``,
+              `- Failed run: ${runUrl}`,
+              `- Pushed by: @${context.actor}`,
+              ``,
+              `main is red: every open PR will now fail its merge check until this is fixed.`,
+            ].join('\n');
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'main-broken',
+            });
+            if (open.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: open[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🔴 main branch CI is failing',
+                body,
+                labels: ['main-broken'],
+              });
+            }

@@ -2,8 +2,10 @@ name: DNA-GOV-003 - Deployment Verification Monitor
 
 on:
   schedule:
-    # Every 10 minutes
-    - cron: '*/10 * * * *'
+    # Every 12 hours. Was */10 (144 runs/day), part of the DNA-monitor cron load
+    # that exhausted the repo's GitHub Actions minutes and took CI down. Run
+    # on-demand any time via workflow_dispatch.
+    - cron: '0 */12 * * *'
   workflow_dispatch:
 
 jobs:

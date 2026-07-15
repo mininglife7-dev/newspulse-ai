@@ -120,7 +120,7 @@ export default function SignInPage() {
 
           <div className="flex justify-end">
             <Link
-              href="#"
+              href="/auth/reset"
               className="text-sm text-blue-400 hover:text-blue-300"
             >
               Forgot password?

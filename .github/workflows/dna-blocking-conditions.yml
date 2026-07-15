@@ -2,8 +2,10 @@ name: DNA-GOV-001 - Blocking Conditions Monitor
 
 on:
   schedule:
-    # Every 30 minutes
-    - cron: '*/30 * * * *'
+    # Every 12 hours. Was */30 (48 runs/day), part of the DNA-monitor cron load
+    # that exhausted the repo's GitHub Actions minutes and took CI down. Run
+    # on-demand any time via workflow_dispatch.
+    - cron: '0 */12 * * *'
   workflow_dispatch:
 
 jobs:

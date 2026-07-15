@@ -86,9 +86,18 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
 
       expect(report).toBeDefined();
       if (report!.overallHealth === 'critical') {
-        expect(['ROLLBACK', 'ESCALATE']).toContain(report!.decision);
-        expect(report!.canRollback).toBe(true);
-        expect(report!.recommendedAction).toMatch(/Rollback|Escalate/);
+        // >=3 hard failures cap the pass rate at 70%, so the decision is
+        // HOLD, ROLLBACK, or ESCALATE — never PASS/RETRY. Exactly 3 failures
+        // lands on HOLD (70%), which the old ROLLBACK/ESCALATE-only set and
+        // the unconditional canRollback assertion both got wrong.
+        expect(['HOLD', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        // canRollback is only set for ROLLBACK/RETRY (determineRollbackDecision).
+        if (report!.decision === 'ROLLBACK') {
+          expect(report!.canRollback).toBe(true);
+        }
+        expect(report!.recommendedAction).toMatch(
+          /Rollback|Escalate|Investigate/
+        );
       }
     });
 
@@ -313,7 +322,10 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       );
       if (dbCheck && dbCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
-        // With a single failure, decision is RETRY; with multiple, it's HOLD/ROLLBACK
+        // With a single failure among many checks the pass rate stays >=80%, so
+        // the decision is RETRY; only multiple failures drop it to HOLD/ROLLBACK/
+        // ESCALATE. Omitting RETRY here made this test flaky (matches the
+        // api-availability case above).
         expect(['RETRY', 'HOLD', 'ROLLBACK', 'ESCALATE']).toContain(
           report!.decision
         );
