@@ -66,7 +66,9 @@ export function parseMigrationSQL(content: string): SchemaChange[] {
   }
 
   // Pattern: ALTER TABLE ... ADD COLUMN (without NOT NULL constraint)
-  const addColumnSafeRegex = /alter\s+table\s+(?:public\.)?(\w+)\s+add\s+(?:column\s+)?(\w+)\s+(.+?)(?:[,;]|$)/gi;
+  // Captures full definition including types with commas (e.g., NUMERIC(10,2) NOT NULL)
+  // Uses lookahead to stop at semicolon/end, not intermediate commas
+  const addColumnSafeRegex = /alter\s+table\s+(?:public\.)?(\w+)\s+add\s+(?:column\s+)?(\w+)\s+(.+?)(?=;|$)/gi;
   for (const match of normalized.matchAll(addColumnSafeRegex)) {
     // Check if column has NOT NULL without default
     const columnDef = match[0];

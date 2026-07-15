@@ -56,10 +56,24 @@ export function scanDependencies(): DependencySecurityReport {
   }
 
   try {
-    const auditOutput = execSync('npm audit --omit=dev --json', {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
+    let auditOutput: string
+
+    try {
+      // npm audit exits 0 only if no vulnerabilities; exits non-zero if vulnerabilities found
+      // But it still writes JSON to stdout in both cases
+      auditOutput = execSync('npm audit --omit=dev --json', {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+    } catch (execError) {
+      // When vulnerabilities exist, execSync throws but stdout contains the audit JSON
+      if (execError instanceof Error && 'stdout' in execError && typeof (execError as any).stdout === 'string') {
+        auditOutput = (execError as any).stdout
+      } else {
+        // Real error (network, etc), not just exit code
+        throw execError
+      }
+    }
 
     const auditData = JSON.parse(auditOutput)
 
