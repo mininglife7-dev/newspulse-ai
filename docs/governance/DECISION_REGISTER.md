@@ -7,6 +7,34 @@ are never requested from the Founder.
 
 ---
 
+## DR-0018 — DNA-300 (CEIS) merged, erased by a force-push, restored; sentinel armed
+
+- **Decision:** Under DNA-GOV-216 and the Founder's standing "continue
+  autonomously" directive: (a) squash-merged PR #5 landing DNA-300, the
+  Cathedral Evolution Intelligence System, after every gate was green;
+  (b) when a subsequent force-push of `main` rewrote history and erased the
+  merged commit, restored the exact tree non-destructively via PR #70 (no
+  counter-force-push) and merged it green; (c) armed a session-side sentinel
+  that watches `main` for repeat erasure until branch protection exists.
+- **Reason:** DNA-300 is a Founder-commissioned permanent organ; merged work
+  vanishing from the default branch is data loss on `main`. Restoring via a
+  normal PR preserved the other line's commits while recovering ours.
+- **Alternatives considered:** Counter-force-push (rejected: destructive to
+  parallel work); waiting for the erasing session to self-correct (rejected:
+  no evidence it noticed); abandoning the mission (rejected: contradicts the
+  commissioning instruction).
+- **Evidence:** PR #5: 589 tests, lint, tsc, Next 16 build, smoke 10/10, E2E.
+  PR #70 restore: 594 tests and the same gates green; `lib/ceis` verified
+  present on `main` afterward, and it survived the #104 reconciliation merge.
+- **Confidence:** High (all verification on the exact merged trees).
+- **Expected impact:** The Cathedral gains its evolution organ: weekly
+  observe→learn→validate→propose cycles behind nine quality gates, activating
+  once the Founder runs `supabase/ceis-schema.sql` and sets `CEIS_CRON_SECRET`.
+- **Risk assessment:** Medium residual — `main` still accepts force-pushes;
+  branch protection (Founder-only toggle) is the standing recommendation.
+  The sentinel is session-bound and expires; it is a stopgap, not the fix.
+- **Timestamp:** 2026-07-15
+
 ## DR-0017 — Migrate to Next 16 + React 19 + eslint 9 (with an honest correction)
 
 - **Decision:** Upgrade next 15.5.20 → 16.2.10, react/react-dom 18 → 19.2.4,
