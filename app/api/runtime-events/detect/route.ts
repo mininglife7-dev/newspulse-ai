@@ -56,21 +56,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get workspace context
-    const { data: workspaceData, error: workspaceError } = await supabase
-      .from('workspaces')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single();
+    // Get workspace context (consistent with other endpoints)
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle();
 
-    if (workspaceError || !workspaceData) {
+    if (!membership) {
       return NextResponse.json(
-        { error: 'Workspace not found' },
-        { status: 404 }
+        { error: 'No active workspace — complete company setup first' },
+        { status: 409 }
       );
     }
 
-    const workspaceId = workspaceData.id;
+    const workspaceId = membership.workspace_id as string;
 
     // Parse request body
     let body: DetectThreatsRequest;
