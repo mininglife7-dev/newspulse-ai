@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { resolveContext, contextError } from '@/lib/api-context';
+import { apiLimiter } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,6 +78,12 @@ export async function GET(req: Request) {
 
 /** POST /api/obligations — create obligations from assessment results */
 export async function POST(req: Request) {
+  // Rate limit API operations (60 per minute per IP)
+  const rateLimitResponse = await apiLimiter(req as NextRequest);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   let body: CreateObligationBody;
   try {
     body = await req.json();

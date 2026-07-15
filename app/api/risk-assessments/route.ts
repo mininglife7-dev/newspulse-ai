@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { resolveContext, contextError } from '@/lib/api-context';
 import { calculateRiskScore, AssessmentResponse } from '@/lib/risk-assessment';
+import { apiLimiter } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -108,6 +109,12 @@ export async function GET(req: Request) {
 
 /** POST /api/risk-assessments — create a new assessment */
 export async function POST(req: Request) {
+  // Rate limit API operations (60 per minute per IP)
+  const rateLimitResponse = await apiLimiter(req as NextRequest);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   let body: CreateAssessmentBody;
   try {
     body = await req.json();
@@ -182,6 +189,12 @@ export async function POST(req: Request) {
 
 /** PATCH /api/risk-assessments/:id — update assessment responses */
 export async function PATCH(req: Request) {
+  // Rate limit API operations (60 per minute per IP)
+  const rateLimitResponse = await apiLimiter(req as NextRequest);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const url = new URL(req.url);
   const assessmentId = url.pathname.split('/').pop();
 

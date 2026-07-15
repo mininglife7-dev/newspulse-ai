@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { resolveContext, contextError } from '@/lib/api-context';
+import { uploadLimiter } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,6 +88,12 @@ export async function GET(req: Request) {
  * Expects FormData with: obligation_id, file, notes (optional)
  */
 export async function POST(req: Request) {
+  // Rate limit file uploads (10 per hour per IP)
+  const rateLimitResponse = await uploadLimiter(req as NextRequest);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const supabase = createRouteClient();
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
@@ -220,6 +227,12 @@ export async function POST(req: Request) {
  * Delete an evidence record (uploader only)
  */
 export async function DELETE(req: Request) {
+  // Rate limit operations (60 per minute per IP)
+  const rateLimitResponse = await uploadLimiter(req as NextRequest);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const { searchParams } = new URL(req.url);
   const evidenceId = searchParams.get('evidence_id');
 
