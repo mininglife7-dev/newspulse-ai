@@ -559,6 +559,10 @@ create policy "Members can update workspace risk_assessments"
     );
 
 -- Assessment obligations: active workspace members can read/create
+-- (drop-first like every other policy in this file — keeps re-runs idempotent)
+drop policy if exists "Members can read workspace assessment_obligations" on public.assessment_obligations;
+drop policy if exists "Members can insert workspace assessment_obligations" on public.assessment_obligations;
+
 create policy "Members can read workspace assessment_obligations"
     on public.assessment_obligations for select
     using (
