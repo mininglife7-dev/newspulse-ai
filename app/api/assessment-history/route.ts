@@ -85,7 +85,7 @@ export async function GET(req: Request) {
         );
       }
 
-      const comp = (comparisonData as unknown[])?.[0];
+      const comp = (comparisonData as unknown[])?.[0] as Record<string, unknown>;
       if (!comp) {
         return NextResponse.json({
           ok: true,
@@ -95,12 +95,12 @@ export async function GET(req: Request) {
       }
 
       let improvement = null;
-      if ((comp as Record<string, unknown>).previous_score !== null) {
+      if (comp.previous_score !== null) {
         const { data: improvementData, error: impError } = await supabase.rpc(
           'calculate_assessment_improvement',
           {
-            old_score: (comp as Record<string, unknown>).previous_score,
-            new_score: (comp as Record<string, unknown>).current_score,
+            old_score: comp.previous_score,
+            new_score: comp.current_score,
           }
         );
 
@@ -112,15 +112,15 @@ export async function GET(req: Request) {
       return NextResponse.json({
         ok: true,
         comparison: {
-          current_version: comp.current_version,
-          current_score: comp.current_score,
-          current_level: comp.current_level,
-          current_date: comp.current_date,
-          previous_version: comp.previous_version,
-          previous_score: comp.previous_score,
-          previous_level: comp.previous_level,
-          previous_date: comp.previous_date,
-          versions_count: comp.versions_count,
+          current_version: comp.current_version as number,
+          current_score: comp.current_score as number,
+          current_level: comp.current_level as string,
+          current_date: comp.current_date as string,
+          previous_version: comp.previous_version as number | undefined,
+          previous_score: comp.previous_score as number | undefined,
+          previous_level: comp.previous_level as string | undefined,
+          previous_date: comp.previous_date as string | undefined,
+          versions_count: comp.versions_count as number,
           improvement,
         } as AssessmentComparison,
       });
