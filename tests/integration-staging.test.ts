@@ -20,11 +20,10 @@
  * 8. Stress tests (optional: 100+ assessments, 50+ members)
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, skip } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 // Skip entire suite if staging credentials not provided
 const SKIP_SUITE = !process.env.SUPABASE_STAGING_URL || !process.env.SUPABASE_STAGING_ANON_KEY;
-const skipIf = (condition: boolean) => (condition ? skip : describe);
 
 // Test helpers
 interface TestUser {
@@ -156,7 +155,7 @@ class StagingTestClient {
 }
 
 // Staging test suite
-skipIf(SKIP_SUITE)('Staging Validation Suite', () => {
+(SKIP_SUITE ? describe.skip : describe)('Staging Validation Suite', () => {
   let client: StagingTestClient;
   let testUser: TestUser;
   let testWorkspace: TestWorkspace;
