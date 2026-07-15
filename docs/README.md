@@ -8,8 +8,9 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 - 🔒 Supabase just deployed? → [`SUPABASE_DEPLOYMENT_NEXT_STEPS.md`](#supabase-deployment-next-steps)
 - ✅ Pre-launch verification? → [`PRE_FLIGHT_VERIFICATION.md`](#pre-flight-verification)
 - 🚀 Ready to launch customers? → [`LAUNCH_DAY_PROCEDURES.md`](#launch-day-procedures)
+- 🆘 Launch day issue? → [`LAUNCH_DAY_TROUBLESHOOTING.md`](#launch-day-troubleshooting)
 - 📊 First week tracking? → [`FIRST_WEEK_TRACKING.md`](#first-week-tracking)
-- 🆘 Something broken? → [`TROUBLESHOOTING_GUIDE.md`](#troubleshooting-guide)
+- 🆘 Customer issue? → [`TROUBLESHOOTING_GUIDE.md`](#troubleshooting-guide)
 
 ---
 
@@ -150,6 +151,15 @@ Welcome to the NewsPulse AI documentation. This index helps you find the right g
 - Pre-flight verification wait (T+15)
 - Critical contacts and escalation procedures
 - **When:** Print and keep next to you during deployment (reference only)
+
+**[LAUNCH_DAY_TROUBLESHOOTING.md](./LAUNCH_DAY_TROUBLESHOOTING.md)** (650+ lines)
+- Rapid diagnosis and fix procedures for critical launch issues
+- 6 critical issues (schema, email, env vars, pre-flight, signup, data loss)
+- 2 urgent issues (signup failure, data corruption)
+- 1 performance issue (slow signup)
+- Decision tree for "what do I do?"
+- When to escalate immediately
+- **When:** Use during launch if issues arise (reference during T+0 to T+24)
 
 ### Operations & Monitoring
 
