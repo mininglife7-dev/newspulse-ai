@@ -47,9 +47,8 @@ begin
   );
   return new;
 exception when others then
-  -- Log error but don't fail signup (defensive pattern)
-  raise warning 'Error creating profile for user %: %', new.id, sqlerrm;
-  return new;
+  -- Fail hard: prevent signup if profile creation fails to ensure data consistency
+  raise exception 'Failed to create user profile: %', sqlerrm;
 end;
 $$ language plpgsql security definer;
 
