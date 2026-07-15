@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { validators, validate } from '@/lib/input-validation';
+import {
+  validators,
+  validate,
+  stripBlankOptionalFields,
+} from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,17 +49,14 @@ export async function POST(req: Request) {
     );
   }
 
-  // The setup form submits untouched optional inputs as '' (an empty text box).
-  // `optional` only treats undefined/null as absent, so a blank '' would fall
-  // through to the inner check — and website's url() rejects '' — which blocked
-  // workspace creation. Normalize blank optionals to undefined first. (Kept in
-  // the route rather than in `optional` so JSON APIs still reject malformed
-  // blank values for non-string fields like booleans.)
-  if (body && typeof body === 'object') {
-    for (const key of ['legalName', 'employees', 'website', 'description'] as const) {
-      if (body[key] === '') delete body[key];
-    }
-  }
+  // The setup form submits untouched optional inputs as '' (or whitespace);
+  // drop those so `optional(url())` etc. don't reject an otherwise-valid create.
+  stripBlankOptionalFields(body, [
+    'legalName',
+    'employees',
+    'website',
+    'description',
+  ]);
 
   // Validate input using schema
   const validationResult = validate(body, {

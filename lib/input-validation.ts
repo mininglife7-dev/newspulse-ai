@@ -194,6 +194,29 @@ export const validators = {
 };
 
 /**
+ * Drop optional fields that arrived blank (empty or whitespace-only) so
+ * `validators.optional(...)` treats them as absent. HTML form controls submit
+ * untouched text inputs and unselected dropdowns as '' (or stray whitespace),
+ * never as undefined — without this, an optional url()/enum() would run its
+ * check on '' and reject an otherwise-valid submission. Mutates `body` in place.
+ * Kept out of `validators.optional` itself so JSON APIs still reject malformed
+ * blank values on non-string optional fields (e.g. optional(boolean())).
+ */
+export function stripBlankOptionalFields(
+  body: unknown,
+  keys: readonly string[]
+): void {
+  if (!body || typeof body !== 'object') return;
+  const obj = body as Record<string, unknown>;
+  for (const key of keys) {
+    const value = obj[key];
+    if (typeof value === 'string' && value.trim() === '') {
+      delete obj[key];
+    }
+  }
+}
+
+/**
  * Validate input against a schema
  * @param input The input object to validate
  * @param schema Schema validators for each field
