@@ -178,6 +178,14 @@ jobs:
               echo "⚠️  Verification script had errors"
               cat /tmp/verify.log | tail -20
             fi
+            # CEIS (DNA-300) verification — hard-fails on missing tables or RLS
+            if psql -v ON_ERROR_STOP=1 -f supabase/CEIS_POST_DEPLOYMENT_VERIFICATION.sql > /tmp/ceis-verify.log 2>&1; then
+              echo "✅ CEIS verification passed (5 tables, RLS enabled)"
+            else
+              echo "❌ CEIS verification failed"
+              cat /tmp/ceis-verify.log | tail -20
+              deployment_success=0
+            fi
           fi
 
           exit $deployment_success
