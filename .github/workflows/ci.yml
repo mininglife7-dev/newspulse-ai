@@ -10,6 +10,13 @@ on:
 permissions:
   contents: read
 
+# Cancel superseded runs for the same pull request to save Actions minutes.
+# Scoped so pushes to main are NEVER cancelled — every main commit is verified
+# to completion (an unverified commit must not be treated as healthy).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     name: Lint & Build
@@ -69,6 +76,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Cache the browser binaries (~100 MB) so E2E doesn't re-download them
+      # every run — the single biggest Actions-minute cost in this workflow.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
