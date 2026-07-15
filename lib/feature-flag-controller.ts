@@ -1,293 +1,356 @@
 /**
- * DNS-GOV-013: Feature Flag Controller
+ * DNA-GOV-013: Feature Flag Controller
  *
- * Enables A/B testing and gradual feature rollouts without code deployment.
- * Supports boolean, percentage-based, and user-specific flag types.
+ * Autonomously manage feature flags for A/B testing, gradual rollouts,
+ * and safe feature launches. Enable controlled customer access to new features
+ * without code deployment.
+ *
+ * Problem: Without feature flags, new features are all-or-nothing. Once deployed,
+ * they're visible to all customers. A bug in a new feature affects everyone.
+ * We need the ability to: enable for specific users, gradual percentage rollouts,
+ * A/B test variants, and instant kill-switches for bugs.
  */
 
-export type FlagType = 'boolean' | 'percentage' | 'user_list'
+export type FlagTargetingRule = 'percentage' | 'user' | 'company' | 'email' | 'tag' | 'all';
 
 export interface FeatureFlag {
-  name: string
-  type: FlagType
-  enabled: boolean
-  percentage?: number // 0-100 for gradual rollout
-  allowedUsers?: string[] // Whitelist for user_list type
-  blockedUsers?: string[] // Blacklist
-  description?: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  // Percentage rollout: 0-100
+  percentage: number;
+  // Targeting rules for advanced control
+  rules: Array<{
+    type: FlagTargetingRule;
+    value: string | number;
+    enabled: boolean;
+  }>;
+  // Variants for A/B testing: { variantA: 50, variantB: 50 }
+  variants?: Record<string, number>;
+  // Metadata
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  tags: string[];
 }
 
-export interface FlagEvaluationContext {
-  userId?: string
-  userSegment?: string
-  timestamp?: number
-  sessionId?: string
+export interface FlagEvaluation {
+  flagId: string;
+  flagName: string;
+  enabled: boolean;
+  variant?: string;
+  reason: string;
+  evaluatedAt: string;
+}
+
+export interface FlagContext {
+  userId?: string;
+  userEmail?: string;
+  companyId?: string;
+  tags?: string[];
+  // Custom attributes for targeting
+  attributes?: Record<string, string | number | boolean>;
+}
+
+// In-memory flag store (would be persisted to database in production)
+const flags = new Map<string, FeatureFlag>();
+
+// Deterministic hash for consistent variant assignment
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
 }
 
 /**
- * Feature Flag Store - In-memory implementation with Supabase persistence path defined
+ * Register a feature flag
  */
-export class FeatureFlagStore {
-  private flags: Map<string, FeatureFlag> = new Map()
+export function registerFlag(flag: FeatureFlag): void {
+  flags.set(flag.id, {
+    ...flag,
+    updatedAt: new Date().toISOString(),
+  });
+}
 
-  constructor(initialFlags?: FeatureFlag[]) {
-    if (initialFlags) {
-      for (const flag of initialFlags) {
-        this.flags.set(flag.name, flag)
-      }
-    }
-  }
+/**
+ * Get a flag definition
+ */
+export function getFlag(flagId: string): FeatureFlag | undefined {
+  return flags.get(flagId);
+}
 
-  /**
-   * Create or update a feature flag
-   */
-  createFlag(flag: FeatureFlag): FeatureFlag {
-    const now = new Date().toISOString()
-    const storedFlag: FeatureFlag = {
-      ...flag,
-      createdAt: flag.createdAt || now,
-      updatedAt: now,
-    }
-    this.flags.set(flag.name, storedFlag)
-    return storedFlag
-  }
+/**
+ * List all registered flags
+ */
+export function listFlags(): FeatureFlag[] {
+  return Array.from(flags.values());
+}
 
-  /**
-   * Get a specific flag
-   */
-  getFlag(name: string): FeatureFlag | undefined {
-    return this.flags.get(name)
-  }
+/**
+ * Update a flag
+ */
+export function updateFlag(flagId: string, updates: Partial<FeatureFlag>): FeatureFlag | undefined {
+  const flag = flags.get(flagId);
+  if (!flag) return undefined;
 
-  /**
-   * List all flags
-   */
-  getAllFlags(): FeatureFlag[] {
-    return Array.from(this.flags.values())
-  }
+  const updated = {
+    ...flag,
+    ...updates,
+    id: flag.id, // Never change the ID
+    createdAt: flag.createdAt, // Never change creation time
+    updatedAt: new Date().toISOString(),
+  };
 
-  /**
-   * Enable a flag (set to 100% rollout)
-   */
-  enableFlag(name: string): FeatureFlag | undefined {
-    const flag = this.flags.get(name)
-    if (!flag) return undefined
+  flags.set(flagId, updated);
+  return updated;
+}
 
-    const updated: FeatureFlag = {
-      ...flag,
-      enabled: true,
-      percentage: 100,
-      updatedAt: new Date().toISOString(),
-    }
-    this.flags.set(name, updated)
-    return updated
-  }
+/**
+ * Evaluate if a flag is enabled for a given context
+ */
+export function evaluateFlag(flagId: string, context: FlagContext): FlagEvaluation {
+  const flag = flags.get(flagId);
+  const now = new Date().toISOString();
 
-  /**
-   * Disable a flag
-   */
-  disableFlag(name: string): FeatureFlag | undefined {
-    const flag = this.flags.get(name)
-    if (!flag) return undefined
-
-    const updated: FeatureFlag = {
-      ...flag,
+  if (!flag) {
+    return {
+      flagId,
+      flagName: 'unknown',
       enabled: false,
-      percentage: 0,
-      updatedAt: new Date().toISOString(),
-    }
-    this.flags.set(name, updated)
-    return updated
+      reason: 'Flag not found',
+      evaluatedAt: now,
+    };
   }
 
-  /**
-   * Set rollout percentage (0-100)
-   */
-  setRolloutPercentage(name: string, percentage: number): FeatureFlag | undefined {
-    if (percentage < 0 || percentage > 100) {
-      throw new Error('Percentage must be between 0 and 100')
-    }
-
-    const flag = this.flags.get(name)
-    if (!flag) return undefined
-
-    const updated: FeatureFlag = {
-      ...flag,
-      percentage,
-      enabled: percentage > 0,
-      updatedAt: new Date().toISOString(),
-    }
-    this.flags.set(name, updated)
-    return updated
+  // Flag must be globally enabled first
+  if (!flag.enabled) {
+    return {
+      flagId,
+      flagName: flag.name,
+      enabled: false,
+      reason: 'Flag is globally disabled',
+      evaluatedAt: now,
+    };
   }
 
-  /**
-   * Add user to allowlist
-   */
-  allowUser(flagName: string, userId: string): FeatureFlag | undefined {
-    const flag = this.flags.get(flagName)
-    if (!flag) return undefined
-
-    const allowedUsers = flag.allowedUsers || []
-    if (!allowedUsers.includes(userId)) {
-      allowedUsers.push(userId)
+  // Check explicit disabling rules
+  for (const rule of flag.rules) {
+    if (!rule.enabled) {
+      // Rule is disabled, skip it
+      continue;
     }
 
-    const updated: FeatureFlag = {
-      ...flag,
-      allowedUsers,
-      updatedAt: new Date().toISOString(),
+    switch (rule.type) {
+      case 'all':
+        return {
+          flagId,
+          flagName: flag.name,
+          enabled: true,
+          reason: 'Matched rule: all',
+          evaluatedAt: now,
+        };
+
+      case 'percentage':
+        // Use user ID for consistent percentage assignment
+        if (context.userId) {
+          const hash = hashCode(`${flag.id}:${context.userId}`);
+          const userPercentile = (hash % 100) + 1;
+          if (userPercentile <= flag.percentage) {
+            return {
+              flagId,
+              flagName: flag.name,
+              enabled: true,
+              reason: `Matched percentage rule (${userPercentile}% <= ${flag.percentage}%)`,
+              evaluatedAt: now,
+            };
+          }
+        }
+        break;
+
+      case 'user':
+        if (context.userId === rule.value) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched user rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
+
+      case 'email':
+        if (context.userEmail === rule.value) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched email rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
+
+      case 'company':
+        if (context.companyId === rule.value) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched company rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
+
+      case 'tag':
+        if (context.tags?.includes(rule.value as string)) {
+          return {
+            flagId,
+            flagName: flag.name,
+            enabled: true,
+            reason: `Matched tag rule: ${rule.value}`,
+            evaluatedAt: now,
+          };
+        }
+        break;
     }
-    this.flags.set(flagName, updated)
-    return updated
   }
 
-  /**
-   * Add user to blocklist
-   */
-  blockUser(flagName: string, userId: string): FeatureFlag | undefined {
-    const flag = this.flags.get(flagName)
-    if (!flag) return undefined
-
-    const blockedUsers = flag.blockedUsers || []
-    if (!blockedUsers.includes(userId)) {
-      blockedUsers.push(userId)
+  // No rules matched, fall back to percentage rollout
+  if (flag.percentage > 0 && context.userId) {
+    const hash = hashCode(`${flag.id}:${context.userId}`);
+    const userPercentile = (hash % 100) + 1;
+    if (userPercentile <= flag.percentage) {
+      return {
+        flagId,
+        flagName: flag.name,
+        enabled: true,
+        reason: `Fallback percentage rollout (${userPercentile}% <= ${flag.percentage}%)`,
+        evaluatedAt: now,
+      };
     }
-
-    const updated: FeatureFlag = {
-      ...flag,
-      blockedUsers,
-      updatedAt: new Date().toISOString(),
-    }
-    this.flags.set(flagName, updated)
-    return updated
   }
 
-  /**
-   * Delete a flag
-   */
-  deleteFlag(name: string): boolean {
-    return this.flags.delete(name)
-  }
-
-  /**
-   * Clear all flags
-   */
-  clear(): void {
-    this.flags.clear()
-  }
+  return {
+    flagId,
+    flagName: flag.name,
+    enabled: false,
+    reason: 'No matching rules and not in percentage rollout',
+    evaluatedAt: now,
+  };
 }
 
 /**
- * Feature Flag Evaluator - Determines if a flag is enabled for a given context
+ * Get variant for A/B testing
  */
-export class FeatureFlagEvaluator {
-  constructor(private store: FeatureFlagStore) {}
+export function getVariant(flagId: string, context: FlagContext): FlagEvaluation & { variant?: string } {
+  const evaluation = evaluateFlag(flagId, context);
+  const flag = flags.get(flagId);
 
-  /**
-   * Evaluate if a feature is enabled for the given context
-   */
-  isEnabled(flagName: string, context: FlagEvaluationContext = {}): boolean {
-    const flag = this.store.getFlag(flagName)
-    if (!flag || !flag.enabled) {
-      return false
-    }
-
-    // Check blocklist first (highest priority)
-    if (flag.blockedUsers && context.userId && flag.blockedUsers.includes(context.userId)) {
-      return false
-    }
-
-    // Check allowlist (whitelist takes precedence)
-    if (flag.allowedUsers && flag.allowedUsers.length > 0) {
-      return context.userId ? flag.allowedUsers.includes(context.userId) : false
-    }
-
-    // For boolean flags, if enabled then enabled
-    if (flag.type === 'boolean') {
-      return true
-    }
-
-    // For percentage-based rollout
-    if (flag.type === 'percentage' && flag.percentage !== undefined) {
-      if (flag.percentage === 100) return true
-      if (flag.percentage === 0) return false
-
-      // Consistent rollout based on userId hash
-      if (!context.userId) {
-        return Math.random() * 100 < flag.percentage
-      }
-
-      // Deterministic: same user always gets same result
-      const hash = this.hashUserId(context.userId)
-      return hash < flag.percentage
-    }
-
-    // For user_list flags (already checked allowlist above)
-    if (flag.type === 'user_list') {
-      return false
-    }
-
-    return false
+  if (!evaluation.enabled || !flag?.variants || !context.userId) {
+    return evaluation;
   }
 
-  /**
-   * Get all enabled flags for a context
-   */
-  getEnabledFlags(context: FlagEvaluationContext = {}): string[] {
-    return this.store
-      .getAllFlags()
-      .filter((flag) => this.isEnabled(flag.name, context))
-      .map((flag) => flag.name)
+  // Deterministically assign variant based on user ID
+  const variantNames = Object.keys(flag.variants);
+  if (variantNames.length === 0) {
+    return evaluation;
   }
 
-  /**
-   * Hash userId to percentage (0-100) for consistent rollouts
-   * Uses simple modulo-based hash to spread users evenly
-   */
-  private hashUserId(userId: string): number {
-    let hash = 0
-    for (let i = 0; i < userId.length; i++) {
-      const char = userId.charCodeAt(i)
-      hash = (hash << 5) - hash + char
-      hash = hash & hash // Convert to 32bit integer
+  const hash = hashCode(`${flagId}:variant:${context.userId}`);
+  let selectedVariant: string | undefined;
+  let accumulator = 0;
+  const userPercentile = (hash % 100) + 1;
+
+  for (const [variant, percentage] of Object.entries(flag.variants)) {
+    accumulator += percentage;
+    if (userPercentile <= accumulator) {
+      selectedVariant = variant;
+      break;
     }
-    return Math.abs(hash) % 100
   }
+
+  return {
+    ...evaluation,
+    variant: selectedVariant || variantNames[0],
+    reason: `${evaluation.reason}; variant: ${selectedVariant}`,
+  };
 }
 
 /**
- * Global singleton instance
+ * Enable a flag for gradual rollout
  */
-let globalStore: FeatureFlagStore | null = null
-let globalEvaluator: FeatureFlagEvaluator | null = null
-
-export function getGlobalStore(): FeatureFlagStore {
-  if (!globalStore) {
-    globalStore = new FeatureFlagStore()
+export function startGradualRollout(
+  flagId: string,
+  startPercentage: number,
+  targetPercentage: number
+): FeatureFlag | undefined {
+  if (startPercentage < 0 || startPercentage > 100 || targetPercentage < 0 || targetPercentage > 100) {
+    throw new Error('Percentages must be between 0 and 100');
   }
-  return globalStore
-}
 
-export function getGlobalEvaluator(): FeatureFlagEvaluator {
-  if (!globalEvaluator) {
-    globalEvaluator = new FeatureFlagEvaluator(getGlobalStore())
-  }
-  return globalEvaluator
+  return updateFlag(flagId, {
+    enabled: true,
+    percentage: startPercentage,
+    tags: [...(flags.get(flagId)?.tags || []), `rollout-target-${targetPercentage}%`],
+  });
 }
 
 /**
- * Helper: Check if feature is enabled (convenience function)
+ * Increment rollout percentage
  */
-export function isFeatureEnabled(flagName: string, context: FlagEvaluationContext = {}): boolean {
-  return getGlobalEvaluator().isEnabled(flagName, context)
+export function incrementRollout(flagId: string, increment: number): FeatureFlag | undefined {
+  const flag = flags.get(flagId);
+  if (!flag) return undefined;
+
+  const newPercentage = Math.min(100, flag.percentage + increment);
+  return updateFlag(flagId, { percentage: newPercentage });
 }
 
 /**
- * Helper: Get all enabled features for a user
+ * Format flag for display
  */
-export function getEnabledFeatures(context: FlagEvaluationContext = {}): string[] {
-  return getGlobalEvaluator().getEnabledFlags(context)
+export function formatFlagStatus(flag: FeatureFlag): string {
+  const status = flag.enabled ? '✅ ENABLED' : '❌ DISABLED';
+  const rollout = flag.percentage > 0 ? ` (${flag.percentage}% rollout)` : '';
+  const ruleCount = flag.rules.length > 0 ? ` [${flag.rules.length} rules]` : '';
+
+  return `${status}${rollout}${ruleCount}`;
+}
+
+/**
+ * Get flag statistics
+ */
+export function getFlagStats(flagId: string): {
+  flagName: string;
+  enabled: boolean;
+  percentage: number;
+  ruleCount: number;
+  variants: string[];
+  tags: string[];
+} | undefined {
+  const flag = flags.get(flagId);
+  if (!flag) return undefined;
+
+  return {
+    flagName: flag.name,
+    enabled: flag.enabled,
+    percentage: flag.percentage,
+    ruleCount: flag.rules.length,
+    variants: flag.variants ? Object.keys(flag.variants) : [],
+    tags: flag.tags,
+  };
+}
+
+/**
+ * Reset flag store (testing/manual reset)
+ */
+export function resetFlagHub(): void {
+  flags.clear();
 }

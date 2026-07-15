@@ -2,12 +2,12 @@
   "name": "newspulse-ai",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-Powered News Intelligence — Search. Scrape. Summarize.",
+  "description": "EURO AI \u2014 AI Governance Platform for EU AI Act compliance",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -15,33 +15,46 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "check-env": "node --env-file=.env.local scripts/check-env.mjs",
-    "test:smoke": "node scripts/smoke-test.mjs"
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.453.0",
-    "next": "^14.2.35",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "16.2.10",
+    "pdf-lib": "^1.17.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@types/node": "^20.16.10",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.10",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
     "postcss": "^8.4.47",
     "prettier": "^3.9.5",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=22.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md,css}": [
+      "prettier --write"
+    ]
   }
 }

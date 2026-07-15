@@ -20,21 +20,26 @@ The dev server runs on [http://localhost:3000](http://localhost:3000) with hot r
 
 ## Required environment variables
 
+Copy `.env.example` to `.env.local` and fill in these values:
+
 | Variable                          | Required | Where to get it             |
 | --------------------------------- | -------- | --------------------------- |
-| `FIRECRAWL_API_KEY`               | yes      | https://firecrawl.dev       |
-| `OPENAI_API_KEY`                  | yes      | https://platform.openai.com |
 | `NEXT_PUBLIC_SUPABASE_URL`        | yes      | Supabase → Settings → API   |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | yes      | Supabase → Settings → API   |
 | `SUPABASE_SERVICE_ROLE_KEY`       | yes      | Supabase → Settings → API   |
-| `NEXT_PUBLIC_SITE_URL`            | no       | Used for sitemap/robots     |
+| `SUPABASE_PROJECT_ID`             | yes      | From Supabase URL            |
+| `GITHUB_OWNER`                    | yes      | Your GitHub organization    |
+| `GITHUB_REPO`                     | yes      | Your GitHub repository      |
+| `ADMIN_TOKEN`                     | no       | For production only; generate with `openssl rand -hex 32` |
+| `GITHUB_TOKEN`                    | no       | GitHub PAT for CI monitoring |
+| `NEXT_PUBLIC_APP_URL`             | no       | Your production deployment URL (required for health checks) |
 
 ---
 
 ## Project conventions
 
 - **TypeScript strict mode** — no `any` unless justified.
-- **Server-only secrets** in `lib/openai.ts`, `lib/firecrawl.ts`, server-only Supabase clients. Never import the service-role client from a client component.
+- **Server-only secrets** in env vars and server-only code paths. Never import the service-role client or pass secrets to client components.
 - **Tailwind utilities** preferred over custom CSS. Theme tokens live in `tailwind.config.js`.
 - **API routes** return `{ ok: boolean, ... }` shape. Errors set `ok: false` and a status code ≥ 400.
 - **App Router** — colocate route-specific files (`page.tsx`, `loading.tsx`, `error.tsx`) inside the route folder.

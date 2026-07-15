@@ -18,14 +18,14 @@
     "app/api/error-rate/route.ts": {
       "maxDuration": 30
     },
-    "app/api/dependency-security/route.ts": {
-      "maxDuration": 60
+    "app/api/ceis/run/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
     {
-      "path": "/api/dependency-security",
-      "schedule": "0 0 * * *"
+      "path": "/api/ceis/run",
+      "schedule": "0 6 * * 1"
     }
   ]
 }

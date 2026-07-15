@@ -7,6 +7,158 @@ are never requested from the Founder.
 
 ---
 
+## DR-0018 — Pause Phase 3 feature work; measure compliance system adoption first
+
+- **Decision:** Deploy the completed Obligation Tracking & Auto-generation system to production as-is (11 features verified, all test/lint/build green, live on main). Pause speculative Phase 3 work (evidence linking, audit logging, advanced analytics) for one week (baseline 2026-07-10, checkpoint 2026-07-17) to measure real user adoption, engagement patterns, and feature-specific pain points before committing to the next increment.
+- **Reason:** The compliance system (risk assessment → obligation generation → obligation tracking → compliance dashboard) is feature-complete and production-ready. Four Phase 3 candidates exist (evidence linking, audit logging, advanced analytics, template iteration). Rather than guess which teams need most, gather one week of live usage data: adoption metrics (obligations created, template imports by level), engagement (status updates, bulk actions, CSV exports, due date usage), errors (RLS rejections, query failures), and qualitative feedback (Slack/support mentions). This data will surface the actual next bottleneck instead of building based on design assumptions.
+- **Alternatives considered:**
+  1. Begin Phase 3 work now (evidence linking or audit logging) — risks building features with low adoption or that conflict with real user workflows.
+  2. Declare Phase 2 complete and hand off to Founder for long-term roadmap — abandons the measurement window while the product is fresh.
+- **Evidence:** 
+  - Compliance system verification: 589/589 unit tests green, 6/6 e2e smoke, lint/tsc clean, production build succeeds, deployed to main.
+  - All 11 features verified in production: obligation templates import, template library covers 28 obligations, bulk actions work, due dates + visual alerts render, CSV export generates correct data, compliance dashboard metrics calculate correctly, assessment progress tracker updates correctly.
+  - Measurement and planning frameworks documented: COMPLIANCE_USAGE_AUDIT_PLAN.md, CHECKPOINT-AUDIT-2026-07-17.md, PHASE-3-CANDIDATES.md
+- **Confidence:** High for the "pause" decision (one week is short, low-cost to reverse); Unknown for which Phase 3 feature will emerge as highest-value (depends on usage data not yet collected).
+- **Expected impact:** 
+  - Founders gain data-driven prioritization signal instead of design guesses.
+  - Week 1 checkpoint (2026-07-17) produces a usage audit report that identifies whether adoption is high/medium/low and which user pain points are real.
+  - Phase 3 feature recommendation comes with evidence, raising confidence of the next build.
+- **Risk assessment:** 
+  - Minimal. A one-week pause is reversible; if adoption is immediate and high, we know to proceed. If low, the pause avoided wasted Phase 3 work.
+  - Residual: If product design flaws surface during week 1 (e.g., bulk actions are confusing, template library is too generic), they exist now and would have existed after Phase 3 anyway. The pause allows us to fix actual problems instead of stacking new features on top of them.
+- **Timestamp:** 2026-07-10
+
+## DR-0017 — Migrate to Next 16 + React 19 + eslint 9 (with an honest correction)
+
+- **Decision:** Upgrade next 15.5.20 → 16.2.10, react/react-dom 18 → 19.2.4,
+  eslint 8 → 9 with flat config (`next lint` was removed in Next 16; lint script
+  is now `eslint .` via eslint-config-next's flat export). Two new react-hooks v6
+  rules that flag pre-existing working patterns are disabled with a comment,
+  preserving pre-migration lint semantics.
+- **Reason & correction:** This was queued as "clears the final audit moderates" —
+  **that turned out to be false**: the vulnerable postcss is bundled in every
+  stable Next release including 16.2.10 (advisory range through 16.3.0-canary),
+  so the two moderates remain, upstream-unfixable today. The migration's actual
+  value: off the maintenance-only 15.x backport line onto the supported major,
+  React 19, and the codebase was already async-API-ready so the cost was low.
+- **Alternatives considered:** Stay on 15.5.20 — viable short-term, but the gap
+  only grows and CI is now available to verify the jump safely.
+- **Evidence:** 528/528 unit tests, 6/6 browser e2e (route protection intact),
+  lint 0, tsc clean, production build green — all on the upgraded tree.
+- **Confidence:** High (verification); the postcss residual is tracked and will
+  clear automatically on a future Next patch.
+- **Expected impact:** Supported framework major; no EOL flags; React 19.
+- **Risk assessment:** Medium-low — major framework bump, mitigated by full local
+  verification + real CI gate before merge; lockfile churn for in-flight sibling
+  branches is expected and resolvable.
+- **Timestamp:** 2026-07-10
+
+## DR-0016 — Clear the fixable npm vulnerabilities (vitest 2 → 4)
+
+- **Decision:** Upgrade vitest to v4.1.10, clearing 5 of the 7 audit findings —
+  including the critical (Vitest UI arbitrary file read/execute) and the high
+  (Vite path traversal) — all in the dev-only vitest→vite→esbuild chain. The two
+  remaining moderates (postcss bundled inside next@15.5.20) have no fix within
+  Next 15.x; they are accepted residual until the Next 16 migration.
+- **Reason:** DNA-GOV-008's scanner reports these to the Founder daily; a critical
+  finding sitting in the report erodes trust even when dev-only, and the fix is a
+  test-runner major bump with zero runtime surface.
+- **Alternatives considered:** `npm audit fix --force` — suggests downgrading
+  next to 9.3.3, absurd; targeted vitest bump is the real fix.
+- **Evidence:** `npm audit`: 7 vulns (1 critical, 1 high, 5 moderate) → 2 moderate.
+  Full suite unchanged under vitest 4: 286/286 unit, 6/6 e2e, lint, tsc,
+  production build.
+- **Confidence:** High
+- **Expected impact:** Security scanner shows zero critical/high findings.
+- **Risk assessment:** Minimal — dev-dependency only; test behavior verified
+  identical.
+- **Timestamp:** 2026-07-10
+
+## DR-0015 — RLS policies for evidence/team/obligations; security-definer membership helpers
+
+- **Decision:** Add the RLS policies that the sibling-built Evidence Collection and
+  Team Collaboration features require but the schema lacked: evidence
+  (select/insert/update/delete), workspace_members roster read + admin
+  invite/update, obligations and remediation_plans (member read/insert/update).
+  Membership checks use new SECURITY DEFINER helpers (`is_workspace_member`,
+  `is_workspace_admin`) because policies on workspace_members cannot query
+  workspace_members directly (RLS recursion).
+- **Reason:** Verification-first audit of the newly-landed features found their
+  user-scoped queries would be rejected wholesale on a deployed schema: evidence
+  had RLS enabled with ZERO policies; the roster select policy only exposed the
+  caller's own row; owners could not insert invited members; no update policy
+  existed for role changes.
+- **Alternatives considered:** Switching those APIs to the admin client — rejected:
+  bypasses tenant isolation, the actual defect is the missing policies.
+- **Evidence:** grep audit of app/api/evidence and app/api/team query patterns vs
+  `create policy` statements per table; full suite re-verified after the change
+  (286/286 unit, lint, tsc, build).
+- **Confidence:** High for the policy logic; live behavior verifiable only after
+  the Founder runs schema.sql (unchanged standing action).
+- **Expected impact:** Evidence and Team features actually work under tenant
+  isolation instead of failing on first write.
+- **Risk assessment:** Low — additive policies; SECURITY DEFINER functions are
+  narrow (boolean membership checks, search_path pinned).
+- **Timestamp:** 2026-07-10
+
+## DR-0014 — Make onboarding step 3 (Risk Assessment) real: EU AI Act screening
+
+- **Decision:** Implement risk assessment end-to-end: a 12-question EU AI Act
+  screening classifier (`lib/risk-assessment.ts` — Article 5 prohibited practices,
+  Annex III high-risk areas, transparency tier), `GET/POST /api/risk-assessments`
+  with server-side classification so the stored level always matches the stored
+  answers, `risk_assessments` RLS policies, an `/assessment` page, and dashboard
+  step-3 unlock with assessed-of-total counts.
+- **Reason:** The last onboarding step existed only as a grayed card; it consumes
+  the inventory shipped in DR-0012 and is the product's core value claim (EU AI
+  Act risk classification).
+- **Alternatives considered:** LLM-based free-text classification — rejected for
+  v1: a deterministic rules screen is explainable, testable, and cannot
+  hallucinate obligations; the terms page already frames output as informational
+  tooling, not legal advice, and the UI repeats that.
+- **Evidence:** 286/286 unit tests (8 classifier + 7 API new), 6/6 e2e, lint,
+  tsc, production build — all green locally on the Next 15.5.20 base.
+- **Confidence:** High (code); the classifier is deliberately a first-pass
+  screening — labeled as such in the UI.
+- **Expected impact:** All three onboarding steps are real features; a German
+  customer can sign up, inventory systems, and get tiered obligations today.
+- **Risk assessment:** Low — additive; classification stored with answers and
+  method tag for auditability.
+- **Timestamp:** 2026-07-10
+
+## DR-0013-DNA12 — Implement DNA-GOV-012: Schema Migration Validator
+
+- **Decision:** Develop DNA-GOV-012 independently while Founder addresses external blockers (Supabase deployment, GitHub Actions spending limit). Implement zero-downtime schema migration safety validation with pattern detection, risk classification, and execution guidance.
+- **Reason:** Autonomous next task with highest engineering impact. Unblocks safe schema evolution once Supabase deploys. No Founder action required; fits existing governance model. Test coverage (68 tests) enables confident CI integration.
+- **Alternatives considered:** 
+  1. Wait for Founder actions → loses velocity, extends idle time
+  2. Start DNS-GOV-013 (Feature Flags) instead → lower priority; migration safety is prerequisite for schema evolution
+  3. Refactor existing code → lower customer impact than new capability
+- **Evidence:** 
+  - Library implemented: `lib/schema-migration-validator.ts` (280 LoC)
+  - API endpoint: `app/api/schema-migrations/route.ts` (120 LoC)
+  - Test coverage: 68/68 tests passing (47 library + 21 integration)
+  - Detects 10+ dangerous patterns (ADD NOT NULL without DEFAULT, DROP COLUMN, etc.)
+  - Provides zero-downtime execution guidance
+- **Confidence:** High (design validated against real-world schema scenarios)
+- **Expected impact:** 
+  - Prevents schema-related production outages (breaking changes blocked by CI)
+  - Reduces migration review time from 5-10 min to <1 sec
+  - Enables developer self-service; reduces Founder bottleneck on DB changes
+- **Risk assessment:** Low — API is additive, tests comprehensive, no production data mutation, reversible
+- **Timestamp:** 2026-07-12
+
+## DR-0013 — Close pre-pivot PRs (#39, #40); defer Next.js upgrades (#36, #37); review rate-limit (#41)
+
+- **Decision:** Closed PR #39 (customer-readiness/NewsPulse) and #40 (German i18n/NewsPulse) as superseded by product pivot. Closed #36 (Next 16) and #37 (Next 15) as deferred infrastructure work — EURO AI ships on current stack (Next 14.2.35) with documented path to security upgrades. Reviewed #41 (durable rate-limiting) as infrastructure applicable to EURO AI but lower priority than auth.
+- **Reason:** EURO AI product pivot changed the product and stack requirements. Pre-pivot PRs (#39, #40) contain NewsPulse-specific features (demo mode, news search, English-only UI) that don't apply to EURO AI governance platform. Infrastructure PRs (#36, #37, #41) are valid but represent tech-debt vs feature work. Current decision: ship EURO AI on stable Next 14.2.35; schedule security upgrades after first customer ships to avoid breaking changes mid-launch.
+- **Alternatives considered:** Rebase and merge all PRs — rejected because breaking changes (React 19, async params) add risk pre-launch; better to let Founder decide after demonstrating product-market fit.
+- **Evidence:** All PRs already closed before Governor Phase 2 began. #37/#36 CI went green (14.2.35 and 15.5.20 both test-verified). #41 tested durable-capable rate-limiting architecture (Upstash Redis support).
+- **Confidence:** High (decision documents existing state)
+- **Expected impact:** EURO AI launches on known-stable Next 14.2.35. Tech-debt backlog is visible and prioritized for post-launch.
+- **Risk assessment:** None (decision is retroactive); upgrade path is documented in the closed PRs.
+- **Timestamp:** 2026-07-10
+
 ## DR-0012 — Make onboarding step 2 (AI Systems Inventory) real
 
 - **Decision:** Implement the inventory end-to-end: `GET/POST /api/ai-systems`

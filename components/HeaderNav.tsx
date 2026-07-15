@@ -13,12 +13,13 @@ export async function HeaderNav() {
 
   // Only hit Supabase when a session cookie exists — anonymous visitors
   // (and builds without env) render the signed-out nav with zero network.
-  const hasSessionCookie = cookies()
+  const cookieStore = await cookies();
+  const hasSessionCookie = cookieStore
     .getAll()
     .some((c) => c.name.startsWith('sb-'));
   if (hasSessionCookie) {
     try {
-      const supabase = createRouteClient();
+      const supabase = await createRouteClient();
       const { data } = await supabase.auth.getUser();
       user = data.user;
     } catch {

@@ -1,323 +1,363 @@
-import fs from 'fs';
-import path from 'path';
+/**
+ * DNA-GOV-012: Schema Migration Validator
+ *
+ * Autonomously validates Supabase schema migrations for safety and provides
+ * zero-downtime guidance. Prevents dangerous patterns from reaching production.
+ *
+ * Problem: Schema changes can lock tables, drop data, or break production if not
+ * executed carefully. Manual review is error-prone and slows deployment.
+ *
+ * Solution: Analyze each migration for common anti-patterns; classify by risk;
+ * recommend safe execution strategy. Integrates with CI to block unsafe migrations.
+ */
 
-export interface MigrationFile {
-  filename: string;
+export type MigrationRiskLevel = 'safe' | 'low-risk' | 'high-risk' | 'breaking';
+export type MigrationPattern =
+  | 'add-column-not-null-no-default'
+  | 'drop-column'
+  | 'rename-column'
+  | 'drop-index'
+  | 'add-unique-constraint'
+  | 'modify-column-type'
+  | 'drop-table'
+  | 'alter-rls-policy'
+  | 'enable-rls'
+  | 'disable-rls'
+  | 'unknown';
+
+export interface MigrationIssue {
+  pattern: MigrationPattern;
+  riskLevel: MigrationRiskLevel;
+  lineNumber: number;
+  description: string;
+  evidence: string;
+  recommendation: string;
+}
+
+export interface MigrationReport {
+  name: string;
   path: string;
   timestamp: string;
-  direction: 'up' | 'down';
-  content: string;
-}
-
-export interface SchemaChange {
-  type: 'table_create' | 'table_drop' | 'column_add' | 'column_drop' | 'column_modify' | 'index_create' | 'index_drop' | 'constraint_add' | 'constraint_drop';
-  tableName: string;
-  columnName?: string;
-  severity: 'safe' | 'warning' | 'dangerous';
-  description: string;
-  remediation?: string;
-}
-
-export interface MigrationValidationReport {
-  filename: string;
-  valid: boolean;
-  direction: 'up' | 'down';
-  changes: SchemaChange[];
-  riskLevel: 'safe' | 'warning' | 'dangerous';
-  issues: string[];
-  suggestions: string[];
+  analysisTimestamp: string;
+  totalLines: number;
+  issues: MigrationIssue[];
+  riskLevel: MigrationRiskLevel;
   summary: string;
+  safeExecutionStrategy: string;
+  canAutoMerge: boolean;
+}
+
+export interface MigrationBatch {
+  files: MigrationReport[];
+  overallRisk: MigrationRiskLevel;
+  blocksCI: boolean;
+  timestamp: string;
 }
 
 /**
- * Parse SQL migration file content and extract schema changes
+ * Detects dangerous patterns in a SQL migration string.
  */
-export function parseMigrationSQL(content: string): SchemaChange[] {
-  const changes: SchemaChange[] = [];
+export function detectMigrationPatterns(
+  sql: string,
+  fileName: string
+): MigrationIssue[] {
+  const issues: MigrationIssue[] = [];
+  const lines = sql.split('\n');
 
-  // Remove comments and normalize whitespace
-  const normalized = content
-    .replace(/--.*$/gm, '') // Remove single-line comments
-    .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
-    .replace(/\s+/g, ' ')
-    .trim();
+  lines.forEach((line, index) => {
+    const lineNumber = index + 1;
+    const trimmed = line.trim().toUpperCase();
 
-  // Pattern: CREATE TABLE
-  const createTableRegex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?(\w+)/gi;
-  for (const match of normalized.matchAll(createTableRegex)) {
-    changes.push({
-      type: 'table_create',
-      tableName: match[1],
-      severity: 'safe',
-      description: `Creating table '${match[1]}'`,
-    });
-  }
+    // Pattern 1: Adding NOT NULL column without default
+    // Only match ADD COLUMN, not ALTER COLUMN (which is modifying existing)
+    if (trimmed.includes('ADD COLUMN')) {
+      if (
+        trimmed.includes('NOT NULL') &&
+        !trimmed.includes('DEFAULT') &&
+        !trimmed.includes('GENERATED')
+      ) {
+        issues.push({
+          pattern: 'add-column-not-null-no-default',
+          riskLevel: 'breaking',
+          lineNumber,
+          description:
+            'Adding NOT NULL column without DEFAULT will fail on existing rows',
+          evidence: line,
+          recommendation:
+            'Step 1: Add column nullable. Step 2: Backfill values. Step 3: Add NOT NULL constraint.',
+        });
+      }
+    }
 
-  // Pattern: DROP TABLE
-  const dropTableRegex = /drop\s+table\s+(?:if\s+exists\s+)?(?:public\.)?(\w+)/gi;
-  for (const match of normalized.matchAll(dropTableRegex)) {
-    changes.push({
-      type: 'table_drop',
-      tableName: match[1],
-      severity: 'dangerous',
-      description: `Dropping table '${match[1]}' (BREAKS EXISTING DATA)`,
-      remediation: 'Use ALTER TABLE to deprecate columns instead of dropping tables',
-    });
-  }
-
-  // Pattern: ALTER TABLE ... ADD COLUMN (without NOT NULL constraint)
-  // Captures full definition including types with commas (e.g., NUMERIC(10,2) NOT NULL)
-  // Uses lookahead to stop at semicolon/end, not intermediate commas
-  const addColumnSafeRegex = /alter\s+table\s+(?:public\.)?(\w+)\s+add\s+(?:column\s+)?(\w+)\s+(.+?)(?=;|$)/gi;
-  for (const match of normalized.matchAll(addColumnSafeRegex)) {
-    // Check if column has NOT NULL without default
-    const columnDef = match[0];
-    const hasNotNull = /not\s+null/i.test(columnDef);
-    const hasDefault = /default\s+/i.test(columnDef);
-
-    if (hasNotNull && !hasDefault) {
-      changes.push({
-        type: 'column_add',
-        tableName: match[1],
-        columnName: match[2],
-        severity: 'dangerous',
-        description: `Adding NOT NULL column '${match[2]}' to '${match[1]}' without default (BREAKS EXISTING ROWS)`,
-        remediation: 'Add DEFAULT clause or add column as nullable first, then backfill, then add constraint',
-      });
-    } else {
-      changes.push({
-        type: 'column_add',
-        tableName: match[1],
-        columnName: match[2],
-        severity: 'safe',
-        description: `Adding column '${match[2]}' to '${match[1]}'`,
+    // Pattern 2: Dropping column
+    if (trimmed.includes('DROP COLUMN') || trimmed.includes('DROP CONSTRAINT')) {
+      issues.push({
+        pattern: 'drop-column',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Dropping column is not reversible without backup restore',
+        evidence: line,
+        recommendation:
+          'Consider deprecation first (add "deprecated_" prefix, mark in RLS). Archive data before drop. Plan rollback.',
       });
     }
-  }
 
-  // Pattern: ALTER TABLE ... DROP COLUMN
-  const dropColumnRegex = /alter\s+table\s+(?:public\.)?(\w+)\s+drop\s+(?:column\s+)?(\w+)/gi;
-  for (const match of normalized.matchAll(dropColumnRegex)) {
-    changes.push({
-      type: 'column_drop',
-      tableName: match[1],
-      columnName: match[2],
-      severity: 'dangerous',
-      description: `Dropping column '${match[2]}' from '${match[1]}' (BREAKS APPLICATION CODE)`,
-      remediation: 'Deprecate column first (keep for 2+ releases), then remove',
-    });
-  }
+    // Pattern 3: Renaming column
+    if (trimmed.includes('RENAME COLUMN')) {
+      issues.push({
+        pattern: 'rename-column',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Renaming breaks any code still using old name',
+        evidence: line,
+        recommendation:
+          'Create new column, backfill, update code, drop old. Or use view alias for compatibility layer.',
+      });
+    }
 
-  // Pattern: CREATE INDEX
-  const createIndexRegex = /create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?(\w+)\s+on\s+(?:public\.)?(\w+)/gi;
-  for (const match of normalized.matchAll(createIndexRegex)) {
-    changes.push({
-      type: 'index_create',
-      tableName: match[2],
-      severity: 'safe',
-      description: `Creating index '${match[1]}' on '${match[2]}'`,
-    });
-  }
+    // Pattern 4: Dropping index
+    if (trimmed.includes('DROP INDEX')) {
+      issues.push({
+        pattern: 'drop-index',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Dropping index may degrade query performance',
+        evidence: line,
+        recommendation:
+          'Verify no active queries rely on this index. Monitor query performance after drop.',
+      });
+    }
 
-  // Pattern: DROP INDEX
-  const dropIndexRegex = /drop\s+index\s+(?:if\s+exists\s+)?(?:public\.)?(\w+)/gi;
-  for (const match of normalized.matchAll(dropIndexRegex)) {
-    changes.push({
-      type: 'index_drop',
-      tableName: 'unknown',
-      severity: 'warning',
-      description: `Dropping index '${match[1]}' (may impact query performance)`,
-    });
-  }
+    // Pattern 5: Adding unique constraint
+    if (trimmed.includes('ADD CONSTRAINT') && trimmed.includes('UNIQUE')) {
+      issues.push({
+        pattern: 'add-unique-constraint',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Adding unique constraint fails if duplicates exist',
+        evidence: line,
+        recommendation:
+          'First, find and resolve duplicates. Then add constraint. Plan for data cleanup.',
+      });
+    }
 
-  return changes;
+    // Pattern 6: Modifying column type
+    if (trimmed.includes('ALTER TABLE') && trimmed.includes('TYPE')) {
+      issues.push({
+        pattern: 'modify-column-type',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Changing column type may fail on incompatible data',
+        evidence: line,
+        recommendation:
+          'Create new column with new type, backfill with CAST, update code, drop old column.',
+      });
+    }
+
+    // Pattern 7: Dropping table
+    if (trimmed.includes('DROP TABLE')) {
+      issues.push({
+        pattern: 'drop-table',
+        riskLevel: 'breaking',
+        lineNumber,
+        description: 'Dropping table destroys all data — not recoverable without backup',
+        evidence: line,
+        recommendation:
+          'Export data first. Plan full rollback procedure. Verify no dependent features exist.',
+      });
+    }
+
+    // Pattern 8: Disabling RLS
+    if (trimmed.includes('DISABLE ROW LEVEL SECURITY')) {
+      issues.push({
+        pattern: 'disable-rls',
+        riskLevel: 'breaking',
+        lineNumber,
+        description:
+          'Disabling RLS exposes all rows to all authenticated users',
+        evidence: line,
+        recommendation:
+          'Never disable RLS in production. If needed, re-enable immediately after data fix.',
+      });
+    }
+
+    // Pattern 9: Enabling RLS
+    if (trimmed.includes('ENABLE ROW LEVEL SECURITY')) {
+      issues.push({
+        pattern: 'enable-rls',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description: 'Enabling RLS may block existing queries that expect unrestricted access',
+        evidence: line,
+        recommendation:
+          'Verify all RLS policies exist before enabling. Test against real app queries first.',
+      });
+    }
+
+    // Pattern 10: Altering RLS policies
+    if (trimmed.includes('ALTER POLICY') || trimmed.includes('CREATE POLICY')) {
+      issues.push({
+        pattern: 'alter-rls-policy',
+        riskLevel: 'high-risk',
+        lineNumber,
+        description:
+          'Changing RLS policy may grant or revoke access unexpectedly',
+        evidence: line,
+        recommendation:
+          'Review policy logic carefully. Test against all expected user roles and tenants.',
+      });
+    }
+  });
+
+  return issues;
 }
 
 /**
- * Validate a migration file for zero-downtime safety
- */export function validateMigration(
-  filename: string,
-  content: string,
-  direction: 'up' | 'down' = 'up'
-): MigrationValidationReport {
-  const changes = parseMigrationSQL(content);
-  const issues: string[] = [];
-  const suggestions: string[] = [];
+ * Classify overall risk level based on issues found.
+ */
+function classifyRiskLevel(issues: MigrationIssue[]): MigrationRiskLevel {
+  const hasBreaking = issues.some((i) => i.riskLevel === 'breaking');
+  const hasHighRisk = issues.some((i) => i.riskLevel === 'high-risk');
+  const hasLowRisk = issues.some((i) => i.riskLevel === 'low-risk');
 
-  // Check for dangerous changes
-  for (const change of changes) {
-    if (change.severity === 'dangerous') {
-      issues.push(`❌ ${change.description}`);
-      if (change.remediation) {
-        suggestions.push(`→ ${change.remediation}`);
-      }
-    } else if (change.severity === 'warning') {
-      issues.push(`⚠️  ${change.description}`);
-    }
+  if (hasBreaking) return 'breaking';
+  if (hasHighRisk) return 'high-risk';
+  if (hasLowRisk) return 'low-risk';
+  return 'safe';
+}
+
+/**
+ * Generate safe execution strategy based on issues.
+ */
+function generateExecutionStrategy(issues: MigrationIssue[]): string {
+  if (issues.length === 0) {
+    return 'Direct execution. Zero downtime expected. Standard production safety checks apply.';
   }
 
-  // Additional validations
-  if (content.toLowerCase().includes('truncate')) {
-    issues.push('❌ TRUNCATE found (destroys data without backup)');
-    suggestions.push('→ Use DELETE instead to preserve audit logs and allow recovery');
-  }
+  const recommendations = issues.map((i) => `- ${i.recommendation}`).join('\n');
 
-  if (content.toLowerCase().includes('drop schema')) {
-    issues.push('❌ DROP SCHEMA found (catastrophic data loss)');
-    suggestions.push('→ This should never be in a migration');
-  }
+  return `Recommended zero-downtime execution plan:
 
-  // Check for transaction safety
-  if (!content.toLowerCase().includes('begin') && !content.toLowerCase().includes('start transaction')) {
-    // Supabase handles transactions, but warn if explicit control expected
-    suggestions.push('→ Ensure Supabase transaction safety: run as single batch or explicit tx');
-  }
+${recommendations}
 
-  const riskLevel =
-    issues.some((i) => i.startsWith('❌'))
-      ? 'dangerous'
-      : issues.some((i) => i.startsWith('⚠️'))
-        ? 'warning'
-        : 'safe';
+Rollback: Review logs immediately after apply. Keep previous version deployed and ready for instant switch.`;
+}
 
-  const dangerousCount = issues.filter((i) => i.startsWith('❌')).length;
-  const warningCount = issues.filter((i) => i.startsWith('⚠️')).length;
+/**
+ * Analyze a single migration file.
+ */
+export function analyzeMigration(
+  sql: string,
+  fileName: string,
+  fileTimestamp?: string
+): MigrationReport {
+  const issues = detectMigrationPatterns(sql, fileName);
+  const riskLevel = classifyRiskLevel(issues);
+  const safeExecutionStrategy = generateExecutionStrategy(issues);
+  const canAutoMerge = riskLevel === 'safe' || riskLevel === 'low-risk';
+
   const summary =
-    dangerousCount > 0
-      ? `${dangerousCount} dangerous change(s) found — migration BLOCKED`
-      : warningCount > 0
-        ? `${warningCount} warning(s) — manual review recommended`
-        : `All checks passed — safe to deploy`;
+    issues.length === 0
+      ? 'Migration is safe. Zero-downtime execution expected.'
+      : `Found ${issues.length} potential issue(s). Review recommendations before deploying.`;
 
   return {
-    filename,
-    valid: riskLevel !== 'dangerous',
-    direction,
-    changes,
-    riskLevel,
+    name: fileName,
+    path: fileName,
+    timestamp: fileTimestamp || new Date().toISOString(),
+    analysisTimestamp: new Date().toISOString(),
+    totalLines: sql.split('\n').length,
     issues,
-    suggestions,
+    riskLevel,
     summary,
+    safeExecutionStrategy,
+    canAutoMerge,
   };
 }
 
 /**
- * Scan migrations directory for all pending migrations
- */export function scanMigrations(migrationsDir: string): MigrationFile[] {
-  if (!fs.existsSync(migrationsDir)) {
-    return [];
-  }
+ * Analyze a batch of migration files.
+ */
+export function analyzeMigrationBatch(
+  migrations: Array<{ name: string; sql: string; timestamp?: string }>
+): MigrationBatch {
+  const files = migrations.map((m) =>
+    analyzeMigration(m.sql, m.name, m.timestamp)
+  );
 
-  const files = fs.readdirSync(migrationsDir);
-  const migrations: MigrationFile[] = [];
+  const riskLevels = files.map((f) => f.riskLevel);
+  const overallRisk: MigrationRiskLevel = riskLevels.some(
+    (r) => r === 'breaking'
+  )
+    ? 'breaking'
+    : riskLevels.some((r) => r === 'high-risk')
+      ? 'high-risk'
+      : riskLevels.some((r) => r === 'low-risk')
+        ? 'low-risk'
+        : 'safe';
 
-  for (const file of files) {
-    if (!file.endsWith('.sql')) continue;
+  const blocksCI = overallRisk === 'breaking';
 
-    const filePath = path.join(migrationsDir, file);
-    const content = fs.readFileSync(filePath, 'utf-8');
-
-    // Parse filename format: YYYYMMDD_HHmmss_description.sql or similar
-    const timestamp = file.split('_').slice(0, 2).join('_');
-    const direction = file.includes('.down.') ? 'down' : 'up';
-
-    migrations.push({
-      filename: file,
-      path: filePath,
-      timestamp,
-      direction,
-      content,
-    });
-  }
-
-  return migrations.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  return {
+    files,
+    overallRisk,
+    blocksCI,
+    timestamp: new Date().toISOString(),
+  };
 }
 
 /**
- * Validate all pending migrations
- */export function validateAllMigrations(
-  migrationsDir: string
-): MigrationValidationReport[] {
-  const migrations = scanMigrations(migrationsDir);
-  return migrations.map((m) => validateMigration(m.filename, m.content, m.direction));
+ * Format migration report for human reading.
+ */
+export function formatMigrationReport(report: MigrationReport): string {
+  const header = `Schema Migration: ${report.name}
+Risk Level: ${report.riskLevel.toUpperCase()}
+Safe to auto-merge: ${report.canAutoMerge ? 'YES' : 'NO'}
+Lines analyzed: ${report.totalLines}
+Issues found: ${report.issues.length}
+
+Summary: ${report.summary}
+
+`;
+
+  if (report.issues.length === 0) {
+    return header + 'Execution strategy: ' + report.safeExecutionStrategy;
+  }
+
+  const issuesText = report.issues
+    .map(
+      (issue, i) => `
+Issue ${i + 1} (${issue.riskLevel}): ${issue.description}
+  Line ${issue.lineNumber}: ${issue.evidence}
+  Recommendation: ${issue.recommendation}
+`
+    )
+    .join('\n');
+
+  return (
+    header +
+    'Issues:\n' +
+    issuesText +
+    '\n\nExecution Strategy:\n' +
+    report.safeExecutionStrategy
+  );
 }
 
 /**
- * Check if migration is safe for automatic deployment
- * Safe = no dangerous changes, optionally no warnings
- */export function isSafeForDeploy(report: MigrationValidationReport, strictMode: boolean = false): boolean {
-  if (report.riskLevel === 'dangerous') return false;
-  if (strictMode && report.riskLevel === 'warning') return false;
-  return true;
-}
+ * Format batch report for display.
+ */
+export function formatBatchReport(batch: MigrationBatch): string {
+  const header = `Schema Migration Batch Analysis
+Overall Risk: ${batch.overallRisk.toUpperCase()}
+Blocks CI: ${batch.blocksCI ? 'YES - MANUAL REVIEW REQUIRED' : 'NO - Ready to merge'}
+Files analyzed: ${batch.files.length}
+Analysis completed: ${batch.timestamp}
 
-/**
- * Generate markdown report for GitHub PR review
- */export function generatePRReport(reports: MigrationValidationReport[]): string {
-  if (reports.length === 0) {
-    return '## 🔍 Schema Migrations\n\nNo migrations detected.\n';
-  }
+`;
 
-  const allSafe = reports.every((r) => r.riskLevel === 'safe');
-  const anyDangerous = reports.some((r) => r.riskLevel === 'dangerous');
-  const anyWarning = reports.some((r) => r.riskLevel === 'warning');
+  const fileReports = batch.files
+    .map((f) => `- ${f.name}: ${f.riskLevel} (${f.issues.length} issues)`)
+    .join('\n');
 
-  let markdown = '';
-
-  if (anyDangerous) {
-    markdown += '## 🔴 Schema Migrations - BLOCKED\n\n';
-    markdown += '⚠️ **This PR contains unsafe database migrations and cannot be merged.**\n\n';
-  } else if (anyWarning) {
-    markdown += '## 🟡 Schema Migrations - REVIEW REQUIRED\n\n';
-    markdown += '⚠️ **This PR contains warnings that require manual review before merge.**\n\n';
-  } else {
-    markdown += '## ✅ Schema Migrations - Safe\n\n';
-    markdown += '✓ All migrations pass safety checks.\n\n';
-  }
-
-  for (const report of reports) {
-    const icon =
-      report.riskLevel === 'dangerous' ? '🔴' : report.riskLevel === 'warning' ? '🟡' : '✅';
-    markdown += `### ${icon} ${report.filename}\n\n`;
-    markdown += `**Status:** ${report.summary}\n\n`;
-
-    if (report.issues.length > 0) {
-      markdown += '**Issues:**\n';
-      for (const issue of report.issues) {
-        markdown += `- ${issue}\n`;
-      }
-      markdown += '\n';
-    }
-
-    if (report.suggestions.length > 0) {
-      markdown += '**Suggestions:**\n';
-      for (const sugg of report.suggestions) {
-        markdown += `- ${sugg}\n`;
-      }
-      markdown += '\n';
-    }
-
-    if (report.changes.length > 0) {
-      markdown += '**Changes Detected:**\n';
-      for (const change of report.changes) {
-        const typeLabel = {
-          table_create: '📊 CREATE TABLE',
-          table_drop: '🗑️ DROP TABLE',
-          column_add: '➕ ADD COLUMN',
-          column_drop: '➖ DROP COLUMN',
-          column_modify: '✏️ MODIFY COLUMN',
-          index_create: '⚡ CREATE INDEX',
-          index_drop: '❌ DROP INDEX',
-          constraint_add: '🔐 ADD CONSTRAINT',
-          constraint_drop: '🔓 DROP CONSTRAINT',
-        }[change.type];
-        markdown += `- ${typeLabel} \`${change.tableName}${change.columnName ? '.' + change.columnName : ''}\`\n`;
-      }
-      markdown += '\n';
-    }
-  }
-
-  markdown += '\n---\n*Generated by DNA-GOV-012 Schema Migration Validator*\n';
-
-  return markdown;
+  return header + '\nFiles:\n' + fileReports;
 }
