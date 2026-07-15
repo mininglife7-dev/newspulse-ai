@@ -5,11 +5,11 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
-  const id = params.id;
+  const { id } = await params;
   if (!id) {
     return NextResponse.json(
       { ok: false, error: 'Missing id.' },
@@ -49,7 +49,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: RouteContext) {
-  const id = params.id;
+  const { id } = await params;
   if (!id) {
     return NextResponse.json(
       { ok: false, error: 'Missing id.' },

@@ -35,15 +35,15 @@ None at or below the 95 bar. Watch-list:
    production traffic.
 3. Supabase RLS allows anonymous read/insert (single-user demo posture) —
    tighten before multi-tenant use.
-4. Dependency posture: Next.js upgraded 14.2.15 → 14.2.35, eliminating the
-   **critical** middleware authorization bypass (GHSA-f82v-jwr5-mffw — an
-   attacker could previously skip this app's rate limiter). Remaining
-   `npm audit` advisories require the breaking Next 15/16 major upgrade (a
-   product decision) and were triaged against this app's configuration:
-   image-optimizer issues N/A (`unoptimized: true`), i18n middleware bypass
-   N/A (app router, no i18n), CSP-nonce XSS N/A (no nonces, ADR 0002),
-   WebSocket SSRF N/A, glob advisory is a dev-CLI-only vector. Plan the
-   Next 15/16 migration as its own change.
+4. Dependency posture: Next.js upgraded 14.2.15 → 14.2.35 (eliminated the
+   **critical** middleware authorization bypass GHSA-f82v-jwr5-mffw), then
+   migrated to the **15.5 backport line** (15.5.20, React 18 retained;
+   async `params` conversion in both dynamic routes; unused
+   `experimental.serverActions` config removed). `npm audit` is now down
+   to **2 moderate** findings — both the postcss copy _bundled inside
+   Next itself_ (affects every Next release through 16; not actionable
+   downstream). The full 76-check suite validated the migration; pages
+   remain statically prerendered.
 5. Content-Security-Policy: a static CSP is now served and smoke/e2e-tested
    alongside the other security headers (D-21). Nonce-based CSP was
    implemented, empirically shown to break statically prerendered pages,

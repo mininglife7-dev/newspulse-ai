@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /**
@@ -46,7 +46,8 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   // On failure or absence, fall back to the generic title — the tab must
   // not claim a saved search exists when none could be verified.
-  const entry = await getSearchById(params.id).catch(() => null);
+  const { id } = await params;
+  const entry = await getSearchById(id).catch(() => null);
   if (!entry) return { title: 'NewsPulse AI' };
   return {
     title: `"${entry.keyword}" — Saved search — NewsPulse AI`,
@@ -55,7 +56,8 @@ export async function generateMetadata({
 }
 
 export default async function HistoryDetailPage({ params }: PageProps) {
-  const entry = await getSearchById(params.id);
+  const { id } = await params;
+  const entry = await getSearchById(id);
   if (!entry) notFound();
 
   const articles = Array.isArray(entry.results) ? entry.results : [];

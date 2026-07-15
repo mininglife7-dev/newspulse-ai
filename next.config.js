@@ -10,11 +10,6 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
-  },
   async headers() {
     // Static CSP: pages are statically prerendered, so per-request nonces
     // are impossible without forcing dynamic rendering everywhere —
