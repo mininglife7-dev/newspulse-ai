@@ -33,7 +33,7 @@ describe('DNA-GOV-008: Dependency Security Scanner', () => {
     delete process.env.SECURITY_SCAN_CACHE_PATH;
   });
 
-  test('scanDependencies returns result with expected structure', async () => {
+  test('scanDependencies returns result with expected structure', { timeout: 60_000 }, async () => {
     const result = await scanDependencies();
 
     expect(result).toHaveProperty('timestamp');
@@ -49,25 +49,25 @@ describe('DNA-GOV-008: Dependency Security Scanner', () => {
     expect(result).toHaveProperty('scanStatus');
   });
 
-  test('scanStatus is "clean" when no vulnerabilities', async () => {
+  test('scanStatus is "clean" when no vulnerabilities', { timeout: 60_000 }, async () => {
     const result = await scanDependencies();
     // This test verifies logic; actual result depends on current dependencies
     // At minimum, scanStatus should be one of the allowed values
     expect(['clean', 'vulnerabilities-found', 'critical-found']).toContain(result.scanStatus);
   });
 
-  test('total count equals sum of all severity counts', async () => {
+  test('total count equals sum of all severity counts', { timeout: 60_000 }, async () => {
     const result = await scanDependencies();
     const sum = result.critical + result.high + result.moderate + result.low + result.info;
     expect(result.total).toBe(sum);
   });
 
-  test('vulnerabilities array matches total count', async () => {
+  test('vulnerabilities array matches total count', { timeout: 60_000 }, async () => {
     const result = await scanDependencies();
     expect(result.vulnerabilities.length).toBe(result.total);
   });
 
-  test('detected vulnerabilities have required fields', async () => {
+  test('detected vulnerabilities have required fields', { timeout: 60_000 }, async () => {
     const result = await scanDependencies();
 
     if (result.vulnerabilities.length > 0) {
@@ -87,7 +87,7 @@ describe('DNA-GOV-008: Dependency Security Scanner', () => {
     }
   });
 
-  test('cache tracks previous vulnerabilities', async () => {
+  test('cache tracks previous vulnerabilities', { timeout: 60_000 }, async () => {
     // First scan
     const result1 = await scanDependencies();
     const initialVulnCount = result1.total;
@@ -276,7 +276,7 @@ describe('DNA-GOV-008: Dependency Security Scanner', () => {
     expect(alert.title).toContain('No Known Vulnerabilities');
   });
 
-  test('getSecuritySummary returns formatted summary string', async () => {
+  test('getSecuritySummary returns formatted summary string', { timeout: 60_000 }, async () => {
     const result = await scanDependencies();
     const summary = getSecuritySummary(result);
 

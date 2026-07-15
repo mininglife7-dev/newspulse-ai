@@ -7,6 +7,104 @@ are never requested from the Founder.
 
 ---
 
+## DR-0017 — Migrate to Next 16 + React 19 + eslint 9 (with an honest correction)
+
+- **Decision:** Upgrade next 15.5.20 → 16.2.10, react/react-dom 18 → 19.2.4,
+  eslint 8 → 9 with flat config (`next lint` was removed in Next 16; lint script
+  is now `eslint .` via eslint-config-next's flat export). Two new react-hooks v6
+  rules that flag pre-existing working patterns are disabled with a comment,
+  preserving pre-migration lint semantics.
+- **Reason & correction:** This was queued as "clears the final audit moderates" —
+  **that turned out to be false**: the vulnerable postcss is bundled in every
+  stable Next release including 16.2.10 (advisory range through 16.3.0-canary),
+  so the two moderates remain, upstream-unfixable today. The migration's actual
+  value: off the maintenance-only 15.x backport line onto the supported major,
+  React 19, and the codebase was already async-API-ready so the cost was low.
+- **Alternatives considered:** Stay on 15.5.20 — viable short-term, but the gap
+  only grows and CI is now available to verify the jump safely.
+- **Evidence:** 528/528 unit tests, 6/6 browser e2e (route protection intact),
+  lint 0, tsc clean, production build green — all on the upgraded tree.
+- **Confidence:** High (verification); the postcss residual is tracked and will
+  clear automatically on a future Next patch.
+- **Expected impact:** Supported framework major; no EOL flags; React 19.
+- **Risk assessment:** Medium-low — major framework bump, mitigated by full local
+  verification + real CI gate before merge; lockfile churn for in-flight sibling
+  branches is expected and resolvable.
+- **Timestamp:** 2026-07-10
+
+## DR-0016 — Clear the fixable npm vulnerabilities (vitest 2 → 4)
+
+- **Decision:** Upgrade vitest to v4.1.10, clearing 5 of the 7 audit findings —
+  including the critical (Vitest UI arbitrary file read/execute) and the high
+  (Vite path traversal) — all in the dev-only vitest→vite→esbuild chain. The two
+  remaining moderates (postcss bundled inside next@15.5.20) have no fix within
+  Next 15.x; they are accepted residual until the Next 16 migration.
+- **Reason:** DNA-GOV-008's scanner reports these to the Founder daily; a critical
+  finding sitting in the report erodes trust even when dev-only, and the fix is a
+  test-runner major bump with zero runtime surface.
+- **Alternatives considered:** `npm audit fix --force` — suggests downgrading
+  next to 9.3.3, absurd; targeted vitest bump is the real fix.
+- **Evidence:** `npm audit`: 7 vulns (1 critical, 1 high, 5 moderate) → 2 moderate.
+  Full suite unchanged under vitest 4: 286/286 unit, 6/6 e2e, lint, tsc,
+  production build.
+- **Confidence:** High
+- **Expected impact:** Security scanner shows zero critical/high findings.
+- **Risk assessment:** Minimal — dev-dependency only; test behavior verified
+  identical.
+- **Timestamp:** 2026-07-10
+
+## DR-0015 — RLS policies for evidence/team/obligations; security-definer membership helpers
+
+- **Decision:** Add the RLS policies that the sibling-built Evidence Collection and
+  Team Collaboration features require but the schema lacked: evidence
+  (select/insert/update/delete), workspace_members roster read + admin
+  invite/update, obligations and remediation_plans (member read/insert/update).
+  Membership checks use new SECURITY DEFINER helpers (`is_workspace_member`,
+  `is_workspace_admin`) because policies on workspace_members cannot query
+  workspace_members directly (RLS recursion).
+- **Reason:** Verification-first audit of the newly-landed features found their
+  user-scoped queries would be rejected wholesale on a deployed schema: evidence
+  had RLS enabled with ZERO policies; the roster select policy only exposed the
+  caller's own row; owners could not insert invited members; no update policy
+  existed for role changes.
+- **Alternatives considered:** Switching those APIs to the admin client — rejected:
+  bypasses tenant isolation, the actual defect is the missing policies.
+- **Evidence:** grep audit of app/api/evidence and app/api/team query patterns vs
+  `create policy` statements per table; full suite re-verified after the change
+  (286/286 unit, lint, tsc, build).
+- **Confidence:** High for the policy logic; live behavior verifiable only after
+  the Founder runs schema.sql (unchanged standing action).
+- **Expected impact:** Evidence and Team features actually work under tenant
+  isolation instead of failing on first write.
+- **Risk assessment:** Low — additive policies; SECURITY DEFINER functions are
+  narrow (boolean membership checks, search_path pinned).
+- **Timestamp:** 2026-07-10
+
+## DR-0014 — Make onboarding step 3 (Risk Assessment) real: EU AI Act screening
+
+- **Decision:** Implement risk assessment end-to-end: a 12-question EU AI Act
+  screening classifier (`lib/risk-assessment.ts` — Article 5 prohibited practices,
+  Annex III high-risk areas, transparency tier), `GET/POST /api/risk-assessments`
+  with server-side classification so the stored level always matches the stored
+  answers, `risk_assessments` RLS policies, an `/assessment` page, and dashboard
+  step-3 unlock with assessed-of-total counts.
+- **Reason:** The last onboarding step existed only as a grayed card; it consumes
+  the inventory shipped in DR-0012 and is the product's core value claim (EU AI
+  Act risk classification).
+- **Alternatives considered:** LLM-based free-text classification — rejected for
+  v1: a deterministic rules screen is explainable, testable, and cannot
+  hallucinate obligations; the terms page already frames output as informational
+  tooling, not legal advice, and the UI repeats that.
+- **Evidence:** 286/286 unit tests (8 classifier + 7 API new), 6/6 e2e, lint,
+  tsc, production build — all green locally on the Next 15.5.20 base.
+- **Confidence:** High (code); the classifier is deliberately a first-pass
+  screening — labeled as such in the UI.
+- **Expected impact:** All three onboarding steps are real features; a German
+  customer can sign up, inventory systems, and get tiered obligations today.
+- **Risk assessment:** Low — additive; classification stored with answers and
+  method tag for auditability.
+- **Timestamp:** 2026-07-10
+
 ## DR-0013 — Close pre-pivot PRs (#39, #40); defer Next.js upgrades (#36, #37); review rate-limit (#41)
 
 - **Decision:** Closed PR #39 (customer-readiness/NewsPulse) and #40 (German i18n/NewsPulse) as superseded by product pivot. Closed #36 (Next 16) and #37 (Next 15) as deferred infrastructure work — EURO AI ships on current stack (Next 14.2.35) with documented path to security upgrades. Reviewed #41 (durable rate-limiting) as infrastructure applicable to EURO AI but lower priority than auth.

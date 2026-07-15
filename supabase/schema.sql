@@ -205,6 +205,21 @@ create index if not exists obligations_company_idx on public.obligations (compan
 create index if not exists obligations_status_idx on public.obligations (status);
 
 -- ---------------------------------------------------------------
+-- Assessment Obligations (Junction Table)
+-- Links risk assessments to their generated obligations
+-- ---------------------------------------------------------------
+create table if not exists public.assessment_obligations (
+    id                uuid        primary key default gen_random_uuid(),
+    assessment_id     uuid        not null references public.risk_assessments(id) on delete cascade,
+    obligation_id     uuid        not null references public.obligations(id) on delete cascade,
+    created_at        timestamptz not null default now(),
+    unique(assessment_id, obligation_id)
+);
+
+create index if not exists assessment_obligations_assessment_idx on public.assessment_obligations (assessment_id);
+create index if not exists assessment_obligations_obligation_idx on public.assessment_obligations (obligation_id);
+
+-- ---------------------------------------------------------------
 -- Evidence
 -- Documentation and artifacts supporting compliance
 -- ---------------------------------------------------------------
@@ -262,6 +277,7 @@ alter table public.companies enable row level security;
 alter table public.ai_systems enable row level security;
 alter table public.risk_assessments enable row level security;
 alter table public.obligations enable row level security;
+alter table public.assessment_obligations enable row level security;
 alter table public.evidence enable row level security;
 alter table public.remediation_plans enable row level security;
 
@@ -537,6 +553,35 @@ create policy "Members can update workspace risk_assessments"
         exists (
             select 1 from public.workspace_members
             where workspace_id = risk_assessments.workspace_id
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+-- Assessment obligations: active workspace members can read/create
+create policy "Members can read workspace assessment_obligations"
+    on public.assessment_obligations for select
+    using (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = (
+                select workspace_id from public.risk_assessments
+                where id = assessment_obligations.assessment_id
+            )
+            and user_id = auth.uid()
+            and status = 'active'
+        )
+    );
+
+create policy "Members can insert workspace assessment_obligations"
+    on public.assessment_obligations for insert
+    with check (
+        exists (
+            select 1 from public.workspace_members
+            where workspace_id = (
+                select workspace_id from public.risk_assessments
+                where id = assessment_obligations.assessment_id
+            )
             and user_id = auth.uid()
             and status = 'active'
         )
@@ -857,6 +902,54 @@ create table if not exists public.hercules_recovery_log (
 alter table public.hercules_recovery_log enable row level security;
 
 create index if not exists hercules_recovery_checkpoint_idx on public.hercules_recovery_log(checkpoint_id);
+
+-- ---------------------------------------------------------------
+-- Membership helper functions (SECURITY DEFINER)
+-- Policies on workspace_members cannot query workspace_members directly
+-- (infinite RLS recursion); these helpers run outside RLS.
+-- ---------------------------------------------------------------
+create or replace function public.is_workspace_member(ws uuid)
+returns boolean
+language sql security definer stable
+set search_path = public
+as $$
+    select exists (
+        select 1 from public.workspace_members
+        where workspace_id = ws
+        and user_id = auth.uid()
+        and status = 'active'
+    );
+$$;
+
+create or replace function public.is_workspace_admin(ws uuid)
+returns boolean
+language sql security definer stable
+set search_path = public
+as $$
+    select exists (
+        select 1 from public.workspace_members
+        where workspace_id = ws
+        and user_id = auth.uid()
+        and status = 'active'
+        and role in ('owner', 'admin')
+    );
+$$;
+
+-- Team collaboration: members see the whole roster; owners/admins manage it
+drop policy if exists "Members can read their workspace roster" on public.workspace_members;
+create policy "Members can read their workspace roster"
+    on public.workspace_members for select
+    using (public.is_workspace_member(workspace_id));
+
+drop policy if exists "Admins can invite members" on public.workspace_members;
+create policy "Admins can invite members"
+    on public.workspace_members for insert
+    with check (public.is_workspace_admin(workspace_id));
+
+drop policy if exists "Admins can update members" on public.workspace_members;
+create policy "Admins can update members"
+    on public.workspace_members for update
+    using (public.is_workspace_admin(workspace_id));
 
 -- =============================================================
 -- DEPLOYMENT COMPLETE
