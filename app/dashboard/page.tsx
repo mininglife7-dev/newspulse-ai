@@ -75,11 +75,14 @@ export default function DashboardPage() {
           </Link>
 
           {/* Step 2: AI Inventory */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+          <Link
+            href="/ai-systems"
+            className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+          >
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
                     2
                   </div>
                   <h3 className="font-semibold text-white">AI Inventory</h3>
@@ -88,15 +91,19 @@ export default function DashboardPage() {
                   Catalog all AI systems in use
                 </p>
               </div>
+              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
             </div>
-          </div>
+          </Link>
 
           {/* Step 3: Risk Assessment */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
+          <Link
+            href="/risk-assessment"
+            className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
+          >
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-bold">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
                     3
                   </div>
                   <h3 className="font-semibold text-white">Risk Assessment</h3>
@@ -105,8 +112,9 @@ export default function DashboardPage() {
                   Classify risks and obligations
                 </p>
               </div>
+              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Key Features Section */}
