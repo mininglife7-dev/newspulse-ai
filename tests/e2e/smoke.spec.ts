@@ -64,6 +64,17 @@ test('auth pages render for signed-out visitors', async ({ page }) => {
   );
 });
 
+test('responses carry the baseline security headers', async ({ request }) => {
+  const res = await request.get('/');
+  const h = res.headers();
+  expect(h['x-content-type-options']).toBe('nosniff');
+  expect(h['x-frame-options']).toBe('DENY');
+  expect(h['referrer-policy']).toBe('strict-origin-when-cross-origin');
+  expect(h['permissions-policy']).toContain('geolocation=()');
+  // HSTS is emitted in all environments (browsers ignore it over plain HTTP).
+  expect(h['strict-transport-security']).toContain('max-age=');
+});
+
 test('API rate limiting returns 429 with headers once the write budget is exceeded', async ({
   request,
 }) => {

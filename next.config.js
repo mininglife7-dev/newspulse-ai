@@ -27,6 +27,13 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          // Force HTTPS for two years incl. subdomains. Ignored by browsers
+          // over plain HTTP (localhost), so it is safe in every environment
+          // and only takes effect on the HTTPS production/preview deploys.
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
         ],
       },
     ];
