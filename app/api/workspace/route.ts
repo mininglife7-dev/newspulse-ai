@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import {
+  validateWorkspaceBody,
+  type WorkspaceSetupBody,
+} from '@/lib/workspace-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export interface WorkspaceSetupBody {
-  companyName: string;
-  legalName?: string;
-  country: string;
-  industry: string;
-  employees?: string;
-  website?: string;
-  description?: string;
-}
+export type { WorkspaceSetupBody };
 
 function slugify(name: string): string {
   const base = name
@@ -32,9 +28,9 @@ function slugify(name: string): string {
  * write is checked by Row Level Security.
  */
 export async function POST(req: Request) {
-  let body: WorkspaceSetupBody;
+  let raw: unknown;
   try {
-    body = await req.json();
+    raw = await req.json();
   } catch {
     return NextResponse.json(
       { ok: false, error: 'Invalid JSON body' },
@@ -42,15 +38,22 @@ export async function POST(req: Request) {
     );
   }
 
-  const companyName = body.companyName?.trim();
-  const country = body.country?.trim();
-  const industry = body.industry?.trim();
-  if (!companyName || !country || !industry) {
+  const validation = validateWorkspaceBody(raw);
+  if (!validation.ok) {
     return NextResponse.json(
-      { ok: false, error: 'companyName, country and industry are required' },
+      { ok: false, error: validation.error },
       { status: 400 }
     );
   }
+  const {
+    companyName,
+    legalName,
+    country,
+    industry,
+    employees,
+    website,
+    description,
+  } = validation.value;
 
   const supabase = createRouteClient();
   const {
@@ -69,7 +72,7 @@ export async function POST(req: Request) {
     .insert({
       slug: slugify(companyName),
       name: companyName,
-      description: body.description?.trim() || null,
+      description,
       owner_id: user.id,
     })
     .select('id, slug, name')
@@ -109,12 +112,12 @@ export async function POST(req: Request) {
     .insert({
       workspace_id: workspace.id,
       name: companyName,
-      legal_name: body.legalName?.trim() || null,
+      legal_name: legalName,
       country,
       industry,
-      employees_range: body.employees?.trim() || null,
-      website: body.website?.trim() || null,
-      governance_priorities: body.description?.trim() || null,
+      employees_range: employees,
+      website,
+      governance_priorities: description,
     })
     .select('id')
     .single();
