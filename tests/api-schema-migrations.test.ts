@@ -8,8 +8,7 @@ function createRequest(
   url: string = 'http://localhost:3000/api/schema-migrations',
   body?: unknown
 ): NextRequest {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const options: any = { method };
+  const options: Record<string, unknown> = { method };
   if (body) {
     options.body = JSON.stringify(body);
   }
