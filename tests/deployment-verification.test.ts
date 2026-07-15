@@ -313,9 +313,8 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       );
       if (dbCheck && dbCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
-        // A single connectivity failure can also warrant RETRY (transient),
-        // matching the sibling customer-journey-failure assertion below.
-        expect(['HOLD', 'RETRY', 'ROLLBACK', 'ESCALATE']).toContain(
+        // With a single failure, decision is RETRY; with multiple, it's HOLD/ROLLBACK
+        expect(['RETRY', 'HOLD', 'ROLLBACK', 'ESCALATE']).toContain(
           report!.decision
         );
       }
