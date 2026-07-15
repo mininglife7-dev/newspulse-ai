@@ -318,7 +318,7 @@ function Row({
                 ))}
               </div>
             ) : (
-              <p className="text-sm italic text-white/40">
+              <p className="text-sm italic text-white/50">
                 No saved results for this search.
               </p>
             )}

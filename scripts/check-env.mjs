@@ -10,10 +10,10 @@
  */
 
 const REQUIRED = [
-  { name: 'FIRECRAWL_API_KEY',           prefix: 'fc-' },
-  { name: 'OPENAI_API_KEY',              prefix: 'sk-' },
-  { name: 'NEXT_PUBLIC_SUPABASE_URL',    prefix: 'https://' },
-  { name: 'SUPABASE_SERVICE_ROLE_KEY',   prefix: 'sb_secret_' },
+  { name: 'FIRECRAWL_API_KEY', prefix: 'fc-' },
+  { name: 'OPENAI_API_KEY', prefix: 'sk-' },
+  { name: 'NEXT_PUBLIC_SUPABASE_URL', prefix: 'https://' },
+  { name: 'SUPABASE_SERVICE_ROLE_KEY', prefix: 'sb_secret_' },
 ];
 
 // NEXT_PUBLIC_SUPABASE_ANON_KEY is optional: all DB access is server-side
@@ -30,7 +30,11 @@ const RESET = '\x1b[0m';
 function mask(value) {
   if (!value) return '<empty>';
   if (value.length <= 8) return '*'.repeat(value.length);
-  return value.slice(0, 4) + '*'.repeat(Math.min(8, value.length - 8)) + value.slice(-4);
+  return (
+    value.slice(0, 4) +
+    '*'.repeat(Math.min(8, value.length - 8)) +
+    value.slice(-4)
+  );
 }
 
 let failures = 0;
@@ -46,12 +50,16 @@ for (const { name, prefix } of REQUIRED) {
     continue;
   }
   if (v.includes('<') || v.includes('>')) {
-    console.log(`${RED}✗${RESET} ${name.padEnd(34)} ${DIM}contains placeholder brackets: ${mask(v)}${RESET}`);
+    console.log(
+      `${RED}✗${RESET} ${name.padEnd(34)} ${DIM}contains placeholder brackets: ${mask(v)}${RESET}`
+    );
     failures++;
     continue;
   }
   if (prefix && !v.startsWith(prefix)) {
-    console.log(`${YELLOW}!${RESET} ${name.padEnd(34)} ${DIM}set, but doesn't start with "${prefix}" — got ${mask(v)}${RESET}`);
+    console.log(
+      `${YELLOW}!${RESET} ${name.padEnd(34)} ${DIM}set, but doesn't start with "${prefix}" — got ${mask(v)}${RESET}`
+    );
     // warning, not a failure — Supabase might still emit JWT-style anon keys for some projects
     continue;
   }
@@ -62,9 +70,13 @@ for (const { name, prefix } of REQUIRED) {
 for (const name of OPTIONAL) {
   const v = process.env[name];
   if (v) {
-    console.log(`${GREEN}✓${RESET} ${name.padEnd(34)} ${DIM}${mask(v)} (optional)${RESET}`);
+    console.log(
+      `${GREEN}✓${RESET} ${name.padEnd(34)} ${DIM}${mask(v)} (optional)${RESET}`
+    );
   } else {
-    console.log(`${DIM}·${RESET} ${name.padEnd(34)} ${DIM}(optional, not set)${RESET}`);
+    console.log(
+      `${DIM}·${RESET} ${name.padEnd(34)} ${DIM}(optional, not set)${RESET}`
+    );
   }
 }
 
@@ -93,7 +105,9 @@ if (supabaseUrl && !supabaseUrl.includes('<')) {
 
 console.log('');
 if (failures > 0) {
-  console.log(`${RED}✗ ${failures} problem${failures === 1 ? '' : 's'} — fix the lines above and re-run.${RESET}\n`);
+  console.log(
+    `${RED}✗ ${failures} problem${failures === 1 ? '' : 's'} — fix the lines above and re-run.${RESET}\n`
+  );
   process.exit(1);
 } else {
   console.log(`${GREEN}✓ All required env vars look good.${RESET}\n`);

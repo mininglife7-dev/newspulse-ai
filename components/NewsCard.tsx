@@ -24,7 +24,7 @@ export default function NewsCard({ article, index = 0 }: NewsCardProps) {
         {date && (
           <time
             dateTime={date}
-            className="text-white/40 tabular-nums"
+            className="text-white/50 tabular-nums"
             title={date}
           >
             {formatRelativeDate(date)}
@@ -53,7 +53,7 @@ export default function NewsCard({ article, index = 0 }: NewsCardProps) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="max-w-[80%] truncate text-white/40 transition-colors hover:text-accent-300"
+          className="max-w-[80%] truncate text-white/50 transition-colors hover:text-accent-300"
           title={url}
         >
           {url}

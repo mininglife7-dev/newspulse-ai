@@ -81,7 +81,7 @@ export default async function HistoryDetailPage({ params }: PageProps) {
             </h1>
           </div>
           <div className="rounded-lg border border-border bg-card px-4 py-2 text-right">
-            <p className="text-xs text-white/40">Run on</p>
+            <p className="text-xs text-white/50">Run on</p>
             <p className="text-sm font-medium text-white/90">
               <LocalDateTime iso={entry.created_at} />
             </p>
@@ -106,7 +106,7 @@ export default async function HistoryDetailPage({ params }: PageProps) {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center text-sm text-white/40">
+        <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center text-sm text-white/50">
           No results were saved for this search.
         </div>
       )}

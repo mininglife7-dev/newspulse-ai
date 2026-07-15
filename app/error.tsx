@@ -27,7 +27,7 @@ export default function GlobalError({
             'An unexpected error occurred while loading this page.'}
         </p>
         {error?.digest && (
-          <p className="mt-2 text-xs text-white/30">
+          <p className="mt-2 text-xs text-white/50">
             Error ID: <code>{error.digest}</code>
           </p>
         )}

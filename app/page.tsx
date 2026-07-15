@@ -125,7 +125,7 @@ export default function HomePage() {
             aria-label="Search keyword"
             maxLength={200}
             placeholder='Try "AI regulation", "SpaceX", "climate summit"…'
-            className="flex-1 bg-transparent px-2 py-3 text-base text-white placeholder-white/30 outline-none"
+            className="flex-1 bg-transparent px-2 py-3 text-base text-white placeholder-white/40 outline-none"
             disabled={loading}
             autoFocus
           />
@@ -229,7 +229,7 @@ export default function HomePage() {
               {results.length} result{results.length === 1 ? '' : 's'} for{' '}
               <span className="text-accent-300">"{lastQuery}"</span>
             </h2>
-            <span className="text-xs text-white/40">
+            <span className="text-xs text-white/50">
               Summaries by {SUMMARY_MODEL}
             </span>
           </div>

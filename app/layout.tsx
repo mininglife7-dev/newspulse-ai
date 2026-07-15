@@ -81,7 +81,7 @@ export default function RootLayout({
         <main id="main" className="mx-auto max-w-6xl px-6 py-10">
           {children}
         </main>
-        <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/40">
+        <footer className="mt-16 border-t border-border/60 py-6 text-center text-sm text-white/50">
           <p>
             Built with Next.js · Firecrawl · OpenAI · Supabase ·{' '}
             <span className="text-accent-400">NewsPulse AI</span>
