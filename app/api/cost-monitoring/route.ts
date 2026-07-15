@@ -208,7 +208,7 @@ async function monitorWorkspaceSpending(
       const supabaseStats = await estimateSupabaseSpending(supabaseUrl, supabaseKey);
 
       // Store Supabase cost snapshot
-      await supabase.from('cost_snapshots').upsert({
+      const { error: snapshotError } = await supabase.from('cost_snapshots').upsert({
         workspace_id: workspaceId,
         provider: 'supabase',
         date: today,
@@ -220,6 +220,9 @@ async function monitorWorkspaceSpending(
           api_requests_count: supabaseStats.api_requests_count,
         },
       });
+      if (snapshotError) {
+        throw new Error(`Failed to store Supabase snapshot: ${snapshotError.message}`);
+      }
 
       // Load Supabase baseline (skip anomaly detection if no historical data)
       const { data: historicalSB } = await supabase

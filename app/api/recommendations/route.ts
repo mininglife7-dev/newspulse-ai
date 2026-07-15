@@ -75,7 +75,7 @@ export async function GET(req: Request) {
     // Fetch assessment for the system
     const { data: assessment } = await supabase
       .from('risk_assessments')
-      .select('id, risk_score, responses')
+      .select('id, risk_score, assessment_data')
       .eq('ai_system_id', aiSystemId)
       .eq('status', 'finalized')
       .maybeSingle();
@@ -88,7 +88,8 @@ export async function GET(req: Request) {
     }
 
     // Generate recommendations
-    const responses = ((assessment as any).responses || []).map((r: any) => ({
+    const assessmentData = (assessment as any).assessment_data || {};
+    const responses = (assessmentData.responses || []).map((r: any) => ({
       question_id: r.question_id,
       answer: r.answer,
     }));
