@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resendVerificationEmail } from '@/lib/auth';
+import { resendVerification } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await resendVerificationEmail(email);
+    await resendVerification(email);
 
     return NextResponse.json({
       ok: true,
