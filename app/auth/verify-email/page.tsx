@@ -1,33 +1,33 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Mail, ArrowRight } from "lucide-react";
-import { resendVerification } from "@/lib/auth";
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Mail, ArrowRight } from 'lucide-react';
+import { resendVerification } from '@/lib/auth';
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
-  const emailParam = searchParams.get("email");
-  const email = emailParam || "your email";
+  const emailParam = searchParams.get('email');
+  const email = emailParam || 'your email';
 
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>(
+    'idle'
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleResend = async () => {
     if (!emailParam) return;
-    setStatus("sending");
+    setStatus('sending');
     setErrorMsg(null);
     try {
       await resendVerification(emailParam);
-      setStatus("sent");
+      setStatus('sent');
     } catch (err: any) {
       setErrorMsg(
         err?.message || "Couldn't resend right now. Please try again."
       );
-      setStatus("error");
+      setStatus('error');
     }
   };
 
@@ -43,7 +43,7 @@ export default function VerifyEmailPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-white">Verify your email</h1>
           <p className="text-slate-400">
-            We sent a verification link to{" "}
+            We sent a verification link to{' '}
             <span className="text-white font-medium">{email}</span>
           </p>
         </div>
@@ -57,28 +57,28 @@ export default function VerifyEmailPage() {
             Didn&apos;t receive the email? Check your spam folder
             {emailParam ? (
               <>
-                {" "}
-                or{" "}
+                {' '}
+                or{' '}
                 <button
                   type="button"
                   onClick={handleResend}
-                  disabled={status === "sending" || status === "sent"}
+                  disabled={status === 'sending' || status === 'sent'}
                   className="text-blue-400 underline hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {status === "sending"
-                    ? "resending…"
-                    : "resend verification link"}
+                  {status === 'sending'
+                    ? 'resending…'
+                    : 'resend verification link'}
                 </button>
               </>
             ) : null}
             .
           </p>
-          {status === "sent" && (
+          {status === 'sent' && (
             <p className="text-xs text-green-400">
               Sent — a fresh verification link is on its way to {email}.
             </p>
           )}
-          {status === "error" && errorMsg && (
+          {status === 'error' && errorMsg && (
             <p className="text-xs text-red-400">{errorMsg}</p>
           )}
         </div>

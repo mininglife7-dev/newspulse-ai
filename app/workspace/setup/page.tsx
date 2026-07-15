@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { FormEvent, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
+import { FormEvent, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function WorkspaceSetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    companyName: "",
-    legalName: "",
-    country: "",
-    industry: "",
-    employees: "",
-    website: "",
-    description: "",
+    companyName: '',
+    legalName: '',
+    country: '',
+    industry: '',
+    employees: '',
+    website: '',
+    description: '',
   });
 
   const handleChange = (
@@ -36,31 +36,31 @@ export default function WorkspaceSetupPage() {
     setLoading(true);
 
     if (!formData.companyName || !formData.country || !formData.industry) {
-      setError("Please fill in required fields");
+      setError('Please fill in required fields');
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch("/api/workspace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/workspace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
       if (res.status === 401) {
-        window.location.href = "/auth/signin?redirect=/workspace/setup";
+        window.location.href = '/auth/signin?redirect=/workspace/setup';
         return;
       }
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to save. Please try again.");
+        throw new Error(data.error || 'Failed to save. Please try again.');
       }
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = '/dashboard';
       }, 2000);
     } catch (err: any) {
-      setError(err?.message || "Failed to save. Please try again.");
+      setError(err?.message || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,9 +74,7 @@ export default function WorkspaceSetupPage() {
           <h2 className="text-2xl font-bold text-green-300 mb-2">
             Company profile created!
           </h2>
-          <p className="text-green-200 mb-4">
-            Redirecting to dashboard...
-          </p>
+          <p className="text-green-200 mb-4">Redirecting to dashboard...</p>
         </div>
       </div>
     );
@@ -276,7 +274,7 @@ export default function WorkspaceSetupPage() {
             disabled={loading}
             className="flex-1 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 py-3 font-semibold text-white disabled:opacity-50"
           >
-            {loading ? "Saving..." : "Continue"}
+            {loading ? 'Saving...' : 'Continue'}
           </button>
         </div>
       </form>

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { FormEvent, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
-import { updatePassword } from "@/lib/auth";
+import { FormEvent, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { updatePassword } from '@/lib/auth';
 
 export default function SetNewPasswordPage() {
   const router = useRouter();
@@ -12,8 +12,8 @@ export default function SetNewPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
+    password: '',
+    confirmPassword: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,11 +26,11 @@ export default function SetNewPasswordPage() {
     setError(null);
 
     if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError('Password must be at least 8 characters');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError('Passwords do not match');
       return;
     }
 
@@ -40,11 +40,11 @@ export default function SetNewPasswordPage() {
       setSuccess(true);
       // The recovery link already established a session, so land the user in
       // the app rather than making them sign in again.
-      setTimeout(() => router.push("/dashboard"), 2000);
+      setTimeout(() => router.push('/dashboard'), 2000);
     } catch (err: any) {
       setError(
         err?.message ||
-          "This reset link is invalid or has expired. Request a new one."
+          'This reset link is invalid or has expired. Request a new one.'
       );
     } finally {
       setLoading(false);
@@ -109,7 +109,9 @@ export default function SetNewPasswordPage() {
                 placeholder="••••••••"
                 disabled={loading}
               />
-              <p className="mt-1 text-xs text-slate-500">At least 8 characters</p>
+              <p className="mt-1 text-xs text-slate-500">
+                At least 8 characters
+              </p>
             </div>
 
             <div>
@@ -136,7 +138,7 @@ export default function SetNewPasswordPage() {
               disabled={loading}
               className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 py-2.5 font-semibold text-white transition hover:shadow-lg hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Updating..." : "Update password"}
+              {loading ? 'Updating...' : 'Update password'}
             </button>
           </form>
         )}

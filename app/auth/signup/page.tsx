@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { FormEvent, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
-import { signUp } from "@/lib/auth";
+import { FormEvent, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { signUp } from '@/lib/auth';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -12,11 +12,11 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
     agreeToTerms: false,
   });
 
@@ -24,7 +24,7 @@ export default function SignUpPage() {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -35,25 +35,25 @@ export default function SignUpPage() {
 
     // Validation
     if (!formData.email || !formData.password || !formData.confirmPassword) {
-      setError("Please fill in all fields");
+      setError('Please fill in all fields');
       setLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError('Passwords do not match');
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError('Password must be at least 8 characters');
       setLoading(false);
       return;
     }
 
     if (!formData.agreeToTerms) {
-      setError("You must agree to the terms");
+      setError('You must agree to the terms');
       setLoading(false);
       return;
     }
@@ -68,11 +68,11 @@ export default function SignUpPage() {
       setSuccess(true);
       setTimeout(() => {
         router.push(
-          "/auth/verify-email?email=" + encodeURIComponent(formData.email)
+          '/auth/verify-email?email=' + encodeURIComponent(formData.email)
         );
       }, 2000);
     } catch (err: any) {
-      setError(err?.message || "Failed to sign up. Please try again.");
+      setError(err?.message || 'Failed to sign up. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -89,9 +89,7 @@ export default function SignUpPage() {
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
-          <h1 className="text-3xl font-bold text-white">
-            Create your account
-          </h1>
+          <h1 className="text-3xl font-bold text-white">Create your account</h1>
           <p className="text-slate-400">
             Join companies across Europe simplifying AI governance
           </p>
@@ -226,7 +224,7 @@ export default function SignUpPage() {
                   disabled={loading}
                 />
                 <span className="text-sm text-slate-400">
-                  I agree to the{" "}
+                  I agree to the{' '}
                   <Link
                     href="/terms"
                     target="_blank"
@@ -234,8 +232,8 @@ export default function SignUpPage() {
                     className="text-blue-400 hover:text-blue-300"
                   >
                     Terms of Service
-                  </Link>{" "}
-                  and{" "}
+                  </Link>{' '}
+                  and{' '}
                   <Link
                     href="/privacy"
                     target="_blank"
@@ -252,14 +250,14 @@ export default function SignUpPage() {
                 disabled={loading}
                 className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 py-2.5 font-semibold text-white transition hover:shadow-lg hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Creating account..." : "Create account"}
+                {loading ? 'Creating account...' : 'Create account'}
               </button>
             </>
           )}
         </form>
 
         <p className="text-center text-slate-400">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <Link
             href="/auth/signin"
             className="text-blue-400 hover:text-blue-300 font-medium"

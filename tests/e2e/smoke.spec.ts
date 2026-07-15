@@ -17,7 +17,9 @@ test('home page renders landing page with governance messaging', async ({
     'AI Governance'
   );
   // Check for CTA buttons
-  await expect(page.getByRole('link', { name: /Start Free Trial/ })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /Start Free Trial/ })
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: /Learn More/ })).toBeVisible();
 });
 
@@ -86,7 +88,9 @@ test('password reset request page renders for signed-out visitors', async ({
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Reset your password'
   );
-  await expect(page.getByRole('button', { name: /Send reset link/ })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /Send reset link/ })
+  ).toBeVisible();
 });
 
 test('set-new-password page renders (reachable with a recovery session)', async ({

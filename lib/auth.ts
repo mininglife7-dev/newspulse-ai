@@ -43,7 +43,11 @@ export async function resendVerification(email: string) {
     type: 'signup',
     email,
     ...(typeof window !== 'undefined'
-      ? { options: { emailRedirectTo: `${window.location.origin}/auth/confirm` } }
+      ? {
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          },
+        }
       : {}),
   });
 

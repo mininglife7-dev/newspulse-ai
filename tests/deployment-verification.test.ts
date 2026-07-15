@@ -95,7 +95,9 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
         if (report!.decision === 'ROLLBACK') {
           expect(report!.canRollback).toBe(true);
         }
-        expect(report!.recommendedAction).toMatch(/Rollback|Escalate|Investigate/);
+        expect(report!.recommendedAction).toMatch(
+          /Rollback|Escalate|Investigate/
+        );
       }
     });
 
@@ -187,7 +189,9 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
         latency_p99_ms: 2500,
       });
 
-      const latencyCheck = report.checks.find((c) => c.type === 'latency-threshold');
+      const latencyCheck = report.checks.find(
+        (c) => c.type === 'latency-threshold'
+      );
       expect(latencyCheck).toBeDefined();
       expect(latencyCheck!.result).toBe('pass');
     });
@@ -197,7 +201,9 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
         latency_p99_ms: 6500,
       });
 
-      const latencyCheck = report.checks.find((c) => c.type === 'latency-threshold');
+      const latencyCheck = report.checks.find(
+        (c) => c.type === 'latency-threshold'
+      );
       expect(latencyCheck).toBeDefined();
       expect(latencyCheck!.result).toBe('degraded');
     });
@@ -209,7 +215,9 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
         error_rate_percent: 2,
       });
 
-      const errorCheck = report.checks.find((c) => c.type === 'error-rate-threshold');
+      const errorCheck = report.checks.find(
+        (c) => c.type === 'error-rate-threshold'
+      );
       expect(errorCheck).toBeDefined();
       expect(errorCheck!.result).toBe('pass');
     });
@@ -219,7 +227,9 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
         error_rate_percent: 12,
       });
 
-      const errorCheck = report.checks.find((c) => c.type === 'error-rate-threshold');
+      const errorCheck = report.checks.find(
+        (c) => c.type === 'error-rate-threshold'
+      );
       expect(errorCheck).toBeDefined();
       expect(errorCheck!.result).toBe('degraded');
     });
@@ -258,8 +268,13 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
 
   describe('Concurrent deployment checks', () => {
     it('should handle multiple concurrent deployments', async () => {
-      const deploymentIds = Array.from({ length: 5 }, (_, i) => `deploy-concurrent-${i}`);
-      const reports = await Promise.all(deploymentIds.map((id) => verifyDeployment(id)));
+      const deploymentIds = Array.from(
+        { length: 5 },
+        (_, i) => `deploy-concurrent-${i}`
+      );
+      const reports = await Promise.all(
+        deploymentIds.map((id) => verifyDeployment(id))
+      );
 
       expect(reports.length).toBe(5);
       reports.forEach((report) => {
@@ -274,15 +289,21 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       let report: DeploymentVerificationReport | null = null;
       for (let i = 0; i < 10; i++) {
         report = await verifyDeployment('deploy-api-fail');
-        const apiCheck = report.checks.find((c) => c.type === 'api-availability');
+        const apiCheck = report.checks.find(
+          (c) => c.type === 'api-availability'
+        );
         if (apiCheck && apiCheck.result === 'fail') break;
       }
 
-      const apiCheck = report!.checks.find((c) => c.type === 'api-availability');
+      const apiCheck = report!.checks.find(
+        (c) => c.type === 'api-availability'
+      );
       if (apiCheck && apiCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
         // With a single failure, decision is RETRY; with multiple, it's HOLD/ROLLBACK
-        expect(['RETRY', 'HOLD', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        expect(['RETRY', 'HOLD', 'ROLLBACK', 'ESCALATE']).toContain(
+          report!.decision
+        );
       }
     });
 
@@ -290,18 +311,24 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       let report: DeploymentVerificationReport | null = null;
       for (let i = 0; i < 10; i++) {
         report = await verifyDeployment('deploy-db-fail');
-        const dbCheck = report.checks.find((c) => c.type === 'database-connectivity');
+        const dbCheck = report.checks.find(
+          (c) => c.type === 'database-connectivity'
+        );
         if (dbCheck && dbCheck.result === 'fail') break;
       }
 
-      const dbCheck = report!.checks.find((c) => c.type === 'database-connectivity');
+      const dbCheck = report!.checks.find(
+        (c) => c.type === 'database-connectivity'
+      );
       if (dbCheck && dbCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
         // With a single failure among many checks the pass rate stays >=80%, so
         // the decision is RETRY; only multiple failures drop it to HOLD/ROLLBACK/
         // ESCALATE. Omitting RETRY here made this test flaky (matches the
         // api-availability case above).
-        expect(['RETRY', 'HOLD', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        expect(['RETRY', 'HOLD', 'ROLLBACK', 'ESCALATE']).toContain(
+          report!.decision
+        );
       }
     });
 
@@ -309,15 +336,21 @@ describe('Deployment Verification (DNA-GOV-012)', () => {
       let report: DeploymentVerificationReport | null = null;
       for (let i = 0; i < 10; i++) {
         report = await verifyDeployment('deploy-journey-fail');
-        const journeyCheck = report.checks.find((c) => c.type === 'customer-journey');
+        const journeyCheck = report.checks.find(
+          (c) => c.type === 'customer-journey'
+        );
         if (journeyCheck && journeyCheck.result === 'fail') break;
       }
 
-      const journeyCheck = report!.checks.find((c) => c.type === 'customer-journey');
+      const journeyCheck = report!.checks.find(
+        (c) => c.type === 'customer-journey'
+      );
       if (journeyCheck && journeyCheck.result === 'fail') {
         expect(report!.failedChecks).toBeGreaterThan(0);
         // Customer journey failure should result in hold/rollback/escalate
-        expect(['HOLD', 'RETRY', 'ROLLBACK', 'ESCALATE']).toContain(report!.decision);
+        expect(['HOLD', 'RETRY', 'ROLLBACK', 'ESCALATE']).toContain(
+          report!.decision
+        );
       }
     });
   });

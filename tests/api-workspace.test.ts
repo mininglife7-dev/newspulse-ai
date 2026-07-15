@@ -20,12 +20,19 @@ function stubClient() {
           const failed = state.failTable === table;
           const result = failed
             ? { data: null, error: { message: `boom:${table}` } }
-            : { data: { id: `${table}-id`, slug: 'acme-1234', name: row.name }, error: null };
+            : {
+                data: { id: `${table}-id`, slug: 'acme-1234', name: row.name },
+                error: null,
+              };
           return {
             select: () => ({ single: async () => result }),
             // insert without .select() resolves directly (workspace_members)
             then: (resolve: any) =>
-              resolve(failed ? { error: { message: `boom:${table}` } } : { error: null }),
+              resolve(
+                failed
+                  ? { error: { message: `boom:${table}` } }
+                  : { error: null }
+              ),
           };
         },
         upsert: async (row: any) => {
