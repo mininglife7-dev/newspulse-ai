@@ -101,7 +101,7 @@ with a timer.
   - Detects: DROP TABLE, DROP COLUMN, ADD NOT NULL without DEFAULT, TRUNCATE, DROP SCHEMA
   - Generates GitHub PR comments with remediation suggestions
 
-**Total Test Coverage:** 307/307 passing (295 existing + 28 DNS-GOV-012 - 16 duplicates accounted)
+**Total Test Coverage:** 283/283 passing (20 test files, all DNA + endpoint + integration tests)
 
 ## DNA Evolution Status: Phase 2 Complete
 
