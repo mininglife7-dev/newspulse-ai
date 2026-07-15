@@ -27,6 +27,7 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 - ✅ **Remediation Tracking** — Plan and execute compliance actions
 - 🔐 **Multi-tenant** — Workspace isolation with role-based access control (RBAC)
 - 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
+- 🧬 **Evolution engine (CEIS)** — a self-improvement subsystem that studies public AI knowledge weekly, extracts principles, and proposes evidence-based missions behind quality gates — see [`docs/CEIS.md`](./docs/CEIS.md)
 
 ---
 
@@ -71,6 +72,8 @@ npm run check-env
 
 The schema is **idempotent** — safe to run multiple times.
 
+To enable the Evolution engine, also run [`supabase/ceis-schema.sql`](./supabase/ceis-schema.sql) (five `ceis_*` tables). See [`docs/CEIS.md`](./docs/CEIS.md).
+
 ### 4. Start the dev server
 
 ```bash
@@ -103,8 +106,8 @@ Connect the repository to the Vercel project (Vercel Dashboard → Project → S
 
 ## 🔑 Where to get credentials
 
-| Service | Link | What you need |
-|---|---|---|
+| Service  | Link                 | What you need                                            |
+| -------- | -------------------- | -------------------------------------------------------- |
 | Supabase | https://supabase.com | Project URL + publishable + secret keys (Settings → API) |
 
 ---
@@ -222,6 +225,7 @@ POST /auth/confirm
 ## 🧠 What's next
 
 ### Completed (EURO AI integration)
+
 - ✅ Multi-tenant authentication and workspace setup
 - ✅ Authorization via Row-Level Security
 - ✅ Email confirmation flow
@@ -231,11 +235,13 @@ POST /auth/confirm
 - ✅ 165 tests passing (unit + E2E)
 
 ### In Progress (Founder Actions)
+
 - ⏳ Deploy Supabase schema via console (idempotent SQL)
 - ⏳ Enable Email auth in Supabase settings
 - ⏳ Verify Supabase project region (should be EU)
 
 ### Planned (Next Missions)
+
 - **German localization** — Full i18n for DE customers
 - **Accessibility audit** — WCAG 2.1 AA compliance
 - **AI system inventory interface** — Add/edit/delete AI systems in workspace
