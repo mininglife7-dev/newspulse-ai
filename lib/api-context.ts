@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 
 export interface ApiContext {
-  status: 200 | 401 | 409;
+  status: 200 | 401 | 409 | 500;
   error?: string;
   workspaceId?: string;
   companyId?: string | null;
@@ -30,10 +30,11 @@ export async function resolveContext(
 ): Promise<ApiContext> {
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
-  if (!user) return { status: 401, error: 'Authentication required' };
+  if (authError || !user) return { status: 401, error: 'Authentication required' };
 
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('workspace_members')
     .select('workspace_id')
     .eq('user_id', user.id)
@@ -41,22 +42,31 @@ export async function resolveContext(
     .limit(1)
     .maybeSingle();
 
-  if (!membership) {
+  if (membershipError || !membership) {
+    console.error('[api-context] workspace query failed:', membershipError);
     return {
-      status: 409,
-      error: 'No workspace — complete company setup first',
+      status: membershipError ? 500 : 409,
+      error: membershipError ? 'Database access failed' : 'No workspace — complete company setup first',
     };
   }
 
   const workspaceId = (membership as WorkspaceMembership).workspace_id;
 
   if (options?.includeCompany) {
-    const { data: company } = await supabase
+    const { data: company, error: companyError } = await supabase
       .from('companies')
       .select('id')
       .eq('workspace_id', workspaceId)
       .limit(1)
       .maybeSingle();
+
+    if (companyError) {
+      console.error('[api-context] company query failed:', companyError);
+      return {
+        status: 500,
+        error: 'Database access failed',
+      };
+    }
 
     return {
       status: 200,

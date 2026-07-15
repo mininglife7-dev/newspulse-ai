@@ -54,6 +54,21 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ ok: true, assessment: data });
   } else if (aiSystemId) {
+    // Verify AI system exists in this workspace
+    const { data: system } = await supabase
+      .from('ai_systems')
+      .select('id')
+      .eq('id', aiSystemId)
+      .eq('workspace_id', ctx.workspaceId)
+      .maybeSingle();
+
+    if (!system) {
+      return NextResponse.json(
+        { ok: false, error: 'AI system not found' },
+        { status: 404 }
+      );
+    }
+
     // Get assessment for a specific AI system
     const { data, error } = await supabase
       .from('risk_assessments')
@@ -128,6 +143,13 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { ok: false, error: 'AI system not found' },
       { status: 404 }
+    );
+  }
+
+  if (!system.company_id) {
+    return NextResponse.json(
+      { ok: false, error: 'System has no associated company' },
+      { status: 400 }
     );
   }
 
