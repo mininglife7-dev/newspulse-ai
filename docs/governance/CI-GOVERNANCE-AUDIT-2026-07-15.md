@@ -74,4 +74,18 @@ Residual gap: until branch protection (§5.1) is enabled, a direct push can stil
 
 ---
 
+## 8. Incident log — the pattern is recurring (evidence for §5.1 urgency)
+
+Same session, same mechanism (unprotected direct-to-`main` changes shipping a type error that fails `tsc`):
+
+| # | Commit(s) | What broke | Detection | Status |
+| --- | --- | --- | --- | --- |
+| 1 | DNA-GOV-011/014 direct pushes | `recordAlert` wrong-arity → `tsc` fail | Surfaced on a PR merge-ref, not on `main` | Fixed in PR #54 + contract guard |
+| 2 | `deployment-verification` test | Two nondeterministic assertions → CI flake | CI red on PR #54 | Fixed in PR #54 |
+| 3 | `9bb29b2`/`64aec2f` (committer `Claude`, no PR) | `new Map([])` → `Map<unknown,unknown>` not assignable to `classifyRisk`'s `Map<string,any>` → `tsc` fail | Reproduced locally on `main`'s tree; `main` CI red | Fixed in PR #54 (3-line type annotation) |
+
+Incident #3 is the clearest proof of §5.1's necessity: within an hour of this audit being written, an automated `Claude` process committed a type-broken test **straight to `main` with no PR**, turning `main` red again. Production was spared only because the error is in a test file (`next build` does not type-check tests), i.e. it was luck, not a safeguard. **Until branch protection (§5.1) requires `Lint & Build` to pass before `main` updates, this will keep happening.** The CI jobs that would catch it already exist; only the Founder can make them mandatory.
+
+---
+
 *This document records engineering facts and repo-level safeguards. It is subordinate to the two Founder constitutions in this directory.*
