@@ -16,6 +16,14 @@ import { randomUUID } from 'node:crypto';
 
 const PORT = Number(process.env.MOCK_PORT || 4545);
 
+/**
+ * In-memory workspace state for the onboarding e2e. Starts empty (fresh
+ * account) and is populated when POST /api/workspace persists a workspace +
+ * membership, so the dashboard read afterwards reflects the created workspace.
+ */
+let currentWorkspace = null; // { id, slug, name }
+let hasMembership = false;
+
 /** In-memory news_searches table */
 let rows = [];
 
@@ -137,18 +145,56 @@ const server = createServer(async (req, res) => {
     return res.end();
   }
 
-  // --- Supabase PostgREST: workspace_members (dashboard read) ---
-  // Return no membership so the dashboard renders the fresh-account state;
-  // the authenticated greeting still comes from the validated user above.
+  // --- Supabase PostgREST: EURO AI onboarding tables (server-side writes) ---
+  if (path === '/supabase/rest/v1/workspaces' && req.method === 'POST') {
+    const body = await readBody(req);
+    const input = Array.isArray(body) ? body[0] : body;
+    currentWorkspace = {
+      id: randomUUID(),
+      slug: input.slug ?? 'workspace',
+      name: input.name ?? 'Workspace',
+    };
+    const wantsObject = (req.headers.accept || '').includes('vnd.pgrst.object');
+    return json(res, 201, wantsObject ? currentWorkspace : [currentWorkspace]);
+  }
+
+  if (path === '/supabase/rest/v1/companies' && req.method === 'POST') {
+    const wantsObject = (req.headers.accept || '').includes('vnd.pgrst.object');
+    const row = { id: randomUUID() };
+    return json(res, 201, wantsObject ? row : [row]);
+  }
+
+  if (path === '/supabase/rest/v1/profiles') {
+    // upsert (POST) — the route only checks for an error.
+    return json(res, 201, []);
+  }
+
   if (path === '/supabase/rest/v1/workspace_members') {
     const wantsObject = (req.headers.accept || '').includes('vnd.pgrst.object');
+
+    if (req.method === 'POST') {
+      hasMembership = true;
+      return json(res, 201, []);
+    }
+
+    // Dashboard read: workspace_members?select=workspaces(name,slug)...
+    if (hasMembership && currentWorkspace) {
+      const membership = {
+        workspaces: { name: currentWorkspace.name, slug: currentWorkspace.slug },
+      };
+      return wantsObject
+        ? json(res, 200, membership, { 'content-range': '0-0/1' })
+        : json(res, 200, [membership], { 'content-range': '0-0/1' });
+    }
+
+    // No membership yet → fresh-account state.
     if (wantsObject) {
       return json(res, 406, {
         code: 'PGRST116',
         message: 'JSON object requested, multiple (or no) rows returned',
       });
     }
-    return json(res, 200, [], { 'content-range': '0-0/0' });
+    return json(res, 200, [], { 'content-range': '*/0' });
   }
 
   // --- Firecrawl ---

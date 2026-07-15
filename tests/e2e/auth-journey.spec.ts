@@ -43,3 +43,32 @@ test('an authenticated user visiting an auth page is sent to the dashboard', asy
   await page.goto('/auth/signin');
   await expect(page).toHaveURL(/\/dashboard$/);
 });
+
+test('full onboarding: sign in, create a workspace, see it on the dashboard', async ({
+  page,
+}) => {
+  // Sign in.
+  await page.goto('/auth/signin');
+  await page.getByLabel('Email').fill('founder@acme.example');
+  await page.getByLabel('Password').fill('correct-horse-battery');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  // Fresh account → prompted to set up the company.
+  await expect(page.getByText('Company Setup')).toBeVisible();
+
+  // Complete the workspace-setup form (the real POST /api/workspace path).
+  await page.goto('/workspace/setup');
+  await page.getByLabel(/Company name/i).fill('Müller GmbH');
+  await page.selectOption('select[name="country"]', 'DE');
+  await page.selectOption('select[name="industry"]', 'technology');
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  // On success the page redirects to the dashboard, which now reads the
+  // freshly created workspace back from the database.
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+  await expect(page.getByText('Müller GmbH')).toBeVisible();
+  await expect(
+    page.getByText('Completed — your workspace is ready')
+  ).toBeVisible();
+});
