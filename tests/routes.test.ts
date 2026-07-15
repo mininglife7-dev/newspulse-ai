@@ -13,11 +13,15 @@ describe('classifyRoute', () => {
     '/workspace/setup',
     '/assessment',
     '/inventory',
+    '/governance',
+    '/evolution',
     '/api/workspace',
     '/api/ai-systems',
     '/api/assessments',
     '/api/obligations',
     '/api/reports',
+    '/api/dashboard',
+    '/api/ceis/dashboard',
   ])('protects %s', (path) => {
     expect(classifyRoute(path)).toBe('protected');
   });
@@ -33,7 +37,6 @@ describe('classifyRoute', () => {
     '/auth/verify-email',
     '/auth/confirm',
     '/api/health',
-    '/governance',
     '/manifest.webmanifest',
   ])('leaves %s public', (path) => {
     expect(classifyRoute(path)).toBe('public');
@@ -49,6 +52,12 @@ describe('classifyRoute', () => {
   it('does not protect lookalike prefixes', () => {
     expect(classifyRoute('/dashboardish')).toBe('public');
     expect(classifyRoute('/workspaces-blog')).toBe('public');
+  });
+
+  it('leaves /api/ceis/run public so the scheduler can reach it (it is cron-token authenticated in the handler, not session-gated)', () => {
+    expect(classifyRoute('/api/ceis/run')).toBe('public');
+    // But the browser-facing CEIS dashboard endpoint is session-gated.
+    expect(classifyRoute('/api/ceis/dashboard')).toBe('protected');
   });
 });
 

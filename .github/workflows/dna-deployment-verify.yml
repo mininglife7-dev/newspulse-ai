@@ -22,7 +22,7 @@ jobs:
             exit 0
           fi
           RESPONSE=$(curl -s -w "\n%{http_code}" "$DEPLOY_URL/api/verify-deployment" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}")
+            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
           BODY=$(echo "$RESPONSE" | head -n -1)
 
