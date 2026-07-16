@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { QUALITY_GATE_NAMES } from '@/lib/ceis/dna-generator';
 import { rememberGenomeEntry } from '@/lib/ceis/genome';
 import { getProposal, updateProposal } from '@/lib/ceis/store';
@@ -48,6 +49,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Founder review actions mutate DNA state — same fail-closed admin-token
+  // gate the repo uses for its other privileged endpoints (lib/api-auth.ts).
+  if (!requireAdminToken(req)) return unauthorizedResponse();
   const { id } = await params;
   let body: PatchBody;
   try {

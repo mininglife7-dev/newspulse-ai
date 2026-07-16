@@ -25,6 +25,35 @@ import type {
  * Founder Evolution Dashboard — the Cathedral's self-improvement console.
  * Reads /api/ceis/dashboard; founder actions go through /api/ceis/proposals.
  */
+
+const TOKEN_KEY = 'euroai.admin-token';
+
+/**
+ * Privileged CEIS actions (review actions, manual cycle runs) require the
+ * ADMIN_TOKEN bearer. Prompt once and keep it in sessionStorage only — it
+ * never touches localStorage or cookies. Cancelling the prompt sends no
+ * header, which still works on open dev setups.
+ */
+function authHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  let token = window.sessionStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    token =
+      window
+        .prompt('Admin token required for this action (ADMIN_TOKEN):')
+        ?.trim() ?? null;
+    if (token) window.sessionStorage.setItem(TOKEN_KEY, token);
+  }
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** On 401 the stored token is stale/wrong — drop it so the next try re-asks. */
+function handleUnauthorized(res: Response): void {
+  if (res.status === 401 && typeof window !== 'undefined') {
+    window.sessionStorage.removeItem(TOKEN_KEY);
+  }
+}
+
 export default function EvolutionPage() {
   const [data, setData] = useState<EvolutionDashboard | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,10 +86,15 @@ export default function EvolutionPage() {
     setError(null);
     setNotice(null);
     try {
-      const res = await fetch('/api/ceis/run', { method: 'POST' });
+      const res = await fetch('/api/ceis/run', {
+        method: 'POST',
+        headers: authHeaders(),
+      });
       const json = await res.json();
-      if (!res.ok || !json.ok)
+      if (!res.ok || !json.ok) {
+        handleUnauthorized(res);
         throw new Error(json.error || `Cycle failed (${res.status})`);
+      }
       setNotice(
         `Cycle complete: ${json.stats.observations} observations → ${json.stats.principles} principles → ${json.stats.dna_generated} DNA proposals (${json.stats.rejected} rejected by the immune system).`
       );
@@ -310,12 +344,14 @@ function ProposalCard({
       try {
         const res = await fetch(`/api/ceis/proposals/${proposal.id}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify(body),
         });
         const json = await res.json();
-        if (!res.ok || !json.ok)
+        if (!res.ok || !json.ok) {
+          handleUnauthorized(res);
           throw new Error(json.error || `Failed (${res.status})`);
+        }
         onChanged();
       } catch (err: any) {
         setActionError(err?.message || 'Action failed.');

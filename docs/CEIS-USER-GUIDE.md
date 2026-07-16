@@ -14,18 +14,22 @@ Open **Evolution** in the top navigation.
   rollback, evidence links, and the nine quality gates.
 - **Gates** — on an expanded card, ✓/✗ each pending gate. **Approve** works
   only when all nine gates are passed; **Reject** asks for a reason.
+- **Admin token** — review actions and manual cycle runs are privileged: the
+  first one you trigger prompts for the `ADMIN_TOKEN` value, which is kept in
+  `sessionStorage` for the rest of the browser session. A rejected token is
+  cleared automatically so the next action re-prompts.
 - **Latest Evolution Report** — the weekly markdown digest at the bottom.
 
 ## API quick reference
 
-| Endpoint                  | Method     | Purpose                                                                                                                                                                |
-| ------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/api/ceis/run`           | POST / GET | Trigger a cycle (`?dry=1` = preview, no writes). Bearer-protected when `CEIS_CRON_SECRET` is set                                                                       |
-| `/api/ceis/dashboard`     | GET        | Aggregated dashboard payload                                                                                                                                           |
-| `/api/ceis/report`        | GET        | Latest weekly report (`?all=1` = recent 12)                                                                                                                            |
-| `/api/ceis/proposals`     | GET        | List proposals (`?status=proposed\|under-review\|approved\|rejected`)                                                                                                  |
-| `/api/ceis/proposals/:id` | GET        | Full mission document                                                                                                                                                  |
-| `/api/ceis/proposals/:id` | PATCH      | `{"action":"start-review"}` · `{"action":"gate","gate":"security-review","status":"passed","notes":"…"}` · `{"action":"approve"}` · `{"action":"reject","reason":"…"}` |
+| Endpoint                  | Method     | Purpose                                                                                                                                                                                                                              |
+| ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/api/ceis/run`           | POST / GET | Trigger a cycle (`?dry=1` = preview, no writes). Bearer: `CEIS_CRON_SECRET`, `CRON_SECRET`, or `ADMIN_TOKEN`. With none configured it is open in dev but disabled (503) in production                                                |
+| `/api/ceis/dashboard`     | GET        | Aggregated dashboard payload                                                                                                                                                                                                         |
+| `/api/ceis/report`        | GET        | Latest weekly report (`?all=1` = recent 12)                                                                                                                                                                                          |
+| `/api/ceis/proposals`     | GET        | List proposals (`?status=proposed\|under-review\|approved\|rejected`)                                                                                                                                                                |
+| `/api/ceis/proposals/:id` | GET        | Full mission document                                                                                                                                                                                                                |
+| `/api/ceis/proposals/:id` | PATCH      | Requires `Authorization: Bearer <ADMIN_TOKEN>` (fail-closed). `{"action":"start-review"}` · `{"action":"gate","gate":"security-review","status":"passed","notes":"…"}` · `{"action":"approve"}` · `{"action":"reject","reason":"…"}` |
 
 ## FAQ
 
