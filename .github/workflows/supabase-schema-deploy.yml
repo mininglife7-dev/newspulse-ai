@@ -100,50 +100,81 @@ jobs:
           if [ -z "$SUPABASE_PROJECT_ID" ]; then
             # Default: the production project ref recorded in the repo's own
             # deployment evidence (docs/infra/DEPLOYMENT_EVIDENCE_TRACKING.md:
-            # https://yrroytwfdrafvajdfkok.supabase.co). The ref is public by
+            # https://yrroytwfdrafvajdfkog.supabase.co). The ref is public by
             # design (it ships in every client bundle); a repo variable or
             # secret above always overrides this default.
-            SUPABASE_PROJECT_ID="yrroytwfdrafvajdfkok"
+            SUPABASE_PROJECT_ID="yrroytwfdrafvajdfkog"
             echo "ℹ️  Using project ref from deployment evidence docs (no variable/secret set)"
           fi
           echo "SUPABASE_PROJECT_ID=$SUPABASE_PROJECT_ID" >> $GITHUB_ENV
           echo "✅ Supabase project ID resolved: $SUPABASE_PROJECT_ID"
 
-      - name: Verify database password secret
+      - name: Verify database credentials
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL || vars.SUPABASE_DB_URL }}
         run: |
-          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "❌ SUPABASE_DB_PASSWORD not configured in GitHub secrets"
-            echo "   Required: Go to Settings → Secrets and variables → Actions"
-            echo "   Add new secret: SUPABASE_DB_PASSWORD"
-            echo "   Value: From Supabase Dashboard → Settings → Database → Password"
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "✅ SUPABASE_DB_URL secret is configured (will be used for connection)"
+          elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            echo "✅ SUPABASE_DB_PASSWORD secret is configured"
+            echo "ℹ️  Will attempt direct connection to db.${SUPABASE_PROJECT_ID}.supabase.co"
+            echo "   If this fails, set SUPABASE_DB_URL to the full connection string from"
+            echo "   Supabase Dashboard → Settings → Database → Connection string (Session pooler)"
+          else
+            echo "❌ No database credentials configured in GitHub secrets"
+            echo ""
+            echo "   Recommended: Set SUPABASE_DB_URL (full connection string)"
+            echo "     Go to Settings → Secrets and variables → Actions → New repository secret"
+            echo "     Name: SUPABASE_DB_URL"
+            echo "     Value: From Supabase Dashboard → Settings → Database → Connection string"
+            echo "            Use the 'Session pooler' URI (port 5432) for schema migrations"
+            echo ""
+            echo "   Alternative: Set SUPABASE_DB_PASSWORD (direct connection — requires IPv4 add-on)"
+            echo "     Name: SUPABASE_DB_PASSWORD"
+            echo "     Value: From Supabase Dashboard → Settings → Database → Database password"
             exit 1
           fi
-          echo "✅ Database password secret is configured"
 
       - name: Deploy schema via PostgreSQL
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL || vars.SUPABASE_DB_URL }}
         run: |
           set +e  # Don't exit on first error
 
           echo "🔧 Connecting to Supabase database..."
 
-          # Construct connection string
-          PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
-          PGPORT="5432"
-          PGUSER="postgres"
-          PGPASSWORD="${SUPABASE_DB_PASSWORD}"
-          PGDATABASE="postgres"
+          # Prefer the full connection URL (required for newer Supabase projects
+          # that use the Session Pooler instead of db.{ref}.supabase.co).
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "ℹ️  Using SUPABASE_DB_URL for connection"
+            PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+          else
+            # Fall back to direct connection (requires IPv4 add-on on newer projects)
+            echo "ℹ️  Constructing direct connection from project ID and password"
+            PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+            PGPORT="5432"
+            PGUSER="postgres"
+            PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            PGDATABASE="postgres"
+            export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
+            PSQL_CONN_ARGS=()
+          fi
 
-          export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
-
-          # Test connection first
+          # Test connection first (capture stderr for diagnostics)
           echo "Testing connection..."
-          if ! psql -c "SELECT version();" >/dev/null 2>&1; then
+          CONN_ERR=$( psql "${PSQL_CONN_ARGS[@]}" -c "SELECT version();" 2>&1 >/dev/null )
+          if [ $? -ne 0 ]; then
             echo "❌ Failed to connect to Supabase database"
-            echo "   Check: SUPABASE_DB_PASSWORD is correct"
+            echo "   Error: $CONN_ERR"
+            echo ""
+            echo "   Common causes:"
+            echo "   1. SUPABASE_DB_URL / SUPABASE_DB_PASSWORD is incorrect"
+            echo "   2. db.${SUPABASE_PROJECT_ID}.supabase.co does not resolve (newer Supabase"
+            echo "      projects require the Session Pooler URL — set SUPABASE_DB_URL to the"
+            echo "      connection string from Supabase Dashboard → Settings → Database)"
+            echo "   3. Network / firewall blocking the connection from GitHub Actions"
             exit 1
           fi
 
@@ -151,34 +182,36 @@ jobs:
           echo ""
           echo "📋 Deploying schema..."
 
+          # Use 0/1 bash exit-code convention: 0 = still good, 1 = failure occurred
+          deployment_failed=0
+
           # Run schema deployment
-          if psql -f supabase/schema.sql > /tmp/deploy.log 2>&1; then
+          if psql "${PSQL_CONN_ARGS[@]}" -f supabase/schema.sql > /tmp/deploy.log 2>&1; then
             echo "✅ Schema deployed successfully"
-            deployment_success=1
           else
             echo "❌ Schema deployment failed"
             cat /tmp/deploy.log | tail -20
-            deployment_success=0
+            deployment_failed=1
           fi
 
           # Deploy the CEIS schema (DNA-300) — idempotent, five ceis_* tables
-          if [ $deployment_success -eq 1 ]; then
+          if [ $deployment_failed -eq 0 ]; then
             echo ""
             echo "🧬 Deploying CEIS schema..."
-            if psql -f supabase/ceis-schema.sql > /tmp/ceis-deploy.log 2>&1; then
+            if psql "${PSQL_CONN_ARGS[@]}" -f supabase/ceis-schema.sql > /tmp/ceis-deploy.log 2>&1; then
               echo "✅ CEIS schema deployed successfully"
             else
               echo "❌ CEIS schema deployment failed"
               cat /tmp/ceis-deploy.log | tail -20
-              deployment_success=0
+              deployment_failed=1
             fi
           fi
 
           # Run verification
           echo ""
           echo "🔍 Verifying deployment..."
-          if [ $deployment_success -eq 1 ]; then
-            if psql -f supabase/POST_DEPLOYMENT_VERIFICATION.sql > /tmp/verify.log 2>&1; then
+          if [ $deployment_failed -eq 0 ]; then
+            if psql "${PSQL_CONN_ARGS[@]}" -f supabase/POST_DEPLOYMENT_VERIFICATION.sql > /tmp/verify.log 2>&1; then
               echo "✅ Deployment verification passed"
               cat /tmp/verify.log | grep "✓" || true
             else
@@ -186,33 +219,38 @@ jobs:
               cat /tmp/verify.log | tail -20
             fi
             # CEIS (DNA-300) verification — hard-fails on missing tables or RLS
-            if psql -v ON_ERROR_STOP=1 -f supabase/CEIS_POST_DEPLOYMENT_VERIFICATION.sql > /tmp/ceis-verify.log 2>&1; then
+            if psql "${PSQL_CONN_ARGS[@]}" -v ON_ERROR_STOP=1 -f supabase/CEIS_POST_DEPLOYMENT_VERIFICATION.sql > /tmp/ceis-verify.log 2>&1; then
               echo "✅ CEIS verification passed (5 tables, RLS enabled)"
             else
               echo "❌ CEIS verification failed"
               cat /tmp/ceis-verify.log | tail -20
-              deployment_success=0
+              deployment_failed=1
             fi
           fi
 
-          exit $deployment_success
+          exit $deployment_failed
 
       - name: Run security tests
         if: success()
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL || vars.SUPABASE_DB_URL }}
         run: |
           echo "🔐 Running security tests..."
 
-          PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
-          PGPORT="5432"
-          PGUSER="postgres"
-          PGPASSWORD="${SUPABASE_DB_PASSWORD}"
-          PGDATABASE="postgres"
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+          else
+            PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+            PGPORT="5432"
+            PGUSER="postgres"
+            PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            PGDATABASE="postgres"
+            export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
+            PSQL_CONN_ARGS=()
+          fi
 
-          export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
-
-          if psql -f supabase/SECURITY_TESTS.sql > /tmp/security.log 2>&1; then
+          if psql "${PSQL_CONN_ARGS[@]}" -f supabase/SECURITY_TESTS.sql > /tmp/security.log 2>&1; then
             echo "✅ Security tests passed"
             cat /tmp/security.log | grep -E "✓|✅|PASS" || true
           else
@@ -240,8 +278,10 @@ jobs:
             echo "❌ SUPABASE SCHEMA DEPLOYMENT FAILED"
             echo ""
             echo "Troubleshooting:"
-            echo "1. Check GitHub secrets: SUPABASE_PROJECT_ID, SUPABASE_DB_PASSWORD"
-            echo "2. Verify credentials are correct and project exists"
-            echo "3. Review workflow logs for detailed errors"
+            echo "1. If connection failed: set SUPABASE_DB_URL secret to the full Session Pooler"
+            echo "   connection string from Supabase Dashboard → Settings → Database"
+            echo "2. If using SUPABASE_DB_PASSWORD: verify value and check that"
+            echo "   db.{project-ref}.supabase.co resolves (requires Supabase IPv4 add-on)"
+            echo "3. Review workflow logs for the exact error from psql"
             exit 1
           fi
