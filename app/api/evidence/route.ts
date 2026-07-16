@@ -10,8 +10,12 @@ interface CreateEvidenceRequest {
   aiSystemId?: string;
 }
 
-async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function resolveContext(
+  supabase: Awaited<ReturnType<typeof createRouteClient>>
+) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { status: 401 as const, error: 'Authentication required' };
 
   const { data: membership } = await supabase
@@ -150,97 +154,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, evidence: data });
-}
-
-/** PUT /api/evidence/:id — update evidence status or details */
-export async function PUT(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const evidenceId = pathname.split('/').pop();
-
-  if (!evidenceId) {
-    return NextResponse.json(
-      { ok: false, error: 'Evidence ID required' },
-      { status: 400 }
-    );
-  }
-
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid JSON' },
-      { status: 400 }
-    );
-  }
-
-  const supabase = await createRouteClient();
-  const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
-  }
-
-  const updateData: any = {};
-  if (body.title) updateData.title = body.title.trim();
-  if (body.description) updateData.description = body.description.trim();
-  if (body.status) updateData.status = body.status;
-
-  const { data, error } = await supabase
-    .from('evidence')
-    .update(updateData)
-    .eq('id', evidenceId)
-    .eq('workspace_id', ctx.workspaceId)
-    .select('*')
-    .single();
-
-  if (error) {
-    console.error('[api/evidence] PUT failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to update evidence' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ ok: true, evidence: data });
-}
-
-/** DELETE /api/evidence/:id — delete evidence record */
-export async function DELETE(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const evidenceId = pathname.split('/').pop();
-
-  if (!evidenceId) {
-    return NextResponse.json(
-      { ok: false, error: 'Evidence ID required' },
-      { status: 400 }
-    );
-  }
-
-  const supabase = await createRouteClient();
-  const ctx = await resolveContext(supabase);
-  if (ctx.status !== 200) {
-    return NextResponse.json(
-      { ok: false, error: ctx.error },
-      { status: ctx.status }
-    );
-  }
-
-  const { error } = await supabase
-    .from('evidence')
-    .delete()
-    .eq('id', evidenceId)
-    .eq('workspace_id', ctx.workspaceId);
-
-  if (error) {
-    console.error('[api/evidence] DELETE failed:', error);
-    return NextResponse.json(
-      { ok: false, error: 'Failed to delete evidence' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ ok: true });
 }
