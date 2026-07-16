@@ -77,4 +77,40 @@ describe('internal endpoints reject anonymous requests', () => {
     const res = await GET(authed('http://localhost:3000/api/knowledge'));
     expect(res.status).toBe(200);
   });
+
+  it('GET /api/deployment-canary -> 401', async () => {
+    const { GET } = await import('@/app/api/deployment-canary/route');
+    const res = await GET(anon('http://localhost:3000/api/deployment-canary'));
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /api/feature-flags -> 401', async () => {
+    const { GET } = await import('@/app/api/feature-flags/route');
+    const res = await GET(anon('http://localhost:3000/api/feature-flags'));
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /api/autonomous-remediation -> 401', async () => {
+    const { GET } = await import('@/app/api/autonomous-remediation/route');
+    const res = await GET(
+      anon('http://localhost:3000/api/autonomous-remediation')
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('POST /api/autonomous-remediation -> 401', async () => {
+    const { POST } = await import('@/app/api/autonomous-remediation/route');
+    const res = await POST(
+      anon('http://localhost:3000/api/autonomous-remediation', 'POST', {})
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /api/deployment-verification -> 401', async () => {
+    const { GET } = await import('@/app/api/deployment-verification/route');
+    const res = await GET(
+      anon('http://localhost:3000/api/deployment-verification')
+    );
+    expect(res.status).toBe(401);
+  });
 });

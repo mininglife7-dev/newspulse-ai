@@ -1,3 +1,4 @@
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextResponse } from 'next/server';
 import {
   planCanaryDeployment,
@@ -28,6 +29,9 @@ export const dynamic = 'force-dynamic';
  * Returns canary deployment status and health information.
  */
 export async function GET(req: Request) {
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   try {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action') || 'health';
@@ -211,13 +215,14 @@ export async function POST(req: Request) {
 
     // Plan a new canary deployment
     if (command === 'plan') {
-      const { name, commit, version, description, stages } = body as unknown as {
-        name: string;
-        commit: string;
-        version: string;
-        description: string;
-        stages: CanaryStageConfig[];
-      };
+      const { name, commit, version, description, stages } =
+        body as unknown as {
+          name: string;
+          commit: string;
+          version: string;
+          description: string;
+          stages: CanaryStageConfig[];
+        };
 
       if (!name || !commit || !version || !stages || !Array.isArray(stages)) {
         return NextResponse.json(
@@ -230,7 +235,13 @@ export async function POST(req: Request) {
         );
       }
 
-      const deployment = planCanaryDeployment(name, commit, version, description || '', stages);
+      const deployment = planCanaryDeployment(
+        name,
+        commit,
+        version,
+        description || '',
+        stages
+      );
 
       return NextResponse.json(
         {
@@ -302,7 +313,10 @@ export async function POST(req: Request) {
       try {
         const snapshot = recordCanaryMetrics(
           deploymentId,
-          metrics as Record<'error_rate' | 'latency' | 'availability' | 'memory' | 'cpu', number>
+          metrics as Record<
+            'error_rate' | 'latency' | 'availability' | 'memory' | 'cpu',
+            number
+          >
         );
 
         return NextResponse.json(
@@ -415,7 +429,10 @@ export async function POST(req: Request) {
 
     // Abort deployment
     if (command === 'abort') {
-      const { deploymentId, reason } = body as unknown as { deploymentId: string; reason: string };
+      const { deploymentId, reason } = body as unknown as {
+        deploymentId: string;
+        reason: string;
+      };
 
       if (!deploymentId) {
         return NextResponse.json(
@@ -428,7 +445,10 @@ export async function POST(req: Request) {
       }
 
       try {
-        const aborted = abortCanaryDeployment(deploymentId, reason || 'Manual abort');
+        const aborted = abortCanaryDeployment(
+          deploymentId,
+          reason || 'Manual abort'
+        );
 
         if (!aborted) {
           return NextResponse.json(
@@ -466,7 +486,14 @@ export async function POST(req: Request) {
       {
         ok: false,
         error: 'Unknown command',
-        supportedCommands: ['plan', 'start', 'record-metrics', 'increment', 'complete', 'abort'],
+        supportedCommands: [
+          'plan',
+          'start',
+          'record-metrics',
+          'increment',
+          'complete',
+          'abort',
+        ],
       },
       { status: 400 }
     );

@@ -1,9 +1,13 @@
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   verifyDeployment,
   DeploymentVerificationReport,
 } from '@/lib/deployment-verification';
-import { RollbackDecisionEngine, executeRollback } from '@/lib/rollback-decision-engine';
+import {
+  RollbackDecisionEngine,
+  executeRollback,
+} from '@/lib/rollback-decision-engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,13 +15,22 @@ export const dynamic = 'force-dynamic';
 const rollbackEngine = new RollbackDecisionEngine();
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
-    const deploymentId = request.nextUrl.searchParams.get('deploymentId') || 'current';
+    const deploymentId =
+      request.nextUrl.searchParams.get('deploymentId') || 'current';
 
     // Verify current deployment
     const report = await verifyDeployment(deploymentId);
 
-    const statusCode = report.overallHealth === 'healthy' ? 200 : report.overallHealth === 'degraded' ? 206 : 503;
+    const statusCode =
+      report.overallHealth === 'healthy'
+        ? 200
+        : report.overallHealth === 'degraded'
+          ? 206
+          : 503;
 
     return NextResponse.json(
       {
@@ -45,7 +58,10 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error during deployment verification';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error during deployment verification';
     return NextResponse.json(
       {
         status: 'error',
@@ -57,14 +73,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body = await request.json();
-    const {
-      deploymentId,
-      previousDeploymentId,
-      metrics,
-      decidedDecision,
-    } = body;
+    const { deploymentId, previousDeploymentId, metrics, decidedDecision } =
+      body;
 
     if (!deploymentId) {
       return NextResponse.json(
@@ -97,11 +112,21 @@ export async function POST(request: NextRequest) {
       rollbackEngine.recordRollbackAttempt(deploymentId, attempt);
     }
 
-    const statusCode = report.overallHealth === 'healthy' ? 200 : report.overallHealth === 'degraded' ? 206 : 503;
+    const statusCode =
+      report.overallHealth === 'healthy'
+        ? 200
+        : report.overallHealth === 'degraded'
+          ? 206
+          : 503;
 
     return NextResponse.json(
       {
-        status: statusCode === 200 ? 'healthy' : statusCode === 206 ? 'degraded' : 'critical',
+        status:
+          statusCode === 200
+            ? 'healthy'
+            : statusCode === 206
+              ? 'degraded'
+              : 'critical',
         deploymentId,
         verificationReport: {
           passedChecks: report.passedChecks,
@@ -130,7 +155,10 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error processing deployment verification';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error processing deployment verification';
     return NextResponse.json(
       {
         status: 'error',
@@ -142,6 +170,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body = await request.json();
     const {
@@ -155,7 +186,10 @@ export async function PUT(request: NextRequest) {
 
     if (!deploymentId || !previousDeploymentId) {
       return NextResponse.json(
-        { error: 'Invalid request: deploymentId and previousDeploymentId required' },
+        {
+          error:
+            'Invalid request: deploymentId and previousDeploymentId required',
+        },
         { status: 400 }
       );
     }
@@ -209,7 +243,10 @@ export async function PUT(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error executing rollback';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error executing rollback';
     return NextResponse.json(
       {
         status: 'error',

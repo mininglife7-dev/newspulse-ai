@@ -1,3 +1,4 @@
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   AutonomousRemediationEngine,
@@ -7,6 +8,9 @@ import {
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const engine = new AutonomousRemediationEngine();
 
@@ -46,7 +50,10 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error during remediation cycle';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error during remediation cycle';
     return NextResponse.json(
       {
         status: 'error',
@@ -58,6 +65,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body = await request.json();
     const { metrics } = body;
@@ -97,7 +107,10 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error processing remediation request';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error processing remediation request';
     return NextResponse.json(
       {
         status: 'error',
