@@ -24,7 +24,7 @@ owns a living document here or points to the canonical existing location.
 | **Deployments**                                                                     | [`docs/DEPLOYMENT_RUNBOOK.md`](../DEPLOYMENT_RUNBOOK.md), [`docs/infra/`](../infra/) evidence tracking; deployment outcome records go to `deployments/` here as they occur                                         |
 | **Audits**                                                                          | [`docs/infra/`](../infra/) (infrastructure/launch), [`docs/integrity/`](../integrity/) (product integrity)                                                                                                         |
 | **Architecture**                                                                    | [`docs/API.md`](../API.md), `supabase/schema.sql`, [`docs/CEIS.md`](../CEIS.md)                                                                                                                                    |
-| **Operations**                                                                      | [`docs/DEPLOYMENT_RUNBOOK.md`](../DEPLOYMENT_RUNBOOK.md), launch-day docs at repo root, [`docs/governance/FOUNDER_BRIEF.md`](../governance/FOUNDER_BRIEF.md) (rolling status — the single source of current state) |
+| **Operations**                                                                      | [`docs/DEPLOYMENT_RUNBOOK.md`](../DEPLOYMENT_RUNBOOK.md), [`PROJECT_STATE.md`](PROJECT_STATE.md) (rolling status — the single source of current state) |
 
 ## Operating rules
 

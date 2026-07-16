@@ -6,5 +6,4 @@
   scores must cite measurable evidence.
 
 The baseline report lives in [`../executive/`](../executive/). Current
-platform status remains canonical in
-[`docs/governance/FOUNDER_BRIEF.md`](../../governance/FOUNDER_BRIEF.md).
+platform status remains canonical in [`../PROJECT_STATE.md`](../PROJECT_STATE.md).

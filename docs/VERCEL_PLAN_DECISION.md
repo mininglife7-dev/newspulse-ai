@@ -100,4 +100,4 @@ When you're ready to upgrade:
 2. ⏳ Decide: Hobby (free) or Pro ($20/month)?
 3. ⏳ If Pro: restore crons and re-push
 
-Questions? See the [Founder Brief](./governance/FOUNDER_BRIEF.md) for full status.
+Questions? See [`PROJECT_STATE.md`](./governor/PROJECT_STATE.md) for current status.

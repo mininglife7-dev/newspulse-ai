@@ -1,7 +1,7 @@
 # 📒 Decision Register
 
 Autonomous engineering decisions made under the
-[Governor Autonomous Decision Constitution](./GOVERNOR_CONSTITUTION.md).
+[Governor Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Newest entries first. Every non-trivial decision gets an entry — routine approvals
 are never requested from the Founder.
 
