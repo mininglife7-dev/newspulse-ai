@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -28,6 +29,7 @@ export async function GET() {
       if (error) {
         dbOk = false;
         dbStatus = `error: ${error.message}`;
+        logger.error('Database health check failed', 'DB_HEALTH_CHECK_ERROR', error);
       } else {
         dbOk = true;
         dbStatus = 'ok';
@@ -35,6 +37,7 @@ export async function GET() {
     } catch (err) {
       dbOk = false;
       dbStatus = err instanceof Error ? `error: ${err.message}` : 'unknown error';
+      logger.error('Database health check exception', 'DB_HEALTH_CHECK_EXCEPTION', err);
     }
   }
 

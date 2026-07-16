@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'down';
@@ -22,6 +23,9 @@ async function checkComponent(
     ]);
 
     const responseTime = performance.now() - start;
+    if (!result.ok) {
+      logger.error(`Health check component degraded: ${name}`, 'HEALTH_CHECK_DEGRADED', result);
+    }
     return {
       status: result.ok ? 'healthy' : 'degraded',
       component: name,
@@ -31,6 +35,7 @@ async function checkComponent(
     };
   } catch (error) {
     const responseTime = performance.now() - start;
+    logger.error(`Health check component down: ${name}`, 'HEALTH_CHECK_DOWN', error);
     return {
       status: 'down',
       component: name,

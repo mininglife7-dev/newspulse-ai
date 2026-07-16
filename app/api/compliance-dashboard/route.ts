@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -175,8 +176,8 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json({ ok: true, summary });
-  } catch (err: any) {
-    console.error('[api/compliance-dashboard] GET failed:', err);
+  } catch (err) {
+    logger.error('Failed to fetch compliance dashboard', 'COMPLIANCE_DASHBOARD_ERROR', err);
     return NextResponse.json(
       { ok: false, error: 'Failed to fetch compliance dashboard' },
       { status: 500 }

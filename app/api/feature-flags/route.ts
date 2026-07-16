@@ -1,5 +1,6 @@
 import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import {
   registerFlag,
   getFlag,
@@ -161,7 +162,7 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[feature-flags] GET failed:', message);
+    logger.error('Feature flag retrieval failed', 'FEATURE_FLAG_RETRIEVAL_ERROR', error);
 
     return NextResponse.json(
       {
@@ -444,7 +445,7 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[feature-flags] POST failed:', message);
+    logger.error('Feature flag operation failed', 'FEATURE_FLAG_OPERATION_ERROR', error);
 
     return NextResponse.json(
       {

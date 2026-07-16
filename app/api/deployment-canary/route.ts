@@ -1,5 +1,6 @@
 import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import {
   planCanaryDeployment,
   getCanaryDeployment,
@@ -179,7 +180,7 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[deployment-canary] GET failed:', message);
+    logger.error('Canary deployment retrieval failed', 'CANARY_DEPLOYMENT_RETRIEVAL_ERROR', error);
 
     return NextResponse.json(
       {
@@ -499,7 +500,7 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[deployment-canary] POST failed:', message);
+    logger.error('Canary deployment operation failed', 'CANARY_DEPLOYMENT_OPERATION_ERROR', error);
 
     return NextResponse.json(
       {

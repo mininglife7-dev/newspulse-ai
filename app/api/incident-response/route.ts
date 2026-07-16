@@ -1,5 +1,6 @@
 import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { IncidentDetector } from '@/lib/incident-detection';
 import { IncidentOrchestrator } from '@/lib/incident-orchestration';
 import { verifyDeployment } from '@/lib/deployment-verification';
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
           report = await verifyDeployment(deploymentId);
         } catch (e) {
           // If verification fails, continue with orchestration anyway
-          console.error('Failed to verify deployment:', e);
+          logger.error('Failed to verify deployment', 'DEPLOYMENT_VERIFICATION_ERROR', e);
         }
       }
 
