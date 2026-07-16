@@ -1,0 +1,67 @@
+name: 'DNA-GOV-008: Dependency Security Scanning'
+
+on:
+  schedule:
+    # Run every day at 09:00 UTC (12:00 CET / 13:00 CEST)
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions tab
+
+jobs:
+  security-scan:
+    name: Scan Dependencies for Vulnerabilities
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security scan
+        id: scan
+        run: |
+          HTTP_CODE=$(curl -s "${{ secrets.DEPLOYMENT_URL || 'https://newspulse-ai.vercel.app' }}/api/security-scan" \
+            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" \
+            -H "User-Agent: GitHub-Actions/dna-gov-008" \
+            -w "%{http_code}" \
+            -o security-scan-result.json)
+          echo "HTTP Status: $HTTP_CODE"
+          cat security-scan-result.json || true
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Security scan endpoint returned $HTTP_CODE (not 200) — scan did NOT run."
+            echo "   Most likely ADMIN_TOKEN is unset or wrong in the repo/Vercel secrets."
+            exit 1
+          fi
+
+      - name: Check for critical vulnerabilities
+        if: always()
+        run: |
+          STATUS=$(jq -r '.status' security-scan-result.json 2>/dev/null || echo 'unknown')
+
+          if [ "$STATUS" = "critical-found" ]; then
+            echo "❌ CRITICAL vulnerabilities detected!"
+            jq '.alert.message' security-scan-result.json
+            exit 1
+          elif [ "$STATUS" = "vulnerabilities-found" ]; then
+            echo "⚠️  High-severity vulnerabilities detected"
+            jq '.alert.message' security-scan-result.json
+            # Don't fail, just warn
+          else
+            echo "✅ Security scan complete: $STATUS"
+            jq '.summary' security-scan-result.json
+          fi
+
+      - name: Report results to Governor
+        if: always()
+        run: |
+          echo "Security Scan Results"
+          echo "===================="
+          jq '.' security-scan-result.json 2>/dev/null || echo "Could not parse scan results"

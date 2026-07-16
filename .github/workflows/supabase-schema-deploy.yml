@@ -1,0 +1,243 @@
+name: Deploy Supabase Schema
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+  # Uncomment to auto-deploy on push to main:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'supabase/schema.sql'
+  #     - '.github/workflows/supabase-schema-deploy.yml'
+
+jobs:
+  preflight-check:
+    name: Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate schema file exists
+        run: |
+          if [ ! -f "supabase/schema.sql" ]; then
+            echo "❌ supabase/schema.sql not found"
+            exit 1
+          fi
+          echo "✅ Schema file found ($(wc -l < supabase/schema.sql) lines)"
+          if [ ! -f "supabase/ceis-schema.sql" ]; then
+            echo "❌ supabase/ceis-schema.sql not found"
+            exit 1
+          fi
+          echo "✅ CEIS schema file found ($(wc -l < supabase/ceis-schema.sql) lines)"
+
+      - name: Validate schema syntax (basic)
+        run: |
+          # Check for CREATE/DROP IF EXISTS (idempotency)
+          create_count=$(grep -c "CREATE.*IF NOT EXISTS" supabase/schema.sql || true)
+          drop_count=$(grep -c "DROP.*IF EXISTS" supabase/schema.sql || true)
+          echo "✅ Found $create_count CREATE IF NOT EXISTS statements"
+          echo "✅ Found $drop_count DROP IF EXISTS statements"
+
+      - name: Verify verification scripts exist
+        run: |
+          if [ ! -f "supabase/POST_DEPLOYMENT_VERIFICATION.sql" ]; then
+            echo "⚠️  POST_DEPLOYMENT_VERIFICATION.sql not found"
+          fi
+          if [ ! -f "supabase/SECURITY_TESTS.sql" ]; then
+            echo "⚠️  SECURITY_TESTS.sql not found"
+          fi
+          echo "✅ Preflight checks passed"
+
+  deploy-schema:
+    name: Deploy Supabase Schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: preflight-check
+    # Secrets/variables saved under a GitHub Environment (not repo-level)
+    # are only visible to jobs that declare that environment.
+    environment: ${{ inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          psql --version
+
+      - name: Extract and verify Supabase project ID
+        env:
+          # CI has no .env.local — resolve from repo variables/secrets first.
+          VAR_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          SECRET_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          VAR_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SECRET_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        run: |
+          SUPABASE_PROJECT_ID="${VAR_PROJECT_ID:-$SECRET_PROJECT_ID}"
+          if [ -z "$SUPABASE_PROJECT_ID" ]; then
+            SUPABASE_URL="${VAR_SUPABASE_URL:-$SECRET_SUPABASE_URL}"
+            # Local-run fallback only; .env.local is never present in CI checkouts.
+            if [ -z "$SUPABASE_URL" ] && [ -f .env.local ]; then
+              SUPABASE_URL=$(grep "NEXT_PUBLIC_SUPABASE_URL=" .env.local | cut -d'=' -f2 || echo "")
+            fi
+            if [ -z "$SUPABASE_URL" ]; then
+              echo "❌ Cannot resolve the Supabase project."
+              echo "   Set ONE of these in Settings → Secrets and variables → Actions:"
+              echo "   - variable or secret SUPABASE_PROJECT_ID (the <ref> in https://<ref>.supabase.co)"
+              echo "   - variable or secret NEXT_PUBLIC_SUPABASE_URL"
+              exit 1
+            fi
+            SUPABASE_PROJECT_ID=$(echo "$SUPABASE_URL" | sed 's/https:\/\/\([^.]*\).*/\1/')
+          fi
+          echo "SUPABASE_PROJECT_ID=$SUPABASE_PROJECT_ID" >> $GITHUB_ENV
+          echo "✅ Supabase project ID resolved: $SUPABASE_PROJECT_ID"
+
+      - name: Verify database password secret
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "❌ SUPABASE_DB_PASSWORD not configured in GitHub secrets"
+            echo "   Required: Go to Settings → Secrets and variables → Actions"
+            echo "   Add new secret: SUPABASE_DB_PASSWORD"
+            echo "   Value: From Supabase Dashboard → Settings → Database → Password"
+            exit 1
+          fi
+          echo "✅ Database password secret is configured"
+
+      - name: Deploy schema via PostgreSQL
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          set +e  # Don't exit on first error
+
+          echo "🔧 Connecting to Supabase database..."
+
+          # Construct connection string
+          PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+          PGPORT="5432"
+          PGUSER="postgres"
+          PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+          PGDATABASE="postgres"
+
+          export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
+
+          # Test connection first
+          echo "Testing connection..."
+          if ! psql -c "SELECT version();" >/dev/null 2>&1; then
+            echo "❌ Failed to connect to Supabase database"
+            echo "   Check: SUPABASE_DB_PASSWORD is correct"
+            exit 1
+          fi
+
+          echo "✅ Connected to Supabase"
+          echo ""
+          echo "📋 Deploying schema..."
+
+          # Run schema deployment
+          if psql -f supabase/schema.sql > /tmp/deploy.log 2>&1; then
+            echo "✅ Schema deployed successfully"
+            deployment_success=1
+          else
+            echo "❌ Schema deployment failed"
+            cat /tmp/deploy.log | tail -20
+            deployment_success=0
+          fi
+
+          # Deploy the CEIS schema (DNA-300) — idempotent, five ceis_* tables
+          if [ $deployment_success -eq 1 ]; then
+            echo ""
+            echo "🧬 Deploying CEIS schema..."
+            if psql -f supabase/ceis-schema.sql > /tmp/ceis-deploy.log 2>&1; then
+              echo "✅ CEIS schema deployed successfully"
+            else
+              echo "❌ CEIS schema deployment failed"
+              cat /tmp/ceis-deploy.log | tail -20
+              deployment_success=0
+            fi
+          fi
+
+          # Run verification
+          echo ""
+          echo "🔍 Verifying deployment..."
+          if [ $deployment_success -eq 1 ]; then
+            if psql -f supabase/POST_DEPLOYMENT_VERIFICATION.sql > /tmp/verify.log 2>&1; then
+              echo "✅ Deployment verification passed"
+              cat /tmp/verify.log | grep "✓" || true
+            else
+              echo "⚠️  Verification script had errors"
+              cat /tmp/verify.log | tail -20
+            fi
+            # CEIS (DNA-300) verification — hard-fails on missing tables or RLS
+            if psql -v ON_ERROR_STOP=1 -f supabase/CEIS_POST_DEPLOYMENT_VERIFICATION.sql > /tmp/ceis-verify.log 2>&1; then
+              echo "✅ CEIS verification passed (5 tables, RLS enabled)"
+            else
+              echo "❌ CEIS verification failed"
+              cat /tmp/ceis-verify.log | tail -20
+              deployment_success=0
+            fi
+          fi
+
+          exit $deployment_success
+
+      - name: Run security tests
+        if: success()
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "🔐 Running security tests..."
+
+          PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+          PGPORT="5432"
+          PGUSER="postgres"
+          PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+          PGDATABASE="postgres"
+
+          export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
+
+          if psql -f supabase/SECURITY_TESTS.sql > /tmp/security.log 2>&1; then
+            echo "✅ Security tests passed"
+            cat /tmp/security.log | grep -E "✓|✅|PASS" || true
+          else
+            echo "⚠️  Some security tests failed (review for policy enforcement)"
+            cat /tmp/security.log | tail -30
+          fi
+
+  post-deployment:
+    name: Post-Deployment Status
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [preflight-check, deploy-schema]
+
+    steps:
+      - name: Report deployment status
+        run: |
+          if [ "${{ needs.deploy-schema.result }}" == "success" ]; then
+            echo "✅ SUPABASE SCHEMA DEPLOYMENT SUCCESSFUL"
+            echo ""
+            echo "Next steps:"
+            echo "1. Trigger Vercel redeployment (or push to main)"
+            echo "2. Configure production environment variables in Vercel"
+            echo "3. Verify application at https://newspulse-ai-production.vercel.app"
+          else
+            echo "❌ SUPABASE SCHEMA DEPLOYMENT FAILED"
+            echo ""
+            echo "Troubleshooting:"
+            echo "1. Check GitHub secrets: SUPABASE_PROJECT_ID, SUPABASE_DB_PASSWORD"
+            echo "2. Verify credentials are correct and project exists"
+            echo "3. Review workflow logs for detailed errors"
+            exit 1
+          fi

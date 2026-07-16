@@ -9,22 +9,6 @@ interface WorkspaceSummary {
   slug: string;
 }
 
-interface AssessmentSummary {
-  total: number;
-  completed: number;
-  low: number;
-  medium: number;
-  high: number;
-  unacceptable: number;
-}
-
-interface ObligationSummary {
-  total: number;
-  completed: number;
-  inProgress: number;
-  critical: number;
-}
-
 /**
  * Onboarding dashboard. Server component: reads the signed-in user's real
  * workspace state so progress reflects the database, not wishful defaults.
@@ -33,23 +17,10 @@ export default async function DashboardPage() {
   let workspace: WorkspaceSummary | null = null;
   let firstName: string | null = null;
   let systemCount = 0;
-  let assessmentSummary: AssessmentSummary = {
-    total: 0,
-    completed: 0,
-    low: 0,
-    medium: 0,
-    high: 0,
-    unacceptable: 0,
-  };
-  let obligationSummary: ObligationSummary = {
-    total: 0,
-    completed: 0,
-    inProgress: 0,
-    critical: 0,
-  };
+  let assessedCount = 0;
 
   try {
-    const supabase = createRouteClient();
+    const supabase = await createRouteClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -74,35 +45,13 @@ export default async function DashboardPage() {
           .eq('workspace_id', membership.workspace_id);
         systemCount = count ?? 0;
 
-        // Load assessment statistics
-        const { data: assessments } = await supabase
+        const { data: assessed } = await supabase
           .from('risk_assessments')
-          .select('id, risk_level, status')
+          .select('ai_system_id')
           .eq('workspace_id', membership.workspace_id);
-
-        if (assessments) {
-          assessmentSummary.total = systemCount;
-          assessmentSummary.completed = assessments.filter((a) => a.status === 'finalized').length;
-          assessmentSummary.low = assessments.filter((a) => a.risk_level === 'low').length;
-          assessmentSummary.medium = assessments.filter((a) => a.risk_level === 'medium').length;
-          assessmentSummary.high = assessments.filter((a) => a.risk_level === 'high').length;
-          assessmentSummary.unacceptable = assessments.filter((a) => a.risk_level === 'unacceptable').length;
-        }
-
-        // Load obligation statistics (only if assessments exist)
-        if (assessmentSummary.completed > 0) {
-          const { data: obligations } = await supabase
-            .from('obligations')
-            .select('id, status, priority')
-            .eq('workspace_id', membership.workspace_id);
-
-          if (obligations) {
-            obligationSummary.total = obligations.length;
-            obligationSummary.completed = obligations.filter((o) => o.status === 'completed').length;
-            obligationSummary.inProgress = obligations.filter((o) => o.status === 'in_progress').length;
-            obligationSummary.critical = obligations.filter((o) => o.priority === 'critical').length;
-          }
-        }
+        assessedCount = new Set(
+          (assessed ?? []).map((a: any) => a.ai_system_id)
+        ).size;
       }
     }
   } catch (err) {
@@ -127,15 +76,41 @@ export default async function DashboardPage() {
       </div>
 
       {hasWorkspace && (
-        <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/50 px-5 py-4">
-          <Building2 className="h-5 w-5 text-cyan-400" />
-          <div>
-            <div className="font-semibold text-white">{workspace!.name}</div>
-            <div className="text-xs text-slate-500">
-              Workspace · {workspace!.slug}
+        <>
+          <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/50 px-5 py-4">
+            <Building2 className="h-5 w-5 text-cyan-400" />
+            <div>
+              <div className="font-semibold text-white">{workspace!.name}</div>
+              <div className="text-xs text-slate-500">
+                Workspace · {workspace!.slug}
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <Link
+              href="/compliance"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-emerald-500/40"
+            >
+              View Compliance Status
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/obligations"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-purple-500/40"
+            >
+              Manage Obligations
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/team"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg hover:shadow-indigo-500/40"
+            >
+              Manage Team
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </>
       )}
 
       {/* Onboarding Progress */}
@@ -229,52 +204,22 @@ export default async function DashboardPage() {
             className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
           >
             <div className="flex items-start justify-between">
-              <div className="flex-1">
+              <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${assessmentSummary.completed > 0 ? 'bg-green-600' : 'bg-blue-500 text-sm font-bold'}`}
-                  >
-                    {assessmentSummary.completed > 0 ? <CheckCircle className="h-5 w-5" /> : '3'}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
+                    3
                   </div>
                   <h3 className="font-semibold text-white">Risk Assessment</h3>
                 </div>
                 <p className="text-sm text-slate-400">
-                  {assessmentSummary.completed > 0
-                    ? `${assessmentSummary.completed}/${assessmentSummary.total} assessed`
-                    : 'Evaluate EU AI Act compliance'}
+                  Classify risks for your AI systems
                 </p>
-                {assessmentSummary.completed > 0 && (
-                  <div className="mt-3 flex gap-2 text-xs">
-                    {assessmentSummary.unacceptable > 0 && (
-                      <span className="px-2 py-1 rounded bg-red-950/50 text-red-300">
-                        🔴 {assessmentSummary.unacceptable} unacceptable
-                      </span>
-                    )}
-                    {assessmentSummary.high > 0 && (
-                      <span className="px-2 py-1 rounded bg-orange-950/50 text-orange-300">
-                        🟠 {assessmentSummary.high} high
-                      </span>
-                    )}
-                    {assessmentSummary.medium > 0 && (
-                      <span className="px-2 py-1 rounded bg-amber-950/50 text-amber-300">
-                        🟡 {assessmentSummary.medium} medium
-                      </span>
-                    )}
-                    {assessmentSummary.low > 0 && (
-                      <span className="px-2 py-1 rounded bg-green-950/50 text-green-300">
-                        🟢 {assessmentSummary.low} low
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
-              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400 flex-shrink-0" />
+              <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400" />
             </div>
           </Link>
         ) : (
-          <div
-            className={`rounded-lg border p-6 ${hasWorkspace && systemCount === 0 ? 'opacity-50 border-slate-800 bg-slate-900/50' : 'opacity-50 border-slate-800 bg-slate-900/50'}`}
-          >
+          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 opacity-50">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -284,55 +229,13 @@ export default async function DashboardPage() {
                   <h3 className="font-semibold text-white">Risk Assessment</h3>
                 </div>
                 <p className="text-sm text-slate-400">
-                  {hasWorkspace && systemCount === 0
-                    ? 'Add AI systems first to begin assessments'
-                    : 'Set up your company to get started'}
+                  Classify risks — unlocked after adding AI systems
                 </p>
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Compliance Obligations (shown after assessments exist) */}
-      {hasWorkspace && assessmentSummary.completed > 0 && obligationSummary.total > 0 && (
-        <Link
-          href="/obligations"
-          className="group rounded-lg border border-slate-800 bg-slate-900/50 p-6 transition hover:border-blue-500/50 hover:bg-slate-900/80"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">
-                  4
-                </div>
-                <h3 className="font-semibold text-white">Compliance Obligations</h3>
-              </div>
-              <p className="text-sm text-slate-400 mb-3">
-                {obligationSummary.total} obligation{obligationSummary.total === 1 ? '' : 's'} from risk assessments
-              </p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                {obligationSummary.completed > 0 && (
-                  <span className="px-2 py-1 rounded bg-green-950/50 text-green-300">
-                    ✓ {obligationSummary.completed} completed
-                  </span>
-                )}
-                {obligationSummary.inProgress > 0 && (
-                  <span className="px-2 py-1 rounded bg-blue-950/50 text-blue-300">
-                    ⏱ {obligationSummary.inProgress} in progress
-                  </span>
-                )}
-                {obligationSummary.critical > 0 && (
-                  <span className="px-2 py-1 rounded bg-red-950/50 text-red-300">
-                    ⚠️ {obligationSummary.critical} critical
-                  </span>
-                )}
-              </div>
-            </div>
-            <ArrowRight className="h-5 w-5 text-slate-600 transition group-hover:text-blue-400 flex-shrink-0 mt-1" />
-          </div>
-        </Link>
-      )}
 
       {/* Next steps */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-8">
@@ -356,11 +259,15 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <CheckCircle className="h-6 w-6 text-slate-600 flex-shrink-0" />
+            <CheckCircle
+              className={`h-6 w-6 flex-shrink-0 ${hasWorkspace ? 'text-cyan-400' : 'text-slate-600'}`}
+            />
             <div>
               <h3 className="font-medium text-white">Add team members</h3>
               <p className="text-sm text-slate-400">
-                Invite colleagues to collaborate — coming soon
+                {hasWorkspace
+                  ? 'Invite colleagues to collaborate'
+                  : 'Unlocked after company setup'}
               </p>
             </div>
           </div>
@@ -381,16 +288,14 @@ export default async function DashboardPage() {
           </div>
           <div className="flex gap-4">
             <CheckCircle
-              className={`h-6 w-6 flex-shrink-0 ${assessmentSummary.completed > 0 ? 'text-green-400' : systemCount > 0 ? 'text-cyan-400' : 'text-slate-600'}`}
+              className={`h-6 w-6 flex-shrink-0 ${systemCount > 0 ? 'text-cyan-400' : 'text-slate-600'}`}
             />
             <div>
-              <h3 className="font-medium text-white">Risk assessments</h3>
+              <h3 className="font-medium text-white">Start risk assessment</h3>
               <p className="text-sm text-slate-400">
-                {assessmentSummary.completed > 0
-                  ? `${assessmentSummary.completed}/${systemCount} evaluated for EU AI Act`
-                  : systemCount > 0
-                    ? 'Evaluate your AI systems for compliance'
-                    : 'Available after adding AI systems'}
+                {systemCount > 0
+                  ? 'Classify risks for compliance'
+                  : 'Unlocked after adding AI systems'}
               </p>
             </div>
           </div>

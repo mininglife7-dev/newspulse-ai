@@ -14,32 +14,20 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-38BDF8?logo=tailwindcss&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o--mini-412991?logo=openai&logoColor=white)
-![Firecrawl](https://img.shields.io/badge/Firecrawl-%2Fv1%2Fsearch-FF7043)
 ![Vercel](https://img.shields.io/badge/Vercel-deploy-000?logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
-## 📸 Screenshots
-
-> Captured automatically by the E2E smoke suite (`npm run test:e2e`) against mocked APIs.
-
-| Search | History |
-|---|---|
-| ![Search UI](./public/screenshots/search.png) | ![History table](./public/screenshots/history.png) |
-
----
-
 ## ✨ Features
 
-- 🔎 **Live web search** — Firecrawl `/v1/search` pulls fresh news for any keyword
-- 🧠 **AI summaries** — every article is summarized in parallel by OpenAI `gpt-4o-mini`
-- 💾 **Saved history** — every query and its results land in Supabase
-- 📋 **History table** — keyword, date, count, expand-to-view, re-run, clear all
-- 🎨 **Dark, polished UI** — Tailwind + lucide-react + Inter font
-- ⚡ **API-first** — `POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`
+- 🎯 **AI Inventory** — Catalog all AI systems, vendors, and use cases in your organization
+- 📊 **Risk Analysis** — Classify risks and understand EU AI Act obligations
+- 📋 **Evidence Collection** — Gather and organize compliance documentation
+- ✅ **Remediation Tracking** — Plan and execute compliance actions
+- 🔐 **Multi-tenant** — Workspace isolation with role-based access control (RBAC)
 - 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
+- 🧬 **Evolution engine (CEIS)** — a self-improvement subsystem that studies public AI knowledge weekly, extracts principles, and proposes evidence-based missions behind quality gates — see [`docs/CEIS.md`](./docs/CEIS.md)
 
 ---
 
@@ -48,7 +36,7 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/<your-username>/newspulse-ai.git
+git clone https://github.com/mininglife7-dev/newspulse-ai.git
 cd newspulse-ai
 npm install
 ```
@@ -59,11 +47,9 @@ npm install
 cp .env.example .env.local
 ```
 
-Fill in `.env.local` with your keys:
+Fill in `.env.local` with your Supabase keys:
 
 ```bash
-FIRECRAWL_API_KEY=fc-...
-OPENAI_API_KEY=sk-proj-...
 NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
@@ -75,9 +61,18 @@ Verify with the included script (it never prints full secrets):
 npm run check-env
 ```
 
-### 3. Run the Supabase schema
+### 3. Deploy the Supabase schema
 
-Open the **Supabase SQL editor** and paste the contents of [`supabase/schema.sql`](./supabase/schema.sql). It creates the `news_searches` table, indexes, and RLS policies.
+**⚠️ Critical step — do this before any users sign up:**
+
+1. Open the **Supabase SQL editor** for your project
+2. Copy the entire contents of [`supabase/schema.sql`](./supabase/schema.sql)
+3. Paste into the SQL editor and run
+4. Enable "Email" auth in **Project Settings → Auth** (required for signup)
+
+The schema is **idempotent** — safe to run multiple times.
+
+To enable the Evolution engine, also run [`supabase/ceis-schema.sql`](./supabase/ceis-schema.sql) (five `ceis_*` tables). See [`docs/CEIS.md`](./docs/CEIS.md) for the full architecture and the founder/CTO/user guides in [`docs/`](./docs).
 
 ### 4. Start the dev server
 
@@ -97,8 +92,6 @@ Open [http://localhost:3000](http://localhost:3000).
 npm install -g vercel
 vercel login
 vercel link            # creates a project named "newspulse-ai"
-vercel env add FIRECRAWL_API_KEY            # repeat for each var
-vercel env add OPENAI_API_KEY
 vercel env add NEXT_PUBLIC_SUPABASE_URL
 vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
 vercel env add SUPABASE_SERVICE_ROLE_KEY
@@ -111,12 +104,10 @@ Connect the repository to the Vercel project (Vercel Dashboard → Project → S
 
 ---
 
-## 🔑 Where to get API keys
+## 🔑 Where to get credentials
 
 | Service | Link | What you need |
 |---|---|---|
-| Firecrawl | https://firecrawl.dev | API key (Dashboard → API Keys) |
-| OpenAI | https://platform.openai.com/api-keys | API key |
 | Supabase | https://supabase.com | Project URL + publishable + secret keys (Settings → API) |
 
 ---
@@ -127,40 +118,42 @@ Connect the repository to the Vercel project (Vercel Dashboard → Project → S
 newspulse-ai/
 ├── app/
 │   ├── api/
-│   │   ├── health/route.ts          # GET /api/health
-│   │   ├── history/[id]/route.ts    # GET /api/history/:id, DELETE /api/history/:id
-│   │   ├── history/route.ts         # GET /api/history, DELETE /api/history (clear all)
-│   │   └── search/route.ts          # POST /api/search
-│   ├── history/[id]/page.tsx        # /history/:id — single saved search
-│   ├── history/page.tsx             # /history — table of all saved searches
-│   ├── error.tsx                    # global error boundary
-│   ├── globals.css                  # Tailwind + dark-theme tokens
-│   ├── icon.tsx                     # programmatic favicon
-│   ├── layout.tsx                   # root layout, header, footer, Inter font
-│   ├── loading.tsx                  # route-transition skeleton
-│   ├── not-found.tsx                # 404
-│   ├── opengraph-image.tsx          # 1200×630 social card
-│   ├── page.tsx                     # / — search UI
-│   ├── robots.ts                    # robots.txt
-│   └── sitemap.ts                   # sitemap.xml
+│   │   ├── health/route.ts                 # GET /api/health
+│   │   ├── workspace/route.ts              # POST /api/workspace (create workspace + member)
+│   │   ├── dashboard/route.ts              # GET /api/dashboard (readiness state)
+│   │   ├── blocking-conditions/route.ts    # GET /api/blocking-conditions (GitHub Actions, etc.)
+│   │   ├── production-health/route.ts      # GET /api/production-health (monitoring)
+│   │   └── ...other health endpoints
+│   ├── auth/
+│   │   ├── signin/page.tsx                 # /auth/signin
+│   │   ├── signup/page.tsx                 # /auth/signup
+│   │   ├── confirm/route.ts                # /auth/confirm (email verification)
+│   │   └── verify-email/page.tsx           # /auth/verify-email
+│   ├── governance/page.tsx                 # /governance dashboard
+│   ├── workspace/setup/page.tsx            # /workspace/setup (onboarding)
+│   ├── dashboard/page.tsx                  # /dashboard (requires auth)
+│   ├── error.tsx                           # global error boundary
+│   ├── globals.css                         # Tailwind + dark-theme
+│   ├── layout.tsx                          # root layout, header, footer
+│   ├── page.tsx                            # / — landing page
+│   ├── privacy/page.tsx                    # /privacy (DRAFT — review with counsel)
+│   └── terms/page.tsx                      # /terms (DRAFT — review with counsel)
 ├── components/
-│   ├── EmptyState.tsx
-│   └── NewsCard.tsx
+│   ├── ui/                                 # headless UI components
+│   └── dashboard/                          # governance dashboard components
 ├── lib/
-│   ├── firecrawl.ts                 # Firecrawl /v1/search wrapper
-│   ├── openai.ts                    # gpt-4o-mini summarizer
-│   ├── supabase.ts                  # supabase client + helpers
-│   └── utils.ts                     # cn() + date formatters
+│   ├── supabase.ts                         # Supabase client + helpers
+│   └── utils.ts                            # shared utilities
 ├── scripts/
-│   └── check-env.mjs                # verify env vars without leaking values
+│   └── check-env.mjs                       # verify env vars without leaking values
 ├── supabase/
-│   └── schema.sql                   # news_searches table + RLS
+│   └── schema.sql                          # complete database schema + RLS policies
 ├── types/
-│   └── index.ts                     # shared API types
+│   └── index.ts                            # shared types
 ├── .github/workflows/
-│   └── ci.yml                       # lint, type-check, build
+│   └── ci.yml                              # lint, type-check, build, test
 ├── .env.example
-├── middleware.ts                    # rate limit on /api/search
+├── middleware.ts                           # auth session validation
 ├── next.config.js
 ├── package.json
 ├── tailwind.config.js
@@ -179,50 +172,92 @@ npm run start         # production server
 npm run lint          # next lint
 npm run type-check    # tsc --noEmit
 npm test              # unit/integration tests (vitest)
-npm run test:e2e      # Playwright smoke suite against mocked APIs (no secrets needed)
+npm run test:watch    # unit tests, watch mode
+npm run test:e2e      # Playwright smoke suite
 npm run format        # prettier write
 npm run check-env     # verify .env.local without printing secrets
 ```
 
-### Optional hardening
-
-Set `ADMIN_TOKEN` in the deployment environment to protect the destructive
-endpoints (`DELETE /api/history`, `DELETE /api/history/:id`). When set, the
-UI prompts for the token before clearing history. When unset, behavior is
-unchanged (open deletes — fine for a private demo, not for a public URL).
-
 ---
 
-## 🧠 How it works
+## 🏆 Architecture
 
 ```
-User keyword
+User signup (email)
     │
     ▼
-POST /api/search
-    │
-    ├─► 1. Firecrawl /v1/search       (web search + scrape, limit 10)
-    │       returns title, url, markdown content per article
-    │
-    ├─► 2. OpenAI gpt-4o-mini         (parallel summarization, concurrency=4)
-    │       returns 2–3 sentence neutral summary per article
-    │
-    ├─► 3. Supabase `news_searches`   (insert: keyword, results JSONB, count)
-    │
-    └─► returns { title, url, source, date, description, ai_summary }[]
+POST /auth/confirm
+    ├─► Supabase verifyOtp() (email confirmation)
+    ├─► create auth session (JWT cookie)
+    └─► redirect to /workspace/setup
+        │
+        ▼
+      POST /api/workspace
+        ├─► validate input (workspace slug, company name, etc.)
+        ├─► create workspace + company + profile in Supabase (RLS enforced)
+        └─► redirect to /dashboard
+            │
+            ▼
+          [Access AI Inventory, Risk Analysis, Evidence Collection]
 ```
 
 ---
 
-## 🏆 Hackathon Notes
+## 🔐 Security
 
-- **Project:** NewsPulse AI
-- **Tagline:** *AI-Powered News Intelligence — Search. Scrape. Summarize.*
-- **Differentiator:** Real-time AI summaries + persistent search history
-- **Built for:** Outskill AI Generalist Accelerator Hackathon
+- **Authentication:** Supabase Auth (email + magic links)
+- **Authorization:** Row-Level Security (RLS) policies enforce multi-tenant isolation
+- **Session management:** JWT cookies via @supabase/ssr middleware
+- **Input validation:** TypeScript + Zod schema validation
+- **Rate limiting:** Middleware on sensitive endpoints (opt-in `ADMIN_TOKEN` for destructive routes)
+
+---
+
+## 📋 Legal (⚠️ DRAFT)
+
+- `/privacy` — Privacy policy (DRAFT, pending legal review)
+- `/terms` — Terms of Service (DRAFT, pending legal review)
+
+**Do not share publicly until reviewed with counsel.** These are templates; your legal obligations depend on your specific deployment and data practices.
+
+---
+
+## 🧠 What's next
+
+### Completed (EURO AI integration)
+- ✅ Multi-tenant authentication and workspace setup
+- ✅ Authorization via Row-Level Security
+- ✅ Email confirmation flow
+- ✅ Governance dashboard scaffolding
+- ✅ Blocking conditions detector (DNA-GOV-001)
+- ✅ Production monitoring API (DNA-GOV-002)
+- ✅ 165 tests passing (unit + E2E)
+
+### In Progress (Founder Actions)
+- ⏳ Deploy Supabase schema via console (idempotent SQL)
+- ⏳ Enable Email auth in Supabase settings
+- ⏳ Verify Supabase project region (should be EU)
+
+### Planned (Next Missions)
+- **German localization** — Full i18n for DE customers
+- **Accessibility audit** — WCAG 2.1 AA compliance
+- **AI system inventory interface** — Add/edit/delete AI systems in workspace
+- **Risk assessment workflow** — Interactive EU AI Act questionnaire
+- **Evidence collection** — File upload and annotation
+- **Compliance reporting** — Executive dashboard with findings
 
 ---
 
 ## 📄 License
 
 MIT — see [`LICENSE`](./LICENSE).
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome. See the [Governance Constitutions](./docs/governance/) for decision authority and technical standards.
+
+---
+
+**Questions?** Open an issue or check [`docs/`](./docs/) for technical details, architecture decisions, and risk registers.

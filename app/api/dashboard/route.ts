@@ -10,6 +10,7 @@
 
 import { buildDashboardState } from '@/lib/governance-state';
 import type { DashboardResponse } from '@/types/governance';
+import { logger } from '@/lib/logger';
 
 export async function GET(): Promise<Response> {
   try {
@@ -25,11 +26,11 @@ export async function GET(): Promise<Response> {
       },
     });
   } catch (err: any) {
-    console.error('Failed to build dashboard state:', err);
+    logger.error('Dashboard state build failed', 'DASHBOARD_BUILD_ERROR', err);
 
     const response: DashboardResponse = {
       ok: false,
-      error: err?.message || 'Failed to build dashboard state',
+      error: 'Failed to build dashboard state',
       timestamp: new Date().toISOString(),
     };
 

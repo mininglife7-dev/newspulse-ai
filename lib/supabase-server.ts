@@ -8,7 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * Runs with the signed-in user's session, so Row Level Security applies —
  * use this (not the admin client) for anything acting on a user's behalf.
  */
-export function createRouteClient(): SupabaseClient {
+export async function createRouteClient(): Promise<SupabaseClient> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
@@ -16,7 +16,7 @@ export function createRouteClient(): SupabaseClient {
       'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY'
     );
   }
-  const store = cookies();
+  const store = await cookies();
   return createServerClient(url, key, {
     cookies: {
       getAll() {

@@ -1,4 +1,4 @@
-# NewsPulse AI — Working Agreement
+# EURO AI — Working Agreement
 
 ## Governor persona (required)
 
@@ -29,15 +29,17 @@ Additional standing documents in [docs/governance/](docs/governance/) — consis
 
 ## Project overview
 
-NewsPulse AI is a Next.js 14 (App Router, TypeScript) news-intelligence app: Firecrawl `/v1/search` fetches articles for a keyword, OpenAI `gpt-4o-mini` summarizes each in parallel, and Supabase stores search history.
+EURO AI is a multi-tenant **AI-governance platform** for EU AI Act compliance (Next.js 16 App Router, React 19, TypeScript, Supabase). Organizations sign up, create a workspace, inventory their AI systems, run risk assessments, and track obligations, evidence, remediation, and team access. (The repo name `newspulse-ai` is historical — the NewsPulse news-search product was replaced by the EURO AI pivot, PR #22/#38.)
 
-- `app/` — pages and API routes (`POST /api/search`, `GET/DELETE /api/history`, `GET /api/health`)
-- `components/` — React UI (Tailwind CSS, lucide-react)
-- `lib/` — clients for Firecrawl, OpenAI, Supabase, plus utils
-- `supabase/` — database schema
-- `scripts/check-env.mjs` — validates required env vars (see `.env.example`)
+- `app/` — customer surfaces (`/auth/*`, `/workspace`, `/inventory`, `/assessment`, `/compliance`, `/obligations`, `/evidence`, `/team`, `/privacy`, `/terms`) and the internal ops dashboard (`/governance`)
+- `app/api/` — REST routes for the above plus monitoring/ops endpoints (`/api/health`, `/api/alerts`, `/api/security-scan`, …)
+- `lib/` — domain logic (risk assessment, obligations, auth) and the DNA-GOV monitoring/governance modules
+- `supabase/` — database schema with Row Level Security for tenant isolation; auth is cookie-based Supabase SSR sessions
+- `docs/governance/` — constitutions, Decision Register, Founder Brief, DNA registry
 
 ## Conventions
 
-- TypeScript strict; Prettier + ESLint are configured — match existing style.
-- Deploys to Vercel via the Vercel GitHub integration: pushes to `main` go to production, PRs get preview deployments. CI (`.github/workflows/ci.yml`) runs lint, type-check, and build.
+- TypeScript strict; Prettier + ESLint configured — match existing style.
+- Verify before claiming done: `npm run lint`, `npm run type-check`, `npm test` (vitest), `npm run test:e2e` (Playwright), `npm run test:smoke`, `npm run build`.
+- Deploys to Vercel via the Vercel GitHub integration: pushes to `main` go to production, PRs get preview deployments. CI (`.github/workflows/ci.yml`) runs lint, type-check, tests, and build.
+- **Check before you build:** many parallel sessions work this repo. Before implementing a feature or module, search `main` for an existing implementation (routes in `app/api/`, modules in `lib/`) and check open PRs — duplicate parallel implementations have been the #1 source of wasted work and closed PRs (see Decision Register DR-0006).

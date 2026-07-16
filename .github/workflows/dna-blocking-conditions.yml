@@ -1,0 +1,35 @@
+name: DNA-GOV-001 - Blocking Conditions Monitor
+
+on:
+  schedule:
+    # Every 12 hours. Was */30 (48 runs/day), part of the DNA-monitor cron load
+    # that exhausted the repo's GitHub Actions minutes and took CI down. Run
+    # on-demand any time via workflow_dispatch.
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-blocking-conditions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check for blocking conditions
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL secret not configured - monitor skipped (will activate once set)"
+            exit 0
+          fi
+          RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" "$DEPLOY_URL/api/blocking-conditions")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Blocking conditions check failed with status $HTTP_CODE"
+            echo "$BODY"
+            exit 1
+          fi
+
+          echo "✅ Blocking conditions check passed"
+          echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"

@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { FormEvent, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
+import { FormEvent, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function WorkspaceSetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    companyName: "",
-    legalName: "",
-    country: "",
-    industry: "",
-    employees: "",
-    website: "",
-    description: "",
+    companyName: '',
+    legalName: '',
+    country: '',
+    industry: '',
+    employees: '',
+    website: '',
+    description: '',
   });
 
   const handleChange = (
@@ -36,31 +36,31 @@ export default function WorkspaceSetupPage() {
     setLoading(true);
 
     if (!formData.companyName || !formData.country || !formData.industry) {
-      setError("Please fill in required fields");
+      setError('Please fill in required fields');
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch("/api/workspace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/workspace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
       if (res.status === 401) {
-        window.location.href = "/auth/signin?redirect=/workspace/setup";
+        window.location.href = '/auth/signin?redirect=/workspace/setup';
         return;
       }
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to save. Please try again.");
+        throw new Error(data.error || 'Failed to save. Please try again.');
       }
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = '/dashboard';
       }, 2000);
     } catch (err: any) {
-      setError(err?.message || "Failed to save. Please try again.");
+      setError(err?.message || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,9 +74,7 @@ export default function WorkspaceSetupPage() {
           <h2 className="text-2xl font-bold text-green-300 mb-2">
             Company profile created!
           </h2>
-          <p className="text-green-200 mb-4">
-            Redirecting to dashboard...
-          </p>
+          <p className="text-green-200 mb-4">Redirecting to dashboard...</p>
         </div>
       </div>
     );
@@ -200,6 +198,50 @@ export default function WorkspaceSetupPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="employees"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
+                Company size (optional)
+              </label>
+              <select
+                id="employees"
+                name="employees"
+                value={formData.employees}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                disabled={loading}
+              >
+                <option value="">Select company size</option>
+                <option value="1-10">1–10 employees</option>
+                <option value="11-50">11–50 employees</option>
+                <option value="51-200">51–200 employees</option>
+                <option value="201-500">201–500 employees</option>
+                <option value="500+">500+ employees</option>
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="website"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
+                Website (optional)
+              </label>
+              <input
+                id="website"
+                type="url"
+                name="website"
+                value={formData.website}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                placeholder="https://acme.example"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
           <div>
             <label
               htmlFor="description"
@@ -232,7 +274,7 @@ export default function WorkspaceSetupPage() {
             disabled={loading}
             className="flex-1 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 py-3 font-semibold text-white disabled:opacity-50"
           >
-            {loading ? "Saving..." : "Continue"}
+            {loading ? 'Saving...' : 'Continue'}
           </button>
         </div>
       </form>

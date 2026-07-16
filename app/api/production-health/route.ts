@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { runProductionHealthChecks } from '@/lib/production-monitoring';
+import { getRequiredAppUrl } from '@/lib/config-validation';
+import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,19 +21,53 @@ export const dynamic = 'force-dynamic';
  * Success criteria: All health checks must pass; latency must be <2s average.
  */
 export async function GET(req: Request) {
-  const protocol = req.headers.get('x-forwarded-proto') || 'https';
-  const host = req.headers.get('x-forwarded-host') || 'localhost:3000';
-  const baseUrl = `${protocol}://${host}`;
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
+  let baseUrl: string;
+
+  try {
+    baseUrl = getRequiredAppUrl();
+  } catch (e) {
+    // Fallback: Try to construct from headers
+    const protocol = req.headers.get('x-forwarded-proto') || 'https';
+    const host = req.headers.get('x-forwarded-host');
+
+    if (!host) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Configuration error',
+          message: 'NEXT_PUBLIC_APP_URL environment variable must be set',
+        },
+        { status: 503 }
+      );
+    }
+
+    baseUrl = `${protocol}://${host}`;
+  }
 
   try {
     const report = await runProductionHealthChecks(baseUrl);
 
-    // Log alerts for Founder visibility
+    // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.critical > 0) {
-        console.error('[production-health] CRITICAL alerts:\n', report.alerts.join('\n'));
+        logger.error(
+          'Production health: critical issues detected',
+          'HEALTH_CRITICAL',
+          {
+            critical: report.summary.critical,
+            degraded: report.summary.degraded,
+          }
+        );
       } else {
-        console.warn('[production-health] Warnings:\n', report.alerts.join('\n'));
+        logger.warn('Production health: warnings detected', 'HEALTH_WARNING', {
+          degraded: report.summary.degraded,
+        });
       }
     }
 
@@ -52,14 +89,12 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[production-health] Monitoring failed:', message);
+    logger.error('Production health check failed', 'HEALTH_CHECK_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Production health check failed',
-        message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

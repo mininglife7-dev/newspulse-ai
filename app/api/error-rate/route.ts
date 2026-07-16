@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getErrorRateReport, formatErrorAlert } from '@/lib/error-rate-monitor';
+import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,23 +20,43 @@ export const dynamic = 'force-dynamic';
  * Success criteria: <5% error rate per endpoint, <10 errors in 5min window.
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   try {
     const report = getErrorRateReport();
     const alert = formatErrorAlert(report);
 
-    // Log alerts for Founder visibility
+    // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.criticalEndpoints.length > 0) {
-        console.error('[error-rate] CRITICAL alerts:\n', report.alerts.join('\n'));
+        logger.error(
+          'Error rate: critical endpoints detected',
+          'ERROR_RATE_CRITICAL',
+          {
+            criticalEndpoints: report.summary.criticalEndpoints.length,
+            totalErrors: report.summary.totalErrors,
+          }
+        );
       } else {
-        console.warn('[error-rate] Warnings:\n', report.alerts.join('\n'));
+        logger.warn('Error rate: warnings detected', 'ERROR_RATE_WARNING', {
+          alertCount: report.alerts.length,
+        });
       }
     }
 
     return NextResponse.json(
       {
         ok: report.ok,
-        status: report.summary.criticalEndpoints.length > 0 ? 'critical' : report.alerts.length > 0 ? 'warning' : 'healthy',
+        status:
+          report.summary.criticalEndpoints.length > 0
+            ? 'critical'
+            : report.alerts.length > 0
+              ? 'warning'
+              : 'healthy',
         timestamp: report.timestamp,
         alert,
         summary: report.summary,
@@ -46,19 +68,19 @@ export async function GET(req: Request) {
         headers: {
           'X-Error-Status': report.ok ? 'healthy' : 'degraded',
           'X-Total-Errors': String(report.summary.totalErrors),
-          'X-Critical-Endpoints': String(report.summary.criticalEndpoints.length),
+          'X-Critical-Endpoints': String(
+            report.summary.criticalEndpoints.length
+          ),
         },
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[error-rate] Report failed:', message);
+    logger.error('Error rate report failed', 'ERROR_RATE_REPORT_ERROR', error);
 
     return NextResponse.json(
       {
         ok: false,
         error: 'Error rate report failed',
-        message,
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

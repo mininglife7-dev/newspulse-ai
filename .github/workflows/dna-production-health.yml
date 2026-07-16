@@ -1,0 +1,43 @@
+name: DNA-GOV-002 - Production Health Monitor
+
+on:
+  schedule:
+    # Every 6 hours. Was */5 (288 runs/day) which — across all DNA monitors —
+    # exhausted the repo's GitHub Actions minutes and took CI down entirely.
+    # Run on-demand any time via workflow_dispatch; for tighter monitoring use a
+    # dedicated uptime service against /api/health (blocker M-06) rather than CI.
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-production-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check production health
+        env:
+          DEPLOY_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::notice::VERCEL_DEPLOYMENT_URL secret not configured - monitor skipped (will activate once set)"
+            exit 0
+          fi
+          RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" "$DEPLOY_URL/api/production-health")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Production health check failed with status $HTTP_CODE"
+            echo "$BODY"
+            exit 1
+          fi
+
+          # Check if any critical checks failed
+          if echo "$BODY" | jq -e '.summary.critical > 0' 2>/dev/null; then
+            echo "⚠️ Critical health issues detected"
+            echo "$BODY" | jq '.alerts[]' 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "✅ Production health check passed"
+          echo "$BODY" | jq '.summary' 2>/dev/null || echo "$BODY"

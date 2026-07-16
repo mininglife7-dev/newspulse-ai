@@ -1,0 +1,78 @@
+name: DNA-GOV-011 - Cost Anomaly Detection
+on:
+  schedule:
+    # Daily at 09:00 UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  cost-anomaly-detection:
+    name: Check Cost Anomalies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Check cost anomalies
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SUPABASE_API_TOKEN: ${{ secrets.SUPABASE_API_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          node -e "
+            // Node 20 has a global fetch; node-fetch was never a dependency,
+            // so requiring it threw MODULE_NOT_FOUND and failed this job every run.
+            const baseUrl = 'https://newspulse-ai-git-main.vercel.app';
+
+            (async () => {
+              try {
+                console.log('🔍 Running DNA-GOV-011: Cost Anomaly Detection...');
+                const response = await fetch(baseUrl + '/api/cost-anomaly', { headers: { Authorization: 'Bearer ${{ secrets.ADMIN_TOKEN }}' } });
+                console.log('Response Status:', response.status);
+                if (!response.ok) {
+                  console.error('❌ Cost-anomaly endpoint returned ' + response.status + ' — monitor did NOT run (check ADMIN_TOKEN).');
+                  process.exit(1);
+                }
+                const data = await response.json();
+
+                console.log('Alert Level:', data.alertLevel || 'unknown');
+                console.log('Summary:', data.summary);
+
+                if (data.anomalies && data.anomalies.length > 0) {
+                  console.log('❌ Cost anomalies detected:');
+                  data.anomalies.forEach(a => {
+                    console.log(
+                      '  -', a.severity.toUpperCase(),
+                      a.provider, 'cost', a.message
+                    );
+                  });
+                } else {
+                  console.log('✅ No cost anomalies detected');
+                }
+
+                // Exit with failure if critical anomalies
+                if (data.alertLevel === 'critical') {
+                  console.error('⚠️  Critical cost anomaly detected');
+                  process.exit(1);
+                }
+              } catch (error) {
+                console.error('Error checking costs:', error.message);
+                process.exit(1);
+              }
+            })();
+          "
+
+      - name: Log results
+        if: always()
+        run: echo "Cost anomaly check completed at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
