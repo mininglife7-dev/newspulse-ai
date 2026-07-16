@@ -20,6 +20,7 @@ const PROTECTED_PREFIXES = [
   '/evolution',
   '/hercules',
   '/api/workspace',
+  '/api/hercules',
   '/api/ai-systems',
   '/api/assessments',
   '/api/obligations',
