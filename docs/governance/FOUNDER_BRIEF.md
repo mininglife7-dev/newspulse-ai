@@ -30,11 +30,17 @@ succeeded end-to-end at 07:20 UTC:**
   reads Unknown due to a verification-script bug (fix in review); the app
   does not depend on it for the signup→workspace journey.
 
-**Remaining Founder actions (non-blocking for engineering, needed for full capability):**
+**Remaining Founder actions:**
 
-1. Vercel env: `CEIS_CRON_SECRET` (optional: `OPENAI_API_KEY`,
+1. **Data residency decision (RISK-008, new — decide before first customer):**
+   production Supabase is in Tokyo (`ap-northeast-1`), not the EU, for a
+   product sold on EU compliance. Recommended: create an EU-region Supabase
+   project (e.g. Frankfurt `eu-central-1`) now while zero customer data
+   exists — Governor executes the full re-deploy the moment you share the
+   new project ref + credentials (same one-click workflow as today).
+2. Vercel env: `CEIS_CRON_SECRET` (optional: `OPENAI_API_KEY`,
    `FIRECRAWL_API_KEY`) — enables full CEIS capability (RISK-006).
-2. Branch protection on `main` — standing recommendation (RISK-002).
+3. Branch protection on `main` — standing recommendation (RISK-002).
 
 Full record: `docs/governor/deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md`.
 
