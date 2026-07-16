@@ -33,13 +33,14 @@ export async function GET(req: Request) {
         logger.critical(
           `Production health check: ${report.summary.critical} critical issues`,
           'PRODUCTION_HEALTH_CRITICAL',
+          new Error('Critical health check alerts detected'),
           {
             critical_issues: report.summary.critical,
             degraded_issues: report.summary.degraded,
             total_checks: Object.keys(report.checks).length,
             alerts: report.alerts,
-          },
-          duration
+            duration_ms: duration,
+          }
         );
       } else {
         logger.warn(
@@ -50,6 +51,7 @@ export async function GET(req: Request) {
             degraded_issues: report.summary.degraded,
             total_checks: Object.keys(report.checks).length,
             alerts: report.alerts,
+            duration_ms: duration,
           },
           duration
         );
@@ -60,6 +62,7 @@ export async function GET(req: Request) {
         'PRODUCTION_HEALTH_OK',
         {
           total_checks: Object.keys(report.checks).length,
+          duration_ms: duration,
         },
         duration
       );
