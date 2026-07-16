@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/structured-logger';
 
 export interface AssessmentBody {
   ai_system_id: string;
@@ -35,10 +36,17 @@ function resolveContext(supabase: any) {
 }
 
 export async function GET(req: NextRequest) {
+  const startTime = Date.now();
   const supabase = await createRouteClient();
   const context = await resolveContext(supabase);
 
   if (context.error) {
+    logger.warn(
+      'Assessment list request failed auth check',
+      'ASSESSMENT_LIST_AUTH_FAILED',
+      { error_message: context.error.message },
+      Date.now() - startTime
+    );
     return NextResponse.json(
       { ok: false, error: context.error.message },
       { status: context.error.status }
@@ -46,6 +54,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const queryStart = Date.now();
     const { data: assessments, error } = await supabase
       .from('risk_assessments')
       .select('*')
@@ -54,12 +63,33 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
+    const queryDuration = Date.now() - queryStart;
+    const totalDuration = Date.now() - startTime;
+
+    logger.info(
+      `Fetched ${assessments?.length || 0} assessments`,
+      'ASSESSMENT_LIST_RETRIEVED',
+      {
+        workspace_id: context.workspace_id,
+        count: assessments?.length || 0,
+        query_ms: queryDuration,
+      },
+      totalDuration
+    );
+
     return NextResponse.json({
       ok: true,
       assessments: assessments || [],
     });
   } catch (error) {
-    console.error('[api/assessment] GET failed:', error);
+    logger.error(
+      'Failed to fetch assessments',
+      'ASSESSMENT_LIST_ERROR',
+      error,
+      {
+        workspace_id: context.workspace_id,
+      }
+    );
     return NextResponse.json(
       { ok: false, error: 'Failed to fetch assessments' },
       { status: 500 }
@@ -68,10 +98,17 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
   let body: AssessmentBody;
   try {
     body = await req.json();
   } catch {
+    logger.warn(
+      'Assessment creation request with invalid JSON',
+      'ASSESSMENT_CREATE_INVALID_JSON',
+      {},
+      Date.now() - startTime
+    );
     return NextResponse.json(
       { ok: false, error: 'Invalid JSON body' },
       { status: 400 }
@@ -82,6 +119,12 @@ export async function POST(req: NextRequest) {
   const context = await resolveContext(supabase);
 
   if (context.error) {
+    logger.warn(
+      'Assessment creation request failed auth check',
+      'ASSESSMENT_CREATE_AUTH_FAILED',
+      { error_message: context.error.message },
+      Date.now() - startTime
+    );
     return NextResponse.json(
       { ok: false, error: context.error.message },
       { status: context.error.status }
@@ -89,6 +132,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (!body.ai_system_id) {
+    logger.warn(
+      'Assessment creation missing ai_system_id',
+      'ASSESSMENT_CREATE_MISSING_FIELD',
+      { missing_field: 'ai_system_id' },
+      Date.now() - startTime
+    );
     return NextResponse.json(
       { ok: false, error: 'ai_system_id is required' },
       { status: 400 }
@@ -96,6 +145,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (!body.risk_level || !['unacceptable', 'high', 'medium', 'low'].includes(body.risk_level)) {
+    logger.warn(
+      'Assessment creation with invalid risk_level',
+      'ASSESSMENT_CREATE_INVALID_RISK',
+      { risk_level: body.risk_level },
+      Date.now() - startTime
+    );
     return NextResponse.json(
       { ok: false, error: 'risk_level must be one of: unacceptable, high, medium, low' },
       { status: 400 }
@@ -103,6 +158,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const queryStart = Date.now();
     // Verify the AI system belongs to this workspace
     const { data: system, error: sysError } = await supabase
       .from('ai_systems')
@@ -112,6 +168,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (sysError || !system) {
+      logger.warn(
+        'Assessment creation - AI system not found',
+        'ASSESSMENT_CREATE_SYSTEM_NOT_FOUND',
+        { ai_system_id: body.ai_system_id, workspace_id: context.workspace_id },
+        Date.now() - startTime
+      );
       return NextResponse.json(
         { ok: false, error: 'AI system not found in this workspace' },
         { status: 404 }
@@ -134,12 +196,33 @@ export async function POST(req: NextRequest) {
 
     if (insertError) throw insertError;
 
+    const totalDuration = Date.now() - startTime;
+    logger.info(
+      'Assessment created successfully',
+      'ASSESSMENT_CREATED',
+      {
+        assessment_id: assessment.id,
+        ai_system_id: body.ai_system_id,
+        workspace_id: context.workspace_id,
+        risk_level: body.risk_level,
+      },
+      totalDuration
+    );
+
     return NextResponse.json({
       ok: true,
       assessment,
     });
   } catch (error) {
-    console.error('[api/assessment] POST failed:', error);
+    logger.error(
+      'Failed to create assessment',
+      'ASSESSMENT_CREATE_ERROR',
+      error,
+      {
+        ai_system_id: body.ai_system_id,
+        workspace_id: context.workspace_id,
+      }
+    );
     return NextResponse.json(
       { ok: false, error: 'Failed to create assessment' },
       { status: 500 }

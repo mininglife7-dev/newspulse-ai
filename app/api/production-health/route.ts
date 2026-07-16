@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runProductionHealthChecks } from '@/lib/production-monitoring';
+import { logger } from '@/lib/structured-logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,15 +24,45 @@ export async function GET(req: Request) {
   const baseUrl = `${protocol}://${host}`;
 
   try {
+    const startTime = Date.now();
     const report = await runProductionHealthChecks(baseUrl);
+    const duration = Date.now() - startTime;
 
-    // Log alerts for Founder visibility
     if (report.alerts.length > 0) {
       if (report.summary.critical > 0) {
-        console.error('[production-health] CRITICAL alerts:\n', report.alerts.join('\n'));
+        logger.critical(
+          `Production health check: ${report.summary.critical} critical issues`,
+          'PRODUCTION_HEALTH_CRITICAL',
+          {
+            critical_issues: report.summary.critical,
+            degraded_issues: report.summary.degraded,
+            total_checks: Object.keys(report.checks).length,
+            alerts: report.alerts,
+          },
+          duration
+        );
       } else {
-        console.warn('[production-health] Warnings:\n', report.alerts.join('\n'));
+        logger.warn(
+          `Production health check: ${report.summary.degraded} warnings`,
+          'PRODUCTION_HEALTH_DEGRADED',
+          {
+            critical_issues: report.summary.critical,
+            degraded_issues: report.summary.degraded,
+            total_checks: Object.keys(report.checks).length,
+            alerts: report.alerts,
+          },
+          duration
+        );
       }
+    } else {
+      logger.info(
+        'Production health check passed',
+        'PRODUCTION_HEALTH_OK',
+        {
+          total_checks: Object.keys(report.checks).length,
+        },
+        duration
+      );
     }
 
     return NextResponse.json(
@@ -53,7 +84,13 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[production-health] Monitoring failed:', message);
+
+    logger.error(
+      'Production health check failed',
+      'PRODUCTION_HEALTH_ERROR',
+      error,
+      { message }
+    );
 
     return NextResponse.json(
       {
