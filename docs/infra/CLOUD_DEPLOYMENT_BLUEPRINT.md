@@ -1,5 +1,9 @@
 # Cloud Deployment Blueprint — NewsPulse AI (EURO AI / Cathedral)
 
+> ⚠️ **SUPERSEDED — historical record (2026-07-09).** This blueprint was written for the **pre-pivot NewsPulse AI** app. The repository has since pivoted to the **EURO AI / Cathedral** EU AI Act governance platform, which is already deployed on Vercel + Supabase with its own operational tooling. The three-tier sizing below is a **historical planning artifact**, not the current architecture.
+>
+> **Current deployment & operations:** [`CATHEDRAL-DEPLOYMENT-QUICKSTART.md`](./CATHEDRAL-DEPLOYMENT-QUICKSTART.md) · [`PRODUCTION_CONFIGURATION_GUIDE.md`](./PRODUCTION_CONFIGURATION_GUIDE.md) · [`OPERATIONAL_RUNBOOK.md`](./OPERATIONAL_RUNBOOK.md) · [`../SUPABASE_DEPLOYMENT.md`](../SUPABASE_DEPLOYMENT.md) · [`../VERCEL_PLAN_DECISION.md`](../VERCEL_PLAN_DECISION.md)
+
 **Date:** 2026-07-09 · Three architectures, cheapest-first, each a strict superset of the previous.
 Costs are summarized here and modeled fully in [`COST_ESTIMATE.md`](./COST_ESTIMATE.md).
 
