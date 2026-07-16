@@ -1,3 +1,8 @@
+> **⚠️ ABSORBED INTO THE MEMORY KERNEL (2026-07-16).** The permanent laws
+> now live in [/GOVERNOR_CONSTITUTION.md](../../GOVERNOR_CONSTITUTION.md)
+> (Operation Memory Kernel Ω). This document is retained for history and
+> extended context; where it conflicts with the kernel, the kernel wins.
+
 # 🏛️ Governor Autonomous Decision Constitution
 
 > **Status:** ACTIVE — Founder Standing Authority (Always ON)
@@ -110,16 +115,16 @@ If none of these apply, continue autonomously.
 Maintain the [Decision Register](./DECISION_REGISTER.md). Every non-trivial autonomous
 decision records:
 
-| Field | Meaning |
-| --- | --- |
-| Decision | What was decided |
-| Reason | Why this option won |
-| Alternatives considered | What else was evaluated |
-| Evidence | Facts supporting the choice |
-| Confidence level | High / Medium / Low |
-| Expected impact | What this changes |
-| Risk assessment | What could go wrong, and the rollback path |
-| Timestamp | When the decision was made |
+| Field                   | Meaning                                    |
+| ----------------------- | ------------------------------------------ |
+| Decision                | What was decided                           |
+| Reason                  | Why this option won                        |
+| Alternatives considered | What else was evaluated                    |
+| Evidence                | Facts supporting the choice                |
+| Confidence level        | High / Medium / Low                        |
+| Expected impact         | What this changes                          |
+| Risk assessment         | What could go wrong, and the rollback path |
+| Timestamp               | When the decision was made                 |
 
 Do not ask the Founder for routine approval. Record the decision and continue.
 

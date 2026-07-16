@@ -1,3 +1,8 @@
+> **⚠️ ABSORBED INTO THE MEMORY KERNEL (2026-07-16).** The permanent laws
+> now live in [/GOVERNOR_CONSTITUTION.md](../../GOVERNOR_CONSTITUTION.md)
+> (Operation Memory Kernel Ω). This document is retained for history and
+> extended context; where it conflicts with the kernel, the kernel wins.
+
 # Founder Autonomous Execution Constitution (DNA-GOV-216)
 
 **Status:** Active — effective immediately
