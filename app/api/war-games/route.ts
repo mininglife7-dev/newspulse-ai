@@ -38,12 +38,12 @@ function verifyAuth(request: NextRequest): boolean {
 
 export async function GET(request: NextRequest) {
   if (!verifyAuth(request)) {
-    return NextNextResponse.json(
+    return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
     );
   }
-  const { searchParams } = new URL(request.url);
+  const { searchParams } = request.nextUrl;
   const action = searchParams.get('action');
 
   // List available scenarios
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!verifyAuth(request)) {
-    return NextNextResponse.json(
+    return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
     );
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   if (!verifyAuth(request)) {
-    return NextNextResponse.json(
+    return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
     );
