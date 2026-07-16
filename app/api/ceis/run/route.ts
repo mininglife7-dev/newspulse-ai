@@ -16,17 +16,44 @@ export const maxDuration = 300;
  * Query params:
  *   ?dry=1 — run without persisting anything (preview mode).
  */
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CEIS_CRON_SECRET || process.env.CRON_SECRET;
-  if (!secret) return true;
-  return req.headers.get('authorization') === `Bearer ${secret}`;
+function authorized(req: NextRequest): {
+  ok: boolean;
+  status?: number;
+  error?: string;
+} {
+  const bearer = req.headers.get('authorization');
+  const secrets = [
+    process.env.CEIS_CRON_SECRET,
+    process.env.CRON_SECRET,
+    process.env.ADMIN_TOKEN,
+  ].filter(Boolean);
+  if (secrets.length > 0) {
+    return secrets.some((s) => bearer === `Bearer ${s}`)
+      ? { ok: true }
+      : { ok: false, status: 401, error: 'Unauthorized.' };
+  }
+  // Fail closed in production: an unsecured evolution trigger invites abuse
+  // (DB writes, upstream API spend). Non-production stays open for dev/tests.
+  if (
+    process.env.VERCEL_ENV === 'production' ||
+    process.env.NODE_ENV === 'production'
+  ) {
+    return {
+      ok: false,
+      status: 503,
+      error:
+        'CEIS run endpoint is disabled: set CEIS_CRON_SECRET (or ADMIN_TOKEN) in the environment to enable it.',
+    };
+  }
+  return { ok: true };
 }
 
 async function handle(req: NextRequest) {
-  if (!authorized(req)) {
+  const auth = authorized(req);
+  if (!auth.ok) {
     return NextResponse.json(
-      { ok: false, error: 'Unauthorized.' },
-      { status: 401 }
+      { ok: false, error: auth.error },
+      { status: auth.status }
     );
   }
 
