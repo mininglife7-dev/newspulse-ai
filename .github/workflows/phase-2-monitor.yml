@@ -1,0 +1,102 @@
+name: Phase 2 Automation Monitor
+
+# Run every 5 minutes to check if Supabase schema is deployed
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Manual action to perform
+        required: false
+        default: 'check'
+        type: choice
+        options:
+          - check
+          - begin-phase-2
+
+jobs:
+  monitor-phase-2:
+    name: Check Phase 2 Readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: claude/governor-omega-consolidation-yrifw7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --omit=optional
+
+      - name: Check Phase 2 Readiness
+        id: check
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+          const { verifySchemaDeployment } = require('./lib/phase-2-automation.ts');
+
+          (async () => {
+            const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+            if (!projectUrl || !serviceRoleKey) {
+              console.log('⚠️  SUPABASE credentials not configured. Skipping verification.');
+              console.log('CREDENTIALS_MISSING=true' >> process.env.GITHUB_OUTPUT);
+              return;
+            }
+
+            try {
+              const result = await verifySchemaDeployment(projectUrl, serviceRoleKey);
+              console.log('Schema Verification Result:', JSON.stringify(result, null, 2));
+
+              if (result.isDeployed) {
+                console.log('✅ Supabase schema DEPLOYED');
+                console.log('SCHEMA_DEPLOYED=true' >> process.env.GITHUB_OUTPUT);
+              } else {
+                console.log('⏳ Supabase schema NOT YET DEPLOYED');
+                console.log('SCHEMA_DEPLOYED=false' >> process.env.GITHUB_OUTPUT);
+              }
+            } catch (error) {
+              console.error('❌ Verification failed:', error.message);
+              console.log('VERIFICATION_ERROR=true' >> process.env.GITHUB_OUTPUT);
+            }
+          })();
+          "
+
+      - name: Report Status
+        if: always()
+        run: |
+          echo "## Phase 2 Status Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** Check Phase 2 Readiness" >> $GITHUB_STEP_SUMMARY
+          echo "**Result:** ${{ steps.check.outputs.SCHEMA_DEPLOYED }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check.outputs.SCHEMA_DEPLOYED }}" = "true" ]; then
+            echo "✅ **SUPABASE SCHEMA DEPLOYED** — Phase 2 automation ready" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check.outputs.CREDENTIALS_MISSING }}" = "true" ]; then
+            echo "⚠️  **CREDENTIALS NOT SET** — Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY secrets to enable monitoring" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏳ **AWAITING DEPLOYMENT** — Schema not yet deployed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Trigger Phase 2 (Future Automation)
+        if: steps.check.outputs.SCHEMA_DEPLOYED == 'true'
+        run: |
+          echo "⚠️  Phase 2 trigger automation not yet implemented"
+          echo "When ready, this step will:"
+          echo "  1. Populate test data"
+          echo "  2. Verify E2E test framework"
+          echo "  3. Begin Phase 2 scenario execution"
+          echo "  4. Post daily status updates"
+          echo ""
+          echo "See: PHASE-2-AUTOMATION.md for implementation plan"
