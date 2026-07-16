@@ -1,17 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const OBLIGATION_STATUS = ['identified', 'in_progress', 'completed', 'not_applicable'] as const;
+const PRIORITY_ORDER: Record<string, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+interface Obligation {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  status: string;
+  priority: string;
+  due_date?: string;
+  created_at: string;
+}
+
+interface RouteContext {
+  status: number;
+  workspaceId?: string;
+  error?: string;
+}
 
 async function resolveContext(
   supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
+): Promise<RouteContext> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
+  if (!user) {
+    return { status: 401, error: 'Authentication required' };
+  }
 
-  const { data: membership } = await supabase
+  const { data: membership, error: memberError } = await supabase
     .from('workspace_members')
     .select('workspace_id')
     .eq('user_id', user.id)
@@ -19,17 +49,27 @@ async function resolveContext(
     .limit(1)
     .maybeSingle();
 
+  if (memberError) {
+    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    return { status: 500, error: 'Membership lookup failed' };
+  }
+
   if (!membership) {
-    return {
-      status: 409 as const,
-      error: 'No workspace yet',
-    };
+    return { status: 403, error: 'Not a workspace member' };
   }
 
   return {
-    status: 200 as const,
+    status: 200,
     workspaceId: membership.workspace_id as string,
   };
+}
+
+function sortObligationsByPriority(obligations: Obligation[]): Obligation[] {
+  return obligations.sort((a, b) => {
+    const aPriority = PRIORITY_ORDER[a.priority] ?? 99;
+    const bPriority = PRIORITY_ORDER[b.priority] ?? 99;
+    return aPriority - bPriority;
+  });
 }
 
 /**
@@ -38,14 +78,12 @@ async function resolveContext(
  * Query params:
  *  - assessmentId: obligations linked to a specific assessment
  *  - systemId: obligations for a specific AI system (via its assessments)
- *  - companyId: obligations for the entire company
  *  - status: filter by status (identified, in_progress, completed, not_applicable)
  */
 export async function GET(request: NextRequest) {
   const assessmentId = request.nextUrl.searchParams.get('assessmentId');
   const systemId = request.nextUrl.searchParams.get('systemId');
-  const companyId = request.nextUrl.searchParams.get('companyId');
-  const status = request.nextUrl.searchParams.get('status');
+  const statusParam = request.nextUrl.searchParams.get('status');
 
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
@@ -58,7 +96,6 @@ export async function GET(request: NextRequest) {
 
   try {
     if (assessmentId) {
-      // Fetch obligations linked to a specific assessment
       const { data, error } = await supabase
         .from('assessment_obligations')
         .select(
@@ -79,38 +116,33 @@ export async function GET(request: NextRequest) {
         .eq('assessment_id', assessmentId);
 
       if (error) {
-        console.error('[api/obligations] query failed:', error);
+        logger.error('Assessment obligations query failed', 'OBLIGATION_QUERY_ERROR', error);
         return NextResponse.json(
           { ok: false, error: 'Could not load obligations' },
           { status: 500 }
         );
       }
 
-      const obligations = data
-        ?.map((item: any) => item.obligations)
-        .filter(Boolean)
-        .sort((a: any, b: any) => {
-          const priorityOrder: Record<string, number> = {
-            critical: 0,
-            high: 1,
-            medium: 2,
-            low: 3,
-          };
-          return (
-            (priorityOrder[a.priority as string] || 99) -
-            (priorityOrder[b.priority as string] || 99)
-          );
-        });
+      const obligations: Obligation[] = (data ?? [])
+        .map((item: Record<string, unknown>) => item.obligations as Obligation)
+        .filter((o): o is Obligation => o != null);
 
-      return NextResponse.json({ ok: true, obligations: obligations || [] });
+      return NextResponse.json({ ok: true, obligations: sortObligationsByPriority(obligations) });
     } else if (systemId) {
-      // Fetch obligations via assessment for a system
-      const { data: assessments } = await supabase
+      const { data: assessments, error: assessmentError } = await supabase
         .from('risk_assessments')
         .select('id')
         .eq('ai_system_id', systemId)
         .eq('workspace_id', ctx.workspaceId)
         .limit(1);
+
+      if (assessmentError) {
+        logger.error('System assessment lookup failed', 'ASSESSMENT_LOOKUP_ERROR', assessmentError);
+        return NextResponse.json(
+          { ok: false, error: 'Failed to load system assessments' },
+          { status: 500 }
+        );
+      }
 
       if (!assessments || assessments.length === 0) {
         return NextResponse.json({ ok: true, obligations: [] });
@@ -136,39 +168,26 @@ export async function GET(request: NextRequest) {
         .eq('assessment_id', assessments[0].id);
 
       if (error) {
-        console.error('[api/obligations] query failed:', error);
+        logger.error('System obligations query failed', 'OBLIGATION_QUERY_ERROR', error);
         return NextResponse.json(
           { ok: false, error: 'Could not load obligations' },
           { status: 500 }
         );
       }
 
-      const obligations = data
-        ?.map((item: any) => item.obligations)
-        .filter(Boolean)
-        .sort((a: any, b: any) => {
-          const priorityOrder: Record<string, number> = {
-            critical: 0,
-            high: 1,
-            medium: 2,
-            low: 3,
-          };
-          return (
-            (priorityOrder[a.priority as string] || 99) -
-            (priorityOrder[b.priority as string] || 99)
-          );
-        });
+      const obligations: Obligation[] = (data ?? [])
+        .map((item: Record<string, unknown>) => item.obligations as Obligation)
+        .filter((o): o is Obligation => o != null);
 
-      return NextResponse.json({ ok: true, obligations: obligations || [] });
+      return NextResponse.json({ ok: true, obligations: sortObligationsByPriority(obligations) });
     } else {
-      // Fetch all company obligations
       let query = supabase
         .from('obligations')
         .select('*')
         .eq('workspace_id', ctx.workspaceId);
 
-      if (status) {
-        query = query.eq('status', status);
+      if (statusParam && OBLIGATION_STATUS.includes(statusParam as typeof OBLIGATION_STATUS[number])) {
+        query = query.eq('status', statusParam);
       }
 
       const { data, error } = await query.order('priority', {
@@ -176,17 +195,17 @@ export async function GET(request: NextRequest) {
       });
 
       if (error) {
-        console.error('[api/obligations] query failed:', error);
+        logger.error('Workspace obligations query failed', 'OBLIGATION_QUERY_ERROR', error);
         return NextResponse.json(
           { ok: false, error: 'Could not load obligations' },
           { status: 500 }
         );
       }
 
-      return NextResponse.json({ ok: true, obligations: data || [] });
+      return NextResponse.json({ ok: true, obligations: data ?? [] });
     }
   } catch (err) {
-    console.error('[api/obligations] error:', err);
+    logger.error('Obligations endpoint error', 'OBLIGATION_ERROR', err);
     return NextResponse.json(
       { ok: false, error: 'Failed to fetch obligations' },
       { status: 500 }

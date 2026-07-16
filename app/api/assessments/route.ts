@@ -1,24 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
-import { classifyRisk, getAssessmentQuestions } from '@/lib/risk-assessment';
+import { logger } from '@/lib/logger';
+import { classifyRisk } from '@/lib/risk-assessment';
+import { validators, validate } from '@/lib/input-validation';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+interface AssessmentAnswer {
+  [questionId: string]: string | number | boolean;
+}
 
 interface CreateAssessmentRequest {
   aiSystemId: string;
-  answers: Record<string, any>;
+  answers: AssessmentAnswer;
   status?: 'draft' | 'in_review' | 'finalized';
+}
+
+interface RouteContext {
+  status: number;
+  workspaceId?: string;
+  userId?: string;
+  error?: string;
 }
 
 async function resolveContext(
   supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
+): Promise<RouteContext> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
+  if (!user) {
+    return { status: 401, error: 'Authentication required' };
+  }
 
-  const { data: membership } = await supabase
+  const { data: membership, error: memberError } = await supabase
     .from('workspace_members')
     .select('workspace_id')
     .eq('user_id', user.id)
@@ -26,12 +42,17 @@ async function resolveContext(
     .limit(1)
     .maybeSingle();
 
+  if (memberError) {
+    logger.error('Workspace membership lookup failed', 'WORKSPACE_LOOKUP_ERROR', memberError);
+    return { status: 500, error: 'Workspace lookup failed' };
+  }
+
   if (!membership) {
-    return { status: 401 as const, error: 'Not a workspace member' };
+    return { status: 403, error: 'Not a workspace member' };
   }
 
   return {
-    status: 200 as const,
+    status: 200,
     workspaceId: membership.workspace_id as string,
     userId: user.id,
   };
@@ -58,7 +79,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  let query = supabase.from('risk_assessments').select('*');
+  let query = supabase
+    .from('risk_assessments')
+    .select('*')
+    .eq('workspace_id', ctx.workspaceId!);
 
   if (systemId) {
     query = query.eq('ai_system_id', systemId);
@@ -67,13 +91,10 @@ export async function GET(request: NextRequest) {
     query = query.eq('id', assessmentId);
   }
 
-  // Ensure user has access to the assessment's workspace
-  query = query.eq('workspace_id', ctx.workspaceId);
-
   const { data, error } = await query.limit(1).maybeSingle();
 
   if (error) {
-    console.error('[api/assessments] GET failed:', error);
+    logger.error('Assessment fetch failed', 'ASSESSMENT_FETCH_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Failed to fetch assessment' },
       { status: 500 }
@@ -89,7 +110,7 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/assessments — create or update assessment */
 export async function POST(request: NextRequest) {
-  let body: CreateAssessmentRequest;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
@@ -99,19 +120,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!body.aiSystemId) {
+  const validationResult = validate(body, {
+    aiSystemId: validators.string({ minLength: 1 }),
+    answers: validators.object(),
+    status: validators.optional(validators.enum(['draft', 'in_review', 'finalized'])),
+  });
+
+  if (!validationResult.ok) {
     return NextResponse.json(
-      { ok: false, error: 'aiSystemId required' },
+      { ok: false, error: 'Invalid input', errors: validationResult.errors },
       { status: 400 }
     );
   }
 
-  if (!body.answers || typeof body.answers !== 'object') {
-    return NextResponse.json(
-      { ok: false, error: 'answers object required' },
-      { status: 400 }
-    );
-  }
+  const validated = validationResult.value as CreateAssessmentRequest;
 
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
@@ -126,13 +148,20 @@ export async function POST(request: NextRequest) {
   const { data: system, error: systemError } = await supabase
     .from('ai_systems')
     .select('id, company_id, workspace_id')
-    .eq('id', body.aiSystemId)
+    .eq('id', validated.aiSystemId)
     .eq('workspace_id', ctx.workspaceId)
     .limit(1)
     .maybeSingle();
 
-  if (systemError || !system) {
-    console.error('[api/assessments] system lookup failed:', systemError);
+  if (systemError) {
+    logger.error('AI system lookup failed', 'SYSTEM_LOOKUP_ERROR', systemError);
+    return NextResponse.json(
+      { ok: false, error: 'Failed to verify AI system' },
+      { status: 500 }
+    );
+  }
+
+  if (!system) {
     return NextResponse.json(
       { ok: false, error: 'AI system not found' },
       { status: 404 }
@@ -140,35 +169,42 @@ export async function POST(request: NextRequest) {
   }
 
   // Classify risk based on answers
-  const answersMap = new Map(Object.entries(body.answers));
+  const answersMap = new Map(Object.entries(validated.answers));
   const result = classifyRisk(answersMap);
 
   // Check if assessment already exists
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('risk_assessments')
     .select('id')
-    .eq('ai_system_id', body.aiSystemId)
+    .eq('ai_system_id', validated.aiSystemId)
     .limit(1)
     .maybeSingle();
 
-  let insertData = {
-    ai_system_id: body.aiSystemId,
+  if (existingError) {
+    logger.error('Assessment existence check failed', 'ASSESSMENT_QUERY_ERROR', existingError);
+    return NextResponse.json(
+      { ok: false, error: 'Failed to check assessment status' },
+      { status: 500 }
+    );
+  }
+
+  const insertData = {
+    ai_system_id: validated.aiSystemId,
     company_id: system.company_id,
     workspace_id: ctx.workspaceId,
     risk_level: result.riskLevel,
     risk_score: result.riskScore,
     assessment_data: {
-      answers: body.answers,
+      answers: validated.answers,
       classification: result,
       completedAt: new Date().toISOString(),
     },
-    status: body.status || 'draft',
+    status: validated.status || 'draft',
   };
 
-  let response;
+  let response: unknown;
 
   if (existing) {
-    // Update existing assessment
     const { data, error } = await supabase
       .from('risk_assessments')
       .update(insertData)
@@ -177,7 +213,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[api/assessments] update failed:', error);
+      logger.error('Assessment update failed', 'ASSESSMENT_UPDATE_ERROR', error);
       return NextResponse.json(
         { ok: false, error: 'Failed to update assessment' },
         { status: 500 }
@@ -186,7 +222,6 @@ export async function POST(request: NextRequest) {
 
     response = data;
   } else {
-    // Create new assessment
     const { data, error } = await supabase
       .from('risk_assessments')
       .insert(insertData)
@@ -194,7 +229,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[api/assessments] insert failed:', error);
+      logger.error('Assessment creation failed', 'ASSESSMENT_INSERT_ERROR', error);
       return NextResponse.json(
         { ok: false, error: 'Failed to create assessment' },
         { status: 500 }
@@ -205,7 +240,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Auto-generate obligations based on risk level and recommendations
-  if (response && response.id) {
+  const assessmentId = (response as Record<string, unknown>)?.id as string | undefined;
+  if (assessmentId) {
     try {
       const priorityMap: Record<string, string> = {
         unacceptable: 'critical',
@@ -215,15 +251,13 @@ export async function POST(request: NextRequest) {
       };
       const priority = priorityMap[result.riskLevel] || 'medium';
 
-      // Generate obligation texts from recommendations and categories
       const obligationTexts: string[] = [];
-      if (result.recommendations && result.recommendations.length > 0) {
-        obligationTexts.push(...result.recommendations);
+      if (result.recommendations && Array.isArray(result.recommendations)) {
+        obligationTexts.push(...(result.recommendations as string[]));
       }
 
       for (const obligationText of obligationTexts) {
-        // Check if obligation already exists for this company
-        const { data: existing } = await supabase
+        const { data: existing, error: existingError } = await supabase
           .from('obligations')
           .select('id')
           .eq('company_id', system.company_id)
@@ -232,12 +266,16 @@ export async function POST(request: NextRequest) {
           .limit(1)
           .maybeSingle();
 
+        if (existingError) {
+          logger.error('Obligation lookup failed', 'OBLIGATION_LOOKUP_ERROR', existingError);
+          continue;
+        }
+
         let obligationId: string;
 
         if (existing) {
           obligationId = existing.id;
         } else {
-          // Create new obligation
           const { data: created, error: createError } = await supabase
             .from('obligations')
             .insert({
@@ -253,32 +291,25 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (createError || !created) {
-            console.warn(
-              '[api/assessments] failed to create obligation:',
-              createError
-            );
+            logger.error('Obligation creation failed', 'OBLIGATION_CREATE_ERROR', createError);
             continue;
           }
           obligationId = created.id;
         }
 
-        // Link obligation to assessment
         const { error: linkError } = await supabase
           .from('assessment_obligations')
           .insert({
-            assessment_id: response.id,
+            assessment_id: assessmentId,
             obligation_id: obligationId,
           });
 
         if (linkError) {
-          console.warn(
-            '[api/assessments] failed to link obligation:',
-            linkError
-          );
+          logger.error('Obligation linking failed', 'OBLIGATION_LINK_ERROR', linkError);
         }
       }
     } catch (err) {
-      console.warn('[api/assessments] obligation auto-generation failed:', err);
+      logger.error('Obligation auto-generation failed', 'OBLIGATION_GEN_ERROR', err);
     }
   }
 

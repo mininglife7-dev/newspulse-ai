@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 interface InviteMemberRequest {
@@ -8,15 +11,25 @@ interface InviteMemberRequest {
   role: 'admin' | 'member' | 'viewer';
 }
 
+interface RouteContext {
+  status: number;
+  workspaceId?: string;
+  userId?: string;
+  userRole?: string;
+  error?: string;
+}
+
 async function resolveContext(
   supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
+): Promise<RouteContext> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
+  if (!user) {
+    return { status: 401, error: 'Authentication required' };
+  }
 
-  const { data: membership } = await supabase
+  const { data: membership, error: memberError } = await supabase
     .from('workspace_members')
     .select('workspace_id, role')
     .eq('user_id', user.id)
@@ -24,12 +37,17 @@ async function resolveContext(
     .limit(1)
     .maybeSingle();
 
+  if (memberError) {
+    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    return { status: 500, error: 'Membership lookup failed' };
+  }
+
   if (!membership) {
-    return { status: 401 as const, error: 'Not a workspace member' };
+    return { status: 403, error: 'Not a workspace member' };
   }
 
   return {
-    status: 200 as const,
+    status: 200,
     workspaceId: membership.workspace_id as string,
     userId: user.id,
     userRole: membership.role as string,
@@ -54,7 +72,7 @@ export async function GET(request: NextRequest) {
     .order('joined_at', { ascending: false, nullsFirst: false });
 
   if (error) {
-    console.error('[api/team] GET failed:', error);
+    logger.error('Team members list failed', 'TEAM_LIST_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Failed to fetch team members' },
       { status: 500 }
@@ -66,7 +84,7 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/team — invite a member to workspace */
 export async function POST(request: NextRequest) {
-  let body: InviteMemberRequest;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
@@ -76,19 +94,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!body.email?.trim()) {
+  const validationResult = validate(body, {
+    email: validators.string({ minLength: 1 }),
+    role: validators.enum(['admin', 'member', 'viewer']),
+  });
+
+  if (!validationResult.ok) {
     return NextResponse.json(
-      { ok: false, error: 'email is required' },
+      { ok: false, error: 'Invalid input', errors: validationResult.errors },
       { status: 400 }
     );
   }
 
-  if (!['admin', 'member', 'viewer'].includes(body.role)) {
-    return NextResponse.json(
-      { ok: false, error: 'role must be admin, member, or viewer' },
-      { status: 400 }
-    );
-  }
+  const validated = validationResult.value as InviteMemberRequest;
+  const normalizedEmail = validated.email.toLowerCase();
 
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
@@ -100,7 +119,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Only admins and owners can invite members
-  if (!['owner', 'admin'].includes(ctx.userRole)) {
+  if (!['owner', 'admin'].includes(ctx.userRole || '')) {
     return NextResponse.json(
       { ok: false, error: 'Only admins can invite members' },
       { status: 403 }
@@ -108,13 +127,21 @@ export async function POST(request: NextRequest) {
   }
 
   // Check if member already exists
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('workspace_members')
     .select('id')
     .eq('workspace_id', ctx.workspaceId)
-    .eq('email', body.email.toLowerCase())
+    .eq('email', normalizedEmail)
     .limit(1)
     .maybeSingle();
+
+  if (existingError) {
+    logger.error('Member existence check failed', 'MEMBER_LOOKUP_ERROR', existingError);
+    return NextResponse.json(
+      { ok: false, error: 'Failed to check member status' },
+      { status: 500 }
+    );
+  }
 
   if (existing) {
     return NextResponse.json(
@@ -128,16 +155,16 @@ export async function POST(request: NextRequest) {
     .from('workspace_members')
     .insert({
       workspace_id: ctx.workspaceId,
-      user_id: null, // Will be populated when user joins
-      email: body.email.toLowerCase(),
-      role: body.role,
+      user_id: null,
+      email: normalizedEmail,
+      role: validated.role,
       status: 'pending',
     })
     .select('id, email, role, status, invited_at')
     .single();
 
   if (error) {
-    console.error('[api/team] POST failed:', error);
+    logger.error('Team member invitation failed', 'TEAM_INVITE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Failed to send invitation' },
       { status: 500 }
