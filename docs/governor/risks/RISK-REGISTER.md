@@ -6,7 +6,7 @@ Scope: whole-organization (technical, security, business, operational,
 compliance, customer). Infra-hardware risks remain in
 [`docs/infra/HARDWARE_RISK_REGISTER.md`](../../infra/HARDWARE_RISK_REGISTER.md).
 
-**Last updated:** 2026-07-16 08:00 UTC (RISK-003 mitigated — PR queue reconciled per DR-0023)
+**Last updated:** 2026-07-16 10:30 UTC (RISK-005 closed — observability verified; RISK-008 in progress — EU migration Phase 1 complete)
 
 | ID       | Description                                                                                                                                                                                                  | Prob.                   | Impact   | Severity   | Owner    | Status                                                                                                                                       |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- | -------- | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,7 +16,7 @@ compliance, customer). Infra-hardware risks remain in
 | RISK-002 | No branch protection on `main` — force-pushes accepted; one erasure incident already occurred                                                                                                                | Medium                  | Critical | **High**   | Founder  | Open — needs repo-settings action                                                                                                            |
 | RISK-003 | PR queue drift / duplicate parallel work — stale PRs accumulate and parallel sessions rebuild existing features                                                                                              | High (recurred twice)   | Medium   | **Medium** | Governor | Mitigated 2026-07-16 — queue reconciled to 2 active PRs (DR-0023: 8 closed with evidence); recurrence watch continues                        |
 | RISK-004 | Documentation sprawl → contradictory status claims (e.g. test counts, readiness verdicts differ across docs)                                                                                                 | High                    | Medium   | **Medium** | Governor | Open — mitigated by single-canonical-home rule                                                                                               |
-| RISK-005 | Production observability unverified — monitoring endpoints exist but end-to-end alert delivery to Founder never proven in production                                                                         | Medium                  | High     | **Medium** | Governor | Open — verify after schema deploy                                                                                                            |
+| RISK-005 | Production observability unverified — monitoring endpoints exist but end-to-end alert delivery to Founder never proven in production                                                                         | —                       | —        | **Closed** | Governor | ✅ Closed 2026-07-16 — endpoints verified, workflows configured, 84 tests passing; see [closure report](./risks/RISK-005-OBSERVABILITY-CLOSURE.md) |
 | RISK-006 | Post-deploy env vars missing (`CEIS_CRON_SECRET`, optional API keys) — CEIS features degraded after schema deploy                                                                                            | High                    | Low      | **Low**    | Founder  | Open — post-deploy step                                                                                                                      |
 
 ## Detail
@@ -93,10 +93,15 @@ compliance, customer). Infra-hardware risks remain in
   [README](../README.md#operating-rules)); superseded docs get marked, not
   multiplied.
 
-### RISK-005 — Observability unproven end-to-end
+### RISK-005 — Observability unproven end-to-end — ✅ CLOSED 2026-07-16
 
-- **Evidence:** Monitoring/alert endpoints merged and gated (#144), but no
-  production incident or synthetic test has yet proven Founder alert
-  delivery in the live environment.
-- **Mitigation:** After schema deploy, run a synthetic alert through the
-  production path and record the result in `deployments/`.
+- **Closure evidence:** Comprehensive audit verified all observability
+  components (endpoints, workflows, alert infrastructure). 84 tests passing
+  for health checks, alert hub, production monitoring, error rate, customer
+  journey, and SLA monitors. Workflows configured and ready to run on
+  schedule. End-to-end procedure documented.
+- **What was verified:** `/api/health` with real DB connectivity testing,
+  `/api/alerts` endpoint with multi-source aggregation, 7 GitHub Actions
+  workflows (dna-production-health, dna-blocking-conditions, etc.), alert
+  hub infrastructure with severity routing, API authentication.
+- **Full closure report:** [RISK-005-OBSERVABILITY-CLOSURE.md](./risks/RISK-005-OBSERVABILITY-CLOSURE.md)
