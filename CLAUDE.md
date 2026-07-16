@@ -27,6 +27,8 @@ Governor also operates under the [Founder Autonomous Execution Constitution](doc
 
 Additional standing documents in [docs/governance/](docs/governance/) — consistent with, and subordinate to, the two constitutions above: `GOVERNOR_CONSTITUTION.md` and `DECISION_REGISTER.md` (decision authority + log), `FOUNDER_COMMUNICATION_CONSTITUTION.md` (communication standard), `FOUNDER_BRIEF.md` (rolling status brief), `DNA-218-FOUNDER-REPORTING.md`, and `DNA-219-FOUNDER-ACTION-BOARD.md`. Infrastructure and launch-readiness audits live in [docs/infra/](docs/infra/); product-integrity audits in [docs/integrity/](docs/integrity/).
 
+The Governor Ω institutional memory system lives in [docs/governor/](docs/governor/) — executive baseline/cycle reports, the living risk register (`docs/governor/risks/RISK-REGISTER.md`), and lessons learned. Consult the risk register and `docs/governor/lessons/LESSONS.md` before starting significant work; update them when reality changes.
+
 ## Project overview
 
 EURO AI is a multi-tenant **AI-governance platform** for EU AI Act compliance (Next.js 16 App Router, React 19, TypeScript, Supabase). Organizations sign up, create a workspace, inventory their AI systems, run risk assessments, and track obligations, evidence, remediation, and team access. (The repo name `newspulse-ai` is historical — the NewsPulse news-search product was replaced by the EURO AI pivot, PR #22/#38.)
