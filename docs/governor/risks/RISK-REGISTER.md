@@ -6,17 +6,18 @@ Scope: whole-organization (technical, security, business, operational,
 compliance, customer). Infra-hardware risks remain in
 [`docs/infra/HARDWARE_RISK_REGISTER.md`](../../infra/HARDWARE_RISK_REGISTER.md).
 
-**Last updated:** 2026-07-16 07:35 UTC (RISK-007 closed — trigger confirmed present by run `29479962355`)
+**Last updated:** 2026-07-16 07:45 UTC (RISK-008 added — production data residency is Tokyo, not EU)
 
-| ID       | Description                                                                                                                          | Prob.                 | Impact   | Severity   | Owner    | Status                                                                                                                                       |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------- | -------- | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| RISK-001 | Production Supabase schema not deployed — no customer can sign up; tenant-isolation (RLS) unverified in production                   | —                     | —        | **Closed** | Founder  | ✅ Closed 2026-07-16 — deployed + verified (run `29479537494`; see [deployment record](../deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md)) |
-| RISK-007 | `on_auth_user_created` trigger existence in production Unknown — verification script false-negative masked its true state            | —                     | —        | **Closed** | Governor | ✅ Closed 2026-07-16 — run `29479962355` (fixed check): triggers 1/1 ✓ PASS; trigger existed all along                                       |
-| RISK-002 | No branch protection on `main` — force-pushes accepted; one erasure incident already occurred                                        | Medium                | Critical | **High**   | Founder  | Open — needs repo-settings action                                                                                                            |
-| RISK-003 | PR queue drift / duplicate parallel work — stale PRs accumulate and parallel sessions rebuild existing features                      | High (recurred twice) | Medium   | **High**   | Governor | Open — triage in progress                                                                                                                    |
-| RISK-004 | Documentation sprawl → contradictory status claims (e.g. test counts, readiness verdicts differ across docs)                         | High                  | Medium   | **Medium** | Governor | Open — mitigated by single-canonical-home rule                                                                                               |
-| RISK-005 | Production observability unverified — monitoring endpoints exist but end-to-end alert delivery to Founder never proven in production | Medium                | High     | **Medium** | Governor | Open — verify after schema deploy                                                                                                            |
-| RISK-006 | Post-deploy env vars missing (`CEIS_CRON_SECRET`, optional API keys) — CEIS features degraded after schema deploy                    | High                  | Low      | **Low**    | Founder  | Open — post-deploy step                                                                                                                      |
+| ID       | Description                                                                                                                                                                                                  | Prob.                   | Impact   | Severity   | Owner    | Status                                                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- | -------- | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| RISK-001 | Production Supabase schema not deployed — no customer can sign up; tenant-isolation (RLS) unverified in production                                                                                           | —                       | —        | **Closed** | Founder  | ✅ Closed 2026-07-16 — deployed + verified (run `29479537494`; see [deployment record](../deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md)) |
+| RISK-007 | `on_auth_user_created` trigger existence in production Unknown — verification script false-negative masked its true state                                                                                    | —                       | —        | **Closed** | Governor | ✅ Closed 2026-07-16 — run `29479962355` (fixed check): triggers 1/1 ✓ PASS; trigger existed all along                                       |
+| RISK-008 | Production data residency outside the EU — Supabase project is in `ap-northeast-1` (Tokyo) and `vercel.json` pins no region, for a product sold on EU AI Act compliance to EU customers (GDPR + credibility) | Certain (current state) | High     | **High**   | Founder  | Open — strategic decision needed before first customer data lands                                                                            |
+| RISK-002 | No branch protection on `main` — force-pushes accepted; one erasure incident already occurred                                                                                                                | Medium                  | Critical | **High**   | Founder  | Open — needs repo-settings action                                                                                                            |
+| RISK-003 | PR queue drift / duplicate parallel work — stale PRs accumulate and parallel sessions rebuild existing features                                                                                              | High (recurred twice)   | Medium   | **High**   | Governor | Open — triage in progress                                                                                                                    |
+| RISK-004 | Documentation sprawl → contradictory status claims (e.g. test counts, readiness verdicts differ across docs)                                                                                                 | High                    | Medium   | **Medium** | Governor | Open — mitigated by single-canonical-home rule                                                                                               |
+| RISK-005 | Production observability unverified — monitoring endpoints exist but end-to-end alert delivery to Founder never proven in production                                                                         | Medium                  | High     | **Medium** | Governor | Open — verify after schema deploy                                                                                                            |
+| RISK-006 | Post-deploy env vars missing (`CEIS_CRON_SECRET`, optional API keys) — CEIS features degraded after schema deploy                                                                                            | High                    | Low      | **Low**    | Founder  | Open — post-deploy step                                                                                                                      |
 
 ## Detail
 
@@ -46,6 +47,25 @@ compliance, customer). Infra-hardware risks remain in
   62 indexes, 43 policies, 3 functions). The trigger existed all along —
   the old check was a false negative. Security tests additionally passed
   "Anonymous cannot read profiles".
+
+### RISK-008 — Production data residency is Tokyo, not EU
+
+- **Evidence (Verified 2026-07-16):** deploy runs `29479537494`/`29479962355`
+  connect to `aws-0-ap-northeast-1.pooler.supabase.com` (project
+  `yrroytwfdrafvajdfkog`) — AWS Tokyo. `vercel.json` contains no `regions`
+  key. First flagged Estimated in the PR #87 audit ("No EU region pinned");
+  today's logs upgrade it to Verified.
+- **Why it matters:** the product's promise is EU AI Act compliance for EU
+  customers; storing their data in Japan undermines GDPR posture and the
+  core "Built for Europe" claim.
+- **Window:** the schema is deployed but no customer data exists yet —
+  migrating now means creating an EU-region Supabase project (e.g.
+  `eu-central-1`), re-running the (idempotent) deploy workflow against it,
+  and updating env vars. Near-zero migration cost today; it grows with
+  every customer signup.
+- **Owner:** Founder — new Supabase project creation and possible plan cost
+  are money/strategy decisions. Governor can execute the full migration
+  once a project ref + credentials exist.
 
 ### RISK-002 — `main` unprotected
 
