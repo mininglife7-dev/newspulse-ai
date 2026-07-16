@@ -40,37 +40,7 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          node -e "
-          const { verifySchemaDeployment } = require('./lib/phase-2-automation.ts');
-
-          (async () => {
-            const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-            const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-            if (!projectUrl || !serviceRoleKey) {
-              console.log('⚠️  SUPABASE credentials not configured. Skipping verification.');
-              console.log('CREDENTIALS_MISSING=true' >> process.env.GITHUB_OUTPUT);
-              return;
-            }
-
-            try {
-              const result = await verifySchemaDeployment(projectUrl, serviceRoleKey);
-              console.log('Schema Verification Result:', JSON.stringify(result, null, 2));
-
-              if (result.isDeployed) {
-                console.log('✅ Supabase schema DEPLOYED');
-                console.log('SCHEMA_DEPLOYED=true' >> process.env.GITHUB_OUTPUT);
-              } else {
-                console.log('⏳ Supabase schema NOT YET DEPLOYED');
-                console.log('SCHEMA_DEPLOYED=false' >> process.env.GITHUB_OUTPUT);
-              }
-            } catch (error) {
-              console.error('❌ Verification failed:', error.message);
-              console.log('VERIFICATION_ERROR=true' >> process.env.GITHUB_OUTPUT);
-            }
-          })();
-          "
+        run: node scripts/verify-phase-2-readiness.js
 
       - name: Report Status
         if: always()
@@ -95,10 +65,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Triggering test data population..."
-          curl -X POST http://localhost:3000/api/phase-2-data-population \
-            -H "Content-Type: application/json" \
-            -d '{"action":"populate"}' || echo "Data population triggered (async)"
+          echo "Populating test data..."
+          node scripts/populate-phase-2-data.js
 
       - name: Report Phase 2 Readiness (if Schema Deployed)
         if: steps.check.outputs.SCHEMA_DEPLOYED == 'true'
