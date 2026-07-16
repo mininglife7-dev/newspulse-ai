@@ -4,6 +4,8 @@
  * Runs every 60 seconds by default
  */
 
+import { autoRepairEngine } from './auto-repair';
+
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'down';
   timestamp: string;
@@ -138,7 +140,7 @@ export class MonitoringLoop {
 
     // Step 3: Autonomous response
     if (incident) {
-      await this.respondToIncident(incident);
+      await this.respondToIncident(incident, result);
     }
 
     // Step 4: Trend detection
@@ -192,21 +194,51 @@ export class MonitoringLoop {
   }
 
   private async respondToIncident(
-    incident: MonitoringCheckResult['incident']
+    incident: MonitoringCheckResult['incident'],
+    result?: MonitoringCheckResult
   ): Promise<void> {
     if (!incident) return;
 
     if (incident.severity === 'critical') {
       // Critical incidents escalate to founder immediately
       console.log(`[🔴 CRITICAL] ${incident.type}: ${incident.details}`);
+      // Trigger auto-repair investigation
+      await this.triggerAutoRepair(incident, result);
       // In production: Send alert to founder
     } else if (incident.severity === 'high') {
       // High severity: Auto-investigate
       console.log(`[🟠 WARNING] ${incident.type}: ${incident.details}`);
-      // In production: Create investigation task
+      // Trigger auto-repair investigation
+      await this.triggerAutoRepair(incident, result);
     } else {
       // Medium/low: Log for monitoring
       console.log(`[🟡 INFO] ${incident.type}: ${incident.details}`);
+    }
+  }
+
+  private async triggerAutoRepair(
+    incident: MonitoringCheckResult['incident'] | undefined,
+    result?: MonitoringCheckResult
+  ): Promise<void> {
+    if (!result || !incident) return;
+
+    try {
+      if (
+        incident.type === 'high_error_rate' ||
+        incident.type === 'elevated_error_rate'
+      ) {
+        const topError = result.errors.topError ||
+          result.errors.topError || { signature: 'Unknown error', count: 0 };
+        await autoRepairEngine.investigateHighErrorRate(
+          result.errors.errorRate,
+          topError
+        );
+      } else if (incident.type === 'component_degraded') {
+        // Potentially slow query issue - use reasonable defaults
+        await autoRepairEngine.investigateSlowQueries(1, 1500);
+      }
+    } catch (error) {
+      console.error('[Governor] Auto-repair trigger failed:', error);
     }
   }
 
