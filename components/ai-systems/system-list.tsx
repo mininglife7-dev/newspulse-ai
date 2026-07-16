@@ -46,23 +46,23 @@ export function SystemList({ workspaceId }: SystemListProps) {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const fetchSystems = async () => {
-    try {
-      const response = await fetch(
-        `/api/ai-system/list?workspace_id=${workspaceId}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch AI systems");
-      const data = await response.json();
-      setSystems(data.ai_systems || []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    async function fetchSystems() {
+      try {
+        const response = await fetch(
+          `/api/ai-system/list?workspace_id=${workspaceId}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch AI systems");
+        const data = await response.json();
+        setSystems(data.ai_systems || []);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (workspaceId) {
       fetchSystems();
     }
