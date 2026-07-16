@@ -37,36 +37,7 @@ async function verifySchemaDeployment() {
       },
     });
 
-    // Query the information_schema to count tables
-    const { data, error } = await client.rpc('information_schema.tables', {
-      table_schema: 'public',
-      table_type: 'BASE TABLE',
-    });
-
-    // If RPC doesn't exist, try direct query through Supabase
-    // For now, we'll use a simpler approach: check if we can query a known table
-    // If tables exist, we'll be able to query; if not, we'll get an error
-
-    const { data: testData, error: testError } = await client
-      .from('information_schema.tables')
-      .select('table_name', { count: 'exact' })
-      .eq('table_schema', 'public')
-      .eq('table_type', 'BASE TABLE');
-
-    if (testError && testError.code === 'PGRST116') {
-      // Table doesn't exist, schema not deployed
-      console.log('⏳ Supabase schema NOT YET DEPLOYED');
-      if (githubOutput) {
-        fs.appendFileSync(githubOutput, 'SCHEMA_DEPLOYED=false\n');
-      }
-      return;
-    }
-
-    if (testError) {
-      throw testError;
-    }
-
-    // Try a simpler approach: attempt to query the companies table
+    // Attempt to query the companies table
     // If it exists, schema is deployed
     const { data: companies, error: companiesError } = await client
       .from('companies')
