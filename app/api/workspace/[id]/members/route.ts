@@ -12,7 +12,9 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json(
@@ -76,7 +78,9 @@ export async function POST(
   }
 
   const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json(
@@ -86,7 +90,11 @@ export async function POST(
   }
 
   // Validate email
-  if (!body.email || typeof body.email !== 'string' || !body.email.includes('@')) {
+  if (
+    !body.email ||
+    typeof body.email !== 'string' ||
+    !body.email.includes('@')
+  ) {
     return NextResponse.json(
       { ok: false, error: 'Valid email is required' },
       { status: 400 }
@@ -120,18 +128,52 @@ export async function POST(
 
     if (existing) {
       return NextResponse.json(
-        { ok: false, error: 'This email is already a member of this workspace' },
+        {
+          ok: false,
+          error: 'This email is already a member of this workspace',
+        },
         { status: 409 }
       );
     }
 
-    // Create invitation (pending status)
+    // Validate role parameter
+    const validRoles = ['owner', 'admin', 'member', 'viewer'];
+    const inviteRole = body.role || 'member';
+    if (!validRoles.includes(inviteRole)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Invalid role. Must be one of: owner, admin, member, viewer',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Look up invited user by email to get user_id
+    const { data: invitedUser } = await supabase.auth.admin.listUsers();
+    const foundUser = invitedUser?.users?.find(
+      (u) => u.email?.toLowerCase() === body.email.toLowerCase()
+    );
+
+    if (!foundUser) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            'User with this email does not have an account yet. They must create an account first.',
+        },
+        { status: 404 }
+      );
+    }
+
+    // Create invitation (pending status) with user_id
     const { data: invitation, error: inviteError } = await supabase
       .from('workspace_members')
       .insert({
         workspace_id: id,
+        user_id: foundUser.id,
         email: body.email.toLowerCase(),
-        role: body.role || 'member',
+        role: inviteRole,
         status: 'pending',
         invited_at: new Date().toISOString(),
       })
@@ -146,7 +188,8 @@ export async function POST(
     return NextResponse.json({
       ok: true,
       invitation,
-      message: 'Invitation created. User will need to accept it to join the workspace.',
+      message:
+        'Invitation created. User will need to accept it to join the workspace.',
     });
   } catch (error) {
     console.error('[api/workspace/[id]/members] POST failed:', error);

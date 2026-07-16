@@ -5,9 +5,15 @@ export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
 
-    if (!email || typeof email !== 'string') {
+    // Validate email format
+    if (
+      !email ||
+      typeof email !== 'string' ||
+      !email.includes('@') ||
+      !email.includes('.')
+    ) {
       return NextResponse.json(
-        { ok: false, error: 'Email is required' },
+        { ok: false, error: 'Valid email address is required' },
         { status: 400 }
       );
     }
@@ -21,10 +27,13 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('[api/auth/resend-verification] Error:', error);
 
-    const errorMessage = error instanceof Error ? error.message : 'Failed to resend verification email';
-
+    // Never expose internal error details (prevents user enumeration and information disclosure)
     return NextResponse.json(
-      { ok: false, error: errorMessage },
+      {
+        ok: false,
+        error:
+          'Failed to resend verification email. Please try again or contact support.',
+      },
       { status: 500 }
     );
   }

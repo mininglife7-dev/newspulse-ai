@@ -14,7 +14,9 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json(
@@ -34,6 +36,22 @@ export async function GET(
       return NextResponse.json(
         { ok: false, error: 'Assessment not found' },
         { status: 404 }
+      );
+    }
+
+    // Defense-in-depth: verify user has access to this workspace (in addition to RLS)
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('id')
+      .eq('workspace_id', assessment.workspace_id)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (!membership) {
+      return NextResponse.json(
+        { ok: false, error: 'Access denied' },
+        { status: 403 }
       );
     }
 
@@ -66,7 +84,9 @@ export async function PATCH(
   }
 
   const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json(
@@ -111,9 +131,12 @@ export async function PATCH(
       updated_at: new Date().toISOString(),
     };
 
-    if (body.risk_level !== undefined) updatePayload.risk_level = body.risk_level;
-    if (body.risk_score !== undefined) updatePayload.risk_score = body.risk_score;
-    if (body.assessment_data !== undefined) updatePayload.assessment_data = body.assessment_data;
+    if (body.risk_level !== undefined)
+      updatePayload.risk_level = body.risk_level;
+    if (body.risk_score !== undefined)
+      updatePayload.risk_score = body.risk_score;
+    if (body.assessment_data !== undefined)
+      updatePayload.assessment_data = body.assessment_data;
     if (body.status !== undefined) updatePayload.status = body.status;
 
     const { data: updated, error: updateError } = await supabase
@@ -144,7 +167,9 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json(
