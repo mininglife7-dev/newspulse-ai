@@ -11,12 +11,19 @@
     },
     "app/api/notifications/send-deadline-reminders/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/notifications/send-weekly-digest/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [
     {
       "path": "/api/notifications/send-deadline-reminders",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/notifications/send-weekly-digest",
+      "schedule": "0 9 * * 1"
     }
   ]
 }
