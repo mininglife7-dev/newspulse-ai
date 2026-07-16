@@ -118,19 +118,46 @@ jobs:
             echo "✅ SUPABASE_DB_URL secret is configured (will be used for connection)"
           elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
             echo "✅ SUPABASE_DB_PASSWORD secret is configured"
-            echo "ℹ️  Will attempt direct connection to db.${SUPABASE_PROJECT_ID}.supabase.co"
-            echo "   If this fails, set SUPABASE_DB_URL to the full connection string from"
-            echo "   Supabase Dashboard → Settings → Database → Connection string (Session pooler)"
+            echo "ℹ️  Checking if direct connection to db.${SUPABASE_PROJECT_ID}.supabase.co is available..."
+
+            # GitHub Actions runners are IPv4-only. Newer Supabase projects (Free plan, no
+            # IPv4 add-on) only expose IPv6 for direct connections — which will always fail
+            # from GitHub Actions. Detect this early so the user gets an actionable message
+            # rather than a cryptic psql timeout.
+            DB_HOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+            IPV4_ADDR=$(dig +short A "$DB_HOST" 2>/dev/null | grep -E '^[0-9]+\.' | head -1 || true)
+            if [ -z "$IPV4_ADDR" ]; then
+              echo ""
+              echo "❌ $DB_HOST has no IPv4 address."
+              echo "   GitHub Actions runners are IPv4-only, so direct connections will fail."
+              echo "   Your Supabase project requires the Session Pooler URL instead."
+              echo ""
+              echo "   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo "   ACTION REQUIRED — add a GitHub secret called SUPABASE_DB_URL:"
+              echo ""
+              echo "   1. Open Supabase Dashboard → Settings → Database"
+              echo "   2. Scroll to 'Connection string' → select 'Session pooler' tab"
+              echo "      (port 5432, user postgres.[ref])"
+              echo "   3. Copy the URI — it looks like:"
+              echo "      postgresql://postgres.${SUPABASE_PROJECT_ID}:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:5432/postgres"
+              echo "   4. Add it to GitHub: Settings → Secrets → Actions → New secret"
+              echo "      Name:  SUPABASE_DB_URL"
+              echo "      Value: [paste the URI with password filled in]"
+              echo "   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              exit 1
+            else
+              echo "✅ Direct database host resolves to IPv4 ($IPV4_ADDR) — direct connection should work"
+            fi
           else
             echo "❌ No database credentials configured in GitHub secrets"
             echo ""
-            echo "   Recommended: Set SUPABASE_DB_URL (full connection string)"
+            echo "   Recommended: Set SUPABASE_DB_URL (full Session Pooler connection string)"
             echo "     Go to Settings → Secrets and variables → Actions → New repository secret"
             echo "     Name: SUPABASE_DB_URL"
             echo "     Value: From Supabase Dashboard → Settings → Database → Connection string"
             echo "            Use the 'Session pooler' URI (port 5432) for schema migrations"
             echo ""
-            echo "   Alternative: Set SUPABASE_DB_PASSWORD (direct connection — requires IPv4 add-on)"
+            echo "   Alternative: Set SUPABASE_DB_PASSWORD (direct connection — requires Supabase IPv4 add-on)"
             echo "     Name: SUPABASE_DB_PASSWORD"
             echo "     Value: From Supabase Dashboard → Settings → Database → Database password"
             exit 1
