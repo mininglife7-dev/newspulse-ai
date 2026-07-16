@@ -1,6 +1,6 @@
 # PROJECT_STATE — Verified Facts Only
 
-**Last verified:** 2026-07-16 ~10:45 UTC (Governor Ω, Memory Kernel session)
+**Last verified:** 2026-07-16 ~13:00 UTC (Governor Ω, truth-reconciliation mission)
 Rules: facts only, each labelled and evidence-cited. Unknown stays UNKNOWN
 until verified. Update whenever verified reality changes.
 
@@ -24,21 +24,18 @@ until verified. Update whenever verified reality changes.
   Evidence: runs `29479537494`, `29479962355`, `29490828367` (all success;
   last at 10:26 UTC — 22 tables, 62 indexes, 43 RLS policies, trigger 1/1,
   CEIS hard-verify, security tests all PASS). — Verified
-- **EU migration (RISK-008): NOT COMPLETE.** Documents on main claim
-  "EU deployment verified / GO certification" (`991dd01d`, `e46309c`), but
-  **every successful deploy run to date targeted the Tokyo project** —
-  verified from run `29490828367` job logs (`SUPABASE_PROJECT_ID:
-yrroytwfdrafvajdfkog`, pooler `aws-0-ap-northeast-1`). No run evidence of
-  any EU-region deploy exists. Those claims are **unsupported** (Law 3
-  violation; correction is the active mission). — Verified
-- **Deploy workflow regression:** merge `e09353f` replaced
-  `supabase-schema-deploy.yml` with a version lacking the `SUPABASE_DB_URL`
-  handling (pooler URI / pasted-`psql` parsing from #148) that every
-  successful deploy used; it also accepts `db_password` as a workflow
-  input (secret-exposure smell, Law 4). The next dispatch from current main
-  will attempt the direct `db.{ref}.supabase.co` connection, which is
-  IPv6-only for this project and previously failed. — Verified (file diff
-  vs. run logs)
+- **EU migration (RISK-008): NOT COMPLETE.** All successful deploy runs
+  target the Tokyo project — verified from run `29490828367` job logs
+  (`SUPABASE_PROJECT_ID: yrroytwfdrafvajdfkog`, pooler
+  `aws-0-ap-northeast-1`). The former "EU deployment verified / GO
+  certification" documents are **bannered as unsupported and void**
+  (Law 3 correction, DR-0024). — Verified
+- **Deploy workflow:** restored to the proven `56dd24e` version
+  (`SUPABASE_DB_URL` pooler/psql-paste handling, `PGPASSWORD` export, CEIS
+  deploy + hard verification; `db_password` workflow input removed — Law 4).
+  The `e09353f` regression that dropped this logic is corrected (DR-0024).
+  Post-restore green dispatch: pending; record the run ID here when done. —
+  Verified (file = last-known-good; run-proof pending)
 
 ## Verified features (platform level)
 

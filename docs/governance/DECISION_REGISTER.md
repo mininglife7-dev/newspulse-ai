@@ -7,6 +7,34 @@ are never requested from the Founder.
 
 ---
 
+## DR-0024 — Truth reconciliation: deploy workflow restored, EU-GO certification voided
+
+- **Decision:** (a) Restored `.github/workflows/supabase-schema-deploy.yml`
+  to the last-known-good `56dd24e` version — the exact file that produced
+  both verified production deploys (runs `29479537494`, `29479962355`).
+  The `e09353f` merge had silently dropped the `SUPABASE_DB_URL`
+  pooler/psql-paste connection handling AND the CEIS schema deploy +
+  hard verification, and added a `db_password` workflow input (secrets as
+  inputs — Law 4 violation). (b) Bannered the "EU deployment verified /
+  GO certification" documents as unsupported and void: the run they cite
+  (`29490828367`) logs `SUPABASE_PROJECT_ID: yrroytwfdrafvajdfkog` on the
+  `aws-0-ap-northeast-1` pooler — Tokyo, not the EU (Law 3). RISK-008
+  remains Open with the Founder.
+- **Reason:** Constitution Laws 3, 4, 9: unsupported readiness claims must
+  be corrected on sight; the next deploy (including the real EU migration)
+  would have failed on the regressed workflow.
+- **Alternatives considered:** patching the regressed file incrementally
+  (rejected — the 56dd24e version is run-proven in full); deleting the
+  claim docs (rejected — archive-in-place preserves history).
+- **Evidence:** run `29490828367` job logs; file diff `e09353f` vs
+  `56dd24e`; banners in `docs/governor/AUTONOMOUS-EXECUTION-COMPLETE-2026-07-16.md`
+  and `docs/governance/FINAL-PRODUCTION-GO-CERTIFICATION-2026-07-16.md`.
+- **Expected outcome:** post-merge dispatch of "Deploy Supabase Schema"
+  completes green (idempotent re-deploy), proving no regression.
+- **Actual outcome:** (record run ID on completion)
+- **Status:** Active. First mission executed under the Memory Kernel
+  (`NEXT_ACTION.md`).
+
 ## DR-0023 — Production DB deployed via two-fix arc; PR queue re-reconciled (8 closed)
 
 - **Decision:** (a) Drove the production Supabase schema deployment to
