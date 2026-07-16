@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { logger, measureDuration } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -12,11 +13,29 @@ interface IdentifyObligationsRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   try {
     const body: IdentifyObligationsRequest = await req.json();
 
+    logger.info('Obligation identification initiated', {
+      requestId,
+      workspaceId: body.workspace_id,
+      aiSystemId: body.ai_system_id,
+      assessmentType: body.assessment_type,
+      riskScore: body.risk_score,
+    });
+
     // Validate required fields
     if (!body.workspace_id || !body.ai_system_id || !body.assessment_type) {
+      logger.warn('Invalid obligation identification request', {
+        requestId,
+        workspace_id: !!body.workspace_id,
+        ai_system_id: !!body.ai_system_id,
+        assessment_type: !!body.assessment_type,
+      });
+
       return NextResponse.json(
         {
           ok: false,
@@ -33,6 +52,11 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      logger.warn('Unauthorized obligation identification attempt', {
+        requestId,
+        workspaceId: body.workspace_id,
+      });
+
       return NextResponse.json(
         { ok: false, error: 'Unauthorized' },
         { status: 401 }
@@ -48,6 +72,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (memberError || !member) {
+      logger.warn('Access denied - obligation identification', {
+        requestId,
+        userId: user.id,
+        workspaceId: body.workspace_id,
+      });
+
       return NextResponse.json(
         { ok: false, error: 'Access denied to this workspace' },
         { status: 403 }
@@ -63,6 +93,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (aiError || !aiSystem) {
+      logger.warn('AI system not found for obligation identification', {
+        requestId,
+        aiSystemId: body.ai_system_id,
+        workspaceId: body.workspace_id,
+      });
+
       return NextResponse.json(
         { ok: false, error: 'AI system not found' },
         { status: 404 }
@@ -117,6 +153,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    logger.info('Obligations generated', {
+      requestId,
+      assessmentType: body.assessment_type,
+      obligationCount: obligations.length,
+      riskScore: body.risk_score,
+    });
+
     // Create obligations in database
     const obligationRecords = obligations.map((o) => ({
       workspace_id: body.workspace_id,
@@ -139,11 +182,25 @@ export async function POST(req: NextRequest) {
       .select();
 
     if (createError) {
+      logger.error('Failed to create obligations', {
+        requestId,
+        workspaceId: body.workspace_id,
+        aiSystemId: body.ai_system_id,
+        error: createError.message,
+      });
+
       return NextResponse.json(
         { ok: false, error: createError.message },
         { status: 500 }
       );
     }
+
+    const duration = measureDuration(startTime);
+    logger.info('Obligations identified successfully', {
+      requestId,
+      obligationsCreated: createdObligations?.length || 0,
+      duration,
+    });
 
     return NextResponse.json(
       {
@@ -154,6 +211,15 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    const duration = measureDuration(startTime);
+
+    logger.error('Unhandled exception in obligation identification', {
+      requestId,
+      duration,
+      error: error?.message,
+      stack: error?.stack,
+    });
+
     return NextResponse.json(
       {
         ok: false,

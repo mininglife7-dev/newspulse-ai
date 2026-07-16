@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { logger, measureDuration } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -17,11 +18,31 @@ interface CreateRiskAssessmentRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   try {
     const body: CreateRiskAssessmentRequest = await req.json();
 
+    logger.info('Risk assessment creation initiated', {
+      requestId,
+      workspaceId: body.workspace_id,
+      aiSystemId: body.ai_system_id,
+      assessmentType: body.assessment_type,
+    });
+
     // Validate required fields
     if (!body.workspace_id || !body.ai_system_id || !body.assessment_type || !body.responses) {
+      logger.warn('Invalid request - missing required fields', {
+        requestId,
+        provided: {
+          workspace_id: !!body.workspace_id,
+          ai_system_id: !!body.ai_system_id,
+          assessment_type: !!body.assessment_type,
+          responses: !!body.responses,
+        },
+      });
+
       return NextResponse.json(
         {
           ok: false,
@@ -38,6 +59,12 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      logger.warn('Unauthorized risk assessment attempt', {
+        requestId,
+        workspaceId: body.workspace_id,
+        authError: authError?.message,
+      });
+
       return NextResponse.json(
         { ok: false, error: 'Unauthorized' },
         { status: 401 }
@@ -53,6 +80,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (memberError || !member) {
+      logger.warn('Access denied - user not workspace member', {
+        requestId,
+        userId: user.id,
+        workspaceId: body.workspace_id,
+      });
+
       return NextResponse.json(
         { ok: false, error: 'Access denied to this workspace' },
         { status: 403 }
@@ -68,6 +101,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (aiError || !aiSystem) {
+      logger.warn('AI system not found', {
+        requestId,
+        aiSystemId: body.ai_system_id,
+        workspaceId: body.workspace_id,
+      });
+
       return NextResponse.json(
         { ok: false, error: 'AI system not found' },
         { status: 404 }
@@ -85,6 +124,14 @@ export async function POST(req: NextRequest) {
       high_risk: 'high',
       general: 'medium',
     };
+
+    logger.info('Risk score calculated', {
+      requestId,
+      affirmativeAnswers,
+      totalQuestions,
+      riskScore,
+      assessmentType: body.assessment_type,
+    });
 
     // Create risk assessment
     const { data: assessment, error: createError } = await supabase
@@ -107,11 +154,26 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (createError) {
+      logger.error('Failed to create risk assessment', {
+        requestId,
+        workspaceId: body.workspace_id,
+        aiSystemId: body.ai_system_id,
+        error: createError.message,
+      });
+
       return NextResponse.json(
         { ok: false, error: createError.message },
         { status: 500 }
       );
     }
+
+    const duration = measureDuration(startTime);
+    logger.info('Risk assessment created successfully', {
+      requestId,
+      assessmentId: assessment.id,
+      riskScore: assessment.risk_score,
+      duration,
+    });
 
     return NextResponse.json(
       {
@@ -128,6 +190,15 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    const duration = measureDuration(startTime);
+
+    logger.error('Unhandled exception in risk assessment creation', {
+      requestId,
+      duration,
+      error: error?.message,
+      stack: error?.stack,
+    });
+
     return NextResponse.json(
       {
         ok: false,
