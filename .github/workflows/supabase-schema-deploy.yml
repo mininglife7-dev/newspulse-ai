@@ -118,9 +118,11 @@ jobs:
             echo "✅ SUPABASE_DB_URL secret is configured (will be used for connection)"
           elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
             echo "✅ SUPABASE_DB_PASSWORD secret is configured"
-            echo "ℹ️  Will attempt direct connection to db.${SUPABASE_PROJECT_ID}.supabase.co"
-            echo "   If this fails, set SUPABASE_DB_URL to the full connection string from"
-            echo "   Supabase Dashboard → Settings → Database → Connection string (Session pooler)"
+            echo "ℹ️  Will try direct connection first, then auto-discover the IPv4 Session Pooler"
+            echo "   if the direct host (db.${SUPABASE_PROJECT_ID}.supabase.co) is not reachable."
+            echo "   Tip: set SUPABASE_DB_URL to the Session Pooler URI from Supabase Dashboard"
+            echo "        → Settings → Database → Connection string (Session pooler, port 5432)"
+            echo "   to skip auto-discovery and guarantee a stable connection."
           else
             echo "❌ No database credentials configured in GitHub secrets"
             echo ""
@@ -130,7 +132,8 @@ jobs:
             echo "     Value: From Supabase Dashboard → Settings → Database → Connection string"
             echo "            Use the 'Session pooler' URI (port 5432) for schema migrations"
             echo ""
-            echo "   Alternative: Set SUPABASE_DB_PASSWORD (direct connection — requires IPv4 add-on)"
+            echo "   Alternative: Set SUPABASE_DB_PASSWORD (auto-discovery of Session Pooler"
+            echo "     will be attempted when the direct db.{ref}.supabase.co host is unreachable)"
             echo "     Name: SUPABASE_DB_PASSWORD"
             echo "     Value: From Supabase Dashboard → Settings → Database → Database password"
             exit 1
@@ -150,35 +153,76 @@ jobs:
           if [ -n "$SUPABASE_DB_URL" ]; then
             echo "ℹ️  Using SUPABASE_DB_URL for connection"
             PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+
+            echo "Testing connection..."
+            CONN_ERR=$( psql "${PSQL_CONN_ARGS[@]}" -c "SELECT version();" 2>&1 >/dev/null )
+            if [ $? -ne 0 ]; then
+              echo "❌ Failed to connect using SUPABASE_DB_URL"
+              echo "   Error: $CONN_ERR"
+              echo "   Verify the connection string at Supabase Dashboard → Settings → Database"
+              exit 1
+            fi
+            echo "✅ Connected to Supabase (via SUPABASE_DB_URL)"
           else
-            # Fall back to direct connection (requires IPv4 add-on on newer projects)
-            echo "ℹ️  Constructing direct connection from project ID and password"
-            PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
-            PGPORT="5432"
-            PGUSER="postgres"
-            PGPASSWORD="${SUPABASE_DB_PASSWORD}"
-            PGDATABASE="postgres"
-            export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
+            # Build connection from SUPABASE_DB_PASSWORD.
+            # Newer Supabase projects are IPv6-only for the direct host
+            # (db.{ref}.supabase.co), which is not reachable from IPv4-only
+            # GitHub Actions runners without the Supabase IPv4 add-on.
+            # We try the direct host first, then auto-discover the IPv4
+            # Session Pooler by probing common Supabase AWS regions.
+            export PGPORT="5432"
+            export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            export PGDATABASE="postgres"
+            export PGCONNECT_TIMEOUT=5
             PSQL_CONN_ARGS=()
-          fi
 
-          # Test connection first (capture stderr for diagnostics)
-          echo "Testing connection..."
-          CONN_ERR=$( psql "${PSQL_CONN_ARGS[@]}" -c "SELECT version();" 2>&1 >/dev/null )
-          if [ $? -ne 0 ]; then
-            echo "❌ Failed to connect to Supabase database"
-            echo "   Error: $CONN_ERR"
-            echo ""
-            echo "   Common causes:"
-            echo "   1. SUPABASE_DB_URL / SUPABASE_DB_PASSWORD is incorrect"
-            echo "   2. db.${SUPABASE_PROJECT_ID}.supabase.co does not resolve (newer Supabase"
-            echo "      projects require the Session Pooler URL — set SUPABASE_DB_URL to the"
-            echo "      connection string from Supabase Dashboard → Settings → Database)"
-            echo "   3. Network / firewall blocking the connection from GitHub Actions"
-            exit 1
-          fi
+            # Attempt 1: direct host (works if IPv4 add-on is enabled)
+            echo "Testing direct connection (db.${SUPABASE_PROJECT_ID}.supabase.co)..."
+            export PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+            export PGUSER="postgres"
+            CONN_ERR=$( psql -c "SELECT version();" 2>&1 >/dev/null )
+            if [ $? -eq 0 ]; then
+              echo "✅ Direct connection established"
+            else
+              echo "ℹ️  Direct connection failed ($CONN_ERR)."
+              echo "    Newer Supabase projects are IPv6-only; probing the IPv4 Session Pooler..."
 
-          echo "✅ Connected to Supabase"
+              # Attempt 2: Session Pooler across all Supabase-hosted AWS regions.
+              # The pooler is IPv4-reachable and does not require the IPv4 add-on.
+              # Username format for the pooler is postgres.{project_ref}.
+              POOLER_CONNECTED=0
+              POOLER_USER="postgres.${SUPABASE_PROJECT_ID}"
+              for REGION in us-east-1 eu-central-1 ap-southeast-1 us-west-1 eu-west-1 \
+                            ap-northeast-1 sa-east-1 ca-central-1 ap-south-1 ap-southeast-2 \
+                            us-west-2 ap-northeast-2; do
+                POOLER_HOST="aws-0-${REGION}.pooler.supabase.com"
+                PGHOST="$POOLER_HOST" PGUSER="$POOLER_USER" \
+                  psql -c "SELECT version();" >/dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  echo "✅ Session Pooler connected (region: $REGION, host: $POOLER_HOST)"
+                  export PGHOST="$POOLER_HOST"
+                  export PGUSER="$POOLER_USER"
+                  # Persist the working host/user so the security-tests step
+                  # can reuse them without repeating the full probe loop.
+                  echo "SUPABASE_PGHOST=$POOLER_HOST" >> "$GITHUB_ENV"
+                  echo "SUPABASE_PGUSER=$POOLER_USER" >> "$GITHUB_ENV"
+                  POOLER_CONNECTED=1
+                  break
+                fi
+              done
+
+              if [ $POOLER_CONNECTED -eq 0 ]; then
+                echo "❌ All connection attempts failed"
+                echo ""
+                echo "   To fix: set SUPABASE_DB_URL in GitHub Secrets or Variables"
+                echo "     Supabase Dashboard → Settings → Database → Connection string"
+                echo "     Copy the 'Session pooler' URI (port 5432, user postgres.{ref})"
+                echo "     and add it as secret SUPABASE_DB_URL."
+                exit 1
+              fi
+            fi
+            echo "✅ Connected to Supabase"
+          fi
           echo ""
           echo "📋 Deploying schema..."
 
@@ -235,11 +279,22 @@ jobs:
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL || vars.SUPABASE_DB_URL }}
+          # Pooler host/user discovered and saved by the deploy step (if auto-discovery ran)
+          SUPABASE_PGHOST: ${{ env.SUPABASE_PGHOST }}
+          SUPABASE_PGUSER: ${{ env.SUPABASE_PGUSER }}
         run: |
           echo "🔐 Running security tests..."
 
           if [ -n "$SUPABASE_DB_URL" ]; then
             PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+          elif [ -n "$SUPABASE_PGHOST" ]; then
+            # Reuse the connection params discovered by the deploy step
+            export PGHOST="$SUPABASE_PGHOST"
+            export PGUSER="$SUPABASE_PGUSER"
+            export PGPORT="5432"
+            export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            export PGDATABASE="postgres"
+            PSQL_CONN_ARGS=()
           else
             PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
             PGPORT="5432"
@@ -280,8 +335,11 @@ jobs:
             echo "Troubleshooting:"
             echo "1. If connection failed: set SUPABASE_DB_URL secret to the full Session Pooler"
             echo "   connection string from Supabase Dashboard → Settings → Database"
-            echo "2. If using SUPABASE_DB_PASSWORD: verify value and check that"
-            echo "   db.{project-ref}.supabase.co resolves (requires Supabase IPv4 add-on)"
-            echo "3. Review workflow logs for the exact error from psql"
+            echo "   (Session pooler URI, port 5432, username postgres.{ref})"
+            echo "   This is the most reliable option and works for all Supabase projects."
+            echo "2. If using SUPABASE_DB_PASSWORD without SUPABASE_DB_URL: the workflow"
+            echo "   auto-tries the Session Pooler across all Supabase regions. If all fail,"
+            echo "   verify the password is correct and set SUPABASE_DB_URL instead."
+            echo "3. Review workflow logs for the exact error from psql."
             exit 1
           fi
