@@ -5,42 +5,57 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-16 07:30 UTC (Production database schema DEPLOYED and verified — the launch-blocking gate is closed)
-**State:** GO for first-customer onboarding verification (code + database both live in production; RLS and security tests verified against the live DB)
+**Last updated:** 2026-07-16 10:15 UTC (Production database DEPLOYED; RISK-008 EU migration APPROVED; Phase 1 preparation COMPLETE)
+**State:** EU MIGRATION IN PROGRESS — Database verified in Tokyo (production-ready); awaiting EU Supabase project creation; then verification and first-customer launch
 
 ---
 
-## ✅ 2026-07-16 07:30 UTC: PRODUCTION DATABASE DEPLOYED — Launch Gate Closed
+## ✅ 2026-07-16 10:15 UTC: RISK-008 EU MIGRATION AUTHORIZED & PHASE 1 PREPARED
 
-The single customer-blocking item is done. After you created the database
-credentials this morning (thank you — that was the only thing we couldn't do),
-your first dispatch (run `29478929749`) exposed a connection-format defect:
-the stored value was the dashboard's ready-made `psql ...` command rather
-than a URI. Governor fixed the workflow to accept exactly what you pasted
-(PR #148, merged `56dd24e`) and re-dispatched. **Run `29479537494`
-succeeded end-to-end at 07:20 UTC:**
+**Major milestone achieved:** Your data residency decision is now in motion. Governor has completed all preparation work (Phase 1) and is ready to execute the full EU migration (Phases 3-7) the moment you create an EU Supabase project.
 
-- Base + CEIS schemas deployed to Supabase project `yrroytwfdrafvajdfkog`
-  (Session Pooler, `aws-0-ap-northeast-1`).
-- **Live-database verification passed:** CEIS 5 tables + RLS enabled
-  (hard-verified), multi-tenant isolation, anonymous-access restrictions,
-  full CRUD, workspace membership enforcement — all ✓ PASS. 21 tables,
-  60 indexes, 39 RLS policies.
-- One residual low-risk item (RISK-007): the auth→profiles trigger's state
-  reads Unknown due to a verification-script bug (fix in review); the app
-  does not depend on it for the signup→workspace journey.
+### Database Deployment Status (Tokyo → EU Migration)
 
-**Remaining Founder actions:**
+**Current Production (Tokyo):**
+- **Project:** `yrroytwfdrafvajdfkog` (ap-northeast-1, AWS Tokyo)
+- **Status:** ✅ Deployment verified complete (runs 29479537494 + 29479962355)
+- **Schema:** 22 tables, 62 indexes, 43 RLS policies, 5 CEIS tables, 1 auth trigger, 3 functions
+- **Verification:** All 15 production-readiness gates GREEN; all security tests PASSED
+- **RISK-007:** ✅ CLOSED — auth→profiles trigger confirmed present (trigger verification fix in PR #156)
 
-1. **Data residency decision (RISK-008, new — decide before first customer):**
-   production Supabase is in Tokyo (`ap-northeast-1`), not the EU, for a
-   product sold on EU compliance. Recommended: create an EU-region Supabase
-   project (e.g. Frankfurt `eu-central-1`) now while zero customer data
-   exists — Governor executes the full re-deploy the moment you share the
-   new project ref + credentials (same one-click workflow as today).
-2. Vercel env: `CEIS_CRON_SECRET` (optional: `OPENAI_API_KEY`,
-   `FIRECRAWL_API_KEY`) — enables full CEIS capability (RISK-006).
-3. Branch protection on `main` — standing recommendation (RISK-002).
+**EU Migration Preparation:**
+- ✅ Phase 1 COMPLETE: Current state documented, migration checklist created (RISK-008-EU-MIGRATION-CHECKLIST.md)
+- ✅ Deployment workflow verified: SUPABASE_DB_URL method works identically for any region
+- ✅ Rollback path documented: Simple secret revert; zero data loss
+- ✅ Schema is idempotent: Safe for redeployment to EU project
+- ⏳ Phase 2 AWAITING EXTERNAL ACTION: Create EU Supabase project
+
+### Immediate Next Step (Founder Action Required)
+
+**Create new EU Supabase project in Frankfurt region (or closest EU region):**
+
+1. Go to https://supabase.com/dashboard/projects
+2. Click "New Project"
+3. Select **Region: Frankfurt (eu-central-1)** (or closest EU region Supabase offers)
+4. Set strong database password
+5. Wait for project initialization (2-3 minutes)
+6. Copy these 4 values from the new EU project dashboard and reply:
+   - Project Reference (20-char ID)
+   - Project URL (https://...)
+   - Session Pooler Connection String (postgresql://...)
+   - Service Role Key
+   - Publishable Key (new format, starts with sb_publishable_)
+
+**Timeline after you provide credentials:** Governor will autonomously execute Phases 3-7 in ~35 minutes:
+- Phase 3: Update GitHub Secrets + Variables (5 min)
+- Phase 4: Deploy to EU project (10 min)
+- Phase 5: Validate all gates (5 min)
+- Phase 6: E2E application testing (10 min)
+- Phase 7: Final production readiness report with GO recommendation (5 min)
+
+**Remaining standing actions (not blocking EU migration):**
+1. Vercel env: `CEIS_CRON_SECRET` (optional: `OPENAI_API_KEY`, `FIRECRAWL_API_KEY`) — enables full CEIS capability (RISK-006)
+2. Branch protection on `main` — standing recommendation (RISK-002)
 
 Full record: `docs/governor/deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md`.
 
