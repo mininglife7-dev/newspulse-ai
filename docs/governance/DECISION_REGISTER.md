@@ -7,6 +7,41 @@ are never requested from the Founder.
 
 ---
 
+## DR-0023 — Production DB deployed via two-fix arc; PR queue re-reconciled (8 closed)
+
+- **Decision:** (a) Drove the production Supabase schema deployment to
+  verified success the same morning the Founder created credentials:
+  diagnosed run `29478929749` (stored `SUPABASE_DB_URL` was the dashboard's
+  pasted `psql ...` command, not a URI), merged PR #148 normalizing both
+  connection sites + `PGPASSWORD` export, dispatched run `29479537494`
+  (success), then fixed the never-passable trigger verification
+  (`trigger_schema='public'` vs trigger on `auth.users`; PR #156) and
+  confirmed with run `29479962355` — every check green (22 tables,
+  62 indexes, 43 policies, trigger 1/1, CEIS + security tests PASS).
+  (b) Registered RISK-008 (High): production data residency is AWS Tokyo
+  (`ap-northeast-1`) for an EU-compliance product — escalated to the
+  Founder while migration cost is near zero (PR #158). (c) Re-reconciled
+  the PR queue: closed 6 stale drafts (#48, #83, #87, #91, #92, #94 —
+  superseded by consolidated main; evidence in each close comment) and
+  2 Copilot deploy-fix PRs (#154, #155 — premise resolved by the verified
+  deploys; #154 would have replaced the working connection logic).
+  Remaining open: #149 (test lab — now unblocked by the schema deploy),
+  #124 (tests — pending adoption).
+- **Reason:** Priority order: the deploy was the single customer-blocking
+  gate (RISK-001); contradictory open fix-PRs invite regression-by-merge;
+  data residency must be decided before the first customer's data lands.
+- **Alternatives considered:** Waiting for the Founder to fix the stored
+  secret format (slower, and the paste format is the natural one — better
+  to accept it); keeping Copilot PRs open for salvage (their useful docs
+  bits are noted in the close comments for fresh extraction).
+- **Evidence:** Runs `29478929749`→`29479537494`→`29479962355`; merges
+  `56dd24e` (#148), `17998ad` (#156), `80726e8` (#157), `1c1e6a6` (#158);
+  deployment record `docs/governor/deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md`.
+- **Expected outcome:** Platform fully launch-capable pending the Founder's
+  residency decision; queue at 2 active PRs.
+- **Actual outcome:** (to be confirmed in later cycles)
+- **Lessons:** L-004, L-005 (`docs/governor/lessons/LESSONS.md`).
+
 ## DR-0022 — CEIS endpoint hardening merged; PR queue reconciled (6 closed, 2 adopted)
 
 - **Decision:** (a) Merged PR #145: fail-closed auth across all CEIS endpoints
