@@ -11,14 +11,6 @@ on:
         options:
           - production
           - staging
-      project_id:
-        description: 'Supabase project ID (optional - uses SUPABASE_PROJECT_ID var if not provided)'
-        required: false
-        type: string
-      db_password:
-        description: 'Supabase database password (optional - uses SUPABASE_DB_PASSWORD secret if not provided)'
-        required: false
-        type: string
   # Uncomment to auto-deploy on push to main:
   # push:
   #   branches: [main]
@@ -43,6 +35,11 @@ jobs:
             exit 1
           fi
           echo "✅ Schema file found ($(wc -l < supabase/schema.sql) lines)"
+          if [ ! -f "supabase/ceis-schema.sql" ]; then
+            echo "❌ supabase/ceis-schema.sql not found"
+            exit 1
+          fi
+          echo "✅ CEIS schema file found ($(wc -l < supabase/ceis-schema.sql) lines)"
 
       - name: Validate schema syntax (basic)
         run: |
@@ -67,6 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: preflight-check
+    # Secrets/variables saved under a GitHub Environment (not repo-level)
+    # are only visible to jobs that declare that environment.
+    environment: ${{ inputs.environment || 'production' }}
 
     steps:
       - name: Checkout
@@ -78,132 +78,115 @@ jobs:
           sudo apt-get install -y postgresql-client
           psql --version
 
-      - name: Diagnostic - Verify configuration accessibility
+      - name: Extract and verify Supabase project ID
         env:
-          PROJECT_ID_INPUT: ${{ github.event.inputs.project_id }}
-          PROJECT_ID_VAR: ${{ vars.SUPABASE_PROJECT_ID }}
-          PROJECT_ID_SECRET: ${{ secrets.SUPABASE_PROJECT_ID }}
-          DB_PASSWORD_INPUT: ${{ github.event.inputs.db_password }}
-          DB_PASSWORD_SECRET: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          # CI has no .env.local — resolve from repo variables/secrets first.
+          VAR_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          SECRET_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          VAR_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SECRET_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         run: |
-          # Resolve values with fallback priority: input > var > secret
-          PROJECT_ID="${PROJECT_ID_INPUT:-${PROJECT_ID_VAR:-$PROJECT_ID_SECRET}}"
-          DB_PASSWORD="${DB_PASSWORD_INPUT:-$DB_PASSWORD_SECRET}"
-
-          echo "🔍 Configuration Accessibility Check"
-          echo "---"
-
-          if [ -n "$PROJECT_ID_INPUT" ]; then
-            echo "✅ PROJECT_ID from workflow input: ${#PROJECT_ID_INPUT} characters"
+          SUPABASE_PROJECT_ID="${VAR_PROJECT_ID:-$SECRET_PROJECT_ID}"
+          if [ -z "$SUPABASE_PROJECT_ID" ]; then
+            SUPABASE_URL="${VAR_SUPABASE_URL:-$SECRET_SUPABASE_URL}"
+            # Local-run fallback only; .env.local is never present in CI checkouts.
+            if [ -z "$SUPABASE_URL" ] && [ -f .env.local ]; then
+              SUPABASE_URL=$(grep "NEXT_PUBLIC_SUPABASE_URL=" .env.local | cut -d'=' -f2 || echo "")
+            fi
+            if [ -n "$SUPABASE_URL" ]; then
+              SUPABASE_PROJECT_ID=$(echo "$SUPABASE_URL" | sed 's/https:\/\/\([^.]*\).*/\1/')
+            fi
           fi
-
-          if [ -z "$PROJECT_ID_VAR" ]; then
-            echo "⚠️  SUPABASE_PROJECT_ID repository variable: NOT SET"
-          else
-            echo "✅ SUPABASE_PROJECT_ID repository variable: ${#PROJECT_ID_VAR} characters"
+          if [ -z "$SUPABASE_PROJECT_ID" ]; then
+            # Default: the production project ref recorded in the repo's own
+            # deployment evidence (docs/infra/DEPLOYMENT_EVIDENCE_TRACKING.md:
+            # https://yrroytwfdrafvajdfkog.supabase.co). The ref is public by
+            # design (it ships in every client bundle); a repo variable or
+            # secret above always overrides this default.
+            SUPABASE_PROJECT_ID="yrroytwfdrafvajdfkog"
+            echo "ℹ️  Using project ref from deployment evidence docs (no variable/secret set)"
           fi
+          echo "SUPABASE_PROJECT_ID=$SUPABASE_PROJECT_ID" >> $GITHUB_ENV
+          echo "✅ Supabase project ID resolved: $SUPABASE_PROJECT_ID"
 
-          if [ -z "$PROJECT_ID_SECRET" ]; then
-            echo "⚠️  SUPABASE_PROJECT_ID repository secret: NOT SET"
-          else
-            echo "✅ SUPABASE_PROJECT_ID repository secret: ${#PROJECT_ID_SECRET} characters"
-          fi
-
-          if [ -n "$DB_PASSWORD_INPUT" ]; then
-            echo "✅ DB_PASSWORD from workflow input: PRESENT"
-          fi
-
-          if [ -z "$DB_PASSWORD_SECRET" ]; then
-            echo "⚠️  SUPABASE_DB_PASSWORD repository secret: NOT SET"
-          else
-            echo "✅ SUPABASE_DB_PASSWORD repository secret: PRESENT"
-          fi
-
-          echo "---"
-          echo "Final PROJECT_ID source: $([ -n "$PROJECT_ID_INPUT" ] && echo "INPUT" || ([ -n "$PROJECT_ID_VAR" ] && echo "VARIABLE" || echo "SECRET"))"
-          echo "Final DB_PASSWORD source: $([ -n "$DB_PASSWORD_INPUT" ] && echo "INPUT" || echo "SECRET")"
-          echo "Repository: ${{ github.repository }}"
-          echo "Workflow SHA: ${{ github.sha }}"
-          echo "Job environment: ${GITHUB_JOB}"
-          echo "Event: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-
-      - name: Validate Supabase configuration
-        run: |
-          # Use input if provided, otherwise fall back to repository variable
-          PROJECT_ID="${{ github.event.inputs.project_id }}"
-          if [ -z "$PROJECT_ID" ]; then
-            PROJECT_ID="${{ vars.SUPABASE_PROJECT_ID }}"
-          fi
-
-          # Fail-closed: project ID must be present
-          if [ -z "$PROJECT_ID" ]; then
-            echo "❌ SUPABASE_PROJECT_ID not configured"
-            echo "   Option 1: Set GitHub repository variable: SUPABASE_PROJECT_ID"
-            echo "     Path: Settings → Secrets and variables → Actions → New repository variable"
-            echo "   Option 2: Pass as workflow input when triggering"
-            exit 1
-          fi
-
-          # Validate format: lowercase alphanumeric only
-          if ! echo "$PROJECT_ID" | grep -E '^[a-z0-9]+$' > /dev/null; then
-            echo "❌ SUPABASE_PROJECT_ID format invalid"
-            echo "   Expected: lowercase alphanumeric characters only"
-            echo "   Got: $PROJECT_ID"
-            exit 1
-          fi
-
-          echo "✅ Supabase project ID validated"
-          echo "SUPABASE_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
-
-      - name: Verify database password secret
+      - name: Verify database credentials
         env:
-          DB_PASSWORD_INPUT: ${{ github.event.inputs.db_password }}
-          DB_PASSWORD_SECRET: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL || vars.SUPABASE_DB_URL }}
         run: |
-          # Use input if provided, otherwise use secret
-          DB_PASSWORD="${DB_PASSWORD_INPUT:-$DB_PASSWORD_SECRET}"
-
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "❌ SUPABASE_DB_PASSWORD not configured"
-            echo "   Option 1: Set GitHub repository secret: SUPABASE_DB_PASSWORD"
-            echo "     Path: Settings → Secrets and variables → Actions → New repository secret"
-            echo "   Option 2: Pass as workflow input when triggering (db_password parameter)"
-            echo "   Value source: Supabase Dashboard → Settings → Database → Password"
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "✅ SUPABASE_DB_URL secret is configured (will be used for connection)"
+          elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            echo "✅ SUPABASE_DB_PASSWORD secret is configured"
+            echo "ℹ️  Will attempt direct connection to db.${SUPABASE_PROJECT_ID}.supabase.co"
+            echo "   If this fails, set SUPABASE_DB_URL to the full connection string from"
+            echo "   Supabase Dashboard → Settings → Database → Connection string (Session pooler)"
+          else
+            echo "❌ No database credentials configured in GitHub secrets"
+            echo ""
+            echo "   Recommended: Set SUPABASE_DB_URL (full connection string)"
+            echo "     Go to Settings → Secrets and variables → Actions → New repository secret"
+            echo "     Name: SUPABASE_DB_URL"
+            echo "     Value: From Supabase Dashboard → Settings → Database → Connection string"
+            echo "            Use the 'Session pooler' URI (port 5432) for schema migrations"
+            echo ""
+            echo "   Alternative: Set SUPABASE_DB_PASSWORD (direct connection — requires IPv4 add-on)"
+            echo "     Name: SUPABASE_DB_PASSWORD"
+            echo "     Value: From Supabase Dashboard → Settings → Database → Database password"
             exit 1
           fi
-
-          if [ -n "$DB_PASSWORD_INPUT" ]; then
-            echo "✅ Database password from workflow input"
-          else
-            echo "✅ Database password from GitHub secret"
-          fi
-
-          # Export for use in next steps
-          echo "SUPABASE_DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
 
       - name: Deploy schema via PostgreSQL
         env:
-          SUPABASE_DB_PASSWORD: ${{ env.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL || vars.SUPABASE_DB_URL }}
         run: |
           set +e  # Don't exit on first error
 
           echo "🔧 Connecting to Supabase database..."
 
-          # Construct connection string
-          PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
-          PGPORT="5432"
-          PGUSER="postgres"
-          PGPASSWORD="${SUPABASE_DB_PASSWORD}"
-          PGDATABASE="postgres"
+          # Prefer the full connection URL (required for newer Supabase projects
+          # that use the Session Pooler instead of db.{ref}.supabase.co).
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "ℹ️  Using SUPABASE_DB_URL for connection"
+            if [[ "$SUPABASE_DB_URL" == psql\ * ]]; then
+              # The dashboard also offers a ready-made "psql -h ... -U ..." command;
+              # pasted verbatim, psql would treat the whole string as a database
+              # name and fall back to a local socket. Parse it into arguments.
+              echo "ℹ️  Value is a pasted 'psql ...' command — parsing its flags"
+              read -r -a PSQL_CONN_ARGS <<< "${SUPABASE_DB_URL#psql }"
+            else
+              PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+            fi
+            # Pooler URIs / psql commands usually omit the password; supply it via env.
+            if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+              export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            fi
+          else
+            # Fall back to direct connection (requires IPv4 add-on on newer projects)
+            echo "ℹ️  Constructing direct connection from project ID and password"
+            PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+            PGPORT="5432"
+            PGUSER="postgres"
+            PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            PGDATABASE="postgres"
+            export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
+            PSQL_CONN_ARGS=()
+          fi
 
-          export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
-
-          # Test connection first
+          # Test connection first (capture stderr for diagnostics)
           echo "Testing connection..."
-          if ! psql -c "SELECT version();" >/dev/null 2>&1; then
+          CONN_ERR=$( psql "${PSQL_CONN_ARGS[@]}" -c "SELECT version();" 2>&1 >/dev/null )
+          if [ $? -ne 0 ]; then
             echo "❌ Failed to connect to Supabase database"
-            echo "   Check: SUPABASE_DB_PASSWORD is correct"
+            echo "   Error: $CONN_ERR"
+            echo ""
+            echo "   Common causes:"
+            echo "   1. SUPABASE_DB_URL / SUPABASE_DB_PASSWORD is incorrect"
+            echo "   2. db.${SUPABASE_PROJECT_ID}.supabase.co does not resolve (newer Supabase"
+            echo "      projects require the Session Pooler URL — set SUPABASE_DB_URL to the"
+            echo "      connection string from Supabase Dashboard → Settings → Database)"
+            echo "   3. Network / firewall blocking the connection from GitHub Actions"
             exit 1
           fi
 
@@ -211,47 +194,83 @@ jobs:
           echo ""
           echo "📋 Deploying schema..."
 
+          # Use 0/1 bash exit-code convention: 0 = still good, 1 = failure occurred
+          deployment_failed=0
+
           # Run schema deployment
-          if psql -f supabase/schema.sql > /tmp/deploy.log 2>&1; then
+          if psql "${PSQL_CONN_ARGS[@]}" -f supabase/schema.sql > /tmp/deploy.log 2>&1; then
             echo "✅ Schema deployed successfully"
-            deployment_success=1
           else
             echo "❌ Schema deployment failed"
             cat /tmp/deploy.log | tail -20
-            deployment_success=0
+            deployment_failed=1
+          fi
+
+          # Deploy the CEIS schema (DNA-300) — idempotent, five ceis_* tables
+          if [ $deployment_failed -eq 0 ]; then
+            echo ""
+            echo "🧬 Deploying CEIS schema..."
+            if psql "${PSQL_CONN_ARGS[@]}" -f supabase/ceis-schema.sql > /tmp/ceis-deploy.log 2>&1; then
+              echo "✅ CEIS schema deployed successfully"
+            else
+              echo "❌ CEIS schema deployment failed"
+              cat /tmp/ceis-deploy.log | tail -20
+              deployment_failed=1
+            fi
           fi
 
           # Run verification
           echo ""
           echo "🔍 Verifying deployment..."
-          if [ $deployment_success -eq 1 ]; then
-            if psql -f supabase/POST_DEPLOYMENT_VERIFICATION.sql > /tmp/verify.log 2>&1; then
+          if [ $deployment_failed -eq 0 ]; then
+            if psql "${PSQL_CONN_ARGS[@]}" -f supabase/POST_DEPLOYMENT_VERIFICATION.sql > /tmp/verify.log 2>&1; then
               echo "✅ Deployment verification passed"
               cat /tmp/verify.log | grep "✓" || true
             else
               echo "⚠️  Verification script had errors"
               cat /tmp/verify.log | tail -20
             fi
+            # CEIS (DNA-300) verification — hard-fails on missing tables or RLS
+            if psql "${PSQL_CONN_ARGS[@]}" -v ON_ERROR_STOP=1 -f supabase/CEIS_POST_DEPLOYMENT_VERIFICATION.sql > /tmp/ceis-verify.log 2>&1; then
+              echo "✅ CEIS verification passed (5 tables, RLS enabled)"
+            else
+              echo "❌ CEIS verification failed"
+              cat /tmp/ceis-verify.log | tail -20
+              deployment_failed=1
+            fi
           fi
 
-          exit $deployment_success
+          exit $deployment_failed
 
       - name: Run security tests
         if: success()
         env:
-          SUPABASE_DB_PASSWORD: ${{ env.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL || vars.SUPABASE_DB_URL }}
         run: |
           echo "🔐 Running security tests..."
 
-          PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
-          PGPORT="5432"
-          PGUSER="postgres"
-          PGPASSWORD="${SUPABASE_DB_PASSWORD}"
-          PGDATABASE="postgres"
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            # Accept both a connection URI and a pasted "psql ..." command (see deploy step).
+            if [[ "$SUPABASE_DB_URL" == psql\ * ]]; then
+              read -r -a PSQL_CONN_ARGS <<< "${SUPABASE_DB_URL#psql }"
+            else
+              PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+            fi
+            if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+              export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            fi
+          else
+            PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
+            PGPORT="5432"
+            PGUSER="postgres"
+            PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            PGDATABASE="postgres"
+            export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
+            PSQL_CONN_ARGS=()
+          fi
 
-          export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
-
-          if psql -f supabase/SECURITY_TESTS.sql > /tmp/security.log 2>&1; then
+          if psql "${PSQL_CONN_ARGS[@]}" -f supabase/SECURITY_TESTS.sql > /tmp/security.log 2>&1; then
             echo "✅ Security tests passed"
             cat /tmp/security.log | grep -E "✓|✅|PASS" || true
           else
@@ -279,9 +298,10 @@ jobs:
             echo "❌ SUPABASE SCHEMA DEPLOYMENT FAILED"
             echo ""
             echo "Troubleshooting:"
-            echo "1. Verify repository variable: SUPABASE_PROJECT_ID"
-            echo "2. Verify GitHub secret: SUPABASE_DB_PASSWORD"
-            echo "3. Verify credentials are correct and project exists"
-            echo "4. Review workflow logs for detailed errors"
+            echo "1. If connection failed: set SUPABASE_DB_URL secret to the full Session Pooler"
+            echo "   connection string from Supabase Dashboard → Settings → Database"
+            echo "2. If using SUPABASE_DB_PASSWORD: verify value and check that"
+            echo "   db.{project-ref}.supabase.co resolves (requires Supabase IPv4 add-on)"
+            echo "3. Review workflow logs for the exact error from psql"
             exit 1
           fi
