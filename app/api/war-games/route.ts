@@ -5,6 +5,7 @@
  * Runs synthetic incident scenarios through the full incident response pipeline.
  */
 
+import { NextRequest, NextResponse } from 'next/server';
 import {
   getAllScenarios,
   validateWarGameResult,
@@ -17,14 +18,38 @@ import {
 // In production, would use Supabase
 const warGameResults = new Map<string, WarGameResult[]>();
 
-export async function GET(request: Request) {
+// Authentication helper
+function verifyAuth(request: NextRequest): boolean {
+  const authHeader = request.headers.get('Authorization');
+  const secret = process.env.PRODUCTION_WIRING_SECRET;
+
+  if (!secret) {
+    console.error('PRODUCTION_WIRING_SECRET not configured');
+    return false;
+  }
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return false;
+  }
+
+  const token = authHeader.slice(7);
+  return token === secret;
+}
+
+export async function GET(request: NextRequest) {
+  if (!verifyAuth(request)) {
+    return NextNextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action');
 
   // List available scenarios
   if (action === 'scenarios') {
     const scenarios = getAllScenarios();
-    return Response.json({
+    return NextResponse.json({
       total: scenarios.length,
       scenarios: scenarios.map((s) => ({
         name: s.name,
@@ -41,11 +66,11 @@ export async function GET(request: Request) {
   if (action === 'results') {
     const scenarioName = searchParams.get('scenario');
     if (!scenarioName) {
-      return Response.json({ error: 'Missing scenario name' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing scenario name' }, { status: 400 });
     }
 
     const results = warGameResults.get(scenarioName) || [];
-    return Response.json({
+    return NextResponse.json({
       scenario: scenarioName,
       results: results.map((r) => ({
         executedAt: r.executedAt,
@@ -67,23 +92,30 @@ export async function GET(request: Request) {
     });
 
     if (allResults.length === 0) {
-      return Response.json({
+      return NextResponse.json({
         timestamp: new Date().toISOString(),
         message: 'No war game results yet. Run scenarios first.',
       });
     }
 
     const summary = summarizeWarGameResults(allResults);
-    return Response.json({
+    return NextResponse.json({
       timestamp: new Date().toISOString(),
       ...summary,
     });
   }
 
-  return Response.json({ error: 'Unknown action' }, { status: 400 });
+  return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  if (!verifyAuth(request)) {
+    return NextNextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = (await request.json()) as {
       scenario?: string;
@@ -98,14 +130,14 @@ export async function POST(request: Request) {
     } else if (body.scenario) {
       const scenario = scenarios.find((s) => s.name === body.scenario);
       if (!scenario) {
-        return Response.json(
+        return NextResponse.json(
           { error: `Scenario not found: ${body.scenario}` },
           { status: 404 }
         );
       }
       scenariosToRun = [scenario];
     } else {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Missing scenario or all=true' },
         { status: 400 }
       );
@@ -208,7 +240,7 @@ export async function POST(request: Request) {
 
     const summary = summarizeWarGameResults(results);
 
-    return Response.json(
+    return NextResponse.json(
       {
         timestamp: new Date().toISOString(),
         executed: results.length,
@@ -224,22 +256,29 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    return Response.json(
+    return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function DELETE(request: NextRequest) {
+  if (!verifyAuth(request)) {
+    return NextNextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  const { searchParams } = request.nextUrl;
   const scenario = searchParams.get('scenario');
 
   if (scenario) {
     warGameResults.delete(scenario);
-    return Response.json({ success: true, cleared: scenario });
+    return NextResponse.json({ success: true, cleared: scenario });
   }
 
   warGameResults.clear();
-  return Response.json({ success: true, cleared: 'all scenarios' });
+  return NextResponse.json({ success: true, cleared: 'all scenarios' });
 }
