@@ -37,3 +37,6 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# build artifacts
+.production-readiness-report.txt
