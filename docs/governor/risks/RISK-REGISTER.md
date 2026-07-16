@@ -6,27 +6,42 @@ Scope: whole-organization (technical, security, business, operational,
 compliance, customer). Infra-hardware risks remain in
 [`docs/infra/HARDWARE_RISK_REGISTER.md`](../../infra/HARDWARE_RISK_REGISTER.md).
 
-**Last updated:** 2026-07-16 (baseline)
+**Last updated:** 2026-07-16 07:30 UTC (RISK-001 closed — production schema deployed; RISK-007 added)
 
-| ID       | Description                                                                                                                          | Prob.                   | Impact   | Severity     | Owner    | Status                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- | -------- | ------------ | -------- | ----------------------------------------------- |
-| RISK-001 | Production Supabase schema not deployed — no customer can sign up; tenant-isolation (RLS) unverified in production                   | Certain (current state) | Critical | **Critical** | Founder  | Open — blocked on `SUPABASE_DB_PASSWORD` secret |
-| RISK-002 | No branch protection on `main` — force-pushes accepted; one erasure incident already occurred                                        | Medium                  | Critical | **High**     | Founder  | Open — needs repo-settings action               |
-| RISK-003 | PR queue drift / duplicate parallel work — stale PRs accumulate and parallel sessions rebuild existing features                      | High (recurred twice)   | Medium   | **High**     | Governor | Open — triage in progress                       |
-| RISK-004 | Documentation sprawl → contradictory status claims (e.g. test counts, readiness verdicts differ across docs)                         | High                    | Medium   | **Medium**   | Governor | Open — mitigated by single-canonical-home rule  |
-| RISK-005 | Production observability unverified — monitoring endpoints exist but end-to-end alert delivery to Founder never proven in production | Medium                  | High     | **Medium**   | Governor | Open — verify after schema deploy               |
-| RISK-006 | Post-deploy env vars missing (`CEIS_CRON_SECRET`, optional API keys) — CEIS features degraded after schema deploy                    | High                    | Low      | **Low**      | Founder  | Open — post-deploy step                         |
+| ID       | Description                                                                                                                          | Prob.                 | Impact   | Severity   | Owner    | Status                                                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------- | -------- | ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| RISK-001 | Production Supabase schema not deployed — no customer can sign up; tenant-isolation (RLS) unverified in production                   | —                     | —        | **Closed** | Founder  | ✅ Closed 2026-07-16 — deployed + verified (run `29479537494`; see [deployment record](../deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md)) |
+| RISK-007 | `on_auth_user_created` trigger existence in production Unknown — verification script false-negative masked its true state            | Low                   | Medium   | **Low**    | Governor | Open — verify fix merged; confirmed on next deploy run. App mitigates via profiles upsert in workspace flow                                  |
+| RISK-002 | No branch protection on `main` — force-pushes accepted; one erasure incident already occurred                                        | Medium                | Critical | **High**   | Founder  | Open — needs repo-settings action                                                                                                            |
+| RISK-003 | PR queue drift / duplicate parallel work — stale PRs accumulate and parallel sessions rebuild existing features                      | High (recurred twice) | Medium   | **High**   | Governor | Open — triage in progress                                                                                                                    |
+| RISK-004 | Documentation sprawl → contradictory status claims (e.g. test counts, readiness verdicts differ across docs)                         | High                  | Medium   | **Medium** | Governor | Open — mitigated by single-canonical-home rule                                                                                               |
+| RISK-005 | Production observability unverified — monitoring endpoints exist but end-to-end alert delivery to Founder never proven in production | Medium                | High     | **Medium** | Governor | Open — verify after schema deploy                                                                                                            |
+| RISK-006 | Post-deploy env vars missing (`CEIS_CRON_SECRET`, optional API keys) — CEIS features degraded after schema deploy                    | High                  | Low      | **Low**    | Founder  | Open — post-deploy step                                                                                                                      |
 
 ## Detail
 
-### RISK-001 — Production database schema undeployed
+### RISK-001 — Production database schema undeployed — ✅ CLOSED 2026-07-16
 
-- **Evidence:** Deploy workflow run `29467340842` halts at `Verify database
-password secret`; full trail in
-  [CHECKPOINT-2026-07-16-DEPLOYMENT-UNBLOCK](../../governance/CHECKPOINT-2026-07-16-DEPLOYMENT-UNBLOCK.md).
-- **Mitigation:** Pipeline is proven up to the password gate; workflow
-  self-verifies schema + RLS on success. Single 5-minute Founder action
-  closes this risk.
+- **Closure evidence:** Run `29479537494` (2026-07-16 07:20 UTC) deployed
+  base + CEIS schemas and passed all verifications: CEIS hard-verify
+  (5 tables, RLS enabled), security tests (tenant isolation, anon
+  restrictions, CRUD, membership), 21 tables / 60 indexes / 39 policies.
+  Full record: [deployment record](../deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md).
+- **History:** blocked for days on the `SUPABASE_DB_PASSWORD` secret
+  (run `29467340842`); Founder created credentials 2026-07-16; connection
+  format defect fixed in PR #148 (`56dd24e`).
+
+### RISK-007 — Production `on_auth_user_created` trigger state Unknown
+
+- **Evidence:** Run `29479537494` verification printed triggers `0/1 ✗ FAIL`;
+  root cause is the script counting `trigger_schema = 'public'` while the
+  trigger lives on `auth.users` (schema `auth`) — a check that can never
+  pass. Fixed to query `pg_trigger` by name.
+- **Impact if truly missing:** signup does not auto-create a `profiles` row;
+  contained because the workspace flow upserts `profiles` itself
+  (`app/api/workspace/route.ts:196`).
+- **Mitigation:** re-run the (idempotent) deploy workflow after the verify
+  fix merges; the trigger check then reports its true state.
 
 ### RISK-002 — `main` unprotected
 
