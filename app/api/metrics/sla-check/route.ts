@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMetrics, validateSLA, type PerformanceMetric, type SLAConfig } from '@/lib/performance-metrics';
 import { withLogging } from '@/lib/middleware-logging';
+import { processSLAViolations } from '@/lib/sla-alert-monitor';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -113,6 +114,15 @@ export async function GET(request: NextRequest) {
 
         const allPassed = results.every((r) => r.passed);
         const violations = results.filter((r) => !r.passed);
+
+        // Record violations in alert hub for Founder visibility
+        if (!allPassed) {
+          processSLAViolations(
+            allPassed,
+            violations.length,
+            violations as Parameters<typeof processSLAViolations>[2]
+          );
+        }
 
         return NextResponse.json(
           {
