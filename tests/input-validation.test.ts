@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { validators, validate, sanitizeString, sanitizeStringArray } from '@/lib/input-validation';
+import {
+  validators,
+  validate,
+  sanitizeString,
+  sanitizeStringArray,
+  stripBlankOptionalFields,
+} from '@/lib/input-validation';
 
 describe('Input Validation Framework', () => {
   describe('validators.string', () => {
@@ -200,20 +206,41 @@ describe('Input Validation Framework', () => {
       expect(validator.validate(123).ok).toBe(false);
     });
 
-    it('treats an empty/blank string as absent (forms submit "" for untouched fields)', () => {
-      // A blank optional URL/enum must not be run through the inner validator —
-      // e.g. leaving the optional website blank used to fail workspace creation
-      // because url() rejects ''.
-      const url = validators.optional(validators.url());
-      expect(url.validate('').ok).toBe(true);
-      expect(url.validate('').value).toBeUndefined();
-      expect(url.validate('   ').value).toBeUndefined();
+    it('does NOT treat a blank string as absent (JSON APIs stay strict)', () => {
+      // A blank '' is only "absent" for HTML forms, so that normalization lives
+      // in the form-facing routes (ai-systems, workspace), NOT here. Keeping the
+      // validator strict means a malformed blank on a non-string JSON field
+      // (e.g. optional(boolean()) on POST /api/knowledge) is still rejected
+      // rather than silently coerced.
+      expect(validators.optional(validators.boolean()).validate('').ok).toBe(
+        false
+      );
+      expect(validators.optional(validators.url()).validate('').ok).toBe(false);
+    });
+  });
 
-      const choice = validators.optional(validators.enum(['a', 'b'] as const));
-      expect(choice.validate('').ok).toBe(true);
-      expect(choice.validate('').value).toBeUndefined();
-      // A non-empty invalid value is still rejected.
-      expect(choice.validate('z').ok).toBe(false);
+  describe('stripBlankOptionalFields', () => {
+    it('drops empty and whitespace-only string fields, keeps the rest', () => {
+      const body: Record<string, unknown> = {
+        name: 'Acme',
+        website: '',
+        vendor: '   ',
+        purpose: 'real value',
+        keep: 0,
+        flag: false,
+      };
+      stripBlankOptionalFields(body, ['website', 'vendor', 'purpose', 'keep', 'flag']);
+      expect('website' in body).toBe(false);
+      expect('vendor' in body).toBe(false); // whitespace-only also dropped
+      expect(body.purpose).toBe('real value');
+      expect(body.keep).toBe(0); // non-strings untouched
+      expect(body.flag).toBe(false);
+      expect(body.name).toBe('Acme');
+    });
+
+    it('is a no-op for non-object input', () => {
+      expect(() => stripBlankOptionalFields(null, ['a'])).not.toThrow();
+      expect(() => stripBlankOptionalFields('x', ['a'])).not.toThrow();
     });
   });
 

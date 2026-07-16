@@ -128,7 +128,7 @@ describe('POST /api/workspace', () => {
         industry: 'Manufacturing',
         legalName: '',
         employees: '',
-        website: '',
+        website: '   ', // whitespace-only must also be treated as absent
         description: '',
       })
     );
