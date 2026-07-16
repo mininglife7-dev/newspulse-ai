@@ -1,17 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+interface UpdateObligationRequest {
+  status?: 'identified' | 'in_progress' | 'completed' | 'not_applicable';
+  priority?: 'critical' | 'high' | 'medium' | 'low';
+  due_date?: string;
+}
+
+interface RouteContext {
+  status: number;
+  workspaceId?: string;
+  error?: string;
+}
 
 async function resolveContext(
   supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
+): Promise<RouteContext> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
+  if (!user) {
+    return { status: 401, error: 'Authentication required' };
+  }
 
-  const { data: membership } = await supabase
+  const { data: membership, error: memberError } = await supabase
     .from('workspace_members')
     .select('workspace_id')
     .eq('user_id', user.id)
@@ -19,12 +36,17 @@ async function resolveContext(
     .limit(1)
     .maybeSingle();
 
+  if (memberError) {
+    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    return { status: 500, error: 'Membership lookup failed' };
+  }
+
   if (!membership) {
-    return { status: 401 as const, error: 'Not a workspace member' };
+    return { status: 403, error: 'Not a workspace member' };
   }
 
   return {
-    status: 200 as const,
+    status: 200,
     workspaceId: membership.workspace_id as string,
   };
 }
@@ -32,10 +54,8 @@ async function resolveContext(
 /**
  * PUT /api/obligations/:id — update an obligation's status/priority/due date.
  *
- * The remediation workflow calls this dynamic path. The handler previously
- * lived on the collection route with `pathname.split('/').pop()` id extraction
- * (which yields the literal "obligations"), so every status change 404'd. Now
- * at the correct segment with async params (Next 15+).
+ * Supports partial updates: status, priority, and/or due_date can be updated
+ * independently. Triggers in remediation workflow.
  */
 export async function PUT(
   request: NextRequest,
@@ -49,15 +69,30 @@ export async function PUT(
     );
   }
 
-  let body: { status?: string; priority?: string; due_date?: string };
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { ok: false, error: 'Invalid JSON body' },
+      { ok: false, error: 'Invalid JSON' },
       { status: 400 }
     );
   }
+
+  const validationResult = validate(body, {
+    status: validators.optional(validators.enum(['identified', 'in_progress', 'completed', 'not_applicable'])),
+    priority: validators.optional(validators.enum(['critical', 'high', 'medium', 'low'])),
+    due_date: validators.optional(validators.string()),
+  });
+
+  if (!validationResult.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'Invalid input', errors: validationResult.errors },
+      { status: 400 }
+    );
+  }
+
+  const validated = validationResult.value as UpdateObligationRequest;
 
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
@@ -69,34 +104,14 @@ export async function PUT(
   }
 
   const updateData: Record<string, unknown> = {};
-  if (body.status !== undefined) {
-    const valid = ['identified', 'in_progress', 'completed', 'not_applicable'];
-    if (!valid.includes(body.status)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `Invalid status. Must be one of: ${valid.join(', ')}`,
-        },
-        { status: 400 }
-      );
-    }
-    updateData.status = body.status;
+  if (validated.status !== undefined) {
+    updateData.status = validated.status;
   }
-  if (body.priority !== undefined) {
-    const valid = ['critical', 'high', 'medium', 'low'];
-    if (!valid.includes(body.priority)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `Invalid priority. Must be one of: ${valid.join(', ')}`,
-        },
-        { status: 400 }
-      );
-    }
-    updateData.priority = body.priority;
+  if (validated.priority !== undefined) {
+    updateData.priority = validated.priority;
   }
-  if (body.due_date !== undefined) {
-    updateData.due_date = body.due_date;
+  if (validated.due_date !== undefined) {
+    updateData.due_date = validated.due_date;
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -106,12 +121,20 @@ export async function PUT(
     );
   }
 
-  const { data: obligation } = await supabase
+  const { data: obligation, error: obligationError } = await supabase
     .from('obligations')
     .select('id, workspace_id')
     .eq('id', id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle();
+
+  if (obligationError) {
+    logger.error('Obligation lookup failed', 'OBLIGATION_LOOKUP_ERROR', obligationError);
+    return NextResponse.json(
+      { ok: false, error: 'Failed to verify obligation' },
+      { status: 500 }
+    );
+  }
 
   if (!obligation) {
     return NextResponse.json(
@@ -129,7 +152,7 @@ export async function PUT(
     .single();
 
   if (error || !data) {
-    console.error('[api/obligations/:id] update failed:', error);
+    logger.error('Obligation update failed', 'OBLIGATION_UPDATE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Failed to update obligation' },
       { status: 500 }

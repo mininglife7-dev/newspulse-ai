@@ -1,17 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+interface UpdateEvidenceRequest {
+  title?: string;
+  description?: string;
+  status?: 'submitted' | 'approved' | 'rejected';
+}
+
+interface RouteContext {
+  status: number;
+  workspaceId?: string;
+  error?: string;
+}
 
 async function resolveContext(
   supabase: Awaited<ReturnType<typeof createRouteClient>>
-) {
+): Promise<RouteContext> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
+  if (!user) {
+    return { status: 401, error: 'Authentication required' };
+  }
 
-  const { data: membership } = await supabase
+  const { data: membership, error: memberError } = await supabase
     .from('workspace_members')
     .select('workspace_id')
     .eq('user_id', user.id)
@@ -19,23 +36,25 @@ async function resolveContext(
     .limit(1)
     .maybeSingle();
 
+  if (memberError) {
+    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    return { status: 500, error: 'Membership lookup failed' };
+  }
+
   if (!membership) {
-    return { status: 401 as const, error: 'Not a workspace member' };
+    return { status: 403, error: 'Not a workspace member' };
   }
 
   return {
-    status: 200 as const,
+    status: 200,
     workspaceId: membership.workspace_id as string,
   };
 }
 
 /**
- * PUT/DELETE /api/evidence/:id — update or delete an evidence record.
+ * PUT /api/evidence/:id — update evidence title/description/status.
  *
- * The evidence UI calls this dynamic path. The handlers previously lived on the
- * collection route with `pathname.split('/').pop()` id extraction (yielding the
- * literal "evidence"), so they never routed here. Now at the correct segment
- * with async params (Next 15+), workspace-scoped.
+ * Supports partial updates: title, description, and/or status can be changed independently.
  */
 export async function PUT(
   request: NextRequest,
@@ -49,7 +68,7 @@ export async function PUT(
     );
   }
 
-  let body: { title?: string; description?: string; status?: string };
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
@@ -58,6 +77,21 @@ export async function PUT(
       { status: 400 }
     );
   }
+
+  const validationResult = validate(body, {
+    title: validators.optional(validators.string({ minLength: 1 })),
+    description: validators.optional(validators.string()),
+    status: validators.optional(validators.enum(['submitted', 'approved', 'rejected'])),
+  });
+
+  if (!validationResult.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'Invalid input', errors: validationResult.errors },
+      { status: 400 }
+    );
+  }
+
+  const validated = validationResult.value as UpdateEvidenceRequest;
 
   const supabase = await createRouteClient();
   const ctx = await resolveContext(supabase);
@@ -69,9 +103,15 @@ export async function PUT(
   }
 
   const updateData: Record<string, unknown> = {};
-  if (body.title) updateData.title = body.title.trim();
-  if (body.description) updateData.description = body.description.trim();
-  if (body.status) updateData.status = body.status;
+  if (validated.title) {
+    updateData.title = validated.title.trim();
+  }
+  if (validated.description) {
+    updateData.description = validated.description.trim();
+  }
+  if (validated.status) {
+    updateData.status = validated.status;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json(
@@ -89,12 +129,13 @@ export async function PUT(
     .maybeSingle();
 
   if (error) {
-    console.error('[api/evidence/:id] PUT failed:', error);
+    logger.error('Evidence update failed', 'EVIDENCE_UPDATE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Failed to update evidence' },
       { status: 500 }
     );
   }
+
   if (!data) {
     return NextResponse.json(
       { ok: false, error: 'Evidence not found' },
@@ -105,6 +146,9 @@ export async function PUT(
   return NextResponse.json({ ok: true, evidence: data });
 }
 
+/**
+ * DELETE /api/evidence/:id — delete an evidence record (soft or hard delete).
+ */
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -133,7 +177,7 @@ export async function DELETE(
     .eq('workspace_id', ctx.workspaceId);
 
   if (error) {
-    console.error('[api/evidence/:id] DELETE failed:', error);
+    logger.error('Evidence deletion failed', 'EVIDENCE_DELETE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Failed to delete evidence' },
       { status: 500 }
