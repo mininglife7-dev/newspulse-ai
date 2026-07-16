@@ -64,6 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: preflight-check
+    # Secrets/variables saved under a GitHub Environment (not repo-level)
+    # are only visible to jobs that declare that environment.
+    environment: ${{ inputs.environment || 'production' }}
 
     steps:
       - name: Checkout
@@ -90,14 +93,18 @@ jobs:
             if [ -z "$SUPABASE_URL" ] && [ -f .env.local ]; then
               SUPABASE_URL=$(grep "NEXT_PUBLIC_SUPABASE_URL=" .env.local | cut -d'=' -f2 || echo "")
             fi
-            if [ -z "$SUPABASE_URL" ]; then
-              echo "❌ Cannot resolve the Supabase project."
-              echo "   Set ONE of these in Settings → Secrets and variables → Actions:"
-              echo "   - variable or secret SUPABASE_PROJECT_ID (the <ref> in https://<ref>.supabase.co)"
-              echo "   - variable or secret NEXT_PUBLIC_SUPABASE_URL"
-              exit 1
+            if [ -n "$SUPABASE_URL" ]; then
+              SUPABASE_PROJECT_ID=$(echo "$SUPABASE_URL" | sed 's/https:\/\/\([^.]*\).*/\1/')
             fi
-            SUPABASE_PROJECT_ID=$(echo "$SUPABASE_URL" | sed 's/https:\/\/\([^.]*\).*/\1/')
+          fi
+          if [ -z "$SUPABASE_PROJECT_ID" ]; then
+            # Default: the production project ref recorded in the repo's own
+            # deployment evidence (docs/infra/DEPLOYMENT_EVIDENCE_TRACKING.md:
+            # https://yrroytwfdrafvajdfkok.supabase.co). The ref is public by
+            # design (it ships in every client bundle); a repo variable or
+            # secret above always overrides this default.
+            SUPABASE_PROJECT_ID="yrroytwfdrafvajdfkok"
+            echo "ℹ️  Using project ref from deployment evidence docs (no variable/secret set)"
           fi
           echo "SUPABASE_PROJECT_ID=$SUPABASE_PROJECT_ID" >> $GITHUB_ENV
           echo "✅ Supabase project ID resolved: $SUPABASE_PROJECT_ID"
@@ -177,6 +184,14 @@ jobs:
             else
               echo "⚠️  Verification script had errors"
               cat /tmp/verify.log | tail -20
+            fi
+            # CEIS (DNA-300) verification — hard-fails on missing tables or RLS
+            if psql -v ON_ERROR_STOP=1 -f supabase/CEIS_POST_DEPLOYMENT_VERIFICATION.sql > /tmp/ceis-verify.log 2>&1; then
+              echo "✅ CEIS verification passed (5 tables, RLS enabled)"
+            else
+              echo "❌ CEIS verification failed"
+              cat /tmp/ceis-verify.log | tail -20
+              deployment_success=0
             fi
           fi
 

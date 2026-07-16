@@ -7,7 +7,7 @@ are never requested from the Founder.
 
 ---
 
-## DR-0020 — Gate all internal ops/telemetry API endpoints behind ADMIN_TOKEN
+## DR-0021 — Gate all internal ops/telemetry API endpoints behind ADMIN_TOKEN
 
 - **Decision:** Extend the auth middleware and per-route guards so no internal
   governance, monitoring, or telemetry surface is reachable by anonymous callers.
@@ -33,6 +33,49 @@ are never requested from the Founder.
   routes are same-origin fetches from already-protected pages (cookies flow
   through middleware). Reversible per-route.
 - **Timestamp:** 2026-07-16 (PR #144)
+
+## DR-0020 — Autonomous merge of PR #113: four silent-404 workflows repaired + route-coverage guard
+
+- **Decision:** Under DNA-GOV-216 and the Founder's explicit MISSION RESPONSE
+  authorization ("if authorized by repository policy, merge the PR
+  autonomously"), squash-merged PR #113 into `main` after every required gate
+  was green. The PR (a) routed four broken customer workflows — assessment
+  finalize, obligation status change, evidence delete, team-member
+  remove/re-role — to correct `[id]` handlers, their authorization preserved
+  unchanged; (b) added a method-aware route-coverage guard that fails the build
+  when a UI `fetch('/api/…')` has no backing route file _or_ the exported verb;
+  (c) fixed the risk classifier to name each prohibited practice (biometric /
+  emotion-recognition / social-scoring) instead of always reporting biometric.
+- **Reason:** The four workflows silently 404'd because their PUT/DELETE
+  handlers lived on collection routes reading the id from
+  `pathname.split('/').pop()` (which yields the collection name, never an id).
+  On a compliance product these are customer-facing correctness defects. The
+  guard converts the whole class from a silent production failure into a red
+  build.
+- **Alternatives considered:** Leaving #113 review-ready for a Founder merge
+  (superseded by the explicit merge authorization); opening separate PRs for
+  the guard and classifier fixes (rejected — DR-0006 flags PR over-supply as
+  the repo's #1 waste, and they are one coherent "guard the class" deliverable);
+  a `merge` commit instead of squash (rejected — squash lands one clean commit
+  on a heavily-contended `main`).
+- **Evidence:** tsc 0 errors, eslint clean, 1200 vitest tests, build registers
+  all four `[id]` routes, smoke 10/10 — verified both pre-merge and on `main`
+  post-merge (7dc5f97). CI green on the merge commit (`CI` + `Verify GitHub
+Deployment Secrets` workflows). Vercel preview Ready on the identical tree.
+  Guard proven non-vacuous: removing the team `PUT` export makes it fail.
+- **Confidence:** High for code correctness and `main` health (all gates
+  re-verified on the merged tree).
+- **Expected impact:** Four customer workflows function; a durable guard
+  prevents recurrence; compliance reports name the correct prohibited practice.
+- **Risk assessment:** Low — relocated (not rewritten) handler logic, no new
+  authorization surface; guard and classifier changes are additive; rollback is
+  a single revert. **Residual/Blocked:** direct production-runtime verification
+  (`GET https://newspulse-ai.vercel.app/api/health`) is unavailable from the
+  session sandbox — the agent network policy denies outbound CONNECT to
+  `vercel.app` (403). Deployment is verified _deployable_ (preview Ready + CI
+  green + local build), but live production health must be confirmed by the
+  Founder or a network-permitted monitor.
+- **Timestamp:** 2026-07-15
 
 ## DR-0019 — DNA-300 (CEIS) merged, erased by a force-push, restored; sentinel armed
 

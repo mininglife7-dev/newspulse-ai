@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { validators, validate } from '@/lib/input-validation';
+import {
+  validators,
+  validate,
+  stripBlankOptionalFields,
+} from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,6 +48,15 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+
+  // The setup form submits untouched optional inputs as '' (or whitespace);
+  // drop those so `optional(url())` etc. don't reject an otherwise-valid create.
+  stripBlankOptionalFields(body, [
+    'legalName',
+    'employees',
+    'website',
+    'description',
+  ]);
 
   // Validate input using schema
   const validationResult = validate(body, {

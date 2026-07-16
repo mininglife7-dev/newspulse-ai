@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
-import { validators, validate } from '@/lib/input-validation';
+import {
+  validators,
+  validate,
+  stripBlankOptionalFields,
+} from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,14 +81,15 @@ export async function POST(req: Request) {
   }
 
   // The inventory form submits unselected optional fields as '' (e.g. the
-  // "Select…" default for Type). `optional` only treats undefined/null as
-  // absent, so a bare '' would fail the enum/string check and reject an
-  // otherwise-valid create. Normalize blank optionals to undefined first.
-  if (body && typeof body === 'object') {
-    for (const key of ['description', 'systemType', 'vendor', 'purpose', 'status'] as const) {
-      if (body[key] === '') delete body[key];
-    }
-  }
+  // "Select…" default for Type); drop those so `optional(enum())` etc. don't
+  // reject an otherwise-valid create.
+  stripBlankOptionalFields(body, [
+    'description',
+    'systemType',
+    'vendor',
+    'purpose',
+    'status',
+  ]);
 
   // Validate input using schema
   const validationResult = validate(body, {

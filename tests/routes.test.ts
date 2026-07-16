@@ -31,6 +31,9 @@ describe('classifyRoute', () => {
     '/api/reports',
     '/api/dashboard',
     '/api/ceis/dashboard',
+    '/api/ceis/proposals',
+    '/api/ceis/proposals/abc123',
+    '/api/ceis/report',
   ])('protects %s', (path) => {
     expect(classifyRoute(path)).toBe('protected');
   });
@@ -65,8 +68,11 @@ describe('classifyRoute', () => {
 
   it('leaves /api/ceis/run public so the scheduler can reach it (it is cron-token authenticated in the handler, not session-gated)', () => {
     expect(classifyRoute('/api/ceis/run')).toBe('public');
-    // But the browser-facing CEIS dashboard endpoint is session-gated.
+    // But the browser-facing CEIS read endpoints are session-gated — DNA
+    // proposals and reports carry internal strategy.
     expect(classifyRoute('/api/ceis/dashboard')).toBe('protected');
+    expect(classifyRoute('/api/ceis/proposals')).toBe('protected');
+    expect(classifyRoute('/api/ceis/report')).toBe('protected');
   });
 });
 

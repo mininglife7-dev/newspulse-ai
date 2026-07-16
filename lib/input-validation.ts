@@ -27,17 +27,27 @@ export interface FieldValidator<T = unknown> {
 
 // Core validators
 export const validators = {
-  string: (opts?: { minLength?: number; maxLength?: number; pattern?: RegExp }): FieldValidator<string> => ({
+  string: (opts?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: RegExp;
+  }): FieldValidator<string> => ({
     validate(value: unknown): ValidationResult<string> {
       if (typeof value !== 'string') {
         return { ok: false, error: 'Must be a string' };
       }
       const trimmed = value.trim();
       if (opts?.minLength && trimmed.length < opts.minLength) {
-        return { ok: false, error: `Must be at least ${opts.minLength} characters` };
+        return {
+          ok: false,
+          error: `Must be at least ${opts.minLength} characters`,
+        };
       }
       if (opts?.maxLength && trimmed.length > opts.maxLength) {
-        return { ok: false, error: `Must be at most ${opts.maxLength} characters` };
+        return {
+          ok: false,
+          error: `Must be at most ${opts.maxLength} characters`,
+        };
       }
       if (opts?.pattern && !opts.pattern.test(trimmed)) {
         return { ok: false, error: 'Invalid format' };
@@ -46,7 +56,11 @@ export const validators = {
     },
   }),
 
-  number: (opts?: { min?: number; max?: number; integer?: boolean }): FieldValidator<number> => ({
+  number: (opts?: {
+    min?: number;
+    max?: number;
+    integer?: boolean;
+  }): FieldValidator<number> => ({
     validate(value: unknown): ValidationResult<number> {
       const num = typeof value === 'string' ? parseFloat(value) : value;
       if (typeof num !== 'number' || isNaN(num)) {
@@ -95,7 +109,10 @@ export const validators = {
           // URL.protocol includes the colon (e.g., 'https:'), so we remove it for comparison
           const protocol = url.protocol.replace(':', '');
           if (!opts.allowedProtocols.includes(protocol)) {
-            return { ok: false, error: `Protocol must be one of: ${opts.allowedProtocols.join(', ')}` };
+            return {
+              ok: false,
+              error: `Protocol must be one of: ${opts.allowedProtocols.join(', ')}`,
+            };
           }
         }
         return { ok: true, value: url.toString() };
@@ -105,7 +122,9 @@ export const validators = {
     },
   }),
 
-  enum: <T extends readonly string[]>(values: T): FieldValidator<T[number]> => ({
+  enum: <T extends readonly string[]>(
+    values: T
+  ): FieldValidator<T[number]> => ({
     validate(value: unknown): ValidationResult<T[number]> {
       if (typeof value !== 'string') {
         return { ok: false, error: 'Must be a string' };
@@ -130,16 +149,25 @@ export const validators = {
     },
   }),
 
-  array: <T>(itemValidator: FieldValidator<T>, opts?: { minLength?: number; maxLength?: number }): FieldValidator<T[]> => ({
+  array: <T>(
+    itemValidator: FieldValidator<T>,
+    opts?: { minLength?: number; maxLength?: number }
+  ): FieldValidator<T[]> => ({
     validate(value: unknown): ValidationResult<T[]> {
       if (!Array.isArray(value)) {
         return { ok: false, error: 'Must be an array' };
       }
       if (opts?.minLength && value.length < opts.minLength) {
-        return { ok: false, error: `Array must have at least ${opts.minLength} items` };
+        return {
+          ok: false,
+          error: `Array must have at least ${opts.minLength} items`,
+        };
       }
       if (opts?.maxLength && value.length > opts.maxLength) {
-        return { ok: false, error: `Array must have at most ${opts.maxLength} items` };
+        return {
+          ok: false,
+          error: `Array must have at most ${opts.maxLength} items`,
+        };
       }
       const validated: T[] = [];
       for (let i = 0; i < value.length; i++) {
@@ -155,7 +183,10 @@ export const validators = {
     },
   }),
 
-  object: <T extends Record<string, FieldValidator>>(schema: T, opts?: { allowExtraFields?: boolean }): FieldValidator<Record<keyof T, unknown>> => ({
+  object: <T extends Record<string, FieldValidator>>(
+    schema: T,
+    opts?: { allowExtraFields?: boolean }
+  ): FieldValidator<Record<keyof T, unknown>> => ({
     validate(value: unknown): ValidationResult<Record<keyof T, unknown>> {
       if (typeof value !== 'object' || value === null) {
         return { ok: false, error: 'Must be an object' };
@@ -183,25 +214,40 @@ export const validators = {
     },
   }),
 
-  optional: <T>(validator: FieldValidator<T>): FieldValidator<T | undefined> => ({
+  optional: <T>(
+    validator: FieldValidator<T>
+  ): FieldValidator<T | undefined> => ({
     validate(value: unknown): ValidationResult<T | undefined> {
-      // Treat absent AND blank as "not provided". HTML form controls submit
-      // unselected/empty fields as '' (a "Select…" dropdown, an untouched text
-      // input), never as undefined — so without this, an optional enum/url/etc.
-      // would run its inner check on '' and reject an otherwise-valid request
-      // (e.g. leaving an optional website blank failed workspace creation).
-      // No optional field has a meaningful '' value distinct from absent.
-      if (
-        value === undefined ||
-        value === null ||
-        (typeof value === 'string' && value.trim() === '')
-      ) {
+      if (value === undefined || value === null) {
         return { ok: true, value: undefined };
       }
       return validator.validate(value) as ValidationResult<T | undefined>;
     },
   }),
 };
+
+/**
+ * Drop optional fields that arrived blank (empty or whitespace-only) so
+ * `validators.optional(...)` treats them as absent. HTML form controls submit
+ * untouched text inputs and unselected dropdowns as '' (or stray whitespace),
+ * never as undefined — without this, an optional url()/enum() would run its
+ * check on '' and reject an otherwise-valid submission. Mutates `body` in place.
+ * Kept out of `validators.optional` itself so JSON APIs still reject malformed
+ * blank values on non-string optional fields (e.g. optional(boolean())).
+ */
+export function stripBlankOptionalFields(
+  body: unknown,
+  keys: readonly string[]
+): void {
+  if (!body || typeof body !== 'object') return;
+  const obj = body as Record<string, unknown>;
+  for (const key of keys) {
+    const value = obj[key];
+    if (typeof value === 'string' && value.trim() === '') {
+      delete obj[key];
+    }
+  }
+}
 
 /**
  * Validate input against a schema

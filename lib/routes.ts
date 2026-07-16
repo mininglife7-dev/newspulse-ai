@@ -28,8 +28,13 @@ const PROTECTED_PREFIXES = [
   // Browser-consumed governance/telemetry data (launch readiness, CEIS).
   // NOTE: exact sub-paths only — /api/ceis/run is cron-authenticated and must
   // stay reachable by the scheduler, so we do NOT protect the /api/ceis root.
+  // DNA proposals and evolution reports carry internal strategy — session
+  // required (the middleware also lets an ADMIN_TOKEN bearer through for
+  // /api/ceis/* so curl/cron access keeps working).
   '/api/dashboard',
   '/api/ceis/dashboard',
+  '/api/ceis/proposals',
+  '/api/ceis/report',
 ];
 
 /** Auth screens: send already-authenticated users to the dashboard. */
