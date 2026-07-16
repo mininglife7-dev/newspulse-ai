@@ -17,7 +17,32 @@ Before proceeding, verify:
 
 ---
 
+## ⚡ CRITICAL: Verify Supabase Deployment Status First
+
+**BEFORE doing anything else, verify whether the schema is already deployed. This takes 5 minutes and may save you 30 minutes.**
+
+### Verification (Do This First — 5 minutes)
+
+1. Open [Supabase Dashboard](https://app.supabase.com)
+2. Select your EURO AI project
+3. Go to **SQL Editor**
+4. Run this query:
+   ```sql
+   SELECT COUNT(*) as table_count FROM information_schema.tables
+   WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
+   ```
+
+**Read the result:**
+
+- **If table_count ≥ 20:** ✅ Schema is deployed! Skip to "What Happens Next" section below.
+- **If table_count < 20:** ❌ Schema not deployed. Continue to "Founder Action Step-by-Step" below.
+- **If query fails:** Check that you're logged into the correct Supabase project.
+
+---
+
 ## Founder Action Step-by-Step
+
+(Only proceed if verification above showed table_count < 20)
 
 ### Step 1: Get Your Supabase Credentials
 
