@@ -27,6 +27,7 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 - ✅ **Remediation Tracking** — Plan and execute compliance actions
 - 🔐 **Multi-tenant** — Workspace isolation with role-based access control (RBAC)
 - 🚀 **Vercel-ready** — auto-deploy on push via the Vercel GitHub integration
+- 🧬 **Evolution engine (CEIS)** — a self-improvement subsystem that studies public AI knowledge weekly, extracts principles, and proposes evidence-based missions behind quality gates — see [`docs/CEIS.md`](./docs/CEIS.md)
 
 ---
 
@@ -70,6 +71,8 @@ npm run check-env
 4. Enable "Email" auth in **Project Settings → Auth** (required for signup)
 
 The schema is **idempotent** — safe to run multiple times.
+
+To enable the Evolution engine, also run [`supabase/ceis-schema.sql`](./supabase/ceis-schema.sql) (five `ceis_*` tables). See [`docs/CEIS.md`](./docs/CEIS.md) for the full architecture and the founder/CTO/user guides in [`docs/`](./docs).
 
 ### 4. Start the dev server
 

@@ -17,7 +17,33 @@
     },
     "app/api/error-rate/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/dependency-security/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cost-anomaly/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/ceis/run/route.ts": {
+      "maxDuration": 300
     }
   },
-  "crons": []
+  "env": {
+    "GITHUB_OWNER": "mininglife7-dev",
+    "GITHUB_REPO": "newspulse-ai"
+  },
+  "crons": [
+    {
+      "path": "/api/dependency-security",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cost-anomaly",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/ceis/run",
+      "schedule": "0 6 * * 1"
+    }
+  ]
 }

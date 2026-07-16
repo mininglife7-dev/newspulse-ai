@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
 import {
   estimateMetricsFromBuild,
   generatePerformanceReport,
   formatPerformanceAlert,
   recordBaseline,
-} from '@/lib/performance-baseline'
-import { logger } from '@/lib/logger'
+} from '@/lib/performance-baseline';
+import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/performance-baseline
@@ -28,9 +29,15 @@ export const dynamic = 'force-dynamic'
  * Used by: GitHub Actions workflow (daily); Founder monitoring dashboard
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   try {
     // Estimate current metrics from build
-    const currentMetrics = estimateMetricsFromBuild()
+    const currentMetrics = estimateMetricsFromBuild();
 
     // In production, would load baseline from persistent storage
     // For MVP, use hardcoded baseline
@@ -63,33 +70,45 @@ export async function GET(req: Request) {
         timestamp: '2026-07-01T00:00:00Z',
         environment: 'production' as const,
       },
-    ]
+    ];
 
     // Generate report
     const report = generatePerformanceReport(
       currentMetrics,
       baselineMetrics,
       `${new Date().toISOString().split('T')[0]}-production`
-    )
+    );
 
-    const formatted = formatPerformanceAlert(report)
+    const formatted = formatPerformanceAlert(report);
 
     // Log performance status (safe for production)
     if (report.regressionsFound > 0) {
       if (report.regressions.some((r) => r.severity === 'critical')) {
-        logger.error('Performance baseline detected critical regressions', 'PERFORMANCE_CRITICAL', {
-          regressionsFound: report.regressionsFound,
-          metricsTracked: report.metricsTracked,
-        })
+        logger.error(
+          'Performance baseline detected critical regressions',
+          'PERFORMANCE_CRITICAL',
+          {
+            regressionsFound: report.regressionsFound,
+            metricsTracked: report.metricsTracked,
+          }
+        );
       } else {
-        logger.warn('Performance baseline detected regressions', 'PERFORMANCE_WARNING', {
-          regressionsFound: report.regressionsFound,
-        })
+        logger.warn(
+          'Performance baseline detected regressions',
+          'PERFORMANCE_WARNING',
+          {
+            regressionsFound: report.regressionsFound,
+          }
+        );
       }
     } else if (report.improvements.length > 0) {
-      logger.info('Performance baseline detected improvements', 'PERFORMANCE_IMPROVED', {
-        improvementsCount: report.improvements.length,
-      })
+      logger.info(
+        'Performance baseline detected improvements',
+        'PERFORMANCE_IMPROVED',
+        {
+          improvementsCount: report.improvements.length,
+        }
+      );
     }
 
     return NextResponse.json(
@@ -112,9 +131,13 @@ export async function GET(req: Request) {
           'X-Metrics-Tracked': String(report.metricsTracked),
         },
       }
-    )
+    );
   } catch (error) {
-    logger.error('Performance baseline check failed', 'PERFORMANCE_CHECK_ERROR', error)
+    logger.error(
+      'Performance baseline check failed',
+      'PERFORMANCE_CHECK_ERROR',
+      error
+    );
 
     return NextResponse.json(
       {
@@ -123,6 +146,6 @@ export async function GET(req: Request) {
         timestamp: new Date().toISOString(),
       },
       { status: 503 }
-    )
+    );
   }
 }

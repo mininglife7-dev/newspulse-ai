@@ -1,327 +1,417 @@
 /**
- * DNA-015: Deployment Canary
+ * DNA-GOV-015: Deployment Canary
  *
- * Gradual production rollout with automatic abort on anomalies:
- * - Health checks during deployment phases
- * - Error rate, latency, and availability monitoring
- * - Automatic rollback on threshold breaches
- * - Traffic shifting (% of production traffic)
- * - Manual override capability
- * - Comprehensive deployment state tracking
+ * Autonomously manage gradual code deployments with continuous health monitoring
+ * and automatic abort if metrics spike. Deploy to 10% of traffic, measure impact,
+ * then increment safely. Kill-switch available at any stage.
  *
- * Ensures safe, reversible deployments with minimal blast radius.
+ * Problem: Large deployments are risky. If a bug slips through tests, it affects
+ * 100% of customers immediately. We need: gradual rollout strategy, continuous
+ * health monitoring, automatic abort when metrics degrade, and manual kill-switch.
  */
 
-export interface DeploymentCanary {
-  id: string;
-  version: string;
-  description: string;
-  status: 'pending' | 'in_progress' | 'paused' | 'completed' | 'rolled_back' | 'failed';
-  phases: CanaryPhase[];
-  currentPhaseIndex: number;
-  healthChecks: HealthCheck[];
-  rollbackThresholds: RollbackThresholds;
-  startedAt?: string;
-  completedAt?: string;
-  rolledBackAt?: string;
-  rollbackReason?: string;
+export type CanaryStage = 'planning' | 'staged' | 'active' | 'aborted' | 'complete';
+export type CanaryMetric = 'error_rate' | 'latency' | 'availability' | 'memory' | 'cpu';
+
+export interface CanaryThreshold {
+  metric: CanaryMetric;
+  criticalMax: number; // Abort if exceeded
+  warningMax: number; // Alert if exceeded
 }
 
-export interface CanaryPhase {
+export interface CanaryStageConfig {
+  stage: number; // 1, 2, 3, etc.
+  percentage: number; // 10%, 25%, 50%, 100%
+  duration: number; // How long to observe at this stage (minutes)
+  thresholds: CanaryThreshold[];
+}
+
+export interface CanaryDeployment {
   id: string;
   name: string;
-  percentage: number;
-  duration: number;
-  healthCheckInterval: number;
-  startedAt?: string;
+  description: string;
+  commit: string;
+  version: string;
+  // Deployment strategy
+  stages: CanaryStageConfig[];
+  currentStage: number;
+  currentPercentage: number;
+  // Health tracking
+  status: CanaryStage;
+  startedAt: string;
+  lastCheckedAt: string;
   completedAt?: string;
-  paused: boolean;
-  pausedAt?: string;
-  resumedAt?: string;
+  abortedAt?: string;
+  abortReason?: string;
+  // Metrics snapshot
+  metrics: Record<CanaryMetric, { current: number; baseline: number; status: 'ok' | 'warning' | 'critical' }>;
+  // History
+  stageHistory: Array<{
+    stage: number;
+    percentage: number;
+    startedAt: string;
+    completedAt?: string;
+    abortedAt?: string;
+    status: 'running' | 'completed' | 'aborted';
+  }>;
 }
 
-export interface HealthCheck {
-  id: string;
+export interface CanaryHealthSnapshot {
   timestamp: string;
-  phase: string;
-  metrics: HealthMetrics;
-  status: 'healthy' | 'degraded' | 'critical' | 'unknown';
-  issues: HealthIssue[];
+  deploymentId: string;
+  stage: number;
+  percentage: number;
+  metrics: Record<CanaryMetric, number>;
+  allHealthy: boolean;
+  warnings: string[];
+  criticalIssues: string[];
 }
 
-export interface HealthMetrics {
-  errorRate: number;
-  p95Latency: number;
-  availabilityPercentage: number;
-  deploymentSuccessRate: number;
-  cpuUsage: number;
-  memoryUsage: number;
+// In-memory canary store (would be persisted to database in production)
+const deployments = new Map<string, CanaryDeployment>();
+const healthSnapshots = new Map<string, CanaryHealthSnapshot[]>();
+
+/**
+ * Create a new canary deployment plan
+ */
+export function planCanaryDeployment(
+  name: string,
+  commit: string,
+  version: string,
+  description: string,
+  stages: CanaryStageConfig[]
+): CanaryDeployment {
+  const id = `canary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  const deployment: CanaryDeployment = {
+    id,
+    name,
+    description,
+    commit,
+    version,
+    stages,
+    currentStage: 0,
+    currentPercentage: 0,
+    status: 'planning',
+    startedAt: new Date().toISOString(),
+    lastCheckedAt: new Date().toISOString(),
+    metrics: {
+      error_rate: { current: 0, baseline: 0, status: 'ok' },
+      latency: { current: 0, baseline: 0, status: 'ok' },
+      availability: { current: 100, baseline: 100, status: 'ok' },
+      memory: { current: 0, baseline: 0, status: 'ok' },
+      cpu: { current: 0, baseline: 0, status: 'ok' },
+    },
+    stageHistory: [],
+  };
+
+  deployments.set(id, deployment);
+  healthSnapshots.set(id, []);
+
+  return deployment;
 }
 
-export interface HealthIssue {
-  type: 'error_rate' | 'latency' | 'availability' | 'memory' | 'cpu' | 'deployment_failure';
-  severity: 'warning' | 'critical';
-  message: string;
-  value: number;
-  threshold: number;
+/**
+ * Get a canary deployment
+ */
+export function getCanaryDeployment(deploymentId: string): CanaryDeployment | undefined {
+  return deployments.get(deploymentId);
 }
 
-export interface RollbackThresholds {
-  maxErrorRate: number;
-  maxP95Latency: number;
-  minAvailability: number;
-  maxConsecutiveFailedChecks: number;
-}
+/**
+ * Start the canary deployment at the first stage
+ */
+export function startCanaryDeployment(deploymentId: string): CanaryDeployment | undefined {
+  const deployment = deployments.get(deploymentId);
+  if (!deployment) return undefined;
 
-export interface DeploymentMetrics {
-  canaryId: string;
-  phase: string;
-  exposedSessions: number;
-  errorCount: number;
-  errorRate: number;
-  p50Latency: number;
-  p95Latency: number;
-  p99Latency: number;
-  availability: number;
-  lastUpdated: string;
-}
-
-export class DeploymentCanaryController {
-  private static instance: DeploymentCanaryController;
-  private canaries: Map<string, DeploymentCanary> = new Map();
-  private metrics: Map<string, DeploymentMetrics> = new Map();
-  private healthHistory: Map<string, HealthCheck[]> = new Map();
-  private consecutiveFailureCount: Map<string, number> = new Map();
-
-  private constructor() {}
-
-  static getInstance(): DeploymentCanaryController {
-    if (!DeploymentCanaryController.instance) {
-      DeploymentCanaryController.instance = new DeploymentCanaryController();
-    }
-    return DeploymentCanaryController.instance;
+  if (deployment.status !== 'planning') {
+    throw new Error('Can only start deployments in planning status');
   }
 
-  async createCanary(canary: Omit<DeploymentCanary, 'startedAt'>): Promise<DeploymentCanary> {
-    const fullCanary: DeploymentCanary = {
-      ...canary,
-      startedAt: new Date().toISOString(),
-    };
+  deployment.status = 'staged';
+  deployment.currentStage = 1;
+  deployment.currentPercentage = deployment.stages[0]?.percentage || 0;
+  deployment.startedAt = new Date().toISOString();
 
-    this.canaries.set(canary.id, fullCanary);
-    this.healthHistory.set(canary.id, []);
-    this.consecutiveFailureCount.set(canary.id, 0);
+  deployment.stageHistory.push({
+    stage: 1,
+    percentage: deployment.currentPercentage,
+    startedAt: new Date().toISOString(),
+    status: 'running',
+  });
 
-    return fullCanary;
+  deployments.set(deploymentId, deployment);
+  return deployment;
+}
+
+/**
+ * Record health metrics for a deployment stage
+ */
+export function recordCanaryMetrics(
+  deploymentId: string,
+  metrics: Record<CanaryMetric, number>
+): CanaryHealthSnapshot {
+  const deployment = deployments.get(deploymentId);
+  if (!deployment) {
+    throw new Error(`Deployment ${deploymentId} not found`);
   }
 
-  async getCanary(canaryId: string): Promise<DeploymentCanary | undefined> {
-    return this.canaries.get(canaryId);
-  }
+  const snapshot: CanaryHealthSnapshot = {
+    timestamp: new Date().toISOString(),
+    deploymentId,
+    stage: deployment.currentStage,
+    percentage: deployment.currentPercentage,
+    metrics,
+    allHealthy: true,
+    warnings: [],
+    criticalIssues: [],
+  };
 
-  async recordHealthCheck(canaryId: string, metrics: HealthMetrics): Promise<HealthCheck | null> {
-    const canary = this.canaries.get(canaryId);
-    if (!canary) return null;
+  // Get current stage config
+  const stageConfig = deployment.stages[deployment.currentStage - 1];
+  if (stageConfig) {
+    for (const threshold of stageConfig.thresholds) {
+      const currentValue = metrics[threshold.metric];
 
-    if (canary.currentPhaseIndex >= canary.phases.length) {
-      return null;
-    }
-
-    const phase = canary.phases[canary.currentPhaseIndex];
-    const issues: HealthIssue[] = [];
-
-    if (metrics.errorRate > canary.rollbackThresholds.maxErrorRate) {
-      issues.push({
-        type: 'error_rate',
-        severity: 'critical',
-        message: `Error rate ${metrics.errorRate}% exceeds threshold ${canary.rollbackThresholds.maxErrorRate}%`,
-        value: metrics.errorRate,
-        threshold: canary.rollbackThresholds.maxErrorRate,
-      });
-    }
-
-    if (metrics.p95Latency > canary.rollbackThresholds.maxP95Latency) {
-      issues.push({
-        type: 'latency',
-        severity: 'warning',
-        message: `P95 latency ${metrics.p95Latency}ms exceeds threshold ${canary.rollbackThresholds.maxP95Latency}ms`,
-        value: metrics.p95Latency,
-        threshold: canary.rollbackThresholds.maxP95Latency,
-      });
-    }
-
-    if (metrics.availabilityPercentage < canary.rollbackThresholds.minAvailability) {
-      issues.push({
-        type: 'availability',
-        severity: 'critical',
-        message: `Availability ${metrics.availabilityPercentage}% below threshold ${canary.rollbackThresholds.minAvailability}%`,
-        value: metrics.availabilityPercentage,
-        threshold: canary.rollbackThresholds.minAvailability,
-      });
-    }
-
-    const status = this.calculateHealthStatus(issues);
-
-    const healthCheck: HealthCheck = {
-      id: `health-${canaryId}-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      phase: phase.id,
-      metrics,
-      status,
-      issues,
-    };
-
-    const history = this.healthHistory.get(canaryId) || [];
-    history.push(healthCheck);
-    this.healthHistory.set(canaryId, history);
-
-    if (status === 'critical') {
-      const failureCount = (this.consecutiveFailureCount.get(canaryId) || 0) + 1;
-      this.consecutiveFailureCount.set(canaryId, failureCount);
-
-      if (failureCount >= canary.rollbackThresholds.maxConsecutiveFailedChecks) {
-        await this.rollback(canaryId, `Consecutive critical checks: ${failureCount}`);
+      // Check for critical
+      if (currentValue > threshold.criticalMax) {
+        snapshot.allHealthy = false;
+        snapshot.criticalIssues.push(
+          `${threshold.metric}: ${currentValue} exceeds critical threshold ${threshold.criticalMax}`
+        );
       }
-    } else {
-      this.consecutiveFailureCount.set(canaryId, 0);
+      // Check for warning
+      else if (currentValue > threshold.warningMax) {
+        snapshot.warnings.push(
+          `${threshold.metric}: ${currentValue} exceeds warning threshold ${threshold.warningMax}`
+        );
+      }
+
+      // Update deployment metrics
+      deployment.metrics[threshold.metric] = {
+        current: currentValue,
+        baseline: deployment.metrics[threshold.metric]?.baseline || 0,
+        status: snapshot.criticalIssues.length > 0 ? 'critical' : snapshot.warnings.length > 0 ? 'warning' : 'ok',
+      };
     }
-
-    return healthCheck;
   }
 
-  async advancePhase(canaryId: string): Promise<boolean> {
-    const canary = this.canaries.get(canaryId);
-    if (!canary) return false;
+  deployment.lastCheckedAt = new Date().toISOString();
 
-    const currentPhase = canary.phases[canary.currentPhaseIndex];
-    if (currentPhase) {
-      currentPhase.completedAt = new Date().toISOString();
-    }
+  // Store snapshot
+  const snapshots = healthSnapshots.get(deploymentId) || [];
+  snapshots.push(snapshot);
+  healthSnapshots.set(deploymentId, snapshots);
 
-    canary.currentPhaseIndex++;
-
-    if (canary.currentPhaseIndex >= canary.phases.length) {
-      canary.status = 'completed';
-      canary.completedAt = new Date().toISOString();
-      return true;
-    }
-
-    const nextPhase = canary.phases[canary.currentPhaseIndex];
-    nextPhase.startedAt = new Date().toISOString();
-    nextPhase.paused = false;
-
-    return true;
+  // If critical issues found, abort
+  if (snapshot.criticalIssues.length > 0) {
+    abortCanaryDeployment(deploymentId, `Critical metrics exceeded: ${snapshot.criticalIssues.join('; ')}`);
   }
 
-  async pausePhase(canaryId: string): Promise<boolean> {
-    const canary = this.canaries.get(canaryId);
-    if (!canary) return false;
+  deployments.set(deploymentId, deployment);
+  return snapshot;
+}
 
-    const phase = canary.phases[canary.currentPhaseIndex];
-    if (!phase) return false;
+/**
+ * Increment to next stage if current stage is healthy
+ */
+export function incrementCanaryStage(deploymentId: string): CanaryDeployment | undefined {
+  const deployment = deployments.get(deploymentId);
+  if (!deployment) return undefined;
 
-    phase.paused = true;
-    phase.pausedAt = new Date().toISOString();
-    canary.status = 'paused';
-
-    return true;
+  if (deployment.status !== 'staged' && deployment.status !== 'active') {
+    throw new Error('Can only increment active canary deployments');
   }
 
-  async resumePhase(canaryId: string): Promise<boolean> {
-    const canary = this.canaries.get(canaryId);
-    if (!canary) return false;
-
-    const phase = canary.phases[canary.currentPhaseIndex];
-    if (!phase) return false;
-
-    phase.paused = false;
-    phase.resumedAt = new Date().toISOString();
-    canary.status = 'in_progress';
-
-    return true;
+  if (deployment.currentStage >= deployment.stages.length) {
+    throw new Error('Already at final stage');
   }
 
-  async rollback(canaryId: string, reason: string): Promise<boolean> {
-    const canary = this.canaries.get(canaryId);
-    if (!canary) return false;
-
-    canary.status = 'rolled_back';
-    canary.rolledBackAt = new Date().toISOString();
-    canary.rollbackReason = reason;
-
-    return true;
+  // Mark current stage as completed
+  if (deployment.stageHistory.length > 0) {
+    const lastStage = deployment.stageHistory[deployment.stageHistory.length - 1];
+    lastStage.completedAt = new Date().toISOString();
+    lastStage.status = 'completed';
   }
 
-  async getHealthHistory(canaryId: string, limit: number = 100): Promise<HealthCheck[]> {
-    const history = this.healthHistory.get(canaryId) || [];
-    return history.slice(-limit);
+  // Move to next stage
+  deployment.currentStage++;
+  deployment.status = 'active';
+  deployment.currentPercentage = deployment.stages[deployment.currentStage - 1]?.percentage || 100;
+
+  deployment.stageHistory.push({
+    stage: deployment.currentStage,
+    percentage: deployment.currentPercentage,
+    startedAt: new Date().toISOString(),
+    status: 'running',
+  });
+
+  // Check if we reached 100%
+  if (deployment.currentPercentage === 100 && deployment.currentStage === deployment.stages.length) {
+    completeCanaryDeployment(deploymentId);
   }
 
-  async recordMetrics(canaryId: string, metrics: Partial<DeploymentMetrics>): Promise<DeploymentMetrics> {
-    const existing = this.metrics.get(canaryId);
-    const canary = this.canaries.get(canaryId);
+  deployments.set(deploymentId, deployment);
+  return deployment;
+}
 
-    const fullMetrics: DeploymentMetrics = {
-      canaryId,
-      phase: canary?.phases[canary.currentPhaseIndex]?.id || 'unknown',
-      exposedSessions: metrics.exposedSessions || existing?.exposedSessions || 0,
-      errorCount: metrics.errorCount || existing?.errorCount || 0,
-      errorRate: metrics.errorRate || existing?.errorRate || 0,
-      p50Latency: metrics.p50Latency || existing?.p50Latency || 0,
-      p95Latency: metrics.p95Latency || existing?.p95Latency || 0,
-      p99Latency: metrics.p99Latency || existing?.p99Latency || 0,
-      availability: metrics.availability || existing?.availability || 100,
-      lastUpdated: new Date().toISOString(),
-    };
+/**
+ * Mark deployment as complete
+ */
+export function completeCanaryDeployment(deploymentId: string): CanaryDeployment | undefined {
+  const deployment = deployments.get(deploymentId);
+  if (!deployment) return undefined;
 
-    this.metrics.set(canaryId, fullMetrics);
-    return fullMetrics;
+  if (deployment.stageHistory.length > 0) {
+    const lastStage = deployment.stageHistory[deployment.stageHistory.length - 1];
+    lastStage.completedAt = new Date().toISOString();
+    lastStage.status = 'completed';
   }
 
-  async getMetrics(canaryId: string): Promise<DeploymentMetrics | undefined> {
-    return this.metrics.get(canaryId);
+  deployment.status = 'complete';
+  deployment.completedAt = new Date().toISOString();
+
+  deployments.set(deploymentId, deployment);
+  return deployment;
+}
+
+/**
+ * Abort canary deployment with reason
+ */
+export function abortCanaryDeployment(deploymentId: string, reason: string): CanaryDeployment | undefined {
+  const deployment = deployments.get(deploymentId);
+  if (!deployment) return undefined;
+
+  if (deployment.status === 'complete' || deployment.status === 'aborted') {
+    throw new Error(`Cannot abort ${deployment.status} deployment`);
   }
 
-  async getCurrentPhase(canaryId: string): Promise<CanaryPhase | undefined> {
-    const canary = this.canaries.get(canaryId);
-    if (!canary) return undefined;
-
-    return canary.phases[canary.currentPhaseIndex];
+  if (deployment.stageHistory.length > 0) {
+    const lastStage = deployment.stageHistory[deployment.stageHistory.length - 1];
+    lastStage.abortedAt = new Date().toISOString();
+    lastStage.status = 'aborted';
   }
 
-  async getDeploymentStatus(canaryId: string): Promise<{
-    canary: DeploymentCanary | undefined;
-    currentPhase: CanaryPhase | undefined;
-    metrics: DeploymentMetrics | undefined;
-    recentHealth: HealthCheck[];
-  }> {
-    const canary = this.canaries.get(canaryId);
-    const currentPhase = canary ? canary.phases[canary.currentPhaseIndex] : undefined;
-    const metrics = this.metrics.get(canaryId);
-    const recentHealth = (this.healthHistory.get(canaryId) || []).slice(-10);
+  deployment.status = 'aborted';
+  deployment.abortedAt = new Date().toISOString();
+  deployment.abortReason = reason;
 
-    return { canary, currentPhase, metrics, recentHealth };
+  deployments.set(deploymentId, deployment);
+  return deployment;
+}
+
+/**
+ * Get health snapshots for a deployment
+ */
+export function getCanaryHealthSnapshots(deploymentId: string): CanaryHealthSnapshot[] {
+  return healthSnapshots.get(deploymentId) || [];
+}
+
+/**
+ * Get latest health snapshot
+ */
+export function getLatestCanarySnapshot(deploymentId: string): CanaryHealthSnapshot | undefined {
+  const snapshots = healthSnapshots.get(deploymentId) || [];
+  return snapshots[snapshots.length - 1];
+}
+
+/**
+ * Get canary deployment summary
+ */
+export function getCanarySummary(deploymentId: string): {
+  id: string;
+  name: string;
+  version: string;
+  status: CanaryStage;
+  progress: string; // "Stage 2 of 3 (25%)"
+  health: string; // "✅ Healthy", "⚠️ Warnings", "🔴 Critical"
+  elapsedTime: string; // "2 hours 30 minutes"
+  expectedCompletion: string; // Estimated time to 100%
+  lastMetrics: Record<CanaryMetric, number>;
+} | undefined {
+  const deployment = deployments.get(deploymentId);
+  if (!deployment) return undefined;
+
+  const snapshots = healthSnapshots.get(deploymentId) || [];
+  const lastSnapshot = snapshots[snapshots.length - 1];
+
+  // Calculate elapsed time
+  const elapsed = new Date(deployment.lastCheckedAt).getTime() - new Date(deployment.startedAt).getTime();
+  const hours = Math.floor(elapsed / 3600000);
+  const minutes = Math.floor((elapsed % 3600000) / 60000);
+  const elapsedStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+  // Health status
+  let healthStatus = '✅ Healthy';
+  if (lastSnapshot?.criticalIssues.length) {
+    healthStatus = '🔴 Critical';
+  } else if (lastSnapshot?.warnings.length) {
+    healthStatus = '⚠️ Warnings';
   }
 
-  private calculateHealthStatus(issues: HealthIssue[]): 'healthy' | 'degraded' | 'critical' | 'unknown' {
-    if (issues.length === 0) return 'healthy';
+  // Progress
+  const progressStr = `Stage ${deployment.currentStage} of ${deployment.stages.length} (${deployment.currentPercentage}%)`;
 
-    const hasCritical = issues.some(i => i.severity === 'critical');
-    if (hasCritical) return 'critical';
+  // Estimate time to completion
+  const completionEstimate = calculateCompletionEstimate(deployment);
 
-    const hasWarning = issues.some(i => i.severity === 'warning');
-    if (hasWarning) return 'degraded';
+  return {
+    id: deploymentId,
+    name: deployment.name,
+    version: deployment.version,
+    status: deployment.status,
+    progress: progressStr,
+    health: healthStatus,
+    elapsedTime: elapsedStr,
+    expectedCompletion: completionEstimate,
+    lastMetrics: lastSnapshot?.metrics || {},
+  };
+}
 
-    return 'healthy';
+/**
+ * Estimate time to completion based on stage durations
+ */
+function calculateCompletionEstimate(deployment: CanaryDeployment): string {
+  let totalMinutes = 0;
+  for (let i = deployment.currentStage; i < deployment.stages.length; i++) {
+    totalMinutes += deployment.stages[i]?.duration || 15;
   }
 
-  async getAllCanaries(): Promise<DeploymentCanary[]> {
-    return Array.from(this.canaries.values());
-  }
+  if (totalMinutes === 0) return 'Immediate (at 100%)';
+  if (totalMinutes < 60) return `~${totalMinutes} minutes`;
 
-  async clearMetrics(): Promise<void> {
-    this.metrics.clear();
-    this.healthHistory.clear();
-    this.consecutiveFailureCount.clear();
-  }
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `~${hours}h ${minutes}m`;
+}
+
+/**
+ * Format deployment status for display
+ */
+export function formatCanaryStatus(deployment: CanaryDeployment): string {
+  const statusIcon = {
+    planning: '📋',
+    staged: '🚀',
+    active: '🔄',
+    complete: '✅',
+    aborted: '⛔',
+  }[deployment.status];
+
+  const progressStr =
+    deployment.currentPercentage > 0
+      ? ` (${deployment.currentPercentage}% → ${deployment.currentStage}/${deployment.stages.length} stages)`
+      : '';
+
+  const reason = deployment.abortReason ? `\n  ⚠️  Reason: ${deployment.abortReason}` : '';
+
+  return `${statusIcon} [${deployment.status}] ${deployment.name} v${deployment.version}${progressStr}${reason}`;
+}
+
+/**
+ * Reset canary store (testing)
+ */
+export function resetCanaryHub(): void {
+  deployments.clear();
+  healthSnapshots.clear();
 }

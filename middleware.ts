@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { classifyRoute } from '@/lib/routes';
-import { corsHeaders, handleCorsPrelight, isCorsAllowed } from '@/lib/cors-config';
+import { requireAdminToken } from '@/lib/api-auth';
+import {
+  corsHeaders,
+  handleCorsPrelight,
+  isCorsAllowed,
+} from '@/lib/cors-config';
 import { checkRateLimit, getRateLimitStatus } from '@/lib/global-rate-limiter';
 
 /**
@@ -14,6 +19,12 @@ import { checkRateLimit, getRateLimitStatus } from '@/lib/global-rate-limiter';
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const kind = classifyRoute(pathname);
+
+  // Session-protected CEIS endpoints stay reachable with the ADMIN_TOKEN
+  // bearer (curl / automation) — their handlers enforce their own token
+  // checks for mutations; this bypass only skips the cookie-session gate.
+  const adminBypass =
+    pathname.startsWith('/api/ceis/') && requireAdminToken(req);
 
   // Handle CORS preflight (OPTIONS) requests for API routes
   if (req.method === 'OPTIONS' && pathname.startsWith('/api/')) {
@@ -78,7 +89,7 @@ export async function middleware(req: NextRequest) {
   // Without Supabase config there are no sessions: public stays reachable,
   // protected traffic goes to sign-in (which will explain the situation).
   if (!url || !key) {
-    if (kind === 'protected') return redirectToSignIn(req);
+    if (kind === 'protected' && !adminBypass) return redirectToSignIn(req);
     return NextResponse.next();
   }
 
@@ -89,9 +100,7 @@ export async function middleware(req: NextRequest) {
         return req.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          req.cookies.set(name, value)
-        );
+        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
         res = NextResponse.next({ request: req });
         cookiesToSet.forEach(({ name, value, options }) =>
           res.cookies.set(name, value, options)
@@ -109,7 +118,9 @@ export async function middleware(req: NextRequest) {
     user = data.user;
   }
 
-  if (kind === 'protected' && !user) return redirectToSignIn(req);
+  if (kind === 'protected' && !user && !adminBypass) {
+    return redirectToSignIn(req);
+  }
   if (kind === 'auth' && user) {
     return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
   }

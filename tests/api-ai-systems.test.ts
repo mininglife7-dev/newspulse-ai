@@ -50,6 +50,22 @@ vi.mock('@/lib/supabase-server', () => ({
 
 import { GET, POST } from '@/app/api/ai-systems/route';
 
+function get(params?: Record<string, string>) {
+  const url = new URL('http://localhost/api/ai-systems');
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+  }
+  const req = new Request(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  // Mock NextRequest properties
+  (req as any).nextUrl = url;
+  return GET(req as any);
+}
+
 function post(body: unknown) {
   return POST(
     new Request('http://localhost/api/ai-systems', {
@@ -71,19 +87,19 @@ beforeEach(() => {
 describe('GET /api/ai-systems', () => {
   it('requires authentication', async () => {
     state.user = null;
-    const res = await GET();
+    const res = await get();
     expect(res.status).toBe(401);
   });
 
   it('returns 409 before company setup', async () => {
     state.membership = null;
-    const res = await GET();
+    const res = await get();
     expect(res.status).toBe(409);
   });
 
   it('lists workspace systems', async () => {
     state.systems = [{ id: 's1', name: 'Chatbot' }];
-    const res = await GET();
+    const res = await get();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.systems).toHaveLength(1);
@@ -104,6 +120,26 @@ describe('POST /api/ai-systems', () => {
   it('rejects unknown status', async () => {
     const res = await post({ name: 'X', status: 'retired' });
     expect(res.status).toBe(400);
+  });
+
+  it('creates a system when optional fields are left blank', async () => {
+    // The inventory form submits unselected optionals as '' (e.g. the Type
+    // "Select…" default). Those must be treated as absent, not rejected.
+    const res = await post({
+      name: 'Minimal system',
+      systemType: '',
+      vendor: '',
+      purpose: '',
+      status: 'active',
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(state.systems[0]).toMatchObject({
+      name: 'Minimal system',
+      system_type: null,
+      status: 'active',
+    });
   });
 
   it('creates a system scoped to the workspace and company', async () => {

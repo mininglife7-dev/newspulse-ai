@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { runProductionHealthChecks } from '@/lib/production-monitoring';
 import { getRequiredAppUrl } from '@/lib/config-validation';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 /**
  * GET /api/production-health
@@ -20,6 +22,12 @@ export const dynamic = 'force-dynamic';
  * Success criteria: All health checks must pass; latency must be <2s average.
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   let baseUrl: string;
 
   try {
@@ -49,10 +57,14 @@ export async function GET(req: Request) {
     // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.critical > 0) {
-        logger.error('Production health: critical issues detected', 'HEALTH_CRITICAL', {
-          critical: report.summary.critical,
-          degraded: report.summary.degraded,
-        });
+        logger.error(
+          'Production health: critical issues detected',
+          'HEALTH_CRITICAL',
+          {
+            critical: report.summary.critical,
+            degraded: report.summary.degraded,
+          }
+        );
       } else {
         logger.warn('Production health: warnings detected', 'HEALTH_WARNING', {
           degraded: report.summary.degraded,

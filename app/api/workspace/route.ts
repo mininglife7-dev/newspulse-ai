@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { validators, validate } from '@/lib/input-validation';
+import {
+  validators,
+  validate,
+  stripBlankOptionalFields,
+} from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,6 +48,15 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+
+  // The setup form submits untouched optional inputs as '' (or whitespace);
+  // drop those so `optional(url())` etc. don't reject an otherwise-valid create.
+  stripBlankOptionalFields(body, [
+    'legalName',
+    'employees',
+    'website',
+    'description',
+  ]);
 
   // Validate input using schema
   const validationResult = validate(body, {
@@ -91,12 +105,37 @@ export async function POST(req: Request) {
     .single();
 
   if (wsError || !workspace) {
-    logger.error('Workspace creation failed', 'WORKSPACE_INSERT_ERROR', wsError);
+    logger.error(
+      'Workspace creation failed',
+      'WORKSPACE_INSERT_ERROR',
+      wsError
+    );
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace' },
       { status: 500 }
     );
   }
+
+  // The workspace row is now committed. These separate PostgREST calls are not
+  // wrapped in one transaction, so if a later step fails we must undo it —
+  // otherwise a failed setup leaves an orphan workspace and the customer's
+  // retry (which mints a fresh slug) piles up duplicates. Delete with the
+  // service-role client because there is no RLS delete policy for owners;
+  // workspace_members and companies cascade-delete with the workspace.
+  const rollbackWorkspace = async () => {
+    try {
+      await getSupabaseAdmin()
+        .from('workspaces')
+        .delete()
+        .eq('id', workspace.id);
+    } catch (cleanupErr) {
+      console.error(
+        '[api/workspace] rollback failed; orphan workspace may remain:',
+        workspace.id,
+        cleanupErr
+      );
+    }
+  };
 
   // 2. Owner membership (activates RLS access to the workspace)
   const { error: memberError } = await supabase
@@ -111,7 +150,12 @@ export async function POST(req: Request) {
     });
 
   if (memberError) {
-    logger.error('Workspace membership creation failed', 'WORKSPACE_MEMBER_ERROR', memberError);
+    logger.error(
+      'Workspace membership creation failed',
+      'WORKSPACE_MEMBER_ERROR',
+      memberError
+    );
+    await rollbackWorkspace();
     return NextResponse.json(
       { ok: false, error: 'Could not create workspace membership' },
       { status: 500 }
@@ -135,7 +179,12 @@ export async function POST(req: Request) {
     .single();
 
   if (companyError || !company) {
-    logger.error('Company profile creation failed', 'WORKSPACE_COMPANY_ERROR', companyError);
+    logger.error(
+      'Company profile creation failed',
+      'WORKSPACE_COMPANY_ERROR',
+      companyError
+    );
+    await rollbackWorkspace();
     return NextResponse.json(
       { ok: false, error: 'Could not create company profile' },
       { status: 500 }
@@ -150,9 +199,13 @@ export async function POST(req: Request) {
     current_workspace_id: workspace.id,
   });
   if (profileError) {
-    logger.warn('Profile update failed (non-blocking)', 'WORKSPACE_PROFILE_WARN', {
-      message: profileError.message,
-    });
+    logger.warn(
+      'Profile update failed (non-blocking)',
+      'WORKSPACE_PROFILE_WARN',
+      {
+        message: profileError.message,
+      }
+    );
   }
 
   return NextResponse.json({

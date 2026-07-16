@@ -1,4 +1,4 @@
-name: Verify Production Configuration
+name: Verify GitHub Deployment Secrets
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
     branches: [main]
 
 jobs:
-  verify-config:
-    name: Check Production Readiness
+  verify-secrets:
+    name: Check GitHub Actions Secrets
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -15,99 +15,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --prefer-offline
-
-      - name: Run preflight checks
+      - name: Verify Schema Deployment Secret
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          GITHUB_OWNER: ${{ secrets.GITHUB_OWNER || 'mininglife7-dev' }}
-          GITHUB_REPO: ${{ secrets.GITHUB_REPO || 'newspulse-ai' }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
-          NODE_ENV: production
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          echo "🔍 Verifying production configuration..."
+          echo "🔐 Checking schema deployment credential..."
           echo ""
 
-          # Check each required variable
-          declare -A vars=(
-            [NEXT_PUBLIC_SUPABASE_URL]="Supabase Project URL"
-            [NEXT_PUBLIC_SUPABASE_ANON_KEY]="Supabase Anonymous Key"
-            [SUPABASE_SERVICE_ROLE_KEY]="Supabase Service Role Key"
-            [SUPABASE_PROJECT_ID]="Supabase Project ID"
-            [GITHUB_OWNER]="GitHub Repository Owner"
-            [GITHUB_REPO]="GitHub Repository Name"
-            [NEXT_PUBLIC_APP_URL]="Application URL"
-            [ADMIN_TOKEN]="Admin Token"
-          )
-
-          missing=0
-          for var in "${!vars[@]}"; do
-            value="${!var}"
-            if [ -z "$value" ]; then
-              echo "❌ ${vars[$var]}: NOT CONFIGURED"
-              ((missing++))
-            else
-              echo "✅ ${vars[$var]}: Configured"
-            fi
-          done
-
-          echo ""
-          if [ $missing -gt 0 ]; then
-            echo "❌ $missing required variables not configured"
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "❌ SUPABASE_DB_PASSWORD: NOT CONFIGURED"
             echo ""
-            echo "Configure in GitHub repository Settings → Secrets and variables → Actions:"
-            echo "  1. NEXT_PUBLIC_SUPABASE_URL (e.g., https://xyz.supabase.co)"
-            echo "  2. NEXT_PUBLIC_SUPABASE_ANON_KEY (from Supabase API settings)"
-            echo "  3. SUPABASE_SERVICE_ROLE_KEY (from Supabase API settings)"
-            echo "  4. SUPABASE_PROJECT_ID (project reference)"
-            echo "  5. GITHUB_OWNER (mininglife7-dev)"
-            echo "  6. GITHUB_REPO (newspulse-ai)"
-            echo "  7. NEXT_PUBLIC_APP_URL (e.g., https://newspulse-ai-production.vercel.app)"
-            echo "  8. ADMIN_TOKEN (generate: openssl rand -hex 32)"
-            exit 1
+            echo "This secret is required for the schema deployment workflow."
+            echo "Configure in GitHub: Settings → Secrets and variables → Actions"
+            echo ""
+            echo "To get the value:"
+            echo "1. Go to Supabase Dashboard → Settings → Database"
+            echo "2. Click 'Show Password' or reset if needed"
+            echo "3. Copy the password to GitHub → SUPABASE_DB_PASSWORD"
+            echo ""
+            # Note: Not exiting with error; schema deployment is separate workflow
+            echo "⚠️  Schema deployment will be skipped until configured"
+          else
+            echo "✅ SUPABASE_DB_PASSWORD: Configured"
           fi
 
-          echo "✅ All required variables configured"
-
-      - name: Verify Supabase connectivity
-        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "Testing Supabase connectivity..."
-          npm test -- --testNamePattern="Supabase" --bail 2>&1 | head -50 || true
-
-      - name: Build production bundle
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-        run: |
-          echo "🔨 Building production bundle..."
-          npm run build
-          echo "✅ Build successful"
-
-      - name: Summary
+      - name: Explain Vercel Configuration
         run: |
           echo ""
-          echo "=== PRODUCTION CONFIGURATION STATUS ==="
-          echo "✅ All environment variables configured"
-          echo "✅ Build successful"
+          echo "📝 Production configuration is separate: Vercel environment variables"
           echo ""
-          echo "Next steps:"
-          echo "1. Deploy Supabase schema (if not already deployed)"
-          echo "2. Push to main to trigger Vercel deployment"
-          echo "3. Verify production application"
+          echo "Vercel (NOT GitHub Actions) requires these:"
+          echo "  1. NEXT_PUBLIC_SUPABASE_URL (from Supabase Dashboard → Settings → API)"
+          echo "  2. NEXT_PUBLIC_SUPABASE_ANON_KEY (from Supabase Dashboard → Settings → API)"
+          echo "  3. SUPABASE_SERVICE_ROLE_KEY (from Supabase Dashboard → Settings → API)"
+          echo "  4. NEXT_PUBLIC_APP_URL (your production URL)"
+          echo "  5. ADMIN_TOKEN (generate: openssl rand -hex 32)"
+          echo ""
+          echo "Configure in Vercel Dashboard → Your Project → Settings → Environment Variables"
+          echo ""
+          echo "After adding Vercel variables:"
+          echo "  1. Trigger a new production deployment in Vercel"
+          echo "  2. Wait for deployment to complete"
+          echo "  3. Test your production application"

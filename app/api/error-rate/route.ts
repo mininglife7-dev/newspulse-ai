@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getErrorRateReport, formatErrorAlert } from '@/lib/error-rate-monitor';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 /**
  * GET /api/error-rate
@@ -19,6 +21,12 @@ export const dynamic = 'force-dynamic';
  * Success criteria: <5% error rate per endpoint, <10 errors in 5min window.
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   try {
     const report = getErrorRateReport();
     const alert = formatErrorAlert(report);
@@ -26,10 +34,14 @@ export async function GET(req: Request) {
     // Log alerts (safe for production)
     if (report.alerts.length > 0) {
       if (report.summary.criticalEndpoints.length > 0) {
-        logger.error('Error rate: critical endpoints detected', 'ERROR_RATE_CRITICAL', {
-          criticalEndpoints: report.summary.criticalEndpoints.length,
-          totalErrors: report.summary.totalErrors,
-        });
+        logger.error(
+          'Error rate: critical endpoints detected',
+          'ERROR_RATE_CRITICAL',
+          {
+            criticalEndpoints: report.summary.criticalEndpoints.length,
+            totalErrors: report.summary.totalErrors,
+          }
+        );
       } else {
         logger.warn('Error rate: warnings detected', 'ERROR_RATE_WARNING', {
           alertCount: report.alerts.length,
@@ -40,7 +52,12 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         ok: report.ok,
-        status: report.summary.criticalEndpoints.length > 0 ? 'critical' : report.alerts.length > 0 ? 'warning' : 'healthy',
+        status:
+          report.summary.criticalEndpoints.length > 0
+            ? 'critical'
+            : report.alerts.length > 0
+              ? 'warning'
+              : 'healthy',
         timestamp: report.timestamp,
         alert,
         summary: report.summary,
@@ -52,7 +69,9 @@ export async function GET(req: Request) {
         headers: {
           'X-Error-Status': report.ok ? 'healthy' : 'degraded',
           'X-Total-Errors': String(report.summary.totalErrors),
-          'X-Critical-Endpoints': String(report.summary.criticalEndpoints.length),
+          'X-Critical-Endpoints': String(
+            report.summary.criticalEndpoints.length
+          ),
         },
       }
     );

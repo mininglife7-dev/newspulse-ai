@@ -1,12 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
-import { validators, validate } from '@/lib/input-validation';
+import {
+  validators,
+  validate,
+  stripBlankOptionalFields,
+} from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import { SYSTEM_TYPES, SYSTEM_STATUSES } from '@/lib/ai-systems';
+import { resolveWorkspaceContext } from '@/lib/ai-systems-server';
 
 interface CreateAiSystemBody {
   name: string;
@@ -17,49 +22,12 @@ interface CreateAiSystemBody {
   status?: 'active' | 'pilot' | 'deprecated';
 }
 
-/**
- * Resolve the caller's active workspace (and company) or explain why not.
- * All queries run as the signed-in user, so RLS applies.
- */
-async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
+/** GET /api/ai-systems — list the caller's workspace AI-system inventory or fetch a single system. */
+export async function GET(request: NextRequest) {
+  const systemId = request.nextUrl.searchParams.get('id');
 
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
-    return {
-      status: 409 as const,
-      error: 'No workspace yet — complete company setup first',
-    };
-  }
-
-  const { data: company } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('workspace_id', membership.workspace_id)
-    .limit(1)
-    .maybeSingle();
-
-  return {
-    status: 200 as const,
-    workspaceId: membership.workspace_id as string,
-    companyId: (company?.id as string) ?? null,
-  };
-}
-
-/** GET /api/ai-systems — list the caller's workspace AI-system inventory. */
-export async function GET() {
   const supabase = await createRouteClient();
-  const ctx = await resolveContext(supabase);
+  const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
       { ok: false, error: ctx.error },
@@ -67,11 +35,20 @@ export async function GET() {
     );
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('ai_systems')
-    .select('id, name, description, system_type, vendor, purpose, status, created_at')
-    .eq('workspace_id', ctx.workspaceId)
-    .order('created_at', { ascending: false });
+    .select(
+      'id, name, description, system_type, vendor, purpose, status, created_at'
+    )
+    .eq('workspace_id', ctx.workspaceId);
+
+  if (systemId) {
+    query = query.eq('id', systemId).limit(1);
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     logger.error('AI systems list failed', 'AI_SYSTEMS_LIST_ERROR', error);
@@ -80,6 +57,14 @@ export async function GET() {
       { status: 500 }
     );
   }
+
+  if (systemId && (!data || data.length === 0)) {
+    return NextResponse.json(
+      { ok: false, error: 'System not found' },
+      { status: 404 }
+    );
+  }
+
   return NextResponse.json({ ok: true, systems: data ?? [] });
 }
 
@@ -94,6 +79,17 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+
+  // The inventory form submits unselected optional fields as '' (e.g. the
+  // "Select…" default for Type); drop those so `optional(enum())` etc. don't
+  // reject an otherwise-valid create.
+  stripBlankOptionalFields(body, [
+    'description',
+    'systemType',
+    'vendor',
+    'purpose',
+    'status',
+  ]);
 
   // Validate input using schema
   const validationResult = validate(body, {
@@ -117,7 +113,7 @@ export async function POST(req: Request) {
   const status = validated.status ?? 'active';
 
   const supabase = await createRouteClient();
-  const ctx = await resolveContext(supabase);
+  const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
       { ok: false, error: ctx.error },

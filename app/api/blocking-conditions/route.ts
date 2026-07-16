@@ -4,9 +4,11 @@ import {
   formatBlockingConditionAlert,
 } from '@/lib/blocking-condition-detector';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 /**
  * GET /api/blocking-conditions
@@ -20,6 +22,12 @@ export const dynamic = 'force-dynamic';
  * - 503: Detection itself failed (network error, etc.)
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   const actionsToken = process.env.GITHUB_TOKEN;
   const owner = process.env.GITHUB_OWNER;
   const repo = process.env.GITHUB_REPO;
@@ -38,7 +46,11 @@ export async function GET(req: Request) {
   }
 
   try {
-    const blockers = await detectAllBlockingConditions(owner, repo, actionsToken);
+    const blockers = await detectAllBlockingConditions(
+      owner,
+      repo,
+      actionsToken
+    );
 
     if (blockers.length === 0) {
       return NextResponse.json({
@@ -54,14 +66,23 @@ export async function GET(req: Request) {
 
     // Log blocking conditions (safe for production)
     if (blockers.some((b) => b.severity === 'critical')) {
-      logger.error('Blocking conditions detected: critical', 'BLOCKER_CRITICAL', {
-        totalBlockers: blockers.length,
-        criticalCount: blockers.filter((b) => b.severity === 'critical').length,
-      });
+      logger.error(
+        'Blocking conditions detected: critical',
+        'BLOCKER_CRITICAL',
+        {
+          totalBlockers: blockers.length,
+          criticalCount: blockers.filter((b) => b.severity === 'critical')
+            .length,
+        }
+      );
     } else {
-      logger.warn('Blocking conditions detected: high severity', 'BLOCKER_WARNING', {
-        totalBlockers: blockers.length,
-      });
+      logger.warn(
+        'Blocking conditions detected: high severity',
+        'BLOCKER_WARNING',
+        {
+          totalBlockers: blockers.length,
+        }
+      );
     }
 
     return NextResponse.json(
@@ -83,7 +104,11 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    logger.error('Blocking condition detection failed', 'BLOCKER_DETECTION_ERROR', error);
+    logger.error(
+      'Blocking condition detection failed',
+      'BLOCKER_DETECTION_ERROR',
+      error
+    );
 
     return NextResponse.json(
       {

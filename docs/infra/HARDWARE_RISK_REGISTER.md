@@ -1,5 +1,9 @@
 # Hardware / Infrastructure Risk Register — NewsPulse AI (EURO AI / Cathedral)
 
+> ⚠️ **SUPERSEDED — historical record (2026-07-09).** This register audits the **pre-pivot NewsPulse AI** app. The repository has since pivoted to the **EURO AI / Cathedral** EU AI Act governance platform; the risks below (the `news_searches` schema, `DELETE /api/history`, Firecrawl/OpenAI wallet-drain, "never deployed") **no longer describe the current codebase**. Several were carried forward or resolved on `main` (e.g. R-06 backups landed via #122). Kept for provenance only.
+>
+> **Current posture:** [`CATHEDRAL-PRODUCTION-READINESS.md`](./CATHEDRAL-PRODUCTION-READINESS.md) · [`PREDEPLOYMENT_AUDIT.md`](./PREDEPLOYMENT_AUDIT.md) · [`INDEPENDENT_VV_AUDIT.md`](./INDEPENDENT_VV_AUDIT.md) · [`../GO-NO-GO-REPORT.md`](../GO-NO-GO-REPORT.md) · [`../LAUNCH-BLOCKERS.md`](../LAUNCH-BLOCKERS.md)
+
 **Date:** 2026-07-09 · **Status:** living document — review at every launch gate
 **Scoring:** Severity × Likelihood → Priority. P0 = fix before any launch, P1 = before Alpha, P2 = before Beta, P3 = before paid customers.
 

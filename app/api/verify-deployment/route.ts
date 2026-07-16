@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
-import { verifyDeployment, formatDeploymentAlert } from '@/lib/deployment-verifier';
+import {
+  verifyDeployment,
+  formatDeploymentAlert,
+} from '@/lib/deployment-verifier';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 /**
  * GET /api/verify-deployment
@@ -19,6 +24,12 @@ export const dynamic = 'force-dynamic';
  * Success criteria: Latest main commit has successful Vercel deployment that is live.
  */
 export async function GET(req: Request) {
+  // Internal telemetry — deny by default. Requires Authorization: Bearer
+  // <ADMIN_TOKEN>; the monitoring workflows pass it. Prevents anonymous
+  // disclosure of internal state (e.g. the live dependency-CVE list).
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   const token = process.env.GITHUB_TOKEN;
   const owner = process.env.GITHUB_OWNER;
   const repo = process.env.GITHUB_REPO;
@@ -41,14 +52,22 @@ export async function GET(req: Request) {
 
     // Log deployment status (safe for production)
     if (result.status === 'critical') {
-      logger.error('Deployment verification: critical mismatch detected', 'DEPLOYMENT_CRITICAL', {
-        hasDeployment: !!result.currentDeployment,
-        latestCommit: result.latestCommit?.sha?.substring(0, 7),
-      });
+      logger.error(
+        'Deployment verification: critical mismatch detected',
+        'DEPLOYMENT_CRITICAL',
+        {
+          hasDeployment: !!result.currentDeployment,
+          latestCommit: result.latestCommit?.sha?.substring(0, 7),
+        }
+      );
     } else if (result.status === 'warning') {
-      logger.warn('Deployment verification: warning detected', 'DEPLOYMENT_WARNING', {
-        mismatch: result.mismatch,
-      });
+      logger.warn(
+        'Deployment verification: warning detected',
+        'DEPLOYMENT_WARNING',
+        {
+          mismatch: result.mismatch,
+        }
+      );
     } else {
       logger.info('Deployment verification: healthy', 'DEPLOYMENT_OK');
     }
@@ -72,7 +91,11 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    logger.error('Deployment verification check failed', 'DEPLOYMENT_CHECK_ERROR', error);
+    logger.error(
+      'Deployment verification check failed',
+      'DEPLOYMENT_CHECK_ERROR',
+      error
+    );
 
     return NextResponse.json(
       {

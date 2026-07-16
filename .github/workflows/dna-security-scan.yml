@@ -28,12 +28,18 @@ jobs:
       - name: Run security scan
         id: scan
         run: |
-          curl -s "${{ secrets.DEPLOYMENT_URL || 'https://newspulse-ai.vercel.app' }}/api/security-scan" \
+          HTTP_CODE=$(curl -s "${{ secrets.DEPLOYMENT_URL || 'https://newspulse-ai.vercel.app' }}/api/security-scan" \
+            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" \
             -H "User-Agent: GitHub-Actions/dna-gov-008" \
-            -w "\nHTTP Status: %{http_code}\n" \
-            -o security-scan-result.json || true
-          cat security-scan-result.json
-        continue-on-error: true
+            -w "%{http_code}" \
+            -o security-scan-result.json)
+          echo "HTTP Status: $HTTP_CODE"
+          cat security-scan-result.json || true
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Security scan endpoint returned $HTTP_CODE (not 200) — scan did NOT run."
+            echo "   Most likely ADMIN_TOKEN is unset or wrong in the repo/Vercel secrets."
+            exit 1
+          fi
 
       - name: Check for critical vulnerabilities
         if: always()

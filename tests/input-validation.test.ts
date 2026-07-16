@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { validators, validate, sanitizeString, sanitizeStringArray } from '@/lib/input-validation';
+import {
+  validators,
+  validate,
+  sanitizeString,
+  sanitizeStringArray,
+  stripBlankOptionalFields,
+} from '@/lib/input-validation';
 
 describe('Input Validation Framework', () => {
   describe('validators.string', () => {
@@ -73,7 +79,9 @@ describe('Input Validation Framework', () => {
     it('accepts valid emails', () => {
       const validator = validators.email();
       expect(validator.validate('user@example.com').ok).toBe(true);
-      expect(validator.validate('  user@example.com  ').value).toBe('user@example.com');
+      expect(validator.validate('  user@example.com  ').value).toBe(
+        'user@example.com'
+      );
     });
 
     it('converts to lowercase', () => {
@@ -199,6 +207,49 @@ describe('Input Validation Framework', () => {
       expect(validator.validate('hello').value).toBe('hello');
       expect(validator.validate(123).ok).toBe(false);
     });
+
+    it('does NOT treat a blank string as absent (JSON APIs stay strict)', () => {
+      // A blank '' is only "absent" for HTML forms, so that normalization lives
+      // in the form-facing routes (ai-systems, workspace), NOT here. Keeping the
+      // validator strict means a malformed blank on a non-string JSON field
+      // (e.g. optional(boolean()) on POST /api/knowledge) is still rejected
+      // rather than silently coerced.
+      expect(validators.optional(validators.boolean()).validate('').ok).toBe(
+        false
+      );
+      expect(validators.optional(validators.url()).validate('').ok).toBe(false);
+    });
+  });
+
+  describe('stripBlankOptionalFields', () => {
+    it('drops empty and whitespace-only string fields, keeps the rest', () => {
+      const body: Record<string, unknown> = {
+        name: 'Acme',
+        website: '',
+        vendor: '   ',
+        purpose: 'real value',
+        keep: 0,
+        flag: false,
+      };
+      stripBlankOptionalFields(body, [
+        'website',
+        'vendor',
+        'purpose',
+        'keep',
+        'flag',
+      ]);
+      expect('website' in body).toBe(false);
+      expect('vendor' in body).toBe(false); // whitespace-only also dropped
+      expect(body.purpose).toBe('real value');
+      expect(body.keep).toBe(0); // non-strings untouched
+      expect(body.flag).toBe(false);
+      expect(body.name).toBe('Acme');
+    });
+
+    it('is a no-op for non-object input', () => {
+      expect(() => stripBlankOptionalFields(null, ['a'])).not.toThrow();
+      expect(() => stripBlankOptionalFields('x', ['a'])).not.toThrow();
+    });
   });
 
   describe('validate (schema validation)', () => {
@@ -250,7 +301,9 @@ describe('Input Validation Framework', () => {
 
   describe('sanitizeString', () => {
     it('removes angle brackets', () => {
-      expect(sanitizeString('<script>alert("xss")</script>')).toBe('scriptalert("xss")/script');
+      expect(sanitizeString('<script>alert("xss")</script>')).toBe(
+        'scriptalert("xss")/script'
+      );
     });
 
     it('trims whitespace', () => {
@@ -285,7 +338,9 @@ describe('Input Validation Framework', () => {
         country: validators.string({ minLength: 1, maxLength: 255 }),
         industry: validators.string({ minLength: 1, maxLength: 255 }),
         website: validators.optional(validators.url()),
-        description: validators.optional(validators.string({ maxLength: 2000 })),
+        description: validators.optional(
+          validators.string({ maxLength: 2000 })
+        ),
       };
 
       const valid = {
@@ -302,7 +357,11 @@ describe('Input Validation Framework', () => {
 
     it('validates incident trigger', () => {
       const schema = {
-        type: validators.enum(['error_rate', 'latency', 'availability'] as const),
+        type: validators.enum([
+          'error_rate',
+          'latency',
+          'availability',
+        ] as const),
         severity: validators.enum(['warning', 'critical'] as const),
         current: validators.number({ min: 0 }),
         threshold: validators.number({ min: 0 }),
@@ -321,7 +380,13 @@ describe('Input Validation Framework', () => {
 
     it('validates knowledge entry', () => {
       const schema = {
-        type: validators.enum(['decision', 'learning', 'pattern', 'fix', 'risk'] as const),
+        type: validators.enum([
+          'decision',
+          'learning',
+          'pattern',
+          'fix',
+          'risk',
+        ] as const),
         title: validators.string({ minLength: 1, maxLength: 255 }),
         description: validators.string({ minLength: 1, maxLength: 5000 }),
         evidence: validators.array(validators.string(), { minLength: 1 }),

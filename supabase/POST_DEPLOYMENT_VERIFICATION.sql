@@ -88,10 +88,15 @@ WHERE schemaname = 'public';
 -- ============================================================================
 \echo ''
 \echo '11. TRIGGERS (1 expected: on_auth_user_created for profiles sync)'
-SELECT trigger_name, event_object_table
-FROM information_schema.triggers
-WHERE trigger_schema = 'public'
-ORDER BY trigger_name;
+-- The trigger is created ON auth.users, so it lives in the auth schema —
+-- a trigger_schema = 'public' filter can never find it. Query pg_trigger
+-- by name instead (information_schema also hides triggers on tables the
+-- current role lacks privileges on).
+SELECT t.tgname AS trigger_name, c.relname AS event_object_table
+FROM pg_trigger t
+JOIN pg_class c ON c.oid = t.tgrelid
+WHERE t.tgname = 'on_auth_user_created'
+ORDER BY t.tgname;
 
 -- ============================================================================
 -- 5. FUNCTION VERIFICATION
@@ -161,7 +166,7 @@ actual_counts AS (
     (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public') as actual_tables,
     (SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'public') as actual_indexes,
     (SELECT COUNT(*) FROM pg_policies WHERE schemaname = 'public') as actual_policies,
-    (SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema = 'public') as actual_triggers,
+    (SELECT COUNT(*) FROM pg_trigger WHERE tgname = 'on_auth_user_created') as actual_triggers,
     (SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema = 'public') as actual_functions
 )
 SELECT

@@ -1,5 +1,9 @@
 # Infrastructure Cost Estimate — NewsPulse AI (EURO AI / Cathedral)
 
+> ⚠️ **SUPERSEDED — historical record (2026-07-09).** These costs model the **pre-pivot NewsPulse AI** app (Firecrawl + OpenAI `gpt-4o-mini` per search). The repository has since pivoted to the **EURO AI / Cathedral** EU AI Act governance platform, whose cost drivers differ. Treat the figures below as a **historical baseline**, not current pricing.
+>
+> **Current cost/plan decisions:** [`../VERCEL_PLAN_DECISION.md`](../VERCEL_PLAN_DECISION.md) · [`CATHEDRAL-PRODUCTION-READINESS.md`](./CATHEDRAL-PRODUCTION-READINESS.md) · [`../GO-NO-GO-REPORT.md`](../GO-NO-GO-REPORT.md)
+
 **Date:** 2026-07-09 · Currency mixed $/€ as billed by providers; treat as ≈ equivalent.
 **Disclaimer:** list prices as of the review date from public pricing pages; verify before purchase — providers change tiers. Nothing in this plan requires spending money before the founder approves it.
 
