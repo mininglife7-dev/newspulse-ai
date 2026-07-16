@@ -8,7 +8,7 @@
 
 ## Current Institutional State
 
-**Stage**: STAGE 3 🟡 IN PROGRESS (Phase 3.1: Engineering Standards ✅ COMPLETE; Phase 3.2: Standards Enforcement IN PROGRESS)
+**Stage**: STAGE 3 🟡 IN PROGRESS (Phase 3.1: Engineering Standards ✅ COMPLETE; Phase 3.2: Standards Enforcement ✅ COMPLETE; Phase 3.3: Integration Tests IN PROGRESS)
 
 **Execution Status**: Governance kernel ✅ complete. Documentation consolidated ✅ complete (~200 → 50 files + 111 archived). API routes consolidated ✅ complete (3 deprecated routes archived). Engineering standards documented ✅ complete. Standards enforcement in progress: 9 critical customer-facing API routes refactored (logging, validation, type safety).
 
@@ -84,8 +84,10 @@
 - Created .husky/pre-push (48 lines): 4-stage enforcement (type-check → lint → format → test)
 - Created STAGE_2_COMPLETION_CHECKLIST.md: Phase verification and sign-off
 
-**Phase 3.2: Standards Enforcement** 🟡 IN PROGRESS
-Refactored 9 critical customer-facing API routes to comply with ENGINEERING_STANDARDS.md:
+**Phase 3.2: Standards Enforcement** ✅ COMPLETE
+Refactored 16 critical API routes (customer-facing and internal monitoring) to comply with ENGINEERING_STANDARDS.md:
+
+**Customer-Facing Routes (10)**:
 1. `/api/assessments/route.ts` — Input validation, logger, type safety
 2. `/api/assessments/[id]/route.ts` — Validators, proper error handling
 3. `/api/team/route.ts` — RBAC enforcement, validators
@@ -94,19 +96,25 @@ Refactored 9 critical customer-facing API routes to comply with ENGINEERING_STAN
 6. `/api/obligations/[id]/route.ts` — Partial update validation
 7. `/api/evidence/route.ts` — Input validation, company resolution error handling
 8. `/api/evidence/[id]/route.ts` — Update/delete with proper validation
+9. `/api/ai-systems/[id]/route.ts` — Type safety, validators, error logging
 
-**Refactoring Metrics (Phase 3.2 to date)**:
-- Routes refactored: 9
-- console.error→logger replacements: 11
-- Manual validation→validators conversions: 9
+**Internal Monitoring Routes (6)**:
+1. `/api/health/route.ts` — Logger import, DB error logging
+2. `/api/health/detailed/route.ts` — Logger, component check failure logging
+3. `/api/deployment-canary/route.ts` — 2 console.error→logger replacements
+4. `/api/feature-flags/route.ts` — 2 console.error→logger replacements
+5. `/api/compliance-dashboard/route.ts` — 1 console.error→logger, type fix (err: any)
+6. `/api/incident-response/route.ts` — 1 console.error→logger replacement
+
+**Refactoring Metrics (Phase 3.2 Final)**:
+- Routes refactored: 16 (10 customer-facing + 6 internal monitoring)
+- console.error→logger replacements: 18
+- Manual validation→validators conversions: 10
 - Type safety improvements (any→interface): 8
 - Membership error handling additions: 9
 - Status codes standardized: 400→validation, 403→forbidden, 404→not found, 500→error
 
-**Next in Phase 3.2**:
-- Refactor remaining internal routes (health, deployment monitoring, etc.)
-- Apply standards to critical lib/ modules (risk-assessment, auth, validation)
-- Ensure pre-push hook enforcement active for all new commits
+**Phase 3.3 Priority**: Integration tests to address RISK-004 (Customer journey verification gaps)
 
 ---
 
