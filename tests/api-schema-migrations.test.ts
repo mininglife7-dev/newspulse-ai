@@ -2,18 +2,36 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { GET, POST } from '@/app/api/schema-migrations/route';
 import { NextRequest } from 'next/server';
 
-// Helper to create NextRequest
+// The endpoint is an internal ops surface guarded by ADMIN_TOKEN (lib/api-auth).
+const TEST_TOKEN = 'test-admin-token';
+beforeAll(() => {
+  process.env.ADMIN_TOKEN = TEST_TOKEN;
+});
+
+// Helper to create an authenticated NextRequest
 function createRequest(
   method: 'GET' | 'POST',
   url: string = 'http://localhost:3000/api/schema-migrations',
   body?: unknown
 ): NextRequest {
-  const options: Record<string, unknown> = { method };
+  const options: Record<string, unknown> = {
+    method,
+    headers: { authorization: `Bearer ${TEST_TOKEN}` },
+  };
   if (body) {
     options.body = JSON.stringify(body);
   }
   return new NextRequest(url, options);
 }
+
+describe('auth guard', () => {
+  it('rejects unauthenticated requests with 401', async () => {
+    const response = await GET(
+      new NextRequest('http://localhost:3000/api/schema-migrations')
+    );
+    expect(response.status).toBe(401);
+  });
+});
 
 describe('GET /api/schema-migrations', () => {
   it('returns health status by default', async () => {
@@ -47,7 +65,10 @@ describe('GET /api/schema-migrations', () => {
   });
 
   it('returns example analysis on ?mode=example', async () => {
-    const request = createRequest('GET', 'http://localhost:3000/api/schema-migrations?mode=example');
+    const request = createRequest(
+      'GET',
+      'http://localhost:3000/api/schema-migrations?mode=example'
+    );
     const response = await GET(request);
     const json = await response.json();
 
@@ -58,7 +79,10 @@ describe('GET /api/schema-migrations', () => {
   });
 
   it('includes batch metadata in example response', async () => {
-    const request = createRequest('GET', 'http://localhost:3000/api/schema-migrations?mode=example');
+    const request = createRequest(
+      'GET',
+      'http://localhost:3000/api/schema-migrations?mode=example'
+    );
     const response = await GET(request);
     const json = await response.json();
 
@@ -68,7 +92,10 @@ describe('GET /api/schema-migrations', () => {
   });
 
   it('returns error for invalid mode', async () => {
-    const request = createRequest('GET', 'http://localhost:3000/api/schema-migrations?mode=invalid');
+    const request = createRequest(
+      'GET',
+      'http://localhost:3000/api/schema-migrations?mode=invalid'
+    );
     const response = await GET(request);
     const json = await response.json();
 
@@ -80,14 +107,18 @@ describe('GET /api/schema-migrations', () => {
 
 describe('POST /api/schema-migrations', () => {
   it('analyzes safe migrations and returns 200', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'safe.sql',
-          sql: 'CREATE TABLE users (id BIGINT PRIMARY KEY);',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'safe.sql',
+            sql: 'CREATE TABLE users (id BIGINT PRIMARY KEY);',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -99,14 +130,18 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('analyzes dangerous migrations and returns 400 with blocksCI flag', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'dangerous.sql',
-          sql: 'DROP TABLE users;',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'dangerous.sql',
+            sql: 'DROP TABLE users;',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -117,9 +152,13 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('returns error for missing migrations field', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      // No migrations field
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        // No migrations field
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -129,9 +168,13 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('returns error when migrations is not an array', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: 'not an array',
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: 'not an array',
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -141,14 +184,18 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('returns error when migration missing name field', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          sql: 'CREATE TABLE t (id BIGINT);',
-          // No name field
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            sql: 'CREATE TABLE t (id BIGINT);',
+            // No name field
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -158,14 +205,18 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('returns error when migration missing sql field', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'test.sql',
-          // No sql field
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'test.sql',
+            // No sql field
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -175,22 +226,26 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('analyzes multiple migrations together', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: '001_create.sql',
-          sql: 'CREATE TABLE users (id BIGINT PRIMARY KEY);',
-        },
-        {
-          name: '002_add_email.sql',
-          sql: 'ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT \'\';',
-        },
-        {
-          name: '003_index.sql',
-          sql: 'CREATE INDEX idx_email ON users(email);',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: '001_create.sql',
+            sql: 'CREATE TABLE users (id BIGINT PRIMARY KEY);',
+          },
+          {
+            name: '002_add_email.sql',
+            sql: "ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT '';",
+          },
+          {
+            name: '003_index.sql',
+            sql: 'CREATE INDEX idx_email ON users(email);',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -201,18 +256,22 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('flags batch as breaking when any file is breaking', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'safe.sql',
-          sql: 'CREATE TABLE t (id BIGINT);',
-        },
-        {
-          name: 'breaking.sql',
-          sql: 'DROP TABLE users;',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'safe.sql',
+            sql: 'CREATE TABLE t (id BIGINT);',
+          },
+          {
+            name: 'breaking.sql',
+            sql: 'DROP TABLE users;',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -224,15 +283,19 @@ describe('POST /api/schema-migrations', () => {
 
   it('accepts optional timestamp parameter', async () => {
     const timestamp = '2026-07-10T10:00:00Z';
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'test.sql',
-          sql: 'CREATE TABLE t (id BIGINT);',
-          timestamp,
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'test.sql',
+            sql: 'CREATE TABLE t (id BIGINT);',
+            timestamp,
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -243,14 +306,18 @@ describe('POST /api/schema-migrations', () => {
 
   it('includes analysis timestamp in response', async () => {
     const before = new Date();
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'test.sql',
-          sql: 'CREATE TABLE t (id BIGINT);',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'test.sql',
+            sql: 'CREATE TABLE t (id BIGINT);',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -263,14 +330,18 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('includes issues in file reports', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'problematic.sql',
-          sql: 'ALTER TABLE users ADD COLUMN status TEXT NOT NULL;',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'problematic.sql',
+            sql: 'ALTER TABLE users ADD COLUMN status TEXT NOT NULL;',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -281,9 +352,13 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('handles empty migrations array gracefully', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -295,14 +370,18 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('reports analysis details for high-risk migrations', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'modify_column.sql',
-          sql: 'ALTER TABLE users ALTER COLUMN email TYPE BIGINT;',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'modify_column.sql',
+            sql: 'ALTER TABLE users ALTER COLUMN email TYPE BIGINT;',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -314,14 +393,18 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('includes canAutoMerge flag in analysis results', async () => {
-    const request = createRequest('POST', 'http://localhost:3000/api/schema-migrations', {
-      migrations: [
-        {
-          name: 'safe.sql',
-          sql: 'CREATE TABLE t (id BIGINT);',
-        },
-      ],
-    });
+    const request = createRequest(
+      'POST',
+      'http://localhost:3000/api/schema-migrations',
+      {
+        migrations: [
+          {
+            name: 'safe.sql',
+            sql: 'CREATE TABLE t (id BIGINT);',
+          },
+        ],
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();
@@ -331,10 +414,14 @@ describe('POST /api/schema-migrations', () => {
   });
 
   it('returns 500 on malformed JSON input', async () => {
-    const request = new NextRequest('http://localhost:3000/api/schema-migrations', {
-      method: 'POST',
-      body: 'invalid json {',
-    });
+    const request = new NextRequest(
+      'http://localhost:3000/api/schema-migrations',
+      {
+        method: 'POST',
+        headers: { authorization: `Bearer ${TEST_TOKEN}` },
+        body: 'invalid json {',
+      }
+    );
 
     const response = await POST(request);
     const json = await response.json();

@@ -1,3 +1,4 @@
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   captureError,
@@ -13,6 +14,9 @@ export const dynamic = 'force-dynamic';
 const errorTracker = new ErrorTracker();
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const metrics = errorTracker.getMetrics();
     const alert = formatErrorAlert(metrics);
@@ -43,7 +47,10 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error retrieving error metrics';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error retrieving error metrics';
     return NextResponse.json(
       {
         status: 'error',
@@ -55,6 +62,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body = await request.json();
     const { error: errorData, endpoint, userId, context } = body;
@@ -67,7 +77,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Capture the error
-    const errorMessage = typeof errorData === 'string' ? new Error(errorData) : errorData;
+    const errorMessage =
+      typeof errorData === 'string' ? new Error(errorData) : errorData;
     const event = await captureError(errorMessage, {
       endpoint,
       userId,
@@ -103,7 +114,10 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error processing error event';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error processing error event';
     return NextResponse.json(
       {
         status: 'error',
@@ -115,6 +129,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     errorTracker.reset();
 
@@ -126,7 +143,10 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error resetting tracker';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error resetting tracker';
     return NextResponse.json(
       {
         status: 'error',

@@ -1,3 +1,4 @@
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { IncidentDetector } from '@/lib/incident-detection';
 import { IncidentOrchestrator } from '@/lib/incident-orchestration';
@@ -53,9 +54,13 @@ interface IncidentResponseResult {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body: IncidentResponseRequest = await request.json();
-    const { deploymentId, trigger, verificationReport, metrics, recentErrors } = body;
+    const { deploymentId, trigger, verificationReport, metrics, recentErrors } =
+      body;
 
     if (!deploymentId) {
       return NextResponse.json(
@@ -99,13 +104,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Orchestrate response for highest severity incident
-      const primaryIncident = incidents.sort(
-        (a, b) => {
-          const severityMap = { critical: 3, high: 2, medium: 1, low: 0 };
-          return severityMap[b.severity as keyof typeof severityMap] -
-                 severityMap[a.severity as keyof typeof severityMap];
-        }
-      )[0];
+      const primaryIncident = incidents.sort((a, b) => {
+        const severityMap = { critical: 3, high: 2, medium: 1, low: 0 };
+        return (
+          severityMap[b.severity as keyof typeof severityMap] -
+          severityMap[a.severity as keyof typeof severityMap]
+        );
+      })[0];
 
       const orchestrator = new IncidentOrchestrator();
       const decision = await orchestrator.orchestrateIncident({
@@ -124,11 +129,14 @@ export async function POST(request: NextRequest) {
 
       // Execute decision if not escalating to founder
       if (!decision.shouldEscalateToFounder) {
-        const executionResult = await orchestrator.executeOrchestrationDecision(decision, {
-          incident: primaryIncident,
-          verificationReport: report,
-          previousAttempts: [],
-        });
+        const executionResult = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident: primaryIncident,
+            verificationReport: report,
+            previousAttempts: [],
+          }
+        );
 
         result.executionResult = {
           success: executionResult.success,
@@ -152,12 +160,15 @@ export async function POST(request: NextRequest) {
     const statusCode = result.incidentDetected ? 207 : 200;
     const headers: Record<string, string> = {
       'X-Incidents-Detected': result.incidentDetected ? 'true' : 'false',
-      'X-Incident-Count': (incidents.length).toString(),
+      'X-Incident-Count': incidents.length.toString(),
     };
 
     if (result.incidentId) {
       headers['X-Primary-Incident'] = result.incidentId;
-      headers['X-Escalated-To-Founder'] = result.orchestrationDecision?.shouldEscalateToFounder ? 'true' : 'false';
+      headers['X-Escalated-To-Founder'] = result.orchestrationDecision
+        ?.shouldEscalateToFounder
+        ? 'true'
+        : 'false';
     }
 
     return NextResponse.json(result, { status: statusCode, headers });
@@ -174,6 +185,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const deploymentId = request.nextUrl.searchParams.get('deploymentId');
     const incidentId = request.nextUrl.searchParams.get('incidentId');
@@ -218,7 +232,7 @@ export async function GET(request: NextRequest) {
       {
         status: 200,
         headers: {
-          'X-Incidents-Detected': (incidents.length).toString(),
+          'X-Incidents-Detected': incidents.length.toString(),
           'X-Overall-Health': report.overallHealth,
         },
       }
