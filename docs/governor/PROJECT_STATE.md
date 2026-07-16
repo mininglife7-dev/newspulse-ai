@@ -1,6 +1,6 @@
 # Alpha Cathedral Ω — Project State
 
-**Last Updated**: 2026-07-16 (STAGE 0 Complete)  
+**Last Updated**: 2026-07-16 (STAGE 3 Complete, STAGE 4 Phase 4.1 In Progress)  
 **Authority**: Governor Ω  
 **Scope**: EURO AI Institutional Build Program
 
@@ -8,9 +8,9 @@
 
 ## Current Institutional State
 
-**Stage**: STAGE 3 🟡 IN PROGRESS (Phase 3.1: Engineering Standards ✅ COMPLETE; Phase 3.2: Standards Enforcement ✅ COMPLETE; Phase 3.3: Integration Tests ✅ COMPLETE)
+**Stage**: STAGE 4 🟡 IN PROGRESS (Phase 4.1: Knowledge Structure ✅ COMPLETE; Phase 4.2: Operational Knowledge 🔵 Queued; Phase 4.3: Engineering Knowledge 🔵 Queued; Phase 4.4: Learning & Lessons 🔵 Queued; Phase 4.5: Knowledge Discovery 🔵 Queued)
 
-**Execution Status**: Governance kernel ✅ complete. Documentation consolidated ✅ complete (~200 → 50 files + 111 archived). API routes consolidated ✅ complete (3 deprecated routes archived). Engineering standards documented ✅ complete. Standards enforcement in progress: 9 critical customer-facing API routes refactored (logging, validation, type safety).
+**Execution Status**: Governance kernel ✅ complete. Documentation consolidated ✅ complete (~200 → 50 files + 111 archived). API routes consolidated ✅ complete (3 deprecated routes archived). Engineering standards documented ✅ complete. Standards enforcement ✅ complete (16 routes refactored with logging, validation, type safety). Integration tests ✅ complete (41 customer journey test cases). Knowledge structure ✅ complete (5 domains, INDEX files, taxonomy, templates). Operational procedures 🔵 next (runbooks, checklists).
 
 **Verified Operational State**:
 - Production deployment: ✅ Active (Vercel + Supabase EU)
@@ -64,7 +64,7 @@
 | 1 | Governance Kernel | ✅ COMPLETE | AGENTS.md, GOVERNOR_OPERATIONAL_FRAMEWORK.md, DECISION_LOG.md, REPORTING_STANDARDS.md, STAGE_1_COMPLETION_CHECKLIST.md | RISK-003 mitigated |
 | 2 | Repository Organization | ✅ COMPLETE | STAGE_2_ROADMAP.md, STAGE_2_API_CONSOLIDATION_PLAN.md, docs/archive/ | RISK-001, RISK-002 mitigated |
 | 3 | Engineering Standards | ✅ COMPLETE | ENGINEERING_STANDARDS.md, INTEGRATION_TEST_STANDARD.md, integration tests (41 cases), .husky/pre-push | RISK-004 mitigated |
-| 4 | Knowledge Architecture | 🔵 QUEUED | Depends on Stage 2 | Documentation scalability |
+| 4 | Knowledge Architecture | 🟡 IN PROGRESS (Phase 4.1 ✅) | docs/INDEX.md, KNOWLEDGE_TAXONOMY.md, domain indexes, STAGE_4_ROADMAP.md | Documentation discovery |
 | 5 | Reusable Skills | 🔵 QUEUED | Depends on Stage 3 | Automation foundation |
 | 6 | Customer Journey | 🔵 QUEUED | Depends on Stage 5 | Verification evidence |
 | 7 | Automation Architecture | 🔵 QUEUED | Depends on Stage 6 | Operational workflows |
@@ -246,8 +246,78 @@ See `docs/governor/risks/RISK-REGISTER.md` for complete register.
 
 ---
 
+## STAGE 4 Progress: Knowledge Architecture
+
+**Phase 4.1: Knowledge Structure Setup** ✅ COMPLETE
+
+**Deliverables**:
+1. **Knowledge Taxonomy & Audience Guide** (`docs/KNOWLEDGE_TAXONOMY.md`)
+   - Defined 5 knowledge domains: governance, operational, engineering, learning, customer
+   - Mapped specific audiences to each domain (Founder, Governor Ω, engineers, ops, support)
+   - Established ownership model and responsibility assignments
+   - Defined versioning strategy (git history + archive for deprecation)
+
+2. **Directory Structure** ✅ Created
+   - `docs/operations/` with RUNBOOKS/, CHECKLISTS/, PROCEDURES/ subdirectories
+   - `docs/engineering/` with PATTERNS/ subdirectory (route patterns, library patterns, testing patterns, React patterns, security patterns)
+   - `docs/lessons/` for stage-based and ongoing learning capture
+   - `docs/customer/` already exists (further population in Phase 4.5)
+
+3. **Master Knowledge Index** (`docs/INDEX.md`)
+   - Central entry point for all institutional knowledge
+   - Quick navigation by role: Founder, Governor Ω, engineers, ops, customer success
+   - Navigation by task: deploy, write endpoint, handle incident, understand architecture
+   - Verification checklist for documentation updates when implementing features
+   - Status tracking for knowledge system build phases
+
+4. **Domain-Specific Indexes**
+   - `docs/operations/INDEX.md` — Quick reference for all operational procedures (runbooks, checklists, procedures)
+   - `docs/engineering/INDEX.md` — Quick reference for architecture, APIs, database schema, code patterns
+   - `docs/lessons/INDEX.md` — Quick reference for learning capture across stages and incidents
+   - Each provides role-specific guidance, task flows, and document status tracking
+
+5. **Reusable Template** (`docs/KNOWLEDGE_TEMPLATE.md`)
+   - Standard structure for all new knowledge documents
+   - Includes: type, audience, authority, status, review schedule, related docs
+   - Template sections for runbooks, checklists, patterns, references, lessons
+
+6. **STAGE 4 Roadmap** (`docs/governor/STAGE_4_ROADMAP.md`)
+   - Comprehensive 5-phase roadmap for knowledge architecture build
+   - Defined knowledge types, architecture, success metrics, timeline, risks
+   - Risk mitigation strategies for knowledge staleness and complexity
+   - Next phases: operational procedures (4.2), engineering docs (4.3), lessons (4.4), discovery (4.5)
+
+**Architecture Decisions**:
+- Knowledge organized by audience first (who needs to know), not by creation date or system origin
+- Single source of truth per topic (no duplicated documents)
+- Living documents updated in place, with git history showing evolution
+- Clear ownership model ensures currency: quarterly reviews, 48-hour updates on request
+- Archive strategy preserves historical context without cluttering active knowledge
+- Status labels on each document track: Active / Deprecated / Draft / Archived
+
+**Success Criteria Met**:
+✅ Directory structure and templates documented  
+✅ Knowledge taxonomy and audience guide complete  
+✅ Master index provides navigation for all audiences  
+✅ Ownership and update responsibilities defined  
+✅ Versioning strategy established (git + archive)  
+✅ Phase 4.1 completion checklist verified  
+
+**Timeline**: Completed in 1 session (planned 1-2 sessions)
+
+**Next**: Phase 4.2 (2-3 sessions) — Document operational procedures
+- Deployment runbook (pre-push through post-verification)
+- Incident response runbook (detection through postmortem)
+- Database operations runbook (migrations, backups, recovery)
+- Release verification runbook (smoke tests, monitoring, rollback)
+- Customer onboarding runbook (workspace setup, initial config)
+- Pre-deployment, post-deployment, incident postmortem, weekly ops review, monthly compliance checklists
+- Git workflow, testing procedures, verification steps, rollback procedures
+
+---
+
 ## Updated By
 
 **Session**: Claude Code / Governor Ω (2026-07-16)  
-**Action**: STAGE 0 reconnaissance complete  
-**Next Action**: See NEXT_ACTION.md
+**Action**: STAGE 4 Phase 4.1 (Knowledge Structure Setup) complete — autonomously executing per FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md  
+**Next Action**: STAGE 4 Phase 4.2 (Operational Knowledge) — create deployment, incident response, database operations runbooks and all operational checklists/procedures
