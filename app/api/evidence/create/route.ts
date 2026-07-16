@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendEmail } from '@/lib/email';
+import { evidenceSubmitted } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
 
@@ -95,6 +97,51 @@ export async function POST(req: NextRequest) {
         { ok: false, error: createError.message },
         { status: 500 }
       );
+    }
+
+    // Send confirmation email
+    try {
+      let obligationTitle = 'Evidence Submission';
+      if (body.obligation_id) {
+        const { data: obligation } = await supabase
+          .from('obligations')
+          .select('title')
+          .eq('id', body.obligation_id)
+          .single();
+        if (obligation?.title) {
+          obligationTitle = obligation.title;
+        }
+      }
+
+      const { data: workspace } = await supabase
+        .from('workspaces')
+        .select('name')
+        .eq('id', body.workspace_id)
+        .single();
+
+      const { html, text } = evidenceSubmitted(
+        user.email || 'user@example.com',
+        obligationTitle,
+        workspace?.name || 'Your Workspace'
+      );
+
+      await sendEmail({
+        to: user.email || 'noreply@example.com',
+        subject: `Evidence Submitted: ${obligationTitle}`,
+        html,
+        text,
+        categories: ['euro-ai-evidence-submitted'],
+      }).catch((err) => {
+        // Log but don't fail the request if email sending fails
+        console.warn('Failed to send evidence submission email', {
+          error: err.message,
+        });
+      });
+    } catch (emailError: any) {
+      // Silently fail email - don't break evidence creation
+      console.warn('Email notification failed for evidence creation', {
+        error: emailError.message,
+      });
     }
 
     return NextResponse.json(

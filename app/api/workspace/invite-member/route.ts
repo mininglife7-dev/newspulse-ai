@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendEmail } from '@/lib/email';
+import { teamMemberInvited } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
 
@@ -98,6 +100,37 @@ export async function POST(req: NextRequest) {
         { ok: false, error: createError.message },
         { status: 500 }
       );
+    }
+
+    // Send invitation email
+    try {
+      const { data: workspace } = await supabase
+        .from('workspaces')
+        .select('name')
+        .eq('id', body.workspace_id)
+        .single();
+
+      const { html, text } = teamMemberInvited(
+        invitation.id,
+        workspace?.name || 'Your Workspace',
+        user.email || 'A team member'
+      );
+
+      await sendEmail({
+        to: body.email,
+        subject: `You're Invited to ${workspace?.name || 'EURO AI'}`,
+        html,
+        text,
+        categories: ['euro-ai-team-invitation'],
+      }).catch((err) => {
+        console.warn('Failed to send team invitation email', {
+          error: err.message,
+        });
+      });
+    } catch (emailError: any) {
+      console.warn('Email notification failed for team invitation', {
+        error: emailError.message,
+      });
     }
 
     return NextResponse.json(

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { logger, measureDuration } from '@/lib/logger';
+import { sendEmail } from '@/lib/email';
+import { obligationAssigned } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
 
@@ -206,6 +208,50 @@ export async function POST(req: NextRequest) {
       obligationsCreated: createdObligations?.length || 0,
       duration,
     });
+
+    // Send email notifications to workspace owner
+    try {
+      const { data: workspace } = await supabase
+        .from('workspaces')
+        .select('name, owner_id')
+        .eq('id', body.workspace_id)
+        .single();
+
+      if (workspace?.owner_id) {
+        const { data } = await supabase.auth.admin.getUserById(
+          workspace.owner_id
+        );
+
+        if (data?.user?.email) {
+          for (const obligation of createdObligations || []) {
+            const { html, text } = obligationAssigned(
+              data.user.email,
+              obligation.title,
+              workspace.name
+            );
+
+            await sendEmail({
+              to: data.user.email,
+              subject: `New Obligation: ${obligation.title}`,
+              html,
+              text,
+              categories: ['euro-ai-obligation-assigned'],
+            }).catch((err) => {
+              logger.warn('Failed to send obligation notification email', {
+                requestId,
+                obligationId: obligation.id,
+                error: err.message,
+              });
+            });
+          }
+        }
+      }
+    } catch (emailError: any) {
+      logger.warn('Email notification failed for obligation creation', {
+        requestId,
+        error: emailError.message,
+      });
+    }
 
     return NextResponse.json(
       {
