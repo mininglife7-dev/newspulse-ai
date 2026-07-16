@@ -1,6 +1,6 @@
 # PROJECT_STATE — Verified Facts Only
 
-**Last verified:** 2026-07-16 ~13:00 UTC (Governor Ω, truth-reconciliation mission)
+**Last verified:** 2026-07-16 ~13:15 UTC (truth-reconciliation mission COMPLETE — proving run `29499904621` green)
 Rules: facts only, each labelled and evidence-cited. Unknown stays UNKNOWN
 until verified. Update whenever verified reality changes.
 
@@ -34,8 +34,8 @@ until verified. Update whenever verified reality changes.
   (`SUPABASE_DB_URL` pooler/psql-paste handling, `PGPASSWORD` export, CEIS
   deploy + hard verification; `db_password` workflow input removed — Law 4).
   The `e09353f` regression that dropped this logic is corrected (DR-0024).
-  Post-restore green dispatch: pending; record the run ID here when done. —
-  Verified (file = last-known-good; run-proof pending)
+  Post-restore proving dispatch: run `29499904621` completed **success**. —
+  Verified
 
 ## Verified features (platform level)
 
