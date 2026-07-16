@@ -69,16 +69,16 @@ All error responses follow this format:
 
 ### Status Codes
 
-| Code | Meaning | Example |
-|------|---------|---------|
-| 200 | Success (GET) | Request completed successfully |
-| 201 | Created (POST) | Resource created successfully |
-| 400 | Bad Request | Missing required fields |
-| 401 | Unauthorized | Missing or invalid token |
-| 403 | Forbidden | User lacks workspace access |
-| 404 | Not Found | Resource doesn't exist |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Server Error | Unexpected error |
+| Code | Meaning           | Example                        |
+| ---- | ----------------- | ------------------------------ |
+| 200  | Success (GET)     | Request completed successfully |
+| 201  | Created (POST)    | Resource created successfully  |
+| 400  | Bad Request       | Missing required fields        |
+| 401  | Unauthorized      | Missing or invalid token       |
+| 403  | Forbidden         | User lacks workspace access    |
+| 404  | Not Found         | Resource doesn't exist         |
+| 429  | Too Many Requests | Rate limit exceeded            |
+| 500  | Server Error      | Unexpected error               |
 
 ### Retry Strategy
 
@@ -119,6 +119,7 @@ async function fetchWithRetry(url, options) {
 List all workspaces the user has access to.
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -141,6 +142,7 @@ List all workspaces the user has access to.
 **POST** `/workspace/create`
 
 **Request:**
+
 ```json
 {
   "name": "Tech Startup Inc",
@@ -149,6 +151,7 @@ List all workspaces the user has access to.
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -167,6 +170,7 @@ List all workspaces the user has access to.
 **GET** `/workspace/members?workspace_id=<id>`
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -190,6 +194,7 @@ List all workspaces the user has access to.
 **POST** `/workspace/invite-member`
 
 **Request:**
+
 ```json
 {
   "workspace_id": "ws-789def",
@@ -199,12 +204,14 @@ List all workspaces the user has access to.
 ```
 
 **Roles:**
+
 - `owner` - Full access, can delete workspace
 - `admin` - Full access except workspace deletion
 - `member` - Can create/modify content
 - `viewer` - Read-only access
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -226,6 +233,7 @@ List all workspaces the user has access to.
 **GET** `/ai-system/list?workspace_id=<id>`
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -251,6 +259,7 @@ List all workspaces the user has access to.
 **POST** `/ai-system/create`
 
 **Request:**
+
 ```json
 {
   "workspace_id": "ws-789def",
@@ -263,6 +272,7 @@ List all workspaces the user has access to.
 ```
 
 **Categories:**
+
 - `large_language_model` - LLMs (GPT, Claude, etc.)
 - `computer_vision` - Image/video analysis
 - `recommendation` - Recommendation systems
@@ -271,6 +281,7 @@ List all workspaces the user has access to.
 - `other` - Other AI systems
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -293,6 +304,7 @@ List all workspaces the user has access to.
 Assess an AI system for compliance risks.
 
 **Request:**
+
 ```json
 {
   "workspace_id": "ws-789def",
@@ -314,11 +326,13 @@ Assess an AI system for compliance risks.
 ```
 
 **Assessment Types:**
+
 - `prohibited` - Violates EU AI Act Article 5
 - `high_risk` - Requires extensive documentation
 - `general` - Standard compliance requirements
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -335,6 +349,7 @@ Assess an AI system for compliance risks.
 ```
 
 **Risk Score Calculation:**
+
 - Formula: `(affirmativeAnswers / totalQuestions) * 100`
 - Range: 0-100
 - Score >= 70 triggers additional obligations
@@ -346,6 +361,7 @@ Assess an AI system for compliance risks.
 **GET** `/risk-assessment/list?workspace_id=<id>&ai_system_id=<id>`
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -373,6 +389,7 @@ Assess an AI system for compliance risks.
 Automatically generate obligations based on risk assessment.
 
 **Request:**
+
 ```json
 {
   "workspace_id": "ws-789def",
@@ -384,6 +401,7 @@ Automatically generate obligations based on risk assessment.
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -411,10 +429,12 @@ Automatically generate obligations based on risk assessment.
 **GET** `/obligations/list?workspace_id=<id>&ai_system_id=<id>`
 
 **Query Parameters:**
+
 - `workspace_id` (required): Workspace ID
 - `ai_system_id` (optional): Filter by AI system
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -444,6 +464,7 @@ Automatically generate obligations based on risk assessment.
 Submit evidence for compliance obligations.
 
 **Request:**
+
 ```json
 {
   "workspace_id": "ws-789def",
@@ -457,12 +478,14 @@ Submit evidence for compliance obligations.
 ```
 
 **Evidence Types:**
+
 - `file` - PDF, document, spreadsheet
 - `url` - Link to external resource
 - `note` - Text notes
 - `attestation` - Formal statement/certification
 
 **Categories:**
+
 - `documentation` - Technical documentation
 - `testing` - Test results and procedures
 - `verification` - Third-party verification
@@ -473,6 +496,7 @@ Submit evidence for compliance obligations.
 - `other` - Other evidence
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -494,6 +518,7 @@ Submit evidence for compliance obligations.
 **GET** `/evidence/list?workspace_id=<id>&obligation_id=<id>`
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -523,6 +548,7 @@ Submit evidence for compliance obligations.
 Create a remediation plan for an obligation.
 
 **Request:**
+
 ```json
 {
   "workspace_id": "ws-789def",
@@ -536,12 +562,14 @@ Create a remediation plan for an obligation.
 ```
 
 **Priorities:**
+
 - `critical` - Address immediately
 - `high` - Address within 2 weeks
 - `medium` - Address within 1 month
 - `low` - Address when possible
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -564,11 +592,13 @@ Create a remediation plan for an obligation.
 **GET** `/remediation/list?workspace_id=<id>&status=<status>`
 
 **Status Filter:**
+
 - `in_progress` - Active remediations
 - `completed` - Finished remediations
 - `blocked` - Blocked/on-hold
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -595,6 +625,7 @@ Create a remediation plan for an obligation.
 Update remediation status or details.
 
 **Request:**
+
 ```json
 {
   "id": "rem-123",
@@ -606,6 +637,7 @@ Update remediation status or details.
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -629,6 +661,7 @@ Update remediation status or details.
 Get overview of compliance status.
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -653,6 +686,7 @@ Get overview of compliance status.
 Get risk distribution across systems.
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -677,6 +711,7 @@ Get risk distribution across systems.
 Check if system is operational (no auth required).
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -699,12 +734,12 @@ Check if system is operational (no auth required).
 
 Requests are rate-limited by endpoint type:
 
-| Endpoint Type | Limit | Window |
-|---------------|-------|--------|
-| Read operations | 100 req/min | Per user |
-| Write operations | 30 req/min | Per user |
-| Auth operations | 5 attempts | Per 15 min |
-| Resource-intensive | 10 req/min | Per workspace |
+| Endpoint Type      | Limit       | Window        |
+| ------------------ | ----------- | ------------- |
+| Read operations    | 100 req/min | Per user      |
+| Write operations   | 30 req/min  | Per user      |
+| Auth operations    | 5 attempts  | Per 15 min    |
+| Resource-intensive | 10 req/min  | Per workspace |
 
 ### Quota Headers
 
@@ -730,6 +765,7 @@ When limit exceeded:
 ```
 
 **Response Header:**
+
 ```
 Retry-After: 45
 ```
@@ -750,7 +786,7 @@ class EUROAIClient {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
+        Authorization: `Bearer ${this.token}`,
         ...options.headers,
       },
     });
@@ -787,11 +823,9 @@ const client = new EUROAIClient(
   'your-jwt-token'
 );
 
-const assessment = await client.createAssessment(
-  'ws-789',
-  'sys-456',
-  [{ question_id: 'q1', answer: true }]
-);
+const assessment = await client.createAssessment('ws-789', 'sys-456', [
+  { question_id: 'q1', answer: true },
+]);
 ```
 
 ---

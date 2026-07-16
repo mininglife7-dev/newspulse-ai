@@ -3,6 +3,7 @@
 ## Overview
 
 This guide covers implementing email notifications for the EURO AI platform. Email is critical for production to notify users of:
+
 - Compliance deadline reminders
 - Evidence submission confirmations
 - Obligation assignment notifications
@@ -17,18 +18,21 @@ This guide covers implementing email notifications for the EURO AI platform. Ema
 ## Architecture Options
 
 ### Option 1: SendGrid (Recommended) ✓
+
 **Best for**: Production, reliable, scalable, cost-effective  
 **Cost**: Free tier available, $0.10/email at scale  
 **Integration**: Simple API, webhook support  
 **Setup time**: 30 minutes
 
 ### Option 2: AWS SES
+
 **Best for**: AWS-based infrastructure  
 **Cost**: $0.10/email at scale  
 **Integration**: SDK integration  
 **Setup time**: 45 minutes
 
 ### Option 3: Mailgun
+
 **Best for**: Developer-friendly, detailed analytics  
 **Cost**: Free tier, $0.50-1.00/email at scale  
 **Setup time**: 45 minutes
@@ -359,16 +363,12 @@ import { obligationAssigned } from '@/lib/email-templates';
 for (const obligation of createdObligations || []) {
   // Notify workspace owner
   const { data: owner } = await supabase.auth.admin.getUserById(createdBy);
-  
+
   if (owner?.email) {
     await sendEmail({
       to: owner.email,
       subject: `New Obligation: ${obligation.title}`,
-      html: obligationAssigned(
-        owner.email,
-        obligation.title,
-        workspaceName
-      ),
+      html: obligationAssigned(owner.email, obligation.title, workspaceName),
     });
   }
 }
@@ -440,14 +440,12 @@ export async function POST(req: NextRequest) {
 
     if (event.event === 'bounce' || event.event === 'complaint') {
       // Update user email status or notify support
-      await supabase
-        .from('email_events')
-        .insert({
-          event_type: event.event,
-          email: event.email,
-          reason: event.reason,
-          timestamp: new Date(event.timestamp * 1000),
-        });
+      await supabase.from('email_events').insert({
+        event_type: event.event,
+        email: event.email,
+        reason: event.reason,
+        timestamp: new Date(event.timestamp * 1000),
+      });
     }
   }
 
@@ -470,12 +468,12 @@ export async function POST(req: NextRequest) {
 
 ### SendGrid (Recommended)
 
-| Volume | Cost/Month | Cost/Year |
-|--------|-----------|-----------|
-| 1,000 emails | $0 (free tier) | $0 |
-| 10,000 emails | $10 | $120 |
-| 100,000 emails | $100 | $1,200 |
-| 1,000,000 emails | $1,000 | $12,000 |
+| Volume           | Cost/Month     | Cost/Year |
+| ---------------- | -------------- | --------- |
+| 1,000 emails     | $0 (free tier) | $0        |
+| 10,000 emails    | $10            | $120      |
+| 100,000 emails   | $100           | $1,200    |
+| 1,000,000 emails | $1,000         | $12,000   |
 
 For EURO AI MVP: Expect 100-1,000 emails/month = $1-10/month
 
@@ -512,16 +510,19 @@ For EURO AI MVP: Expect 100-1,000 emails/month = $1-10/month
 ## Implementation Timeline
 
 **Phase 4.1 - Basic Setup** (2-3 hours)
+
 - [ ] SendGrid account setup
 - [ ] Email template creation
 - [ ] Basic send endpoint implementation
 
 **Phase 4.2 - Scheduled Jobs** (3-4 hours)
+
 - [ ] Implement deadline reminder job
 - [ ] Set up Vercel Cron
 - [ ] Test email delivery
 
 **Phase 4.3 - Full Integration** (5-6 hours)
+
 - [ ] Add email to all obligation workflows
 - [ ] Implement team invitation emails
 - [ ] Add email preferences to user settings
