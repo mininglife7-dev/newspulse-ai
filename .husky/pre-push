@@ -1,0 +1,48 @@
+#!/bin/sh
+set -e
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📋 Pre-Push Verification (STAGE 3 Engineering Standards)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# 1. Type checking
+echo "1️⃣  TypeScript type checking..."
+npm run type-check || {
+  echo "❌ Type checking failed"
+  exit 1
+}
+echo "   ✅ Type checking passed"
+echo ""
+
+# 2. Linting
+echo "2️⃣  ESLint verification..."
+npm run lint || {
+  echo "❌ Linting failed"
+  exit 1
+}
+echo "   ✅ Linting passed"
+echo ""
+
+# 3. Quick format check
+echo "3️⃣  Prettier format check..."
+npm run format:check || {
+  echo "❌ Format check failed - run: npm run format"
+  exit 1
+}
+echo "   ✅ Format check passed"
+echo ""
+
+# 4. Unit tests (fast only)
+echo "4️⃣  Running unit tests..."
+npm test -- --run --passWithNoTests 2>/dev/null || {
+  echo "❌ Unit tests failed"
+  exit 1
+}
+echo "   ✅ Unit tests passed"
+echo ""
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ All pre-push checks passed"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
