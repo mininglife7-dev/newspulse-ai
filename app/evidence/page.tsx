@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Loader } from "lucide-react";
-import { EvidenceForm } from "@/components/evidence/evidence-form";
+import { useEffect, useState } from 'react';
+import { Loader } from 'lucide-react';
+import { EvidenceForm } from '@/components/evidence/evidence-form';
 
 interface AISystem {
   id: string;
@@ -19,8 +19,8 @@ export default function EvidencePage() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [systems, setSystems] = useState<AISystem[]>([]);
   const [obligations, setObligations] = useState<Obligation[]>([]);
-  const [selectedSystemId, setSelectedSystemId] = useState<string>("");
-  const [selectedObligationId, setSelectedObligationId] = useState<string>("");
+  const [selectedSystemId, setSelectedSystemId] = useState<string>('');
+  const [selectedObligationId, setSelectedObligationId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
@@ -28,13 +28,10 @@ export default function EvidencePage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const workspaceResponse = await fetch("/api/workspace/list");
+        const workspaceResponse = await fetch('/api/workspace/list');
         if (workspaceResponse.ok) {
           const workspaceData = await workspaceResponse.json();
-          if (
-            workspaceData.workspaces &&
-            workspaceData.workspaces.length > 0
-          ) {
+          if (workspaceData.workspaces && workspaceData.workspaces.length > 0) {
             const wId = workspaceData.workspaces[0].id;
             setWorkspaceId(wId);
 
@@ -56,9 +53,7 @@ export default function EvidencePage() {
           }
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load data"
-        );
+        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
@@ -118,7 +113,7 @@ export default function EvidencePage() {
             value={selectedSystemId}
             onChange={(e) => {
               setSelectedSystemId(e.target.value);
-              setSelectedObligationId("");
+              setSelectedObligationId('');
             }}
             className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
           >
@@ -159,9 +154,7 @@ export default function EvidencePage() {
 
       {/* Evidence Form */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-8">
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Submit Evidence
-        </h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Submit Evidence</h2>
         <EvidenceForm
           key={formKey}
           workspaceId={workspaceId}

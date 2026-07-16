@@ -25,8 +25,8 @@ EURO AI is a multi-tenant platform for managing AI systems, assessing regulatory
 
 > Captured automatically by the E2E smoke suite (`npm run test:e2e`) against mocked APIs.
 
-| Search | History |
-|---|---|
+| Search                                        | History                                            |
+| --------------------------------------------- | -------------------------------------------------- |
 | ![Search UI](./public/screenshots/search.png) | ![History table](./public/screenshots/history.png) |
 
 ---
@@ -113,11 +113,11 @@ Connect the repository to the Vercel project (Vercel Dashboard → Project → S
 
 ## 🔑 Where to get API keys
 
-| Service | Link | What you need |
-|---|---|---|
-| Firecrawl | https://firecrawl.dev | API key (Dashboard → API Keys) |
-| OpenAI | https://platform.openai.com/api-keys | API key |
-| Supabase | https://supabase.com | Project URL + publishable + secret keys (Settings → API) |
+| Service   | Link                                 | What you need                                            |
+| --------- | ------------------------------------ | -------------------------------------------------------- |
+| Firecrawl | https://firecrawl.dev                | API key (Dashboard → API Keys)                           |
+| OpenAI    | https://platform.openai.com/api-keys | API key                                                  |
+| Supabase  | https://supabase.com                 | Project URL + publishable + secret keys (Settings → API) |
 
 ---
 
@@ -217,7 +217,7 @@ POST /api/search
 ## 🏆 Hackathon Notes
 
 - **Project:** NewsPulse AI
-- **Tagline:** *AI-Powered News Intelligence — Search. Scrape. Summarize.*
+- **Tagline:** _AI-Powered News Intelligence — Search. Scrape. Summarize._
 - **Differentiator:** Real-time AI summaries + persistent search history
 - **Built for:** Outskill AI Generalist Accelerator Hackathon
 

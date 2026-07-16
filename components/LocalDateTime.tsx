@@ -18,7 +18,11 @@ interface LocalDateTimeProps {
  */
 export default function LocalDateTime({ iso, className }: LocalDateTimeProps) {
   return (
-    <time dateTime={iso ?? undefined} className={className} suppressHydrationWarning>
+    <time
+      dateTime={iso ?? undefined}
+      className={className}
+      suppressHydrationWarning
+    >
       {formatAbsoluteDate(iso)}
     </time>
   );

@@ -6,7 +6,12 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 
 // Protected routes that require authentication
-const PROTECTED_ROUTES = ['/dashboard', '/workspace', '/assessment', '/api/workspace'];
+const PROTECTED_ROUTES = [
+  '/dashboard',
+  '/workspace',
+  '/assessment',
+  '/api/workspace',
+];
 const AUTH_ROUTES = ['/auth/signup', '/auth/signin', '/auth/reset'];
 const PUBLIC_ROUTES = ['/', '/auth', '/auth/verify-email', '/api/health'];
 

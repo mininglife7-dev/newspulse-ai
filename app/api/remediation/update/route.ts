@@ -74,12 +74,16 @@ export async function PUT(req: NextRequest) {
 
     // Build update object with only provided fields
     const updateData: any = {};
-    if (body.description !== undefined) updateData.description = body.description;
-    if (body.assigned_to !== undefined) updateData.assigned_to = body.assigned_to;
+    if (body.description !== undefined)
+      updateData.description = body.description;
+    if (body.assigned_to !== undefined)
+      updateData.assigned_to = body.assigned_to;
     if (body.priority !== undefined) updateData.priority = body.priority;
     if (body.status !== undefined) updateData.status = body.status;
-    if (body.target_completion_date !== undefined) updateData.target_completion_date = body.target_completion_date;
-    if (body.completed_date !== undefined) updateData.completed_date = body.completed_date;
+    if (body.target_completion_date !== undefined)
+      updateData.target_completion_date = body.target_completion_date;
+    if (body.completed_date !== undefined)
+      updateData.completed_date = body.completed_date;
 
     // Update remediation record
     const { data: updated, error: updateError } = await supabase

@@ -89,10 +89,7 @@ export function extractPublishedDate(
   result: FirecrawlSearchResult
 ): string | null {
   const meta = result.metadata ?? {};
-  const raw =
-    meta.publishedTime ||
-    meta['article:published_time'] ||
-    null;
+  const raw = meta.publishedTime || meta['article:published_time'] || null;
   if (!raw) return null;
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();

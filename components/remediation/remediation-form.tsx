@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { useState } from 'react';
+import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 interface RemediationFormProps {
   workspaceId: string;
@@ -11,10 +11,10 @@ interface RemediationFormProps {
 }
 
 const PRIORITIES = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "critical", label: "Critical" },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'critical', label: 'Critical' },
 ];
 
 export function RemediationForm({
@@ -24,12 +24,12 @@ export function RemediationForm({
   onSuccess,
 }: RemediationFormProps) {
   const [formData, setFormData] = useState({
-    obligation_id: obligationId || "",
-    title: "",
-    description: "",
-    priority: "medium",
-    target_completion_date: "",
-    assigned_to: "",
+    obligation_id: obligationId || '',
+    title: '',
+    description: '',
+    priority: 'medium',
+    target_completion_date: '',
+    assigned_to: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -53,16 +53,16 @@ export function RemediationForm({
 
     try {
       if (!formData.obligation_id) {
-        throw new Error("Obligation is required");
+        throw new Error('Obligation is required');
       }
 
       if (!formData.title) {
-        throw new Error("Title is required");
+        throw new Error('Title is required');
       }
 
-      const response = await fetch("/api/remediation/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/remediation/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workspace_id: workspaceId,
           obligation_id: formData.obligation_id,
@@ -77,17 +77,17 @@ export function RemediationForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create remediation");
+        throw new Error(data.error || 'Failed to create remediation');
       }
 
       setSuccess(true);
       setFormData({
-        obligation_id: obligationId || "",
-        title: "",
-        description: "",
-        priority: "medium",
-        target_completion_date: "",
-        assigned_to: "",
+        obligation_id: obligationId || '',
+        title: '',
+        description: '',
+        priority: 'medium',
+        target_completion_date: '',
+        assigned_to: '',
       });
 
       setTimeout(() => {
@@ -95,7 +95,7 @@ export function RemediationForm({
         onSuccess?.();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -231,7 +231,7 @@ export function RemediationForm({
         className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium rounded-lg transition flex items-center justify-center gap-2"
       >
         {loading && <Loader className="w-4 h-4 animate-spin" />}
-        {loading ? "Creating..." : "Create Remediation Action"}
+        {loading ? 'Creating...' : 'Create Remediation Action'}
       </button>
     </form>
   );

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Trash2, Eye, Edit2, Loader } from "lucide-react";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Trash2, Eye, Edit2, Loader } from 'lucide-react';
 
 interface AISystem {
   id: string;
@@ -19,25 +19,25 @@ interface SystemListProps {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  large_language_model: "Large Language Model",
-  computer_vision: "Computer Vision",
-  recommendation: "Recommendation System",
-  autonomous: "Autonomous Agent",
-  biometric: "Biometric System",
-  other: "Other",
+  large_language_model: 'Large Language Model',
+  computer_vision: 'Computer Vision',
+  recommendation: 'Recommendation System',
+  autonomous: 'Autonomous Agent',
+  biometric: 'Biometric System',
+  other: 'Other',
 };
 
 const RISK_COLORS: Record<string, string> = {
-  low: "bg-green-900/30 border-green-800 text-green-300",
-  medium: "bg-yellow-900/30 border-yellow-800 text-yellow-300",
-  high: "bg-red-900/30 border-red-800 text-red-300",
+  low: 'bg-green-900/30 border-green-800 text-green-300',
+  medium: 'bg-yellow-900/30 border-yellow-800 text-yellow-300',
+  high: 'bg-red-900/30 border-red-800 text-red-300',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  in_development: "bg-blue-900/30 border-blue-800 text-blue-300",
-  pilot: "bg-purple-900/30 border-purple-800 text-purple-300",
-  production: "bg-green-900/30 border-green-800 text-green-300",
-  deprecated: "bg-gray-900/30 border-gray-800 text-gray-300",
+  in_development: 'bg-blue-900/30 border-blue-800 text-blue-300',
+  pilot: 'bg-purple-900/30 border-purple-800 text-purple-300',
+  production: 'bg-green-900/30 border-green-800 text-green-300',
+  deprecated: 'bg-gray-900/30 border-gray-800 text-gray-300',
 };
 
 export function SystemList({ workspaceId }: SystemListProps) {
@@ -52,12 +52,12 @@ export function SystemList({ workspaceId }: SystemListProps) {
         const response = await fetch(
           `/api/ai-system/list?workspace_id=${workspaceId}`
         );
-        if (!response.ok) throw new Error("Failed to fetch AI systems");
+        if (!response.ok) throw new Error('Failed to fetch AI systems');
         const data = await response.json();
         setSystems(data.ai_systems || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -69,23 +69,23 @@ export function SystemList({ workspaceId }: SystemListProps) {
   }, [workspaceId]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this AI system?")) return;
+    if (!confirm('Are you sure you want to delete this AI system?')) return;
 
     setDeleting(id);
     try {
-      const response = await fetch("/api/ai-system/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/ai-system/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, workspace_id: workspaceId }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete AI system");
+        throw new Error('Failed to delete AI system');
       }
 
       setSystems(systems.filter((s) => s.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
+      setError(err instanceof Error ? err.message : 'Failed to delete');
     } finally {
       setDeleting(null);
     }
@@ -134,7 +134,7 @@ export function SystemList({ workspaceId }: SystemListProps) {
                 {system.name}
               </h3>
               <p className="text-sm text-slate-400">
-                {system.description || "No description provided"}
+                {system.description || 'No description provided'}
               </p>
             </div>
             <div className="flex gap-2 ml-4">
@@ -183,7 +183,7 @@ export function SystemList({ workspaceId }: SystemListProps) {
               <div
                 className={`inline-block px-2 py-1 rounded text-xs font-medium border ${
                   RISK_COLORS[system.risk_level] ||
-                  "bg-slate-900/30 border-slate-800 text-slate-300"
+                  'bg-slate-900/30 border-slate-800 text-slate-300'
                 }`}
               >
                 {system.risk_level.charAt(0).toUpperCase() +
@@ -195,19 +195,17 @@ export function SystemList({ workspaceId }: SystemListProps) {
               <div
                 className={`inline-block px-2 py-1 rounded text-xs font-medium border ${
                   STATUS_COLORS[system.status] ||
-                  "bg-slate-900/30 border-slate-800 text-slate-300"
+                  'bg-slate-900/30 border-slate-800 text-slate-300'
                 }`}
               >
                 {system.status
-                  .split("_")
+                  .split('_')
                   .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(" ")}
+                  .join(' ')}
               </div>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-400 mb-1">
-                Created
-              </p>
+              <p className="text-xs font-medium text-slate-400 mb-1">Created</p>
               <p className="text-sm text-white">
                 {new Date(system.created_at).toLocaleDateString()}
               </p>

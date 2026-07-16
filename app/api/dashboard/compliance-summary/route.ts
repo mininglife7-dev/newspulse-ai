@@ -105,33 +105,46 @@ export async function GET(req: NextRequest) {
     };
 
     const obligationsByPriority = {
-      critical: obligations?.filter((o) => o.priority === 'critical').length || 0,
+      critical:
+        obligations?.filter((o) => o.priority === 'critical').length || 0,
       high: obligations?.filter((o) => o.priority === 'high').length || 0,
       medium: obligations?.filter((o) => o.priority === 'medium').length || 0,
       low: obligations?.filter((o) => o.priority === 'low').length || 0,
     };
 
     const obligationsByStatus = {
-      identified: obligations?.filter((o) => o.status === 'identified').length || 0,
-      in_progress: obligations?.filter((o) => o.status === 'in_progress').length || 0,
-      completed: obligations?.filter((o) => o.status === 'completed').length || 0,
+      identified:
+        obligations?.filter((o) => o.status === 'identified').length || 0,
+      in_progress:
+        obligations?.filter((o) => o.status === 'in_progress').length || 0,
+      completed:
+        obligations?.filter((o) => o.status === 'completed').length || 0,
     };
 
     const remediationsByStatus = {
       open: remediations?.filter((r) => r.status === 'open').length || 0,
-      in_progress: remediations?.filter((r) => r.status === 'in_progress').length || 0,
-      completed: remediations?.filter((r) => r.status === 'completed').length || 0,
+      in_progress:
+        remediations?.filter((r) => r.status === 'in_progress').length || 0,
+      completed:
+        remediations?.filter((r) => r.status === 'completed').length || 0,
       blocked: remediations?.filter((r) => r.status === 'blocked').length || 0,
     };
 
-    const evidenceApproved = evidence?.filter((e) => e.status === 'approved').length || 0;
+    const evidenceApproved =
+      evidence?.filter((e) => e.status === 'approved').length || 0;
     const evidenceTotal = evidence?.length || 0;
-    const evidenceApprovalRate = evidenceTotal > 0 ? Math.round((evidenceApproved / evidenceTotal) * 100) : 0;
+    const evidenceApprovalRate =
+      evidenceTotal > 0
+        ? Math.round((evidenceApproved / evidenceTotal) * 100)
+        : 0;
 
     // Calculate overall compliance score
     const completeObligations = obligationsByStatus.completed;
     const totalObligations = obligations?.length || 0;
-    const complianceScore = totalObligations > 0 ? Math.round((completeObligations / totalObligations) * 100) : 0;
+    const complianceScore =
+      totalObligations > 0
+        ? Math.round((completeObligations / totalObligations) * 100)
+        : 0;
 
     return NextResponse.json({
       ok: true,

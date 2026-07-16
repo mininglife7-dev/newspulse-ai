@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Loader, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { Loader, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 interface RemediationItem {
   id: string;
   obligation_id: string;
   title: string;
   description?: string;
-  priority: "low" | "medium" | "high" | "critical";
-  status: "open" | "in_progress" | "completed" | "blocked";
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: 'open' | 'in_progress' | 'completed' | 'blocked';
   target_completion_date?: string;
   completed_date?: string;
   assigned_to?: string;
@@ -21,17 +21,17 @@ interface RemediationListProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  open: "bg-slate-900/30 border-slate-800 text-slate-300",
-  in_progress: "bg-blue-900/30 border-blue-800 text-blue-300",
-  completed: "bg-green-900/30 border-green-800 text-green-300",
-  blocked: "bg-red-900/30 border-red-800 text-red-300",
+  open: 'bg-slate-900/30 border-slate-800 text-slate-300',
+  in_progress: 'bg-blue-900/30 border-blue-800 text-blue-300',
+  completed: 'bg-green-900/30 border-green-800 text-green-300',
+  blocked: 'bg-red-900/30 border-red-800 text-red-300',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  low: "text-green-400",
-  medium: "text-yellow-400",
-  high: "text-orange-400",
-  critical: "text-red-400",
+  low: 'text-green-400',
+  medium: 'text-yellow-400',
+  high: 'text-orange-400',
+  critical: 'text-red-400',
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -45,7 +45,9 @@ export function RemediationList({ workspaceId }: RemediationListProps) {
   const [remediations, setRemediations] = useState<RemediationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "open" | "in_progress" | "completed" | "blocked">("all");
+  const [filter, setFilter] = useState<
+    'all' | 'open' | 'in_progress' | 'completed' | 'blocked'
+  >('all');
 
   useEffect(() => {
     async function fetchRemediations() {
@@ -53,12 +55,12 @@ export function RemediationList({ workspaceId }: RemediationListProps) {
         const response = await fetch(
           `/api/remediation/list?workspace_id=${workspaceId}`
         );
-        if (!response.ok) throw new Error("Failed to fetch remediations");
+        if (!response.ok) throw new Error('Failed to fetch remediations');
         const data = await response.json();
         setRemediations(data.remediations || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -70,15 +72,15 @@ export function RemediationList({ workspaceId }: RemediationListProps) {
   }, [workspaceId]);
 
   const filteredRemediations = remediations.filter((r) =>
-    filter === "all" ? true : r.status === filter
+    filter === 'all' ? true : r.status === filter
   );
 
   const statusCounts = {
     all: remediations.length,
-    open: remediations.filter((r) => r.status === "open").length,
-    in_progress: remediations.filter((r) => r.status === "in_progress").length,
-    completed: remediations.filter((r) => r.status === "completed").length,
-    blocked: remediations.filter((r) => r.status === "blocked").length,
+    open: remediations.filter((r) => r.status === 'open').length,
+    in_progress: remediations.filter((r) => r.status === 'in_progress').length,
+    completed: remediations.filter((r) => r.status === 'completed').length,
+    blocked: remediations.filter((r) => r.status === 'blocked').length,
   };
 
   if (loading) {
@@ -112,23 +114,23 @@ export function RemediationList({ workspaceId }: RemediationListProps) {
     <div className="space-y-6">
       {/* Status Filter */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {(["all", "open", "in_progress", "completed", "blocked"] as const).map(
+        {(['all', 'open', 'in_progress', 'completed', 'blocked'] as const).map(
           (status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
               className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition ${
                 filter === status
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
-              {status === "all"
-                ? "All"
+              {status === 'all'
+                ? 'All'
                 : status
-                    .split("_")
+                    .split('_')
                     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ")}{" "}
+                    .join(' ')}{' '}
               ({statusCounts[status]})
             </button>
           )
@@ -139,7 +141,9 @@ export function RemediationList({ workspaceId }: RemediationListProps) {
       <div className="space-y-4">
         {filteredRemediations.length === 0 ? (
           <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-8 text-center">
-            <p className="text-slate-400">No remediation items in this status</p>
+            <p className="text-slate-400">
+              No remediation items in this status
+            </p>
           </div>
         ) : (
           filteredRemediations.map((remediation) => (
@@ -179,9 +183,9 @@ export function RemediationList({ workspaceId }: RemediationListProps) {
                     }`}
                   >
                     {remediation.status
-                      .split("_")
+                      .split('_')
                       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                      .join(" ")}
+                      .join(' ')}
                   </div>
                 </div>
               </div>
@@ -206,7 +210,9 @@ export function RemediationList({ workspaceId }: RemediationListProps) {
                       Completed
                     </p>
                     <p className="text-sm text-white">
-                      {new Date(remediation.completed_date).toLocaleDateString()}
+                      {new Date(
+                        remediation.completed_date
+                      ).toLocaleDateString()}
                     </p>
                   </div>
                 )}

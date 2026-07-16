@@ -19,14 +19,17 @@ interface RateLimitStore {
 const store: RateLimitStore = {};
 
 // Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  Object.keys(store).forEach((key) => {
-    if (store[key].resetTime < now) {
-      delete store[key];
-    }
-  });
-}, 5 * 60 * 1000);
+setInterval(
+  () => {
+    const now = Date.now();
+    Object.keys(store).forEach((key) => {
+      if (store[key].resetTime < now) {
+        delete store[key];
+      }
+    });
+  },
+  5 * 60 * 1000
+);
 
 export function createRateLimiter(config: RateLimitConfig) {
   const { windowMs, maxRequests, keyGenerator } = config;

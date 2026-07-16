@@ -19,6 +19,7 @@ This document outlines operational procedures for deploying, monitoring, and mai
 ### Deployment Process (Vercel)
 
 1. **Push to `main` branch**
+
    ```bash
    git push origin main
    ```
@@ -28,6 +29,7 @@ This document outlines operational procedures for deploying, monitoring, and mai
    - Deployment status: Ready = Success, Error = Rollback
 
 3. **Verify deployment**
+
    ```bash
    curl https://newspulse-ai-production.vercel.app/api/health
    # Expected response: { "ok": true, "status": "healthy" }
@@ -41,11 +43,13 @@ This document outlines operational procedures for deploying, monitoring, and mai
 ### Rollback Procedure
 
 1. **Identify problematic commit**
+
    ```bash
    git log --oneline main | head -5
    ```
 
 2. **Revert to previous version**
+
    ```bash
    git revert HEAD
    git push origin main
@@ -86,6 +90,7 @@ All logs are structured JSON with the following fields:
 ### Viewing Logs
 
 **Vercel Real-time Logs:**
+
 ```bash
 vercel logs -f
 ```
@@ -106,16 +111,19 @@ All logs include `requestId` for tracing related events across services.
 ### Backup and Recovery
 
 **Automatic Backups:**
+
 - Supabase automatically backs up daily
 - Access backups via Supabase dashboard > Backups
 
 **Manual Backup:**
+
 ```bash
 # Export database
 supabase db pull
 ```
 
 **Restore from Backup:**
+
 - Via Supabase dashboard: Backups tab > Restore
 - Contact Supabase support for point-in-time recovery
 
@@ -229,17 +237,20 @@ Updates: [Every 30 minutes during incident]
 ## Scheduled Maintenance
 
 ### Weekly Tasks
+
 - Review error logs for patterns
 - Check database growth rate
 - Monitor authentication metrics
 
 ### Monthly Tasks
+
 - Review and update security policies
 - Audit user access and permissions
 - Analyze performance trends
 - Update capacity planning
 
 ### Quarterly Tasks
+
 - Security audit of API endpoints
 - Database performance optimization
 - Update operational runbooks
@@ -261,9 +272,9 @@ Updates: [Every 30 minutes during incident]
 
 ## Version History
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-07-16 | 1.0.0 | Initial production procedures |
+| Date       | Version | Changes                       |
+| ---------- | ------- | ----------------------------- |
+| 2026-07-16 | 1.0.0   | Initial production procedures |
 
 ---
 

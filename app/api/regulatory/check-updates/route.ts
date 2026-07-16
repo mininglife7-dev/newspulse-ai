@@ -66,7 +66,9 @@ export async function GET(req: NextRequest) {
     // Fetch regulatory updates for the jurisdiction
     let query = supabase
       .from('regulatory_updates')
-      .select('id, title, description, jurisdiction, regulation_type, effective_date, impact_level, status, created_at')
+      .select(
+        'id, title, description, jurisdiction, regulation_type, effective_date, impact_level, status, created_at'
+      )
       .in('status', ['active', 'pending'])
       .order('effective_date', { ascending: true });
 

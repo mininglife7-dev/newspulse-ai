@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { AlertTriangle, TrendingUp, Zap } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { AlertTriangle, TrendingUp, Zap } from 'lucide-react';
 
 interface HeatmapSystem {
   ai_system_id: string;
@@ -11,7 +11,7 @@ interface HeatmapSystem {
   obligations_total: number;
   obligations_incomplete: number;
   critical_obligations: number;
-  compliance_urgency: "critical" | "high" | "low";
+  compliance_urgency: 'critical' | 'high' | 'low';
 }
 
 interface RiskHeatmapData {
@@ -38,7 +38,7 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
         const response = await fetch(
           `/api/dashboard/risk-heatmap?workspace_id=${workspaceId}`
         );
-        if (!response.ok) throw new Error("Failed to fetch risk heatmap");
+        if (!response.ok) throw new Error('Failed to fetch risk heatmap');
         const result = await response.json();
         if (result.ok) {
           setData(result);
@@ -46,7 +46,7 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
           setError(result.error);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -68,27 +68,27 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
   if (error || !data) {
     return (
       <div className="rounded-lg border border-red-800/50 bg-red-900/20 p-6">
-        <p className="text-red-400">{error || "Failed to load risk heatmap"}</p>
+        <p className="text-red-400">{error || 'Failed to load risk heatmap'}</p>
       </div>
     );
   }
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
-      case "critical":
-        return "border-red-600 bg-red-900/30";
-      case "high":
-        return "border-yellow-600 bg-yellow-900/30";
+      case 'critical':
+        return 'border-red-600 bg-red-900/30';
+      case 'high':
+        return 'border-yellow-600 bg-yellow-900/30';
       default:
-        return "border-green-600 bg-green-900/30";
+        return 'border-green-600 bg-green-900/30';
     }
   };
 
   const getUrgencyIcon = (urgency: string) => {
     switch (urgency) {
-      case "critical":
+      case 'critical':
         return <AlertTriangle className="w-4 h-4 text-red-400" />;
-      case "high":
+      case 'high':
         return <TrendingUp className="w-4 h-4 text-yellow-400" />;
       default:
         return <Zap className="w-4 h-4 text-green-400" />;
@@ -100,7 +100,9 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
       {/* Summary */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs font-medium text-slate-400 mb-1">Total Systems</p>
+          <p className="text-xs font-medium text-slate-400 mb-1">
+            Total Systems
+          </p>
           <p className="text-2xl font-bold text-white">
             {data.summary.total_systems}
           </p>
@@ -114,9 +116,7 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
           </p>
         </div>
         <div className="rounded-lg border border-yellow-800/50 bg-yellow-900/20 p-4">
-          <p className="text-xs font-medium text-yellow-300 mb-1">
-            High Risk
-          </p>
+          <p className="text-xs font-medium text-yellow-300 mb-1">High Risk</p>
           <p className="text-2xl font-bold text-yellow-400">
             {data.summary.high_risk_systems}
           </p>
@@ -147,7 +147,7 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
                       {system.ai_system_name}
                     </h4>
                     <p className="text-sm text-slate-400 mt-1">
-                      Risk Level:{" "}
+                      Risk Level:{' '}
                       <span className="font-medium capitalize text-white">
                         {system.risk_level}
                       </span>
@@ -176,11 +176,13 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
                   <p className="text-xs font-medium text-slate-400 mb-1">
                     Incomplete
                   </p>
-                  <p className={`text-lg font-semibold ${
-                    system.obligations_incomplete > 0
-                      ? "text-yellow-400"
-                      : "text-green-400"
-                  }`}>
+                  <p
+                    className={`text-lg font-semibold ${
+                      system.obligations_incomplete > 0
+                        ? 'text-yellow-400'
+                        : 'text-green-400'
+                    }`}
+                  >
                     {system.obligations_incomplete}
                   </p>
                 </div>
@@ -188,11 +190,13 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
                   <p className="text-xs font-medium text-slate-400 mb-1">
                     Critical
                   </p>
-                  <p className={`text-lg font-semibold ${
-                    system.critical_obligations > 0
-                      ? "text-red-400"
-                      : "text-green-400"
-                  }`}>
+                  <p
+                    className={`text-lg font-semibold ${
+                      system.critical_obligations > 0
+                        ? 'text-red-400'
+                        : 'text-green-400'
+                    }`}
+                  >
                     {system.critical_obligations}
                   </p>
                 </div>
@@ -207,20 +211,22 @@ export function RiskHeatmap({ workspaceId }: RiskHeatmapProps) {
                     </span>
                     <span className="text-xs font-medium text-slate-300">
                       {Math.round(
-                        ((system.obligations_total - system.obligations_incomplete) /
+                        ((system.obligations_total -
+                          system.obligations_incomplete) /
                           system.obligations_total) *
                           100
-                      )}%
+                      )}
+                      %
                     </span>
                   </div>
                   <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className={
-                        system.compliance_urgency === "critical"
-                          ? "bg-red-500"
-                          : system.compliance_urgency === "high"
-                          ? "bg-yellow-500"
-                          : "bg-green-500"
+                        system.compliance_urgency === 'critical'
+                          ? 'bg-red-500'
+                          : system.compliance_urgency === 'high'
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
                       }
                       style={{
                         width: `${

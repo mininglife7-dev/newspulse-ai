@@ -8,7 +8,13 @@ interface UpdateAISystemRequest {
   workspace_id: string;
   name?: string;
   description?: string;
-  category?: 'large_language_model' | 'computer_vision' | 'recommendation' | 'autonomous' | 'biometric' | 'other';
+  category?:
+    | 'large_language_model'
+    | 'computer_vision'
+    | 'recommendation'
+    | 'autonomous'
+    | 'biometric'
+    | 'other';
   status?: 'deployed' | 'in_development' | 'planned' | 'retired';
   risk_level?: 'low' | 'medium' | 'high';
 }
@@ -59,7 +65,8 @@ export async function PUT(req: NextRequest) {
     // Update AI system
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name;
-    if (body.description !== undefined) updateData.description = body.description;
+    if (body.description !== undefined)
+      updateData.description = body.description;
     if (body.category !== undefined) updateData.category = body.category;
     if (body.status !== undefined) updateData.status = body.status;
     if (body.risk_level !== undefined) updateData.risk_level = body.risk_level;

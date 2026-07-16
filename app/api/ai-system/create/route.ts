@@ -7,7 +7,13 @@ interface CreateAISystemRequest {
   workspace_id: string;
   name: string;
   description?: string;
-  category: 'large_language_model' | 'computer_vision' | 'recommendation' | 'autonomous' | 'biometric' | 'other';
+  category:
+    | 'large_language_model'
+    | 'computer_vision'
+    | 'recommendation'
+    | 'autonomous'
+    | 'biometric'
+    | 'other';
   status: 'deployed' | 'in_development' | 'planned' | 'retired';
   risk_level?: 'low' | 'medium' | 'high';
 }

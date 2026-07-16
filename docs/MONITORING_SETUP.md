@@ -35,6 +35,7 @@ All API endpoints emit structured JSON logs with:
 ### Accessing Logs
 
 **Vercel Real-time Logs:**
+
 ```bash
 vercel logs -f  # Follow mode
 vercel logs --limit 100  # Last 100 entries
@@ -99,6 +100,7 @@ All related events share the same `requestId` for easy tracing.
 These alerts should trigger immediate investigation:
 
 1. **Error Rate > 5%**
+
    ```
    Alert: High error rate detected
    Threshold: 5xx errors > 5% of total requests
@@ -106,6 +108,7 @@ These alerts should trigger immediate investigation:
    ```
 
 2. **Service Down**
+
    ```
    Alert: Health check failing
    Threshold: 3 consecutive health check failures
@@ -122,12 +125,14 @@ These alerts should trigger immediate investigation:
 ### Warning Alerts (Investigation within 1 hour)
 
 1. **High Response Time (P95 > 1s)**
+
    ```
    Threshold: P95 latency > 1000ms for 5+ minutes
    Action: Check database performance, review slow queries
    ```
 
 2. **Unusual Error Pattern**
+
    ```
    Threshold: Same error appearing > 10x in 5 minutes
    Action: Review error details, check for missing config
@@ -144,24 +149,28 @@ These alerts should trigger immediate investigation:
 ### Key Queries
 
 **Total Requests (last hour):**
+
 ```
 filter by: timestamp > now - 1h
 count: all log entries
 ```
 
 **Error Rate (last hour):**
+
 ```
 filter by: timestamp > now - 1h AND (level == "error" OR statusCode >= 500)
 calculate: error_count / total_count * 100
 ```
 
 **Response Times (last hour):**
+
 ```
 filter by: timestamp > now - 1h AND level == "info"
 calculate: p50(duration), p95(duration), p99(duration)
 ```
 
 **Requests by Endpoint (last hour):**
+
 ```
 filter by: timestamp > now - 1h
 group by: endpoint
@@ -169,6 +178,7 @@ count: requests per endpoint
 ```
 
 **Top Errors (last hour):**
+
 ```
 filter by: timestamp > now - 1h AND level == "error"
 group by: error message
@@ -238,8 +248,8 @@ Track performance of critical operations:
   "message": "Risk assessment created successfully",
   "duration": 342,
   "assessmentId": "assessment-123",
-  "queryTimeMs": 120,  // Database time
-  "computeTimeMs": 45   // Risk scoring time
+  "queryTimeMs": 120, // Database time
+  "computeTimeMs": 45 // Risk scoring time
 }
 ```
 
@@ -248,6 +258,7 @@ Track performance of critical operations:
 ### Optional: Vercel Analytics
 
 Enable in Vercel dashboard for built-in observability:
+
 - Web Vitals tracking
 - Edge request analytics
 - Performance monitoring

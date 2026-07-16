@@ -1,7 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { BarChart3, TrendingUp, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { useEffect, useState } from 'react';
+import {
+  BarChart3,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+} from 'lucide-react';
 
 interface ComplianceSummaryData {
   ai_systems: {
@@ -62,7 +68,7 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
         const response = await fetch(
           `/api/dashboard/compliance-summary?workspace_id=${workspaceId}`
         );
-        if (!response.ok) throw new Error("Failed to fetch compliance summary");
+        if (!response.ok) throw new Error('Failed to fetch compliance summary');
         const result = await response.json();
         if (result.ok) {
           setData(result.summary);
@@ -70,7 +76,7 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
           setError(result.error);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -98,7 +104,7 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
     return (
       <div className="rounded-lg border border-red-800/50 bg-red-900/20 p-6">
         <p className="text-red-400">
-          {error || "Failed to load compliance summary"}
+          {error || 'Failed to load compliance summary'}
         </p>
       </div>
     );
@@ -106,9 +112,13 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
 
   const score = data.compliance_metrics.overall_compliance_score;
   const scoreColor =
-    score >= 80 ? "text-green-400" : score >= 60 ? "text-yellow-400" : "text-red-400";
+    score >= 80
+      ? 'text-green-400'
+      : score >= 60
+        ? 'text-yellow-400'
+        : 'text-red-400';
   const scoreGauge =
-    score >= 80 ? "bg-green-400" : score >= 60 ? "bg-yellow-400" : "bg-red-400";
+    score >= 80 ? 'bg-green-400' : score >= 60 ? 'bg-yellow-400' : 'bg-red-400';
 
   return (
     <div className="space-y-6">
@@ -124,7 +134,7 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
                 {score}%
               </span>
               <span className="text-sm text-slate-400">
-                {data.compliance_metrics.obligations_completed} of{" "}
+                {data.compliance_metrics.obligations_completed} of{' '}
                 {data.compliance_metrics.obligations_total} obligations complete
               </span>
             </div>
@@ -146,10 +156,7 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
             <span className="text-xs font-medium text-slate-400">Progress</span>
           </div>
           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div
-              className={scoreGauge}
-              style={{ width: `${score}%` }}
-            />
+            <div className={scoreGauge} style={{ width: `${score}%` }} />
           </div>
         </div>
       </div>
@@ -159,7 +166,9 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
         {/* AI Systems */}
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-slate-400">AI Systems</span>
+            <span className="text-sm font-medium text-slate-400">
+              AI Systems
+            </span>
             <AlertTriangle className="w-4 h-4 text-slate-500" />
           </div>
           <div className="text-3xl font-bold text-white mb-2">
@@ -190,7 +199,9 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
         {/* Obligations */}
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-slate-400">Obligations</span>
+            <span className="text-sm font-medium text-slate-400">
+              Obligations
+            </span>
             <Clock className="w-4 h-4 text-slate-500" />
           </div>
           <div className="text-3xl font-bold text-white mb-2">
@@ -230,13 +241,23 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
           <div className="space-y-1 text-xs text-slate-400">
             <div className="flex justify-between">
               <span>Approval Rate:</span>
-              <span className={data.evidence.approval_rate >= 75 ? "text-green-400" : "text-yellow-400"}>
+              <span
+                className={
+                  data.evidence.approval_rate >= 75
+                    ? 'text-green-400'
+                    : 'text-yellow-400'
+                }
+              >
                 {data.evidence.approval_rate}%
               </span>
             </div>
             <div className="h-1 bg-slate-800 rounded-full overflow-hidden mt-2">
               <div
-                className={data.evidence.approval_rate >= 75 ? "bg-green-400" : "bg-yellow-400"}
+                className={
+                  data.evidence.approval_rate >= 75
+                    ? 'bg-green-400'
+                    : 'bg-yellow-400'
+                }
                 style={{ width: `${data.evidence.approval_rate}%` }}
               />
             </div>
@@ -284,8 +305,8 @@ export function ComplianceSummary({ workspaceId }: ComplianceSummaryProps) {
           </div>
           <p className="text-sm text-red-300/80">
             You have {data.obligations.by_priority.critical} critical compliance
-            obligation{data.obligations.by_priority.critical > 1 ? "s" : ""} that
-            require immediate action.
+            obligation{data.obligations.by_priority.critical > 1 ? 's' : ''}{' '}
+            that require immediate action.
           </p>
         </div>
       )}

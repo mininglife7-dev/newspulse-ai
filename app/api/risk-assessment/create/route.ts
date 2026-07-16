@@ -32,7 +32,12 @@ export async function POST(req: NextRequest) {
     });
 
     // Validate required fields
-    if (!body.workspace_id || !body.ai_system_id || !body.assessment_type || !body.responses) {
+    if (
+      !body.workspace_id ||
+      !body.ai_system_id ||
+      !body.assessment_type ||
+      !body.responses
+    ) {
       logger.warn('Invalid request - missing required fields', {
         requestId,
         provided: {
@@ -116,7 +121,10 @@ export async function POST(req: NextRequest) {
     // Calculate risk score based on responses
     const affirmativeAnswers = body.responses.filter((r) => r.answer).length;
     const totalQuestions = body.responses.length;
-    const riskScore = totalQuestions > 0 ? Math.round((affirmativeAnswers / totalQuestions) * 100) : 0;
+    const riskScore =
+      totalQuestions > 0
+        ? Math.round((affirmativeAnswers / totalQuestions) * 100)
+        : 0;
 
     // Map assessment type to risk level
     const riskLevelMap: Record<string, string> = {

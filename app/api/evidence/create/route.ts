@@ -9,7 +9,8 @@ interface CreateEvidenceRequest {
   ai_system_id?: string;
   title: string;
   description?: string;
-  category: 'documentation' | 'testing' | 'audit' | 'policy' | 'training' | 'other';
+  category:
+    'documentation' | 'testing' | 'audit' | 'policy' | 'training' | 'other';
   evidence_type: 'file' | 'url' | 'note' | 'attestation';
   file_url?: string;
   external_url?: string;
@@ -22,11 +23,17 @@ export async function POST(req: NextRequest) {
     const body: CreateEvidenceRequest = await req.json();
 
     // Validate required fields
-    if (!body.workspace_id || !body.title || !body.category || !body.evidence_type) {
+    if (
+      !body.workspace_id ||
+      !body.title ||
+      !body.category ||
+      !body.evidence_type
+    ) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Missing required fields: workspace_id, title, category, evidence_type',
+          error:
+            'Missing required fields: workspace_id, title, category, evidence_type',
         },
         { status: 400 }
       );

@@ -79,7 +79,9 @@ export function extractWorkspaceId(req: NextRequest): string | null {
   return params.get('workspace_id') || null;
 }
 
-export async function extractUserIdFromAuth(req: NextRequest): Promise<string | null> {
+export async function extractUserIdFromAuth(
+  req: NextRequest
+): Promise<string | null> {
   // Try to get from Supabase auth header if present
   const authHeader = req.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {

@@ -50,7 +50,9 @@ export async function GET(req: NextRequest) {
     // Build query
     let query = supabase
       .from('remediations')
-      .select('id, workspace_id, obligation_id, title, description, assigned_to, priority, status, target_completion_date, completed_date, created_at, created_by')
+      .select(
+        'id, workspace_id, obligation_id, title, description, assigned_to, priority, status, target_completion_date, completed_date, created_at, created_by'
+      )
       .eq('workspace_id', workspaceId);
 
     if (obligationId) {
@@ -61,9 +63,12 @@ export async function GET(req: NextRequest) {
       query = query.eq('status', status);
     }
 
-    const { data: remediations, error } = await query.order('target_completion_date', {
-      ascending: true,
-    });
+    const { data: remediations, error } = await query.order(
+      'target_completion_date',
+      {
+        ascending: true,
+      }
+    );
 
     if (error) {
       return NextResponse.json(

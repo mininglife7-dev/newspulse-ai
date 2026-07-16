@@ -112,7 +112,8 @@ export async function POST(req: NextRequest) {
       obligations.push({
         category: 'compliance',
         title: 'Prohibited AI System',
-        description: 'This AI system falls under prohibited uses per EU AI Act Article 5. Immediate action required.',
+        description:
+          'This AI system falls under prohibited uses per EU AI Act Article 5. Immediate action required.',
         priority: 'critical',
         deadline_days: 30,
       });
@@ -120,7 +121,8 @@ export async function POST(req: NextRequest) {
       obligations.push({
         category: 'documentation',
         title: 'High-Risk AI System Documentation',
-        description: 'Comprehensive documentation required including training data, testing procedures, and usage guidelines per Article 13.',
+        description:
+          'Comprehensive documentation required including training data, testing procedures, and usage guidelines per Article 13.',
         priority: 'high',
         deadline_days: 90,
       });
@@ -129,7 +131,8 @@ export async function POST(req: NextRequest) {
         obligations.push({
           category: 'monitoring',
           title: 'Continuous Performance Monitoring',
-          description: 'Implement system for monitoring performance and compliance with Article 15 requirements.',
+          description:
+            'Implement system for monitoring performance and compliance with Article 15 requirements.',
           priority: 'high',
           deadline_days: 90,
         });
@@ -137,7 +140,8 @@ export async function POST(req: NextRequest) {
         obligations.push({
           category: 'governance',
           title: 'Human Oversight Procedures',
-          description: 'Establish procedures for human oversight and intervention per Article 14.',
+          description:
+            'Establish procedures for human oversight and intervention per Article 14.',
           priority: 'high',
           deadline_days: 90,
         });
@@ -147,7 +151,8 @@ export async function POST(req: NextRequest) {
       obligations.push({
         category: 'transparency',
         title: 'Transparency and Disclosure',
-        description: 'Users should be informed when interacting with AI systems per Article 52.',
+        description:
+          'Users should be informed when interacting with AI systems per Article 52.',
         priority: 'medium',
         deadline_days: 180,
       });

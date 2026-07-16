@@ -49,7 +49,9 @@ export async function GET(req: NextRequest) {
     // Fetch obligations
     let query = supabase
       .from('obligations')
-      .select('id, ai_system_id, title, description, category, priority, deadline_days, created_at, risk_assessment_id')
+      .select(
+        'id, ai_system_id, title, description, category, priority, deadline_days, created_at, risk_assessment_id'
+      )
       .eq('workspace_id', workspaceId);
 
     // Optional filtering by AI system
@@ -57,8 +59,9 @@ export async function GET(req: NextRequest) {
       query = query.eq('ai_system_id', aiSystemId);
     }
 
-    const { data: obligations, error } = await query
-      .order('created_at', { ascending: false });
+    const { data: obligations, error } = await query.order('created_at', {
+      ascending: false,
+    });
 
     if (error) {
       return NextResponse.json(

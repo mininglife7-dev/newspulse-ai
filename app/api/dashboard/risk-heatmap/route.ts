@@ -103,31 +103,43 @@ export async function GET(req: NextRequest) {
     });
 
     // Build heatmap data
-    const heatmapData = aiSystems?.map((system) => {
-      const assessment = latestAssessmentsBySystem[system.id];
-      const systemObligations = obligationMap[system.id] || [];
-      const incompleteObligations = systemObligations.filter((o) => o.status !== 'completed');
-      const criticalObligations = systemObligations.filter((o) => o.priority === 'critical' && o.status !== 'completed');
+    const heatmapData =
+      aiSystems?.map((system) => {
+        const assessment = latestAssessmentsBySystem[system.id];
+        const systemObligations = obligationMap[system.id] || [];
+        const incompleteObligations = systemObligations.filter(
+          (o) => o.status !== 'completed'
+        );
+        const criticalObligations = systemObligations.filter(
+          (o) => o.priority === 'critical' && o.status !== 'completed'
+        );
 
-      return {
-        ai_system_id: system.id,
-        ai_system_name: system.name,
-        risk_level: system.risk_level,
-        status: system.status,
-        latest_risk_score: assessment?.risk_score || 0,
-        latest_assessment_type: assessment?.assessment_type || null,
-        obligations_total: systemObligations.length,
-        obligations_incomplete: incompleteObligations.length,
-        critical_obligations: criticalObligations.length,
-        compliance_urgency: criticalObligations.length > 0 ? 'critical' : incompleteObligations.length > 0 ? 'high' : 'low',
-      };
-    }) || [];
+        return {
+          ai_system_id: system.id,
+          ai_system_name: system.name,
+          risk_level: system.risk_level,
+          status: system.status,
+          latest_risk_score: assessment?.risk_score || 0,
+          latest_assessment_type: assessment?.assessment_type || null,
+          obligations_total: systemObligations.length,
+          obligations_incomplete: incompleteObligations.length,
+          critical_obligations: criticalObligations.length,
+          compliance_urgency:
+            criticalObligations.length > 0
+              ? 'critical'
+              : incompleteObligations.length > 0
+                ? 'high'
+                : 'low',
+        };
+      }) || [];
 
     // Sort by risk/urgency
     heatmapData.sort((a, b) => {
       const urgencyOrder = { critical: 3, high: 2, low: 1 };
-      const aUrgency = urgencyOrder[a.compliance_urgency as keyof typeof urgencyOrder] || 0;
-      const bUrgency = urgencyOrder[b.compliance_urgency as keyof typeof urgencyOrder] || 0;
+      const aUrgency =
+        urgencyOrder[a.compliance_urgency as keyof typeof urgencyOrder] || 0;
+      const bUrgency =
+        urgencyOrder[b.compliance_urgency as keyof typeof urgencyOrder] || 0;
       return bUrgency - aUrgency || b.latest_risk_score - a.latest_risk_score;
     });
 
@@ -136,8 +148,12 @@ export async function GET(req: NextRequest) {
       heatmap: heatmapData,
       summary: {
         total_systems: heatmapData.length,
-        critical_systems: heatmapData.filter((s) => s.compliance_urgency === 'critical').length,
-        high_risk_systems: heatmapData.filter((s) => s.compliance_urgency === 'high').length,
+        critical_systems: heatmapData.filter(
+          (s) => s.compliance_urgency === 'critical'
+        ).length,
+        high_risk_systems: heatmapData.filter(
+          (s) => s.compliance_urgency === 'high'
+        ).length,
       },
     });
   } catch (error: any) {

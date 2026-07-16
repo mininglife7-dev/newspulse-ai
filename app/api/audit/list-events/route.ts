@@ -52,7 +52,9 @@ export async function GET(req: NextRequest) {
     // Build query
     let query = supabase
       .from('audit_logs')
-      .select('id, user_id, event_type, entity_type, entity_id, action, description, metadata, created_at')
+      .select(
+        'id, user_id, event_type, entity_type, entity_id, action, description, metadata, created_at'
+      )
       .eq('workspace_id', workspaceId);
 
     if (entityType) {

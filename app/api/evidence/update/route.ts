@@ -72,8 +72,10 @@ export async function PUT(req: NextRequest) {
 
     // Build update object with only provided fields
     const updateData: any = {};
-    if (body.description !== undefined) updateData.description = body.description;
-    if (body.obligation_id !== undefined) updateData.obligation_id = body.obligation_id;
+    if (body.description !== undefined)
+      updateData.description = body.description;
+    if (body.obligation_id !== undefined)
+      updateData.obligation_id = body.obligation_id;
     if (body.tags !== undefined) updateData.tags = body.tags;
     if (body.status !== undefined) updateData.status = body.status;
 

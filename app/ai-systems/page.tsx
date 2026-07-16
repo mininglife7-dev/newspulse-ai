@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Loader } from "lucide-react";
-import { SystemForm } from "@/components/ai-systems/system-form";
-import { SystemList } from "@/components/ai-systems/system-list";
+import { useEffect, useState } from 'react';
+import { Loader } from 'lucide-react';
+import { SystemForm } from '@/components/ai-systems/system-form';
+import { SystemList } from '@/components/ai-systems/system-list';
 
 export default function AISSystemsPage() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export default function AISSystemsPage() {
   useEffect(() => {
     async function loadWorkspace() {
       try {
-        const response = await fetch("/api/workspace/list");
+        const response = await fetch('/api/workspace/list');
         if (response.ok) {
           const data = await response.json();
           if (data.workspaces && data.workspaces.length > 0) {
@@ -22,7 +22,7 @@ export default function AISSystemsPage() {
           }
         }
       } catch (err) {
-        console.error("Failed to load workspace:", err);
+        console.error('Failed to load workspace:', err);
       } finally {
         setLoading(false);
       }
@@ -42,7 +42,9 @@ export default function AISSystemsPage() {
   if (!workspaceId) {
     return (
       <div className="rounded-lg border border-red-800/50 bg-red-900/20 p-6">
-        <p className="text-red-400">No workspace found. Please set up your workspace first.</p>
+        <p className="text-red-400">
+          No workspace found. Please set up your workspace first.
+        </p>
       </div>
     );
   }
@@ -61,14 +63,16 @@ export default function AISSystemsPage() {
           onClick={() => setShowForm(!showForm)}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
         >
-          {showForm ? "Hide Form" : "Add System"}
+          {showForm ? 'Hide Form' : 'Add System'}
         </button>
       </div>
 
       {/* Form Section */}
       {showForm && (
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-8">
-          <h2 className="text-2xl font-bold text-white mb-6">Create New AI System</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Create New AI System
+          </h2>
           <SystemForm
             workspaceId={workspaceId}
             onSuccess={() => {
@@ -81,9 +85,7 @@ export default function AISSystemsPage() {
 
       {/* Systems List Section */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Your AI Systems
-        </h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Your AI Systems</h2>
         <SystemList key={refreshTrigger} workspaceId={workspaceId} />
       </div>
     </div>

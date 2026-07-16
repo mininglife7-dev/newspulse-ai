@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { useState } from 'react';
+import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 interface SystemFormProps {
   workspaceId: string;
@@ -9,27 +9,27 @@ interface SystemFormProps {
 }
 
 const CATEGORIES = [
-  { value: "large_language_model", label: "Large Language Model" },
-  { value: "computer_vision", label: "Computer Vision" },
-  { value: "recommendation", label: "Recommendation System" },
-  { value: "autonomous", label: "Autonomous Agent" },
-  { value: "biometric", label: "Biometric System" },
-  { value: "other", label: "Other" },
+  { value: 'large_language_model', label: 'Large Language Model' },
+  { value: 'computer_vision', label: 'Computer Vision' },
+  { value: 'recommendation', label: 'Recommendation System' },
+  { value: 'autonomous', label: 'Autonomous Agent' },
+  { value: 'biometric', label: 'Biometric System' },
+  { value: 'other', label: 'Other' },
 ];
 
 const RISK_LEVELS = [
-  { value: "low", label: "Low Risk" },
-  { value: "medium", label: "Medium Risk" },
-  { value: "high", label: "High Risk" },
+  { value: 'low', label: 'Low Risk' },
+  { value: 'medium', label: 'Medium Risk' },
+  { value: 'high', label: 'High Risk' },
 ];
 
 export function SystemForm({ workspaceId, onSuccess }: SystemFormProps) {
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    category: "large_language_model",
-    risk_level: "medium",
-    status: "in_development",
+    name: '',
+    description: '',
+    category: 'large_language_model',
+    risk_level: 'medium',
+    status: 'in_development',
   });
 
   const [loading, setLoading] = useState(false);
@@ -52,9 +52,9 @@ export function SystemForm({ workspaceId, onSuccess }: SystemFormProps) {
     setSuccess(false);
 
     try {
-      const response = await fetch("/api/ai-system/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/ai-system/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workspace_id: workspaceId,
           ...formData,
@@ -64,16 +64,16 @@ export function SystemForm({ workspaceId, onSuccess }: SystemFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create AI system");
+        throw new Error(data.error || 'Failed to create AI system');
       }
 
       setSuccess(true);
       setFormData({
-        name: "",
-        description: "",
-        category: "large_language_model",
-        risk_level: "medium",
-        status: "in_development",
+        name: '',
+        description: '',
+        category: 'large_language_model',
+        risk_level: 'medium',
+        status: 'in_development',
       });
 
       setTimeout(() => {
@@ -81,7 +81,7 @@ export function SystemForm({ workspaceId, onSuccess }: SystemFormProps) {
         onSuccess?.();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -204,7 +204,7 @@ export function SystemForm({ workspaceId, onSuccess }: SystemFormProps) {
         className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium rounded-lg transition flex items-center justify-center gap-2"
       >
         {loading && <Loader className="w-4 h-4 animate-spin" />}
-        {loading ? "Creating..." : "Create AI System"}
+        {loading ? 'Creating...' : 'Create AI System'}
       </button>
     </form>
   );

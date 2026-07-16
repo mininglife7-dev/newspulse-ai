@@ -32,6 +32,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -43,6 +44,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -61,6 +63,7 @@ GET /workspace/list
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -85,6 +88,7 @@ GET /workspace/members?workspace_id=<uuid>
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -115,6 +119,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -124,6 +129,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -145,6 +151,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -154,6 +161,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -178,6 +186,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -190,6 +199,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -211,6 +221,7 @@ GET /ai-system/list?workspace_id=<uuid>
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -238,6 +249,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -251,6 +263,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -270,6 +283,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -278,6 +292,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -297,6 +312,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -315,6 +331,7 @@ Content-Type: application/json
 Risk score is automatically calculated as: `(affirmativeAnswers / totalQuestions) * 100`
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -336,6 +353,7 @@ GET /risk-assessment/list?workspace_id=<uuid>&ai_system_id=<uuid (optional)>
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -368,6 +386,7 @@ Content-Type: application/json
 Automatically creates compliance obligations based on risk assessment results.
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -379,11 +398,13 @@ Automatically creates compliance obligations based on risk assessment results.
 ```
 
 **Logic:**
+
 - **Prohibited**: 1 critical obligation (30 days)
 - **High-Risk**: 1 high-priority obligation (90 days) + monitoring/oversight if score ≥ 70
 - **General**: 1 medium-priority transparency obligation (180 days)
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -416,6 +437,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -433,6 +455,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -453,6 +476,7 @@ GET /evidence/list?workspace_id=<uuid>&ai_system_id=<uuid (optional)>&obligation
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -480,6 +504,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -492,6 +517,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -516,6 +542,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -529,6 +556,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -553,6 +581,7 @@ GET /remediation/list?workspace_id=<uuid>&obligation_id=<uuid (optional)>&status
 Status filters: `open`, `in_progress`, `completed`, `blocked`
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -580,6 +609,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -594,6 +624,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -617,6 +648,7 @@ GET /dashboard/compliance-summary?workspace_id=<uuid>
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -676,6 +708,7 @@ GET /dashboard/risk-heatmap?workspace_id=<uuid>
 Prioritizes AI systems by compliance urgency (critical obligations + high risk scores).
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -711,6 +744,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -724,6 +758,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "ok": true,
@@ -743,6 +778,7 @@ GET /audit/list-events?workspace_id=<uuid>&entity_type=<type (optional)>&entity_
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -776,6 +812,7 @@ GET /regulatory/check-updates?workspace_id=<uuid>&jurisdiction=<jurisdiction (op
 Automatically uses workspace country if jurisdiction not provided.
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -810,6 +847,7 @@ Content-Type: application/json
 ```
 
 **Request:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -819,6 +857,7 @@ Content-Type: application/json
 ```
 
 **Response (201):**
+
 ```json
 {
   "ok": true,

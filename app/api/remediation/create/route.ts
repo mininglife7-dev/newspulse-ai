@@ -18,11 +18,18 @@ export async function POST(req: NextRequest) {
     const body: CreateRemediationRequest = await req.json();
 
     // Validate required fields
-    if (!body.workspace_id || !body.obligation_id || !body.title || !body.priority || !body.target_completion_date) {
+    if (
+      !body.workspace_id ||
+      !body.obligation_id ||
+      !body.title ||
+      !body.priority ||
+      !body.target_completion_date
+    ) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Missing required fields: workspace_id, obligation_id, title, priority, target_completion_date',
+          error:
+            'Missing required fields: workspace_id, obligation_id, title, priority, target_completion_date',
         },
         { status: 400 }
       );

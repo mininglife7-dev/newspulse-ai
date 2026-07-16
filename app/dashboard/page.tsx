@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { CheckCircle, ArrowRight, AlertCircle, Loader } from "lucide-react";
-import { ComplianceSummary } from "@/components/dashboard/compliance-summary";
-import { RiskHeatmap } from "@/components/dashboard/risk-heatmap";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { CheckCircle, ArrowRight, AlertCircle, Loader } from 'lucide-react';
+import { ComplianceSummary } from '@/components/dashboard/compliance-summary';
+import { RiskHeatmap } from '@/components/dashboard/risk-heatmap';
 
 export default function DashboardPage() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export default function DashboardPage() {
     // For now, fetch the first workspace the user has access to
     async function loadWorkspace() {
       try {
-        const response = await fetch("/api/workspace/list");
+        const response = await fetch('/api/workspace/list');
         if (response.ok) {
           const data = await response.json();
           if (data.workspaces && data.workspaces.length > 0) {
@@ -23,7 +23,7 @@ export default function DashboardPage() {
           }
         }
       } catch (err) {
-        console.error("Failed to load workspace:", err);
+        console.error('Failed to load workspace:', err);
       } finally {
         setLoading(false);
       }
@@ -126,7 +126,9 @@ export default function DashboardPage() {
             <div className="flex gap-4">
               <CheckCircle className="h-6 w-6 text-cyan-400 flex-shrink-0" />
               <div>
-                <h3 className="font-medium text-white">Complete company profile</h3>
+                <h3 className="font-medium text-white">
+                  Complete company profile
+                </h3>
                 <p className="text-sm text-slate-400">
                   Set up your organization details
                 </p>
@@ -169,11 +171,14 @@ export default function DashboardPage() {
             <div>
               <h3 className="font-medium text-white">Need help?</h3>
               <p className="text-sm text-slate-400 mt-1">
-                Our AI governance advisors are here to guide you. Check out our{" "}
-                <Link href="/docs" className="text-blue-400 hover:text-blue-300">
+                Our AI governance advisors are here to guide you. Check out our{' '}
+                <Link
+                  href="/docs"
+                  className="text-blue-400 hover:text-blue-300"
+                >
                   documentation
-                </Link>{" "}
-                or{" "}
+                </Link>{' '}
+                or{' '}
                 <Link href="#" className="text-blue-400 hover:text-blue-300">
                   contact support
                 </Link>
@@ -201,7 +206,9 @@ export default function DashboardPage() {
 
       {/* Risk Heatmap */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">System Risk Heatmap</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">
+          System Risk Heatmap
+        </h2>
         <RiskHeatmap workspaceId={workspaceId} />
       </div>
 

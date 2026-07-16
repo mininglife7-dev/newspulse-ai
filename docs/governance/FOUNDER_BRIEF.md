@@ -10,7 +10,7 @@ Updated continuously; read this instead of being interrupted.
 
 ## Current DNA (active work)
 
-- Ratify and codify the Governor Constitution in-repo. *(this change)*
+- Ratify and codify the Governor Constitution in-repo. _(this change)_
 
 ## Completed DNA
 

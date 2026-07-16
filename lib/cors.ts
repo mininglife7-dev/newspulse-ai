@@ -25,7 +25,11 @@ export const defaultCORSConfig: CORSConfig = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 
   // Headers exposed to the browser
-  exposedHeaders: ['X-Request-ID', 'X-RateLimit-Limit', 'X-RateLimit-Remaining'],
+  exposedHeaders: [
+    'X-Request-ID',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+  ],
 
   // How long preflight cache should be stored (in seconds)
   maxAge: 86400, // 24 hours
@@ -46,7 +50,10 @@ export function setCORSHeaders(
 
   if (isOriginAllowed) {
     response.headers.set('Access-Control-Allow-Origin', origin || '');
-    response.headers.set('Access-Control-Allow-Credentials', config.credentials ? 'true' : 'false');
+    response.headers.set(
+      'Access-Control-Allow-Credentials',
+      config.credentials ? 'true' : 'false'
+    );
     response.headers.set(
       'Access-Control-Allow-Methods',
       config.allowedMethods.join(', ')

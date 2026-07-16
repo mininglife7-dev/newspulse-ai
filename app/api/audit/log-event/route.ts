@@ -6,9 +6,16 @@ export const runtime = 'nodejs';
 interface LogEventRequest {
   workspace_id: string;
   event_type: string;
-  entity_type: 'ai_system' | 'obligation' | 'evidence' | 'remediation' | 'workspace' | 'member';
+  entity_type:
+    | 'ai_system'
+    | 'obligation'
+    | 'evidence'
+    | 'remediation'
+    | 'workspace'
+    | 'member';
   entity_id: string;
-  action: 'created' | 'updated' | 'deleted' | 'reviewed' | 'approved' | 'rejected';
+  action:
+    'created' | 'updated' | 'deleted' | 'reviewed' | 'approved' | 'rejected';
   description?: string;
   metadata?: Record<string, any>;
 }
@@ -18,11 +25,18 @@ export async function POST(req: NextRequest) {
     const body: LogEventRequest = await req.json();
 
     // Validate required fields
-    if (!body.workspace_id || !body.event_type || !body.entity_type || !body.entity_id || !body.action) {
+    if (
+      !body.workspace_id ||
+      !body.event_type ||
+      !body.entity_type ||
+      !body.entity_id ||
+      !body.action
+    ) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Missing required fields: workspace_id, event_type, entity_type, entity_id, action',
+          error:
+            'Missing required fields: workspace_id, event_type, entity_type, entity_id, action',
         },
         { status: 400 }
       );

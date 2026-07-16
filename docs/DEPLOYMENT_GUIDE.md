@@ -5,13 +5,14 @@
 **Environment**: Vercel (automatic via GitHub integration)  
 **Trigger**: Push to `main` branch  
 **Rollback**: Revert commit and push  
-**Monitoring**: Vercel dashboard + structured logs  
+**Monitoring**: Vercel dashboard + structured logs
 
 ---
 
 ## Pre-Deployment (1-2 hours before)
 
 ### 1. Verify Build & Tests
+
 ```bash
 # Clean install
 npm ci
@@ -32,6 +33,7 @@ npm run type-check
 ### 2. Verify Environment Variables
 
 In Vercel dashboard:
+
 - [ ] `NEXT_PUBLIC_SUPABASE_URL` configured
 - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` configured
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` configured
@@ -81,6 +83,7 @@ gh pr list --base main --state merged
 ```
 
 **Check for**:
+
 - [ ] Database migrations included
 - [ ] No hardcoded secrets
 - [ ] No experimental features
@@ -104,6 +107,7 @@ git push origin main
 ```
 
 **GitHub Actions CI will automatically**:
+
 - [ ] Run lint check
 - [ ] Run type check
 - [ ] Run tests
@@ -115,11 +119,13 @@ git push origin main
 Dashboard: https://vercel.com/lalit-kumar-d-s-projects/newspulse-ai
 
 **Status indicators**:
+
 - 🔵 **Building**: Deployment in progress (5-10 min)
 - 🟢 **Ready**: Deployment successful, live in production
 - 🔴 **Error**: Build or deployment failed
 
 If status is **Error**:
+
 1. Click on deployment to see error details
 2. Review error message
 3. If fixable: commit fix and push again
@@ -175,6 +181,7 @@ vercel logs -f --limit 50
 ```
 
 **Look for**:
+
 - [ ] No 5xx error rate > 1%
 - [ ] No recurring error patterns
 - [ ] Request completion times normal
@@ -207,6 +214,7 @@ If this is a major release, notify users:
 > **Subject**: EURO AI Platform Update
 >
 > We've successfully deployed new features and improvements.
+>
 > - All systems operational
 > - No action required from your team
 > - Please report any issues via support
@@ -237,6 +245,7 @@ git push origin main
 ```
 
 **This method**:
+
 - ✓ Creates a record of the revert
 - ✓ Keeps git history clean
 - ✓ Allows recovery if rollback itself fails
@@ -255,6 +264,7 @@ git push --force-with-lease origin main
 ```
 
 **This method**:
+
 - ⚠️ Rewrites history
 - ⚠️ Only use if revert doesn't work
 - ⚠️ Requires force flag, increased risk
@@ -262,12 +272,14 @@ git push --force-with-lease origin main
 ### Option 3: Via Vercel UI
 
 In Vercel dashboard:
+
 1. Go to Deployments tab
 2. Find last known good deployment
 3. Click "Redeploy"
 4. Confirm redeployment
 
 **After Rollback**:
+
 1. [ ] Verify health endpoint
 2. [ ] Monitor error rate (should decrease)
 3. [ ] Test critical paths
@@ -309,6 +321,7 @@ In Vercel dashboard:
 4. **Verify**: Both parts working together
 
 Or use feature flags:
+
 1. Deploy code with feature flag OFF
 2. Verify deployment successful
 3. Enable feature flag
@@ -346,18 +359,21 @@ vercel logs -f | grep '/api/risk-assessment'
 ### Key Log Patterns to Watch
 
 **Good signs**:
+
 ```json
 {"level":"info","message":"Request completed","statusCode":200,"duration":45}
 {"level":"info","message":"Risk assessment created successfully","duration":342}
 ```
 
 **Warning signs**:
+
 ```json
 {"level":"warn","message":"Rate limit exceeded","retryAfter":5}
 {"level":"error","message":"Failed to create risk assessment","error":"database connection error"}
 ```
 
 **Critical signs**:
+
 ```json
 {"level":"error","message":"Unhandled exception in risk assessment creation","stack":"..."}
 {"statusCode":503,"message":"Service Unavailable"}
@@ -369,15 +385,16 @@ vercel logs -f | grep '/api/risk-assessment'
 
 After deployment, confirm metrics match baseline:
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| Health check response | < 50ms | ✓ |
-| /api/risk-assessment/create | < 500ms P95 | ✓ |
-| /api/obligations/list | < 200ms P95 | ✓ |
-| Error rate | < 1% | ✓ |
-| Database queries | < 100ms P95 | ✓ |
+| Metric                      | Target      | Status |
+| --------------------------- | ----------- | ------ |
+| Health check response       | < 50ms      | ✓      |
+| /api/risk-assessment/create | < 500ms P95 | ✓      |
+| /api/obligations/list       | < 200ms P95 | ✓      |
+| Error rate                  | < 1%        | ✓      |
+| Database queries            | < 100ms P95 | ✓      |
 
 If any metric degrades:
+
 1. Check logs for errors
 2. Review recent changes
 3. Consider rollback if severe

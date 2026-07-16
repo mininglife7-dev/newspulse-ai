@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Loader } from "lucide-react";
-import { RemediationList } from "@/components/remediation/remediation-list";
-import { RemediationForm } from "@/components/remediation/remediation-form";
+import { useEffect, useState } from 'react';
+import { Loader } from 'lucide-react';
+import { RemediationList } from '@/components/remediation/remediation-list';
+import { RemediationForm } from '@/components/remediation/remediation-form';
 
 interface Obligation {
   id: string;
@@ -21,13 +21,10 @@ export default function RemediationPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const workspaceResponse = await fetch("/api/workspace/list");
+        const workspaceResponse = await fetch('/api/workspace/list');
         if (workspaceResponse.ok) {
           const workspaceData = await workspaceResponse.json();
-          if (
-            workspaceData.workspaces &&
-            workspaceData.workspaces.length > 0
-          ) {
+          if (workspaceData.workspaces && workspaceData.workspaces.length > 0) {
             const wId = workspaceData.workspaces[0].id;
             setWorkspaceId(wId);
 
@@ -41,9 +38,7 @@ export default function RemediationPage() {
           }
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load data"
-        );
+        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
@@ -83,9 +78,7 @@ export default function RemediationPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white">
-            Remediation Actions
-          </h1>
+          <h1 className="text-4xl font-bold text-white">Remediation Actions</h1>
           <p className="mt-2 text-lg text-slate-400">
             Track compliance remediation progress and action items
           </p>
@@ -94,7 +87,7 @@ export default function RemediationPage() {
           onClick={() => setShowForm(!showForm)}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
         >
-          {showForm ? "Hide Form" : "Create Action"}
+          {showForm ? 'Hide Form' : 'Create Action'}
         </button>
       </div>
 
@@ -117,9 +110,7 @@ export default function RemediationPage() {
 
       {/* Remediations List Section */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Action Items
-        </h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Action Items</h2>
         <RemediationList key={refreshTrigger} workspaceId={workspaceId} />
       </div>
     </div>

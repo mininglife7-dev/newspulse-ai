@@ -19,13 +19,13 @@
 
 **No verified production deployment.** A Vercel project is connected and builds PR previews (discovered during this review — see table), but the repo's own deploy pipeline has never gone green, and the last audited deploy logs showed empty env vars. Until the founder confirms otherwise in the Vercel dashboard, treat production as **not running**.
 
-| Question | Answer | Evidence |
-|---|---|---|
-| Cloud deployment | **No production deploy has ever gone green through the repo's pipeline.** The only push to `main` (2026-05-08) failed both the CI and the "Deploy to Vercel" workflows | GitHub Actions run history: `CI / main / push / failure`, `Deploy to Vercel / main / push / failure` |
-| Vercel project | **Exists and is connected** via the Vercel GitHub integration (separate from the broken Actions workflow): project `newspulse-ai`, team `lalit-kumar-d-s-projects`, auto-builds PR previews. Whether its **production** deployment works and has real env vars is unverified from here — a prior audit (PR #4) found the env empty in deploy logs. **Founder to-do: open the Vercel dashboard and verify production state + env vars** | `vercel[bot]` preview-build comment observed on PR #6 (2026-07-09) |
-| Why the deploy failed | No `package-lock.json` in the repo → `npm ci` and the Actions npm cache fail; Vercel secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) apparently never set | Reproduced locally: `npm ci` → "loadVirtual requires existing shrinkwrap file"; PR #4 verified env empty in deploy logs |
-| Where it actually runs | Founder's local **Windows machine**, as the **Administrator** account, via `npm run dev` on `localhost:3000` | `push_to_github.ps1` references `C:\Users\Administrator\Documents\Claude\Projects\Hackathon Outskill` |
-| Intended target | Vercel (serverless) + Supabase (managed Postgres) + Firecrawl + OpenAI | `vercel.json`, `.github/workflows/deploy.yml`, `lib/*.ts` |
+| Question               | Answer                                                                                                                                                                                                                                                                                                                                                                                                                                 | Evidence                                                                                                                |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Cloud deployment       | **No production deploy has ever gone green through the repo's pipeline.** The only push to `main` (2026-05-08) failed both the CI and the "Deploy to Vercel" workflows                                                                                                                                                                                                                                                                 | GitHub Actions run history: `CI / main / push / failure`, `Deploy to Vercel / main / push / failure`                    |
+| Vercel project         | **Exists and is connected** via the Vercel GitHub integration (separate from the broken Actions workflow): project `newspulse-ai`, team `lalit-kumar-d-s-projects`, auto-builds PR previews. Whether its **production** deployment works and has real env vars is unverified from here — a prior audit (PR #4) found the env empty in deploy logs. **Founder to-do: open the Vercel dashboard and verify production state + env vars** | `vercel[bot]` preview-build comment observed on PR #6 (2026-07-09)                                                      |
+| Why the deploy failed  | No `package-lock.json` in the repo → `npm ci` and the Actions npm cache fail; Vercel secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) apparently never set                                                                                                                                                                                                                                                               | Reproduced locally: `npm ci` → "loadVirtual requires existing shrinkwrap file"; PR #4 verified env empty in deploy logs |
+| Where it actually runs | Founder's local **Windows machine**, as the **Administrator** account, via `npm run dev` on `localhost:3000`                                                                                                                                                                                                                                                                                                                           | `push_to_github.ps1` references `C:\Users\Administrator\Documents\Claude\Projects\Hackathon Outskill`                   |
+| Intended target        | Vercel (serverless) + Supabase (managed Postgres) + Firecrawl + OpenAI                                                                                                                                                                                                                                                                                                                                                                 | `vercel.json`, `.github/workflows/deploy.yml`, `lib/*.ts`                                                               |
 
 ### Hardware inventory
 
@@ -39,30 +39,30 @@ There is **no owned or rented hardware**. The architecture is serverless-by-desi
 
 ### Exposed ports / services (once deployed as designed)
 
-| Surface | Method | Protection | Risk |
-|---|---|---|---|
-| `/` , `/history` | GET pages | none needed | low |
-| `/api/search` | POST | in-memory rate limit only (30/min/IP), **no auth** | **wallet drain** — each call spends Firecrawl + OpenAI credits |
-| `/api/history` | GET | **none** | anyone can read all stored searches |
-| `/api/history` | **DELETE** | **none** | **anyone on the internet can wipe the entire database** |
-| `/api/history/[id]` | GET/DELETE | **none** | same |
-| `/api/health` | GET | none | fine (leaks only booleans) |
-| Supabase REST API | direct, via public anon key | RLS policies grant `anon` **SELECT + INSERT** on the whole table | public DB read/write bypassing the app entirely |
+| Surface             | Method                      | Protection                                                       | Risk                                                           |
+| ------------------- | --------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| `/` , `/history`    | GET pages                   | none needed                                                      | low                                                            |
+| `/api/search`       | POST                        | in-memory rate limit only (30/min/IP), **no auth**               | **wallet drain** — each call spends Firecrawl + OpenAI credits |
+| `/api/history`      | GET                         | **none**                                                         | anyone can read all stored searches                            |
+| `/api/history`      | **DELETE**                  | **none**                                                         | **anyone on the internet can wipe the entire database**        |
+| `/api/history/[id]` | GET/DELETE                  | **none**                                                         | same                                                           |
+| `/api/health`       | GET                         | none                                                             | fine (leaks only booleans)                                     |
+| Supabase REST API   | direct, via public anon key | RLS policies grant `anon` **SELECT + INSERT** on the whole table | public DB read/write bypassing the app entirely                |
 
 Locally, only `:3000` is exposed while `npm run dev` runs.
 
 ### Secrets inventory
 
-| Secret | Where stored | Status |
-|---|---|---|
-| `FIRECRAWL_API_KEY` | `.env.local` on founder's Windows machine | not in git ✅ |
-| `OPENAI_API_KEY` | same | not in git ✅ |
-| `NEXT_PUBLIC_SUPABASE_URL` | same (public by design) | not in git ✅ |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | same (public by design) | not in git ✅ |
-| `SUPABASE_SERVICE_ROLE_KEY` | same — **bypasses RLS, full DB admin** | not in git ✅ |
+| Secret                                                 | Where stored                                      | Status        |
+| ------------------------------------------------------ | ------------------------------------------------- | ------------- |
+| `FIRECRAWL_API_KEY`                                    | `.env.local` on founder's Windows machine         | not in git ✅ |
+| `OPENAI_API_KEY`                                       | same                                              | not in git ✅ |
+| `NEXT_PUBLIC_SUPABASE_URL`                             | same (public by design)                           | not in git ✅ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`                        | same (public by design)                           | not in git ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY`                            | same — **bypasses RLS, full DB admin**            | not in git ✅ |
 | `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` | GitHub Actions secrets — **apparently never set** | deploy broken |
 
-A full-history secret scan (all commits, patterns for OpenAI/Firecrawl/Supabase/AWS/GitHub key formats) found **no leaked secrets in git history**. However, `.env.local.template` says *"fill in your rotated values"*, which suggests keys were exposed at some point in the past. **Rotate all five keys before any launch** — cost: €0.
+A full-history secret scan (all commits, patterns for OpenAI/Firecrawl/Supabase/AWS/GitHub key formats) found **no leaked secrets in git history**. However, `.env.local.template` says _"fill in your rotated values"_, which suggests keys were exposed at some point in the past. **Rotate all five keys before any launch** — cost: €0.
 
 The single biggest secret risk is structural: all production secrets live in one plaintext file on one Windows machine that also runs as Administrator, with no password manager, no second copy, and no rotation schedule.
 
@@ -70,18 +70,18 @@ The single biggest secret risk is structural: all production secrets live in one
 
 ## 2. Launch Fitness Scores (current state, 0–10)
 
-| Dimension | Score | Justification |
-|---|---:|---|
-| Reliability | **2/10** | Never deployed; free-tier Supabase pauses when idle; no redundancy; no green pipeline. (+2 because the serverless design is sound once it works.) |
-| Security | **2/10** | No authentication at all; unauthenticated DELETE-everything endpoint; public anon INSERT/SELECT RLS policies; `next@14.2.15` has 1 critical + 3 high advisories (`npm audit`), including middleware bypasses — and middleware is the *only* rate limiter; no security headers. (+2: HTTPS-by-default target, secrets kept out of git.) |
-| EU data sovereignty | **1/10** | Nothing pinned to EU. Vercel functions default to US (iad1) unless configured; Supabase region unverified; OpenAI + Firecrawl process data in the US; no DPAs, no SCC review, no processing records. |
-| Backup & disaster recovery | **1/10** | No DB backups (free tier), no restore ever tested, no export job, no runbook. Code on GitHub is the only backup of anything. |
-| Scalability | **4/10** | Serverless compute scales automatically — but the in-memory rate limiter is per-instance (meaningless under scale), the DB free tier is 500 MB, and unauthenticated LLM spend scales linearly with abuse. |
-| Cost control | **3/10** | Free tiers everywhere is good; but `/api/search` lets any anonymous visitor spend your OpenAI/Firecrawl budget at 30 req/min/IP; no billing alerts on any provider. |
-| Monitoring | **1/10** | `/api/health` exists; nothing polls it. No error tracking, no log retention, no alerting, no dashboards. |
-| Deployment repeatability | **2/10** | CI/CD workflows exist and are well-written, but have **never passed on main**: no lockfile (breaks `npm ci`), Vercel secrets unset. No staging, no rollback plan. |
-| Mobile / PWA support | **3/10** | Responsive Tailwind UI works on mobile browsers. A full PWA install layer exists **only in unmerged PR #2**. |
-| Pilot customer readiness | **1/10** | No login, no tenants, no audit log, no data-deletion capability per customer, no DPA — a German business pilot cannot be onboarded on this today. |
+| Dimension                  |    Score | Justification                                                                                                                                                                                                                                                                                                                          |
+| -------------------------- | -------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reliability                | **2/10** | Never deployed; free-tier Supabase pauses when idle; no redundancy; no green pipeline. (+2 because the serverless design is sound once it works.)                                                                                                                                                                                      |
+| Security                   | **2/10** | No authentication at all; unauthenticated DELETE-everything endpoint; public anon INSERT/SELECT RLS policies; `next@14.2.15` has 1 critical + 3 high advisories (`npm audit`), including middleware bypasses — and middleware is the _only_ rate limiter; no security headers. (+2: HTTPS-by-default target, secrets kept out of git.) |
+| EU data sovereignty        | **1/10** | Nothing pinned to EU. Vercel functions default to US (iad1) unless configured; Supabase region unverified; OpenAI + Firecrawl process data in the US; no DPAs, no SCC review, no processing records.                                                                                                                                   |
+| Backup & disaster recovery | **1/10** | No DB backups (free tier), no restore ever tested, no export job, no runbook. Code on GitHub is the only backup of anything.                                                                                                                                                                                                           |
+| Scalability                | **4/10** | Serverless compute scales automatically — but the in-memory rate limiter is per-instance (meaningless under scale), the DB free tier is 500 MB, and unauthenticated LLM spend scales linearly with abuse.                                                                                                                              |
+| Cost control               | **3/10** | Free tiers everywhere is good; but `/api/search` lets any anonymous visitor spend your OpenAI/Firecrawl budget at 30 req/min/IP; no billing alerts on any provider.                                                                                                                                                                    |
+| Monitoring                 | **1/10** | `/api/health` exists; nothing polls it. No error tracking, no log retention, no alerting, no dashboards.                                                                                                                                                                                                                               |
+| Deployment repeatability   | **2/10** | CI/CD workflows exist and are well-written, but have **never passed on main**: no lockfile (breaks `npm ci`), Vercel secrets unset. No staging, no rollback plan.                                                                                                                                                                      |
+| Mobile / PWA support       | **3/10** | Responsive Tailwind UI works on mobile browsers. A full PWA install layer exists **only in unmerged PR #2**.                                                                                                                                                                                                                           |
+| Pilot customer readiness   | **1/10** | No login, no tenants, no audit log, no data-deletion capability per customer, no DPA — a German business pilot cannot be onboarded on this today.                                                                                                                                                                                      |
 
 **Average: 2.0/10 — not launch-ready as it stands, but the gap is closable in weeks, mostly for free** (see verdict, §6).
 
@@ -100,7 +100,7 @@ Full register with owners and severities in [`HARDWARE_RISK_REGISTER.md`](./HARD
 7. **No monitoring/logging.** An outage or a breach would be discovered by a customer, not by you.
 8. **No staging/production separation.** One Supabase project for everything; schema changes are applied by pasting SQL into the production SQL editor.
 9. **No rollback plan.** No tagged releases, no tested restore, no runbook.
-10. **Broken deploy pipeline masquerading as automation.** The repo *looks* like it auto-deploys; it doesn't. That false confidence is itself a risk.
+10. **Broken deploy pipeline masquerading as automation.** The repo _looks_ like it auto-deploys; it doesn't. That false confidence is itself a risk.
 
 ---
 
@@ -144,18 +144,18 @@ Production-grade, auditable, EU-sovereign option for signed contracts:
 
 ## 5. EU AI Act / German Customer Requirements
 
-| Requirement | Today | Tier B (Alpha/Beta) | Tier C (Paid) |
-|---|---|---|---|
-| EU data residency | ❌ nothing pinned; Vercel defaults US | ⚠️ Vercel fra1 + Supabase eu-central-1; **but** OpenAI/Firecrawl still process in US unless replaced/configured | ✅ EU compute + EU DB + EU-resident LLM (OpenAI EU residency / Azure OpenAI EU / Mistral); Firecrawl replaced or contractually covered |
-| Audit logs | ❌ none | ✅ append-only `audit_log` table | ✅ immutable, exportable, retained ≥1 yr |
-| Access control | ❌ no auth at all | ✅ Supabase Auth + RLS deny-by-default | ✅ + SSO, roles, least-privilege service keys |
-| Encryption | ⚠️ TLS in transit by default; Supabase encrypts at rest | ✅ same, documented | ✅ + encrypted backups (restic/age), key inventory |
-| Backup retention | ❌ none | ✅ 7-day daily + weekly offsite | ✅ 30-day + PITR + quarterly restore drills |
-| Customer tenant separation | ❌ single shared table | ✅ tenant_id + RLS per pilot | ✅ enforced + tested per-tenant isolation, optional schema-per-tenant |
-| Evidence export | ❌ | ⚠️ manual SQL export on request | ✅ self-serve tenant export endpoint |
-| Data deletion | ⚠️ only "delete everything" (and anyone can!) | ✅ per-tenant deletion, authenticated | ✅ + deletion certificates, retention policy |
-| Incident recovery | ❌ no plan | ✅ 1-page runbook + tested restore | ✅ RTO/RPO defined (e.g. RTO 4h / RPO 24h), drills |
-| Legal/compliance trust | ❌ no DPAs | ✅ DPAs with Vercel, Supabase, OpenAI (all offer them free); privacy notice; processing records | ✅ + AVV (German DPA) template for customers, subprocessor list, ISO/SOC evidence from providers |
+| Requirement                | Today                                                   | Tier B (Alpha/Beta)                                                                                             | Tier C (Paid)                                                                                                                          |
+| -------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| EU data residency          | ❌ nothing pinned; Vercel defaults US                   | ⚠️ Vercel fra1 + Supabase eu-central-1; **but** OpenAI/Firecrawl still process in US unless replaced/configured | ✅ EU compute + EU DB + EU-resident LLM (OpenAI EU residency / Azure OpenAI EU / Mistral); Firecrawl replaced or contractually covered |
+| Audit logs                 | ❌ none                                                 | ✅ append-only `audit_log` table                                                                                | ✅ immutable, exportable, retained ≥1 yr                                                                                               |
+| Access control             | ❌ no auth at all                                       | ✅ Supabase Auth + RLS deny-by-default                                                                          | ✅ + SSO, roles, least-privilege service keys                                                                                          |
+| Encryption                 | ⚠️ TLS in transit by default; Supabase encrypts at rest | ✅ same, documented                                                                                             | ✅ + encrypted backups (restic/age), key inventory                                                                                     |
+| Backup retention           | ❌ none                                                 | ✅ 7-day daily + weekly offsite                                                                                 | ✅ 30-day + PITR + quarterly restore drills                                                                                            |
+| Customer tenant separation | ❌ single shared table                                  | ✅ tenant_id + RLS per pilot                                                                                    | ✅ enforced + tested per-tenant isolation, optional schema-per-tenant                                                                  |
+| Evidence export            | ❌                                                      | ⚠️ manual SQL export on request                                                                                 | ✅ self-serve tenant export endpoint                                                                                                   |
+| Data deletion              | ⚠️ only "delete everything" (and anyone can!)           | ✅ per-tenant deletion, authenticated                                                                           | ✅ + deletion certificates, retention policy                                                                                           |
+| Incident recovery          | ❌ no plan                                              | ✅ 1-page runbook + tested restore                                                                              | ✅ RTO/RPO defined (e.g. RTO 4h / RPO 24h), drills                                                                                     |
+| Legal/compliance trust     | ❌ no DPAs                                              | ✅ DPAs with Vercel, Supabase, OpenAI (all offer them free); privacy notice; processing records                 | ✅ + AVV (German DPA) template for customers, subprocessor list, ISO/SOC evidence from providers                                       |
 
 **EU AI Act positioning:** NewsPulse AI (news search + LLM summarization) is a **minimal/limited-risk** AI system — not a prohibited practice, not Annex III high-risk. Obligations are mainly **transparency** (Art. 50: tell users content is AI-generated — add an "AI-generated summary" label, already implicitly present, make it explicit) and **GPAI flows down to the model provider** (OpenAI), not you. German customers will care much more about **GDPR** (residency, DPA/AVV, TOMs document, deletion) than the AI Act for this product class. The Tier B checklist covers what a German Mittelstand pilot's procurement will actually ask.
 
@@ -164,9 +164,11 @@ Production-grade, auditable, EU-sovereign option for signed contracts:
 ## 6. Decision Verdict
 
 ## ⛔ NO-GO — in the current state
+
 ## ✅ GO WITH RISKS — for August Alpha, **if** the P0 list ships (realistic: 1–2 weeks, ~€0–50/mo)
 
 **Why NO-GO today:**
+
 1. The product has **never been deployed** — there is nothing to launch. The pipeline has never been green on `main`.
 2. **Anyone on the internet could delete the entire database** and read/write it directly via the public anon key.
 3. **No authentication** means no pilots, no tenants, no audit trail, no GDPR answers for German customers.
@@ -174,6 +176,7 @@ Production-grade, auditable, EU-sovereign option for signed contracts:
 5. The pinned framework version carries a **critical advisory**, and the app's only abuse protection lives in the affected middleware layer.
 
 **Why GO WITH RISKS is realistic for August:**
+
 - Every blocker is fixable with configuration and code, not money: the fixes for the build, lockfile, Next upgrade, and RLS are **already written in open PR #4** — they just need to be merged and deployed.
 - The chosen stack (Vercel + Supabase) has first-class EU regions and free DPAs; residency is a project-settings decision, not a re-architecture.
 - Today is July 9. The P0 list (see action plan) is ~1–2 focused weeks. The remaining accepted risks for Alpha (US-based LLM subprocessor with DPA, no PITR, single region) are disclosable and normal for a pilot-stage product.
@@ -186,48 +189,53 @@ Production-grade, auditable, EU-sovereign option for signed contracts:
 
 ### Top 10 fixes (priority order)
 
-1. **Merge PR #4** (or equivalent): lockfile, Next ≥14.2.35, anon-policy removal, rate-limit widening, security headers, tests. *(today, €0)*
-2. **Rotate all 5 API keys**; store in Vercel env + password manager. *(today, €0)*
-3. **Verify/create Supabase project in eu-central-1**; if the current project is in a US region, create a new EU project and migrate the (tiny) schema. *(today, €0)*
-4. **Set the 3 GitHub Vercel secrets + 5 Vercel env vars; pin functions to fra1; get one green deploy to production.** *(today–tomorrow, €0)*
-5. **Authentication on every mutating endpoint** (Supabase Auth); deny-by-default RLS; remove the unauthenticated wipe-all. *(before Alpha)*
-6. **Backups:** enable Supabase Pro daily backups ($25/mo) or, at minimum, a free weekly `pg_dump` GitHub Action to encrypted storage — **and rehearse one restore**. *(before Alpha)*
-7. **Durable rate limiting** via Upstash Redis (EU region, free tier) + provider billing alerts (OpenAI hard limit, Vercel spend alert). *(before Alpha)*
-8. **Monitoring:** UptimeRobot on `/api/health`, Sentry free tier, Vercel log drain. *(before Alpha)*
-9. **Staging/production separation:** second free Supabase project + Vercel preview env pointed at it; releases via tagged deploys with instant Vercel rollback. *(before Beta)*
-10. **Compliance pack:** DPAs (Vercel/Supabase/OpenAI), privacy notice, processing record, 1-page incident runbook, audit-log table, per-tenant deletion. *(before Beta / first German pilot contract)*
+1. **Merge PR #4** (or equivalent): lockfile, Next ≥14.2.35, anon-policy removal, rate-limit widening, security headers, tests. _(today, €0)_
+2. **Rotate all 5 API keys**; store in Vercel env + password manager. _(today, €0)_
+3. **Verify/create Supabase project in eu-central-1**; if the current project is in a US region, create a new EU project and migrate the (tiny) schema. _(today, €0)_
+4. **Set the 3 GitHub Vercel secrets + 5 Vercel env vars; pin functions to fra1; get one green deploy to production.** _(today–tomorrow, €0)_
+5. **Authentication on every mutating endpoint** (Supabase Auth); deny-by-default RLS; remove the unauthenticated wipe-all. _(before Alpha)_
+6. **Backups:** enable Supabase Pro daily backups ($25/mo) or, at minimum, a free weekly `pg_dump` GitHub Action to encrypted storage — **and rehearse one restore**. _(before Alpha)_
+7. **Durable rate limiting** via Upstash Redis (EU region, free tier) + provider billing alerts (OpenAI hard limit, Vercel spend alert). _(before Alpha)_
+8. **Monitoring:** UptimeRobot on `/api/health`, Sentry free tier, Vercel log drain. _(before Alpha)_
+9. **Staging/production separation:** second free Supabase project + Vercel preview env pointed at it; releases via tagged deploys with instant Vercel rollback. _(before Beta)_
+10. **Compliance pack:** DPAs (Vercel/Supabase/OpenAI), privacy notice, processing record, 1-page incident runbook, audit-log table, per-tenant deletion. _(before Beta / first German pilot contract)_
 
 ### What can be done today (all €0)
+
 Items 1–4 plus: enable GitHub secret scanning + Dependabot, add billing alerts, document the stack (this PR).
 
 ### Must be done before Alpha (August)
+
 Items 5–8. Accepted, disclosed risks: single region, no PITR, OpenAI US processing under DPA.
 
 ### Must be done before Beta
+
 Items 9–10, plus: PWA layer (merge PR #2 or equivalent), evidence-export endpoint, restore drill #2, load test of `/api/search` under the Redis limiter.
 
 ### Can wait until paid customers
+
 Supabase Team/PITR, EU-resident LLM switch (OpenAI EU residency / Azure OpenAI EU / Mistral), Hetzner sovereign migration (Tier C Path 2), WAF, SSO, SOC2-style evidence collection, multi-region DR.
 
 ---
 
 ## Checks executed during this review
 
-| Check | Result |
-|---|---|
-| `npm ci` | ❌ fails — no `package-lock.json` (confirms CI break) |
-| `npm install` | ✅ |
-| `npm audit` | ❌ 5 vulns: **1 critical**, 3 high, 1 moderate — all fixed by Next upgrade |
-| `npm run lint` | ✅ clean |
-| `npx tsc --noEmit` | ✅ clean |
-| `npm run build` (stub env) | ✅ builds; all routes compile |
-| Full-git-history secret scan | ✅ no leaked keys found |
-| GitHub Actions history | ❌ `main` has never had a green CI or deploy run |
-| Open PR inventory | 5 open PRs, none merged; PR #4 contains most P0 fixes already |
+| Check                        | Result                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `npm ci`                     | ❌ fails — no `package-lock.json` (confirms CI break)                      |
+| `npm install`                | ✅                                                                         |
+| `npm audit`                  | ❌ 5 vulns: **1 critical**, 3 high, 1 moderate — all fixed by Next upgrade |
+| `npm run lint`               | ✅ clean                                                                   |
+| `npx tsc --noEmit`           | ✅ clean                                                                   |
+| `npm run build` (stub env)   | ✅ builds; all routes compile                                              |
+| Full-git-history secret scan | ✅ no leaked keys found                                                    |
+| GitHub Actions history       | ❌ `main` has never had a green CI or deploy run                           |
+| Open PR inventory            | 5 open PRs, none merged; PR #4 contains most P0 fixes already              |
 
 ---
 
-*Companion documents:*
+_Companion documents:_
+
 - [`HARDWARE_RISK_REGISTER.md`](./HARDWARE_RISK_REGISTER.md) — full risk register with severity, likelihood, owner, mitigation
 - [`CLOUD_DEPLOYMENT_BLUEPRINT.md`](./CLOUD_DEPLOYMENT_BLUEPRINT.md) — concrete build-out for tiers A/B/C incl. migration steps
 - [`ALPHA_BETA_INFRA_CHECKLIST.md`](./ALPHA_BETA_INFRA_CHECKLIST.md) — tick-box launch checklist

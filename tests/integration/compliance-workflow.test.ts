@@ -110,7 +110,10 @@ describe('Compliance Workflow Integration Tests', () => {
           }
         }
       } catch (error) {
-        console.log('Obligation identification test skipped (requires auth):', error);
+        console.log(
+          'Obligation identification test skipped (requires auth):',
+          error
+        );
       }
     });
 

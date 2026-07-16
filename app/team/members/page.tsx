@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Loader } from "lucide-react";
-import { MembersList } from "@/components/team/members-list";
-import { InviteMemberForm } from "@/components/team/invite-member-form";
+import { useEffect, useState } from 'react';
+import { Loader } from 'lucide-react';
+import { MembersList } from '@/components/team/members-list';
+import { InviteMemberForm } from '@/components/team/invite-member-form';
 
 export default function TeamMembersPage() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export default function TeamMembersPage() {
   useEffect(() => {
     async function loadWorkspace() {
       try {
-        const response = await fetch("/api/workspace/list");
+        const response = await fetch('/api/workspace/list');
         if (response.ok) {
           const data = await response.json();
           if (data.workspaces && data.workspaces.length > 0) {
@@ -22,7 +22,7 @@ export default function TeamMembersPage() {
           }
         }
       } catch (err) {
-        console.error("Failed to load workspace:", err);
+        console.error('Failed to load workspace:', err);
       } finally {
         setLoading(false);
       }
@@ -63,7 +63,7 @@ export default function TeamMembersPage() {
           onClick={() => setShowForm(!showForm)}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
         >
-          {showForm ? "Hide Form" : "Invite Member"}
+          {showForm ? 'Hide Form' : 'Invite Member'}
         </button>
       </div>
 
@@ -85,9 +85,7 @@ export default function TeamMembersPage() {
 
       {/* Members List */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Current Members
-        </h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Current Members</h2>
         <MembersList key={refreshTrigger} workspaceId={workspaceId} />
       </div>
     </div>

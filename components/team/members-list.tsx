@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Loader, Shield, Users, Eye, Edit2, Trash2 } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { Loader, Shield, Users, Eye, Edit2, Trash2 } from 'lucide-react';
 
 interface WorkspaceMember {
   id: string;
   user_id: string;
   email: string;
-  role: "owner" | "admin" | "member" | "viewer";
+  role: 'owner' | 'admin' | 'member' | 'viewer';
   status: string;
   created_at: string;
 }
@@ -24,10 +24,10 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  owner: "bg-yellow-900/30 border-yellow-800 text-yellow-300",
-  admin: "bg-orange-900/30 border-orange-800 text-orange-300",
-  member: "bg-blue-900/30 border-blue-800 text-blue-300",
-  viewer: "bg-slate-900/30 border-slate-800 text-slate-300",
+  owner: 'bg-yellow-900/30 border-yellow-800 text-yellow-300',
+  admin: 'bg-orange-900/30 border-orange-800 text-orange-300',
+  member: 'bg-blue-900/30 border-blue-800 text-blue-300',
+  viewer: 'bg-slate-900/30 border-slate-800 text-slate-300',
 };
 
 export function MembersList({ workspaceId }: MembersListProps) {
@@ -41,12 +41,12 @@ export function MembersList({ workspaceId }: MembersListProps) {
         const response = await fetch(
           `/api/workspace/members?workspace_id=${workspaceId}`
         );
-        if (!response.ok) throw new Error("Failed to fetch members");
+        if (!response.ok) throw new Error('Failed to fetch members');
         const data = await response.json();
         setMembers(data.members || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -110,9 +110,7 @@ export function MembersList({ workspaceId }: MembersListProps) {
                 }`}
               >
                 {ROLE_ICONS[member.role]}
-                <span className="capitalize">
-                  {member.role}
-                </span>
+                <span className="capitalize">{member.role}</span>
               </div>
 
               <div className="flex gap-2">

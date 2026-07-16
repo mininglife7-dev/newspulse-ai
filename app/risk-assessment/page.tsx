@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Loader, ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { AssessmentForm } from "@/components/risk-assessment/assessment-form";
+import { useEffect, useState } from 'react';
+import { Loader, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { AssessmentForm } from '@/components/risk-assessment/assessment-form';
 
 interface AISystem {
   id: string;
@@ -23,13 +23,10 @@ export default function RiskAssessmentPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const workspaceResponse = await fetch("/api/workspace/list");
+        const workspaceResponse = await fetch('/api/workspace/list');
         if (workspaceResponse.ok) {
           const workspaceData = await workspaceResponse.json();
-          if (
-            workspaceData.workspaces &&
-            workspaceData.workspaces.length > 0
-          ) {
+          if (workspaceData.workspaces && workspaceData.workspaces.length > 0) {
             const wId = workspaceData.workspaces[0].id;
             setWorkspaceId(wId);
 
@@ -43,9 +40,7 @@ export default function RiskAssessmentPage() {
           }
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load data"
-        );
+        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
@@ -130,12 +125,16 @@ export default function RiskAssessmentPage() {
                   </h3>
                   <div className="flex gap-4 text-sm">
                     <span className="text-slate-400">
-                      Category:{" "}
-                      <span className="text-white font-medium">{system.category}</span>
+                      Category:{' '}
+                      <span className="text-white font-medium">
+                        {system.category}
+                      </span>
                     </span>
                     <span className="text-slate-400">
-                      Status:{" "}
-                      <span className="text-white font-medium">{system.status}</span>
+                      Status:{' '}
+                      <span className="text-white font-medium">
+                        {system.status}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -166,9 +165,7 @@ export default function RiskAssessmentPage() {
       {/* Page Title */}
       <div>
         <h1 className="text-4xl font-bold text-white">Risk Assessment</h1>
-        <p className="mt-2 text-lg text-slate-400">
-          {selectedSystem?.name}
-        </p>
+        <p className="mt-2 text-lg text-slate-400">{selectedSystem?.name}</p>
       </div>
 
       {/* Assessment Form */}

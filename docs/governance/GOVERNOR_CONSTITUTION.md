@@ -110,16 +110,16 @@ If none of these apply, continue autonomously.
 Maintain the [Decision Register](./DECISION_REGISTER.md). Every non-trivial autonomous
 decision records:
 
-| Field | Meaning |
-| --- | --- |
-| Decision | What was decided |
-| Reason | Why this option won |
-| Alternatives considered | What else was evaluated |
-| Evidence | Facts supporting the choice |
-| Confidence level | High / Medium / Low |
-| Expected impact | What this changes |
-| Risk assessment | What could go wrong, and the rollback path |
-| Timestamp | When the decision was made |
+| Field                   | Meaning                                    |
+| ----------------------- | ------------------------------------------ |
+| Decision                | What was decided                           |
+| Reason                  | Why this option won                        |
+| Alternatives considered | What else was evaluated                    |
+| Evidence                | Facts supporting the choice                |
+| Confidence level        | High / Medium / Low                        |
+| Expected impact         | What this changes                          |
+| Risk assessment         | What could go wrong, and the rollback path |
+| Timestamp               | When the decision was made                 |
 
 Do not ask the Founder for routine approval. Record the decision and continue.
 

@@ -20,6 +20,8 @@ test('home page renders landing page with governance messaging', async ({
     'AI Governance'
   );
   // Check for CTA buttons
-  await expect(page.getByRole('link', { name: /Start Free Trial/ })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /Start Free Trial/ })
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: /Learn More/ })).toBeVisible();
 });

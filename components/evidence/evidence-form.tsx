@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle, Loader, Upload, X } from "lucide-react";
+import { useState } from 'react';
+import { AlertCircle, CheckCircle, Loader, Upload, X } from 'lucide-react';
 
 interface EvidenceFormProps {
   workspaceId: string;
@@ -11,21 +11,21 @@ interface EvidenceFormProps {
 }
 
 const EVIDENCE_TYPES = [
-  { value: "file", label: "File Upload" },
-  { value: "url", label: "URL Reference" },
-  { value: "note", label: "Text Note" },
-  { value: "attestation", label: "Attestation" },
+  { value: 'file', label: 'File Upload' },
+  { value: 'url', label: 'URL Reference' },
+  { value: 'note', label: 'Text Note' },
+  { value: 'attestation', label: 'Attestation' },
 ];
 
 const CATEGORIES = [
-  { value: "policy", label: "Policy Document" },
-  { value: "audit", label: "Audit Report" },
-  { value: "test_result", label: "Test Result" },
-  { value: "certification", label: "Certification" },
-  { value: "training", label: "Training Record" },
-  { value: "consent", label: "Consent Form" },
-  { value: "impact_assessment", label: "Impact Assessment" },
-  { value: "other", label: "Other" },
+  { value: 'policy', label: 'Policy Document' },
+  { value: 'audit', label: 'Audit Report' },
+  { value: 'test_result', label: 'Test Result' },
+  { value: 'certification', label: 'Certification' },
+  { value: 'training', label: 'Training Record' },
+  { value: 'consent', label: 'Consent Form' },
+  { value: 'impact_assessment', label: 'Impact Assessment' },
+  { value: 'other', label: 'Other' },
 ];
 
 export function EvidenceForm({
@@ -35,17 +35,17 @@ export function EvidenceForm({
   onSuccess,
 }: EvidenceFormProps) {
   const [formData, setFormData] = useState({
-    title: "",
-    category: "policy",
-    evidence_type: "file",
-    description: "",
-    external_url: "",
-    content: "",
+    title: '',
+    category: 'policy',
+    evidence_type: 'file',
+    description: '',
+    external_url: '',
+    content: '',
     file: null as File | null,
     tags: [] as string[],
   });
 
-  const [tagInput, setTagInput] = useState("");
+  const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -70,7 +70,7 @@ export function EvidenceForm({
         ...prev,
         tags: [...prev.tags, tagInput.trim()],
       }));
-      setTagInput("");
+      setTagInput('');
     }
   };
 
@@ -90,27 +90,24 @@ export function EvidenceForm({
     try {
       // Validate required fields
       if (!formData.title) {
-        throw new Error("Title is required");
+        throw new Error('Title is required');
       }
 
-      if (
-        formData.evidence_type === "file" &&
-        !formData.file
-      ) {
-        throw new Error("File is required for file upload type");
+      if (formData.evidence_type === 'file' && !formData.file) {
+        throw new Error('File is required for file upload type');
       }
 
-      if (formData.evidence_type === "url" && !formData.external_url) {
-        throw new Error("URL is required for URL reference type");
+      if (formData.evidence_type === 'url' && !formData.external_url) {
+        throw new Error('URL is required for URL reference type');
       }
 
-      if (formData.evidence_type === "note" && !formData.content) {
-        throw new Error("Content is required for text note type");
+      if (formData.evidence_type === 'note' && !formData.content) {
+        throw new Error('Content is required for text note type');
       }
 
-      const response = await fetch("/api/evidence/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/evidence/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workspace_id: workspaceId,
           title: formData.title,
@@ -128,28 +125,28 @@ export function EvidenceForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create evidence");
+        throw new Error(data.error || 'Failed to create evidence');
       }
 
       setSuccess(true);
       setFormData({
-        title: "",
-        category: "policy",
-        evidence_type: "file",
-        description: "",
-        external_url: "",
-        content: "",
+        title: '',
+        category: 'policy',
+        evidence_type: 'file',
+        description: '',
+        external_url: '',
+        content: '',
         file: null,
         tags: [],
       });
-      setTagInput("");
+      setTagInput('');
 
       setTimeout(() => {
         setSuccess(false);
         onSuccess?.();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -193,7 +190,7 @@ export function EvidenceForm({
       </div>
 
       {/* Evidence Input Based on Type */}
-      {formData.evidence_type === "file" && (
+      {formData.evidence_type === 'file' && (
         <div>
           <label className="block text-sm font-medium text-white mb-2">
             Upload File *
@@ -208,7 +205,9 @@ export function EvidenceForm({
             <label htmlFor="file-input" className="cursor-pointer">
               <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
               <p className="text-sm text-white font-medium">
-                {formData.file ? formData.file.name : "Click to upload or drag file"}
+                {formData.file
+                  ? formData.file.name
+                  : 'Click to upload or drag file'}
               </p>
               <p className="text-xs text-slate-500">
                 PDF, DOC, DOCX, or other document files
@@ -218,7 +217,7 @@ export function EvidenceForm({
         </div>
       )}
 
-      {formData.evidence_type === "url" && (
+      {formData.evidence_type === 'url' && (
         <div>
           <label className="block text-sm font-medium text-white mb-2">
             URL *
@@ -234,7 +233,7 @@ export function EvidenceForm({
         </div>
       )}
 
-      {formData.evidence_type === "note" && (
+      {formData.evidence_type === 'note' && (
         <div>
           <label className="block text-sm font-medium text-white mb-2">
             Note Content *
@@ -250,7 +249,7 @@ export function EvidenceForm({
         </div>
       )}
 
-      {formData.evidence_type === "attestation" && (
+      {formData.evidence_type === 'attestation' && (
         <div>
           <label className="block text-sm font-medium text-white mb-2">
             Attestation Statement *
@@ -310,7 +309,9 @@ export function EvidenceForm({
             type="text"
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
+            onKeyPress={(e) =>
+              e.key === 'Enter' && (e.preventDefault(), handleAddTag())
+            }
             placeholder="Add tags and press Enter"
             className="flex-1 px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
           />
@@ -368,7 +369,7 @@ export function EvidenceForm({
         className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium rounded-lg transition flex items-center justify-center gap-2"
       >
         {loading && <Loader className="w-4 h-4 animate-spin" />}
-        {loading ? "Submitting..." : "Submit Evidence"}
+        {loading ? 'Submitting...' : 'Submit Evidence'}
       </button>
     </form>
   );

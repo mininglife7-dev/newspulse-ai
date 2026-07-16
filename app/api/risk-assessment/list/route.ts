@@ -49,7 +49,9 @@ export async function GET(req: NextRequest) {
     // Fetch risk assessments
     let query = supabase
       .from('risk_assessments')
-      .select('id, ai_system_id, assessment_type, risk_score, status, created_at, created_by')
+      .select(
+        'id, ai_system_id, assessment_type, risk_score, status, created_at, created_by'
+      )
       .eq('workspace_id', workspaceId);
 
     if (aiSystemId) {

@@ -48,7 +48,9 @@ export async function GET(req: NextRequest) {
     // Fetch AI systems for workspace
     const { data: aiSystems, error } = await supabase
       .from('ai_systems')
-      .select('id, name, description, category, status, risk_level, created_at, created_by')
+      .select(
+        'id, name, description, category, status, risk_level, created_at, created_by'
+      )
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
 

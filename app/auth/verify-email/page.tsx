@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Mail, ArrowRight } from "lucide-react";
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Mail, ArrowRight } from 'lucide-react';
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "your email";
+  const email = searchParams.get('email') || 'your email';
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -18,11 +18,9 @@ export default function VerifyEmailPage() {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-white">
-            Verify your email
-          </h1>
+          <h1 className="text-3xl font-bold text-white">Verify your email</h1>
           <p className="text-slate-400">
-            We sent a verification link to{" "}
+            We sent a verification link to{' '}
             <span className="text-white font-medium">{email}</span>
           </p>
         </div>
@@ -33,7 +31,7 @@ export default function VerifyEmailPage() {
             with EURO AI.
           </p>
           <p className="text-xs text-slate-500">
-            Didn't receive the email? Check your spam folder or{" "}
+            Didn't receive the email? Check your spam folder or{' '}
             <Link href="#" className="text-blue-400 hover:text-blue-300">
               resend verification link
             </Link>

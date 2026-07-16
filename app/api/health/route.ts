@@ -17,7 +17,8 @@ export async function GET() {
       ok: allOk,
       status: allOk ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
-      uptime_s: typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
+      uptime_s:
+        typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
       checks,
     },
     { status: allOk ? 200 : 503 }

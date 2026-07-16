@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { useState } from 'react';
+import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 interface InviteMemberFormProps {
   workspaceId: string;
@@ -9,9 +9,17 @@ interface InviteMemberFormProps {
 }
 
 const ROLES = [
-  { value: "admin", label: "Admin", description: "Full access except workspace deletion" },
-  { value: "member", label: "Member", description: "Can create and manage content" },
-  { value: "viewer", label: "Viewer", description: "Read-only access" },
+  {
+    value: 'admin',
+    label: 'Admin',
+    description: 'Full access except workspace deletion',
+  },
+  {
+    value: 'member',
+    label: 'Member',
+    description: 'Can create and manage content',
+  },
+  { value: 'viewer', label: 'Viewer', description: 'Read-only access' },
 ];
 
 export function InviteMemberForm({
@@ -19,8 +27,8 @@ export function InviteMemberForm({
   onSuccess,
 }: InviteMemberFormProps) {
   const [formData, setFormData] = useState({
-    email: "",
-    role: "member",
+    email: '',
+    role: 'member',
   });
 
   const [loading, setLoading] = useState(false);
@@ -42,16 +50,16 @@ export function InviteMemberForm({
 
     try {
       if (!formData.email) {
-        throw new Error("Email is required");
+        throw new Error('Email is required');
       }
 
-      if (!formData.email.includes("@")) {
-        throw new Error("Please enter a valid email address");
+      if (!formData.email.includes('@')) {
+        throw new Error('Please enter a valid email address');
       }
 
-      const response = await fetch("/api/workspace/invite-member", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/workspace/invite-member', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workspace_id: workspaceId,
           email: formData.email,
@@ -62,13 +70,13 @@ export function InviteMemberForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to invite member");
+        throw new Error(data.error || 'Failed to invite member');
       }
 
       setSuccess(true);
       setFormData({
-        email: "",
-        role: "member",
+        email: '',
+        role: 'member',
       });
 
       setTimeout(() => {
@@ -76,7 +84,7 @@ export function InviteMemberForm({
         onSuccess?.();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -111,8 +119,8 @@ export function InviteMemberForm({
               key={role.value}
               className={`block p-4 rounded-lg border-2 cursor-pointer transition ${
                 formData.role === role.value
-                  ? "border-blue-500 bg-blue-900/20"
-                  : "border-slate-700 bg-slate-900/50 hover:border-slate-600"
+                  ? 'border-blue-500 bg-blue-900/20'
+                  : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -159,7 +167,7 @@ export function InviteMemberForm({
         className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium rounded-lg transition flex items-center justify-center gap-2"
       >
         {loading && <Loader className="w-4 h-4 animate-spin" />}
-        {loading ? "Sending..." : "Send Invitation"}
+        {loading ? 'Sending...' : 'Send Invitation'}
       </button>
     </form>
   );

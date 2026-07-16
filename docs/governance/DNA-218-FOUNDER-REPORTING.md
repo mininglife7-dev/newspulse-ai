@@ -51,12 +51,15 @@ Never mix them.
 Always end with exactly three sections:
 
 ### Do Today
+
 Highest ROI actions.
 
 ### Do This Week
+
 Important but not blocking.
 
 ### Later
+
 Non-critical improvements.
 
 ## Success Criterion

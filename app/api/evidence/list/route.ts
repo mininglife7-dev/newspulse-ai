@@ -50,7 +50,9 @@ export async function GET(req: NextRequest) {
     // Build query
     let query = supabase
       .from('evidence')
-      .select('id, workspace_id, obligation_id, ai_system_id, title, description, category, evidence_type, status, file_url, external_url, content, tags, created_at, created_by')
+      .select(
+        'id, workspace_id, obligation_id, ai_system_id, title, description, category, evidence_type, status, file_url, external_url, content, tags, created_at, created_by'
+      )
       .eq('workspace_id', workspaceId);
 
     if (aiSystemId) {

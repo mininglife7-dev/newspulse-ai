@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { useState } from 'react';
+import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 interface RiskQuestion {
   question_id: string;
   text: string;
-  category: "prohibited" | "high_risk" | "general";
+  category: 'prohibited' | 'high_risk' | 'general';
 }
 
 interface AssessmentFormProps {
@@ -18,78 +18,78 @@ interface AssessmentFormProps {
 const RISK_QUESTIONS: RiskQuestion[] = [
   // Prohibited Systems (EU AI Act - Annex III)
   {
-    question_id: "prohibited_1",
-    text: "Does this system use subliminal techniques or manipulative methods to distort behavior or decision-making?",
-    category: "prohibited",
+    question_id: 'prohibited_1',
+    text: 'Does this system use subliminal techniques or manipulative methods to distort behavior or decision-making?',
+    category: 'prohibited',
   },
   {
-    question_id: "prohibited_2",
-    text: "Is this system designed to exploit vulnerabilities of vulnerable persons based on age, physical or mental disability?",
-    category: "prohibited",
+    question_id: 'prohibited_2',
+    text: 'Is this system designed to exploit vulnerabilities of vulnerable persons based on age, physical or mental disability?',
+    category: 'prohibited',
   },
   {
-    question_id: "prohibited_3",
-    text: "Does this system perform real-time remote biometric identification in public spaces for law enforcement?",
-    category: "prohibited",
+    question_id: 'prohibited_3',
+    text: 'Does this system perform real-time remote biometric identification in public spaces for law enforcement?',
+    category: 'prohibited',
   },
   {
-    question_id: "prohibited_4",
-    text: "Does this system use biometric categorization based on sensitive characteristics (race, ethnicity, political views, etc.)?",
-    category: "prohibited",
+    question_id: 'prohibited_4',
+    text: 'Does this system use biometric categorization based on sensitive characteristics (race, ethnicity, political views, etc.)?',
+    category: 'prohibited',
   },
 
   // High-Risk Systems
   {
-    question_id: "high_risk_1",
-    text: "Does this system make decisions that affect legal rights, safety, or opportunities of individuals?",
-    category: "high_risk",
+    question_id: 'high_risk_1',
+    text: 'Does this system make decisions that affect legal rights, safety, or opportunities of individuals?',
+    category: 'high_risk',
   },
   {
-    question_id: "high_risk_2",
-    text: "Is this system used for critical infrastructure management (energy, transport, water, electricity)?",
-    category: "high_risk",
+    question_id: 'high_risk_2',
+    text: 'Is this system used for critical infrastructure management (energy, transport, water, electricity)?',
+    category: 'high_risk',
   },
   {
-    question_id: "high_risk_3",
-    text: "Does this system determine access to or denying access to education or vocational training?",
-    category: "high_risk",
+    question_id: 'high_risk_3',
+    text: 'Does this system determine access to or denying access to education or vocational training?',
+    category: 'high_risk',
   },
   {
-    question_id: "high_risk_4",
-    text: "Is this system used for employment-related decisions (recruitment, promotion, termination)?",
-    category: "high_risk",
+    question_id: 'high_risk_4',
+    text: 'Is this system used for employment-related decisions (recruitment, promotion, termination)?',
+    category: 'high_risk',
   },
   {
-    question_id: "high_risk_5",
-    text: "Does this system assess creditworthiness or determine loan/insurance eligibility?",
-    category: "high_risk",
+    question_id: 'high_risk_5',
+    text: 'Does this system assess creditworthiness or determine loan/insurance eligibility?',
+    category: 'high_risk',
   },
   {
-    question_id: "high_risk_6",
-    text: "Is this system used in law enforcement for predicting crime or criminal behavior?",
-    category: "high_risk",
+    question_id: 'high_risk_6',
+    text: 'Is this system used in law enforcement for predicting crime or criminal behavior?',
+    category: 'high_risk',
   },
 
   // General Risk
   {
-    question_id: "general_1",
-    text: "Does this system collect or process personal data?",
-    category: "general",
+    question_id: 'general_1',
+    text: 'Does this system collect or process personal data?',
+    category: 'general',
   },
   {
-    question_id: "general_2",
-    text: "Is this system accessible to external users or the public?",
-    category: "general",
+    question_id: 'general_2',
+    text: 'Is this system accessible to external users or the public?',
+    category: 'general',
   },
   {
-    question_id: "general_3",
-    text: "Does this system generate predictions or recommendations that affect user experience?",
-    category: "general",
+    question_id: 'general_3',
+    text: 'Does this system generate predictions or recommendations that affect user experience?',
+    category: 'general',
   },
   {
-    question_id: "general_4",
-    text: "Can errors or failures of this system cause operational disruption?",
-    category: "general",
+    question_id: 'general_4',
+    text: 'Can errors or failures of this system cause operational disruption?',
+    category: 'general',
   },
 ];
 
@@ -111,24 +111,25 @@ export function AssessmentForm({
     setResponses((prev) => ({ ...prev, [questionId]: answer }));
   };
 
-  const determineAssessmentType = (): "prohibited" | "high_risk" | "general" => {
+  const determineAssessmentType = ():
+    'prohibited' | 'high_risk' | 'general' => {
     const prohibitedYes = RISK_QUESTIONS.filter(
-      (q) => q.category === "prohibited" && responses[q.question_id]
+      (q) => q.category === 'prohibited' && responses[q.question_id]
     ).length;
     const highRiskYes = RISK_QUESTIONS.filter(
-      (q) => q.category === "high_risk" && responses[q.question_id]
+      (q) => q.category === 'high_risk' && responses[q.question_id]
     ).length;
 
-    if (prohibitedYes > 0) return "prohibited";
-    if (highRiskYes > 0) return "high_risk";
-    return "general";
+    if (prohibitedYes > 0) return 'prohibited';
+    if (highRiskYes > 0) return 'high_risk';
+    return 'general';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (answered < total) {
-      setError("Please answer all questions before submitting");
+      setError('Please answer all questions before submitting');
       return;
     }
 
@@ -142,9 +143,9 @@ export function AssessmentForm({
         answer: responses[q.question_id],
       }));
 
-      const response = await fetch("/api/risk-assessment/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/risk-assessment/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workspace_id: workspaceId,
           ai_system_id: aiSystemId,
@@ -156,7 +157,7 @@ export function AssessmentForm({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create risk assessment");
+        throw new Error(data.error || 'Failed to create risk assessment');
       }
 
       setSuccess(true);
@@ -167,7 +168,7 @@ export function AssessmentForm({
         onSuccess?.();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -199,7 +200,7 @@ export function AssessmentForm({
         <p className="text-sm text-slate-400">
           Does your system exhibit any of these prohibited characteristics?
         </p>
-        {RISK_QUESTIONS.filter((q) => q.category === "prohibited").map(
+        {RISK_QUESTIONS.filter((q) => q.category === 'prohibited').map(
           (question) => (
             <div
               key={question.question_id}
@@ -219,8 +220,8 @@ export function AssessmentForm({
                     onClick={() => handleAnswer(question.question_id, false)}
                     className={`px-3 py-1 rounded text-sm font-medium transition ${
                       responses[question.question_id] === false
-                        ? "bg-green-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? 'bg-green-500 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                     }`}
                   >
                     No
@@ -230,8 +231,8 @@ export function AssessmentForm({
                     onClick={() => handleAnswer(question.question_id, true)}
                     className={`px-3 py-1 rounded text-sm font-medium transition ${
                       responses[question.question_id] === true
-                        ? "bg-red-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? 'bg-red-500 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                     }`}
                   >
                     Yes
@@ -251,7 +252,7 @@ export function AssessmentForm({
         <p className="text-sm text-slate-400">
           Does your system perform any of these high-risk activities?
         </p>
-        {RISK_QUESTIONS.filter((q) => q.category === "high_risk").map(
+        {RISK_QUESTIONS.filter((q) => q.category === 'high_risk').map(
           (question) => (
             <div
               key={question.question_id}
@@ -271,8 +272,8 @@ export function AssessmentForm({
                     onClick={() => handleAnswer(question.question_id, false)}
                     className={`px-3 py-1 rounded text-sm font-medium transition ${
                       responses[question.question_id] === false
-                        ? "bg-green-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? 'bg-green-500 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                     }`}
                   >
                     No
@@ -282,8 +283,8 @@ export function AssessmentForm({
                     onClick={() => handleAnswer(question.question_id, true)}
                     className={`px-3 py-1 rounded text-sm font-medium transition ${
                       responses[question.question_id] === true
-                        ? "bg-yellow-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? 'bg-yellow-500 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                     }`}
                   >
                     Yes
@@ -303,7 +304,7 @@ export function AssessmentForm({
         <p className="text-sm text-slate-400">
           Does your system have these general characteristics?
         </p>
-        {RISK_QUESTIONS.filter((q) => q.category === "general").map(
+        {RISK_QUESTIONS.filter((q) => q.category === 'general').map(
           (question) => (
             <div
               key={question.question_id}
@@ -323,8 +324,8 @@ export function AssessmentForm({
                     onClick={() => handleAnswer(question.question_id, false)}
                     className={`px-3 py-1 rounded text-sm font-medium transition ${
                       responses[question.question_id] === false
-                        ? "bg-green-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? 'bg-green-500 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                     }`}
                   >
                     No
@@ -334,8 +335,8 @@ export function AssessmentForm({
                     onClick={() => handleAnswer(question.question_id, true)}
                     className={`px-3 py-1 rounded text-sm font-medium transition ${
                       responses[question.question_id] === true
-                        ? "bg-blue-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                     }`}
                   >
                     Yes
@@ -374,7 +375,7 @@ export function AssessmentForm({
       >
         {loading && <Loader className="w-4 h-4 animate-spin" />}
         {loading
-          ? "Submitting..."
+          ? 'Submitting...'
           : `Submit Assessment (${answered}/${total} answered)`}
       </button>
     </form>

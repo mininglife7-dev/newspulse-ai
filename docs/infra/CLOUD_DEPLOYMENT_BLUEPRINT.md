@@ -18,17 +18,18 @@ Browser ──HTTPS──► Vercel Hobby (Next.js 14, functions pinned fra1/Fra
 UptimeRobot (free) ──► GET /api/health every 5 min
 ```
 
-| Component | Choice | Spec | Cost |
-|---|---|---|---|
-| Compute | Vercel Hobby | serverless, 1 vCPU / 2 GB per invocation, 60s max on `/api/search` | €0 |
-| Database | Supabase Free, **eu-central-1** | 500 MB Postgres, pauses when idle | €0 |
-| Object storage | none needed yet | — | €0 |
-| Backup | GitHub Actions weekly `pg_dump` → encrypted artifact (90-day retention) | RPO 7 days | €0 |
-| Monitoring | UptimeRobot free + Vercel logs | 5-min checks | €0 |
-| Security | key rotation, anon RLS policies dropped, shared bearer secret on DELETE routes, Next ≥14.2.35 | — | €0 |
-| **Total fixed** | | | **€0/mo** (+ ~€5–20 AI usage) |
+| Component       | Choice                                                                                        | Spec                                                               | Cost                          |
+| --------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------- |
+| Compute         | Vercel Hobby                                                                                  | serverless, 1 vCPU / 2 GB per invocation, 60s max on `/api/search` | €0                            |
+| Database        | Supabase Free, **eu-central-1**                                                               | 500 MB Postgres, pauses when idle                                  | €0                            |
+| Object storage  | none needed yet                                                                               | —                                                                  | €0                            |
+| Backup          | GitHub Actions weekly `pg_dump` → encrypted artifact (90-day retention)                       | RPO 7 days                                                         | €0                            |
+| Monitoring      | UptimeRobot free + Vercel logs                                                                | 5-min checks                                                       | €0                            |
+| Security        | key rotation, anon RLS policies dropped, shared bearer secret on DELETE routes, Next ≥14.2.35 | —                                                                  | €0                            |
+| **Total fixed** |                                                                                               |                                                                    | **€0/mo** (+ ~€5–20 AI usage) |
 
 **Migration steps (Day 1):**
+
 1. Merge PR #4 (lockfile, build fix, Next 14.2.35, anon-policy removal, headers, tests). Close PR #1 as superseded.
 2. Rotate all 5 keys at their dashboards. Store in a password manager.
 3. In Supabase: check project region (Settings → General). If not an EU region, create a new project in **eu-central-1**, run `supabase/schema.sql` (post-PR-#4 version) there, retire the old project.
@@ -61,18 +62,19 @@ Sentry (errors) · UptimeRobot (uptime) · Vercel log drain
 Weekly pg_dump ──► Hetzner Object Storage (EU, encrypted, 30-day retention)
 ```
 
-| Component | Choice | Spec | Cost |
-|---|---|---|---|
-| Compute | Vercel Pro | fra1, staging+prod, instant rollback, spend controls | ~$20/mo |
-| Database | Supabase Pro, eu-central-1 | 8 GB, daily backups 7-day, no pausing, Auth included | $25/mo |
-| Staging DB | Supabase Free #2 | 500 MB | €0 |
-| Rate limiting | Upstash Redis, EU region | @upstash/ratelimit sliding window | €0–10/mo |
-| Object storage / backup offsite | Hetzner Object Storage (Falkenstein) | weekly encrypted `pg_dump`, 30-day retention | ~€5/mo |
-| Monitoring | Sentry free + UptimeRobot free + Vercel logs | errors, uptime, request logs | €0 |
-| Security | Supabase Auth on all routes; tenant_id RLS; security headers; Dependabot; secret scanning | — | €0 |
-| **Total fixed** | | | **~€50–60/mo** (+ AI usage) |
+| Component                       | Choice                                                                                    | Spec                                                 | Cost                        |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------- |
+| Compute                         | Vercel Pro                                                                                | fra1, staging+prod, instant rollback, spend controls | ~$20/mo                     |
+| Database                        | Supabase Pro, eu-central-1                                                                | 8 GB, daily backups 7-day, no pausing, Auth included | $25/mo                      |
+| Staging DB                      | Supabase Free #2                                                                          | 500 MB                                               | €0                          |
+| Rate limiting                   | Upstash Redis, EU region                                                                  | @upstash/ratelimit sliding window                    | €0–10/mo                    |
+| Object storage / backup offsite | Hetzner Object Storage (Falkenstein)                                                      | weekly encrypted `pg_dump`, 30-day retention         | ~€5/mo                      |
+| Monitoring                      | Sentry free + UptimeRobot free + Vercel logs                                              | errors, uptime, request logs                         | €0                          |
+| Security                        | Supabase Auth on all routes; tenant_id RLS; security headers; Dependabot; secret scanning | —                                                    | €0                          |
+| **Total fixed**                 |                                                                                           |                                                      | **~€50–60/mo** (+ AI usage) |
 
 **Code changes required (all in-repo, no re-architecture):**
+
 1. **Auth:** Supabase Auth; middleware verifies session JWT on `/api/history*` (all methods) and `POST /api/search`; server routes read the user from the token, not the service key path.
 2. **Schema v2:** add `user_id uuid references auth.users`, `tenant_id uuid`; RLS: `using (tenant_id = auth.jwt()->>'tenant_id')`-style policies; drop the wipe-all path — replace with scoped deletes.
 3. **Rate limit:** swap in-memory Map for Upstash sliding-window (per-user for authed routes, per-IP for public pages); keep spend caps at providers.
@@ -111,14 +113,14 @@ Grafana + Loki + Prometheus (small VM) or BetterStack — metrics/logs/alerts
 LLM: OpenAI EU data residency, or Azure OpenAI (Germany West Central / Sweden Central), or Mistral (FR)
 ```
 
-| Component | Spec | Cost |
-|---|---|---|
-| 2× Hetzner CPX31 + LB | 4 vCPU / 8 GB / 160 GB NVMe each | ~€35/mo |
-| Managed Postgres (EU) or replica pair | 2 vCPU / 8 GB, daily backups + WAL | €30–80/mo |
-| Object storage + offsite backup | 1 TB class | ~€10/mo |
-| Monitoring stack | small VM or BetterStack | €5–30/mo |
-| WAF/CDN | Cloudflare Pro or bunny.net | €0–20/mo |
-| **Total fixed** | | **~€90–180/mo** (+ AI usage) |
+| Component                             | Spec                               | Cost                         |
+| ------------------------------------- | ---------------------------------- | ---------------------------- |
+| 2× Hetzner CPX31 + LB                 | 4 vCPU / 8 GB / 160 GB NVMe each   | ~€35/mo                      |
+| Managed Postgres (EU) or replica pair | 2 vCPU / 8 GB, daily backups + WAL | €30–80/mo                    |
+| Object storage + offsite backup       | 1 TB class                         | ~€10/mo                      |
+| Monitoring stack                      | small VM or BetterStack            | €5–30/mo                     |
+| WAF/CDN                               | Cloudflare Pro or bunny.net        | €0–20/mo                     |
+| **Total fixed**                       |                                    | **~€90–180/mo** (+ AI usage) |
 
 **Migration B→C (Path 2):** containerize (`output: 'standalone'` in `next.config.js`, Dockerfile, Caddy TLS); replace Supabase Auth with Keycloak/Auth.js or keep Supabase solely as auth+DB (hybrid); `pg_dump`/restore Supabase → EU Postgres during a maintenance window (data volumes are tiny); cut DNS over; keep Vercel as instant-rollback fallback for 30 days.
 
