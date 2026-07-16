@@ -245,6 +245,29 @@ All other Governor variants are now methodologies/departments within Governor Ω
 - `docs/governance/INTEGRATION_TEST_STANDARD.md`
 - `.husky/pre-push` (enforcement hook)
 - STAGE 3 (Engineering Standards) roadmap
+- `docs/governor/PROJECT_STATE.md` (Phase 3.2 metrics)
+
+**Phase 3.2 Progress** (Standards Enforcement):
+- ✅ 10 high-impact customer-facing API routes refactored:
+  - `/api/assessments/route.ts`, `/api/assessments/[id]/route.ts`
+  - `/api/team/route.ts`, `/api/team/[id]/route.ts`
+  - `/api/obligations/route.ts`, `/api/obligations/[id]/route.ts`
+  - `/api/evidence/route.ts`, `/api/evidence/[id]/route.ts`
+  - `/api/ai-systems/[id]/route.ts`
+- ✅ 12 console.error→logger replacements
+- ✅ 10 manual validation→validators conversions
+- ✅ 10 type safety improvements (removed `any` types)
+- ✅ 10 membership/auth error handling improvements
+- 🟡 Internal monitoring routes (health, deployment-canary, compliance-dashboard) pending
+- 🟡 Critical lib/ modules (risk-assessment, auth) pending standards application
+
+**Refactoring Pattern** (consistent across all routes):
+1. Import logger and validators modules
+2. Define typed Request interface (replacing `any`)
+3. Replace manual validation with validators.enum/string/object
+4. Replace console.error with logger.error(message, ERROR_CODE, error)
+5. Add proper error handling for all async operations
+6. Standardize status codes: 400→validation, 403→forbidden, 404→not found, 500→error
 
 ---
 
