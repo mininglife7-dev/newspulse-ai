@@ -31,7 +31,8 @@ are never requested from the Founder.
   and `docs/governance/FINAL-PRODUCTION-GO-CERTIFICATION-2026-07-16.md`.
 - **Expected outcome:** post-merge dispatch of "Deploy Supabase Schema"
   completes green (idempotent re-deploy), proving no regression.
-- **Actual outcome:** (record run ID on completion)
+- **Actual outcome:** Proving dispatch run `29499904621` completed
+  success on the restored workflow — no regression; mission complete.
 - **Status:** Active. First mission executed under the Memory Kernel
   (`NEXT_ACTION.md`).
 
