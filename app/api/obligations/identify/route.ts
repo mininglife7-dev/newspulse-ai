@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { logger, measureDuration } from '@/lib/logger';
 import { sendEmail } from '@/lib/email';
 import { obligationAssigned } from '@/lib/email-templates';
+import { triggerWebhooks } from '@/lib/webhook';
 
 export const runtime = 'nodejs';
 
@@ -250,6 +251,38 @@ export async function POST(req: NextRequest) {
       logger.warn('Email notification failed for obligation creation', {
         requestId,
         error: emailError.message,
+      });
+    }
+
+    // Trigger webhooks for each created obligation
+    try {
+      for (const obligation of createdObligations || []) {
+        triggerWebhooks(
+          body.workspace_id,
+          'obligation.created',
+          'obligation',
+          obligation.id,
+          {
+            id: obligation.id,
+            title: obligation.title,
+            category: obligation.category,
+            priority: obligation.priority,
+            deadline_days: obligation.deadline_days,
+            status: obligation.status,
+            ai_system_id: body.ai_system_id,
+          }
+        ).catch((err) => {
+          logger.warn('Webhook trigger failed for obligation creation', {
+            requestId,
+            obligationId: obligation.id,
+            error: err.message,
+          });
+        });
+      }
+    } catch (webhookError: any) {
+      logger.warn('Webhook notification failed for obligation creation', {
+        requestId,
+        error: webhookError.message,
       });
     }
 
