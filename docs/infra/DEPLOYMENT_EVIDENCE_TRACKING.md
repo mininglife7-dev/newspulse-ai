@@ -13,7 +13,7 @@
 
 ### Credential Verification
 
-- [ ] Supabase URL obtained: `https://yrroytwfdrafvajdfkok.supabase.co`
+- [ ] Supabase URL obtained: `https://yrroytwfdrafvajdfkog.supabase.co`
 - [ ] Anon Key obtained: `eyJ...` (masked for security)
 - [ ] Service Role Key obtained: `eyJ...` (masked for security)
 - [ ] All credentials stored securely (not in code/logs)
