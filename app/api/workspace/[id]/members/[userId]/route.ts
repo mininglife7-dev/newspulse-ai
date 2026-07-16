@@ -22,7 +22,9 @@ export async function PATCH(
   }
 
   const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json(
@@ -104,7 +106,10 @@ export async function PATCH(
     // Handle reject action
     if (body.action === 'reject') {
       // Only the invited user can reject, or owner/admin
-      if (targetMember.user_id !== user.id && !['owner', 'admin'].includes(userMembership?.role || '')) {
+      if (
+        targetMember.user_id !== user.id &&
+        !['owner', 'admin'].includes(userMembership?.role || '')
+      ) {
         return NextResponse.json(
           { ok: false, error: 'Access denied' },
           { status: 403 }
@@ -128,9 +133,15 @@ export async function PATCH(
     // Handle remove action
     if (body.action === 'remove') {
       // Only owner/admin can remove
-      if (!userMembership || !['owner', 'admin'].includes(userMembership.role)) {
+      if (
+        !userMembership ||
+        !['owner', 'admin'].includes(userMembership.role)
+      ) {
         return NextResponse.json(
-          { ok: false, error: 'Only workspace owners/admins can remove members' },
+          {
+            ok: false,
+            error: 'Only workspace owners/admins can remove members',
+          },
           { status: 403 }
         );
       }
@@ -138,7 +149,10 @@ export async function PATCH(
       // Cannot remove self
       if (targetMember.user_id === user.id) {
         return NextResponse.json(
-          { ok: false, error: 'Cannot remove yourself. Transfer ownership first.' },
+          {
+            ok: false,
+            error: 'Cannot remove yourself. Transfer ownership first.',
+          },
           { status: 409 }
         );
       }
@@ -168,7 +182,10 @@ export async function PATCH(
 
       if (!body.role || !['admin', 'member', 'viewer'].includes(body.role)) {
         return NextResponse.json(
-          { ok: false, error: 'Valid role is required (admin, member, or viewer)' },
+          {
+            ok: false,
+            error: 'Valid role is required (admin, member, or viewer)',
+          },
           { status: 400 }
         );
       }
@@ -198,7 +215,10 @@ export async function PATCH(
     }
 
     return NextResponse.json(
-      { ok: false, error: 'action is required (accept, reject, remove, or change_role)' },
+      {
+        ok: false,
+        error: 'action is required (accept, reject, remove, or change_role)',
+      },
       { status: 400 }
     );
   } catch (error) {

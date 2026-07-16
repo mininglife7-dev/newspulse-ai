@@ -26,23 +26,25 @@
 **Why:** The schema uses idempotent patterns (DROP IF EXISTS), but we verify the database is truly clean first.
 
 ### Step 1: Open SQL Editor
+
 1. Click **SQL Editor** in left sidebar
 2. Click **New Query**
 3. Paste this query:
 
 ```sql
 -- PREFLIGHT_CHECK: Verify database is empty before schema deployment
-SELECT 
-  (SELECT COUNT(*) FROM information_schema.tables 
+SELECT
+  (SELECT COUNT(*) FROM information_schema.tables
    WHERE table_schema = 'public') AS existing_tables,
-  (SELECT COUNT(*) FROM information_schema.indexes 
+  (SELECT COUNT(*) FROM information_schema.indexes
    WHERE schemaname = 'public') AS existing_indexes,
-  (SELECT COUNT(*) FROM information_schema.constraint_column_usage 
+  (SELECT COUNT(*) FROM information_schema.constraint_column_usage
    WHERE table_schema = 'public') AS existing_policies;
 ```
 
 4. Click **Run** (or Ctrl+Enter)
 5. **Expected result:**
+
    ```
    existing_tables | existing_indexes | existing_policies
    0               | 0                | 0
@@ -58,11 +60,13 @@ SELECT
 ## Part 3: Deploy Database Schema (5 min)
 
 ### Step 1: Copy the schema file
+
 1. Open this file in your editor: `/home/user/newspulse-ai/supabase/schema.sql`
 2. Select all text (Ctrl+A / Cmd+A)
 3. Copy to clipboard (Ctrl+C / Cmd+C)
 
 ### Step 2: Paste into Supabase SQL Editor
+
 1. Go back to Supabase SQL Editor
 2. Click **New Query** (create a fresh query window)
 3. Delete any placeholder text
@@ -70,49 +74,53 @@ SELECT
 5. **You should see approximately 850 lines of SQL**
 
 ### Step 3: Execute the schema
+
 1. Click **Run** button (or Ctrl+Enter)
 2. **Expected:** "Query executed successfully" message at bottom
 3. **Timing:** Should complete in 30-60 seconds
 4. **Progress indicator:** Blue progress bar at bottom
 
 ### Step 4: Handle any errors (if they occur)
+
 **If you see an error message:**
 
-| Error | Meaning | Fix |
-|-------|---------|-----|
-| `relation "X" already exists` | Table/index duplicate | Run DROP CASCADE, then re-run schema |
-| `syntax error at line N` | SQL syntax problem | Don't edit; report to Governor |
-| `permission denied for schema public` | Auth issue | Check RLS policies; may need service role key |
-| `connection timeout` | Network issue | Wait 30s, try again |
+| Error                                 | Meaning               | Fix                                           |
+| ------------------------------------- | --------------------- | --------------------------------------------- |
+| `relation "X" already exists`         | Table/index duplicate | Run DROP CASCADE, then re-run schema          |
+| `syntax error at line N`              | SQL syntax problem    | Don't edit; report to Governor                |
+| `permission denied for schema public` | Auth issue            | Check RLS policies; may need service role key |
+| `connection timeout`                  | Network issue         | Wait 30s, try again                           |
 
 ---
 
 ## Part 4: Post-Deployment Verification (5 min)
 
 ### Step 1: Verify all objects created
+
 1. Click **New Query** in SQL Editor
 2. Paste this verification script:
 
 ```sql
 -- POST_DEPLOYMENT_VERIFICATION: Confirm all schema objects
-SELECT 
+SELECT
   'Tables' AS object_type, COUNT(*) AS count
-FROM information_schema.tables 
+FROM information_schema.tables
 WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
 UNION ALL
-SELECT 
+SELECT
   'Indexes', COUNT(*)
-FROM information_schema.indexes 
+FROM information_schema.indexes
 WHERE schemaname = 'public'
 UNION ALL
-SELECT 
+SELECT
   'RLS Policies', COUNT(*)
-FROM information_schema.constraint_column_usage 
+FROM information_schema.constraint_column_usage
 WHERE table_schema = 'public';
 ```
 
 3. Click **Run**
 4. **Expected result:**
+
    ```
    object_type  | count
    Tables       | 15
@@ -127,11 +135,12 @@ WHERE table_schema = 'public';
    - If mismatch: Re-run schema.sql (idempotent pattern handles this)
 
 ### Step 2: Spot-check key tables exist
+
 1. Click **New Query**
 2. Paste:
 
 ```sql
-SELECT tablename FROM pg_tables 
+SELECT tablename FROM pg_tables
 WHERE schemaname = 'public' ORDER BY tablename;
 ```
 
@@ -150,6 +159,7 @@ WHERE schemaname = 'public' ORDER BY tablename;
 ## Part 5: Security Validation (5 min)
 
 ### Step 1: Verify Row-Level Security (RLS)
+
 1. Click **New Query**
 2. Paste this security test:
 
@@ -168,13 +178,14 @@ RESET role;
 5. **If you get permission denied error:** Good! RLS is working (that's what we want)
 
 ### Step 2: Verify multi-tenant isolation
+
 1. Click **New Query**
 2. Paste:
 
 ```sql
 -- SECURITY_TEST: Verify service role can see schema
 SET role service_role;
-SELECT COUNT(*) FROM information_schema.tables 
+SELECT COUNT(*) FROM information_schema.tables
 WHERE table_schema = 'public';
 RESET role;
 ```
@@ -187,7 +198,9 @@ RESET role;
 ## Part 6: Complete and Verify Access from App
 
 ### Step 1: Configure app environment
+
 In your `.env.local` (or Vercel env vars), confirm:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://yrroytwfdrafvajdfkog.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon_key_from_supabase_dashboard>
@@ -195,6 +208,7 @@ SUPABASE_SERVICE_ROLE_KEY=<service_role_key_from_supabase_dashboard>
 ```
 
 ### Step 2: Test from app
+
 1. Restart your local dev server: `npm run dev`
 2. Try to sign up: `/auth/signup`
 3. You should be able to:
@@ -207,13 +221,13 @@ SUPABASE_SERVICE_ROLE_KEY=<service_role_key_from_supabase_dashboard>
 
 ## Troubleshooting Guide
 
-| Symptom | Root Cause | Fix |
-|---------|-----------|-----|
-| **"relation does not exist"** | Schema not deployed | Run Part 3 again |
-| **Signup fails with 403** | RLS policies blocking auth | Verify NEXT_PUBLIC_SUPABASE_ANON_KEY is correct |
-| **Can't see my data in app** | Workspace isolation or auth issue | Check workspaces table and workspace_members |
-| **Slow queries on workspaces** | Missing indexes | Verify indexes created (Part 4, Step 2) |
-| **"permission denied" in SQL Editor** | Role/auth issue | Use default role; don't manually SET ROLE |
+| Symptom                               | Root Cause                        | Fix                                             |
+| ------------------------------------- | --------------------------------- | ----------------------------------------------- |
+| **"relation does not exist"**         | Schema not deployed               | Run Part 3 again                                |
+| **Signup fails with 403**             | RLS policies blocking auth        | Verify NEXT_PUBLIC_SUPABASE_ANON_KEY is correct |
+| **Can't see my data in app**          | Workspace isolation or auth issue | Check workspaces table and workspace_members    |
+| **Slow queries on workspaces**        | Missing indexes                   | Verify indexes created (Part 4, Step 2)         |
+| **"permission denied" in SQL Editor** | Role/auth issue                   | Use default role; don't manually SET ROLE       |
 
 ---
 
@@ -246,6 +260,7 @@ SUPABASE_SERVICE_ROLE_KEY=<service_role_key_from_supabase_dashboard>
 ## Support
 
 **If something goes wrong:**
+
 1. Check Troubleshooting Guide above
 2. Screenshot the error
 3. Check: `docs/infra/DEPLOYMENT_READINESS_REPORT.md` for context
@@ -256,6 +271,7 @@ SUPABASE_SERVICE_ROLE_KEY=<service_role_key_from_supabase_dashboard>
    - Screenshot if possible
 
 **Rollback (if needed):**
+
 - The schema uses DROP IF EXISTS patterns, so re-running is safe
 - To completely start over:
   - Go to Supabase: Settings → Danger Zone → Delete Database

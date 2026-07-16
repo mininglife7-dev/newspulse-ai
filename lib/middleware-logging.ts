@@ -97,7 +97,9 @@ export async function withLogging(
  * Middleware to extract user info from auth headers/cookies
  * Returns userId if available, undefined otherwise
  */
-export async function extractUserIdFromAuth(req: NextRequest): Promise<string | undefined> {
+export async function extractUserIdFromAuth(
+  req: NextRequest
+): Promise<string | undefined> {
   try {
     // Try to extract from Authorization header (Bearer token)
     const auth = req.headers.get('authorization');
@@ -118,25 +120,16 @@ export async function extractUserIdFromAuth(req: NextRequest): Promise<string | 
  * Reduces boilerplate in route handlers
  */
 export function createApiLogger(options: Partial<LoggingOptions>) {
-  return (
-    handler: (
-      req: NextRequest,
-      ...args: any[]
-    ) => Promise<Response>
-  ) => {
+  return (handler: (req: NextRequest, ...args: any[]) => Promise<Response>) => {
     return async (req: NextRequest, ...args: any[]) => {
       const userId = await extractUserIdFromAuth(req);
 
-      return withLogging(
-        req,
-        () => handler(req, ...args),
-        {
-          endpoint: options.endpoint || req.nextUrl.pathname,
-          method: options.method || req.method,
-          userId: userId || options.userId,
-          workspaceId: options.workspaceId,
-        }
-      );
+      return withLogging(req, () => handler(req, ...args), {
+        endpoint: options.endpoint || req.nextUrl.pathname,
+        method: options.method || req.method,
+        userId: userId || options.userId,
+        workspaceId: options.workspaceId,
+      });
     };
   };
 }

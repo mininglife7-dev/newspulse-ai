@@ -7,6 +7,33 @@ are never requested from the Founder.
 
 ---
 
+## DR-0021 — Gate all internal ops/telemetry API endpoints behind ADMIN_TOKEN
+
+- **Decision:** Extend the auth middleware and per-route guards so no internal
+  governance, monitoring, or telemetry surface is reachable by anonymous callers.
+  Added `/compliance`, `/obligations`, `/evidence`, `/team`, `/hercules` (+ its
+  `/api/hercules/*` namespace) to `PROTECTED_PREFIXES`, and applied
+  `requireAdminToken` to eight API routes that had none: knowledge,
+  error-tracking, schema-migrations, incident-response, deployment-canary,
+  feature-flags, autonomous-remediation, deployment-verification.
+- **Reason:** A production-boot probe (no credentials) found customer-workspace
+  pages rendering publicly and internal endpoints — including the organizational
+  decision log and mutating remediation/verification actions — served to anyone.
+  For an EU-AI-Act compliance product this is a direct information-disclosure and
+  integrity exposure. Independent Codex review flagged the `/api/hercules` gap as
+  P1; fixed in the same PR.
+- **Evidence:** `tests/api-internal-auth.test.ts` pins 401-for-anonymous on every
+  guarded endpoint; `scripts/smoke-test.mjs` now asserts the full protected-page
+  matrix (21 checks) against a real credential-less production boot on every CI
+  run; verified locally — all ten internal endpoints return 401. No crons or
+  workflows reference the guarded routes (only `/api/ceis/run` is scheduled), so
+  nothing breaks. Full suite 1150/1150.
+- **Confidence:** High
+- **Risk assessment:** Low — additive guards; the sole callers of the gated
+  routes are same-origin fetches from already-protected pages (cookies flow
+  through middleware). Reversible per-route.
+- **Timestamp:** 2026-07-16 (PR #144)
+
 ## DR-0020 — Autonomous merge of PR #113: four silent-404 workflows repaired + route-coverage guard
 
 - **Decision:** Under DNA-GOV-216 and the Founder's explicit MISSION RESPONSE

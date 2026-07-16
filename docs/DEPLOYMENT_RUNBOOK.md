@@ -192,7 +192,7 @@ npx supabase db push --linked
 
 ```bash
 # Verify migration applied
-select * from information_schema.tables 
+select * from information_schema.tables
 where table_name = '[new_table_name]';
 
 # Verify data integrity
@@ -226,18 +226,21 @@ curl https://newspulse-ai.vercel.app/api/health
 Test core workflows manually:
 
 **Workspace Creation:**
+
 1. Navigate to https://newspulse-ai.vercel.app
 2. Sign in or create account
 3. Create workspace: "Test Company Inc."
 4. Verify workspace appears in dashboard
 
 **Assessment Creation:**
+
 1. Go to Assessments tab
 2. Click "New Assessment"
 3. Create: AI System "test-gpt4", Risk Level "High", Score 75
 4. Verify assessment appears in list
 
 **Team Invitation:**
+
 1. Go to Settings → Team Members
 2. Click "Invite Member"
 3. Invite: "test-colleague@example.com", Role "member"
@@ -377,6 +380,7 @@ git push origin main --force-with-lease
 ### First Day (Ongoing Monitoring)
 
 **Schedule:**
+
 - 8:00 AM: Morning check (all green?)
 - 12:00 PM: Midday check
 - 3:00 PM: Afternoon check
@@ -423,6 +427,7 @@ git push origin main --force-with-lease
 # NewsPulse AI v1.0.0 — July 15, 2026
 
 ## Features ✨
+
 - Workspace management with atomic RPC transactions
 - Team member invitation with role-based access control
 - AI system risk assessments (CRUD operations)
@@ -430,22 +435,27 @@ git push origin main --force-with-lease
 - Comprehensive API client SDK (TypeScript)
 
 ## Fixes 🐛
+
 - [MAJOR-2] Removed unused current_workspace_id column
 - [CRITICAL-1] Added server-side idempotency check
 
 ## Breaking Changes ⚠️
+
 None in this release.
 
 ## Known Issues 🚧
+
 - Bulk assessment export (coming Q3 2026)
 - SSO integration (coming Q4 2026)
 
 ## Documentation 📚
+
 - [API Client Guide](./API_CLIENT_GUIDE.md)
 - [Customer Onboarding](./CUSTOMER_ONBOARDING_GUIDE.md)
 - [Deployment Runbook](./DEPLOYMENT_RUNBOOK.md)
 
 ## Rollout
+
 - Timeline: 7/15/2026 2:00 PM UTC
 - Downtime: 0 minutes (zero-downtime deployment)
 - Rollback plan: Available in Vercel dashboard
@@ -458,6 +468,7 @@ Deployed by: Governor (Claude AI)
 **Before Deployment (4 hours):**
 
 Slack #announcements:
+
 ```
 🚀 NewsPulse AI v1.0.0 deploying today at 2:00 PM UTC
 Features: Workspace management, team members, assessments
@@ -468,6 +479,7 @@ Release notes: [link]
 **After Deployment (15 minutes):**
 
 Slack #announcements:
+
 ```
 ✅ NewsPulse AI v1.0.0 deployed successfully!
 Health: ✅ All systems green
@@ -479,6 +491,7 @@ Start testing: [link to dashboard]
 **If Rollback Needed:**
 
 Slack #alerts:
+
 ```
 🔄 Rolling back NewsPulse AI due to [reason]
 Rollback commit: [sha]
@@ -493,11 +506,13 @@ Status page: [link]
 ### Issue: Build Fails with TypeScript Error
 
 **Error Message:**
+
 ```
 error TS2339: Property 'X' does not exist
 ```
 
 **Solution:**
+
 1. Fix TypeScript error locally: `npm run type-check`
 2. Commit fix: `git add . && git commit -m "fix: [error]"`
 3. Push to main: `git push origin main`
@@ -508,6 +523,7 @@ error TS2339: Property 'X' does not exist
 **Error:** `"database": "degraded"`
 
 **Solution:**
+
 1. Check Supabase console for connection issues
 2. Verify SUPABASE_URL and keys are correct
 3. Restart Vercel deployment: Go to Vercel → Deployments → Redeploy
@@ -518,6 +534,7 @@ error TS2339: Property 'X' does not exist
 **Error:** `Migration 20260715_xxx.sql failed`
 
 **Solution:**
+
 1. Check Supabase dashboard for error details
 2. Revert migration: Delete migration file, reset DB
 3. Fix SQL syntax and try again
@@ -528,6 +545,7 @@ error TS2339: Property 'X' does not exist
 **Symptom:** Response times increase after deployment
 
 **Solution:**
+
 1. Check database connection pool: Supabase console
 2. Check query performance: Supabase monitoring
 3. Check for new N+1 queries in code
@@ -579,15 +597,18 @@ Deployment is successful when:
 ## Emergency Contacts
 
 **On-Call Engineer:**
+
 - Name: [TBD]
 - Phone: [TBD]
 - Email: [TBD]
 
 **Escalation:**
+
 - Lead: [TBD]
 - CTO: [TBD]
 
 **External Contacts:**
+
 - Vercel Support: https://vercel.com/help
 - Supabase Support: https://supabase.com/support
 

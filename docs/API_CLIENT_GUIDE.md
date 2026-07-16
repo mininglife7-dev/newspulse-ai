@@ -41,7 +41,7 @@ if (response.ok && response.data) {
 const response = await apiClient.assessments.list();
 
 if (response.ok && response.data) {
-  response.data.forEach(assessment => {
+  response.data.forEach((assessment) => {
     console.log(`${assessment.id}: ${assessment.risk_level}`);
   });
 }
@@ -67,9 +67,11 @@ if (response.ok) {
 ### Assessment Client
 
 #### `create(options)`
+
 Create a new risk assessment.
 
 **Parameters:**
+
 ```typescript
 {
   ai_system_id: string;                    // Required: ID of AI system
@@ -86,6 +88,7 @@ Create a new risk assessment.
 ```
 
 **Returns:**
+
 ```typescript
 Promise<ApiResponse<Assessment>> where Assessment = {
   id: string;
@@ -101,6 +104,7 @@ Promise<ApiResponse<Assessment>> where Assessment = {
 ```
 
 **Errors:**
+
 - `400` — Missing required fields or invalid risk_level
 - `401` — User not authenticated
 - `404` — AI system not found in workspace
@@ -109,31 +113,38 @@ Promise<ApiResponse<Assessment>> where Assessment = {
 ---
 
 #### `list()`
+
 Fetch all assessments in user's current workspace.
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<Assessment[]>>
+Promise<ApiResponse<Assessment[]>>;
 ```
 
 **Errors:**
+
 - `401` — User not authenticated
 - `409` — No workspace
 
 ---
 
 #### `get(id)`
+
 Fetch a single assessment by ID.
 
 **Parameters:**
+
 - `id: string` — Assessment ID
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<Assessment>>
+Promise<ApiResponse<Assessment>>;
 ```
 
 **Errors:**
+
 - `401` — User not authenticated
 - `404` — Assessment not found
 - `403` — Access denied (not in workspace)
@@ -141,13 +152,16 @@ Promise<ApiResponse<Assessment>>
 ---
 
 #### `update(id, options)`
+
 Update assessment fields (partial update supported).
 
 **Parameters:**
+
 - `id: string` — Assessment ID
 - `options: Partial<Assessment>` — Fields to update
 
 **Example:**
+
 ```typescript
 await apiClient.assessments.update('assessment-123', {
   risk_level: 'medium',
@@ -156,11 +170,13 @@ await apiClient.assessments.update('assessment-123', {
 ```
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<Assessment>>
+Promise<ApiResponse<Assessment>>;
 ```
 
 **Errors:**
+
 - `400` — Invalid risk_level
 - `401` — User not authenticated
 - `404` — Assessment not found
@@ -169,17 +185,21 @@ Promise<ApiResponse<Assessment>>
 ---
 
 #### `delete(id)`
+
 Delete an assessment.
 
 **Parameters:**
+
 - `id: string` — Assessment ID
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<void>>
+Promise<ApiResponse<void>>;
 ```
 
 **Errors:**
+
 - `401` — User not authenticated
 - `404` — Assessment not found
 - `403` — Access denied
@@ -189,12 +209,15 @@ Promise<ApiResponse<void>>
 ### Team Client
 
 #### `listMembers(workspaceId)`
+
 Fetch all members in a workspace.
 
 **Parameters:**
+
 - `workspaceId: string` — Workspace ID
 
 **Returns:**
+
 ```typescript
 Promise<ApiResponse<WorkspaceMember[]>> where WorkspaceMember = {
   id: string;
@@ -209,15 +232,18 @@ Promise<ApiResponse<WorkspaceMember[]>> where WorkspaceMember = {
 ```
 
 **Errors:**
+
 - `401` — User not authenticated
 - `403` — Not a member of workspace
 
 ---
 
 #### `invite(workspaceId, options)`
+
 Invite a new member to workspace.
 
 **Parameters:**
+
 ```typescript
 {
   email: string;                           // Required: Email address
@@ -229,11 +255,13 @@ Invite a new member to workspace.
 ```
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<WorkspaceMember>>
+Promise<ApiResponse<WorkspaceMember>>;
 ```
 
 **Errors:**
+
 - `400` — Invalid email format
 - `401` — User not authenticated
 - `403` — Only owner/admin can invite
@@ -242,18 +270,22 @@ Promise<ApiResponse<WorkspaceMember>>
 ---
 
 #### `acceptInvitation(workspaceId, memberId)`
+
 Accept a pending invitation (invited user only).
 
 **Parameters:**
+
 - `workspaceId: string` — Workspace ID
 - `memberId: string` — Membership record ID
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<WorkspaceMember>>
+Promise<ApiResponse<WorkspaceMember>>;
 ```
 
 **Errors:**
+
 - `401` — User not authenticated
 - `404` — Invitation not found
 - `409` — Invitation not pending
@@ -261,36 +293,44 @@ Promise<ApiResponse<WorkspaceMember>>
 ---
 
 #### `rejectInvitation(workspaceId, memberId)`
+
 Reject or delete an invitation.
 
 **Parameters:**
+
 - `workspaceId: string` — Workspace ID
 - `memberId: string` — Membership record ID
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<void>>
+Promise<ApiResponse<void>>;
 ```
 
 **Errors:**
+
 - `401` — User not authenticated
 - `404` — Invitation not found
 
 ---
 
 #### `removeMember(workspaceId, memberId)`
+
 Remove a member from workspace (owner/admin only).
 
 **Parameters:**
+
 - `workspaceId: string` — Workspace ID
 - `memberId: string` — Membership record ID
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<void>>
+Promise<ApiResponse<void>>;
 ```
 
 **Errors:**
+
 - `401` — User not authenticated
 - `403` — Only owner/admin can remove
 - `409` — Cannot remove yourself
@@ -299,19 +339,23 @@ Promise<ApiResponse<void>>
 ---
 
 #### `changeRole(workspaceId, memberId, role)`
+
 Change member's role (owner only).
 
 **Parameters:**
+
 - `workspaceId: string` — Workspace ID
 - `memberId: string` — Membership record ID
 - `role: 'admin' | 'member' | 'viewer'` — New role
 
 **Returns:**
+
 ```typescript
-Promise<ApiResponse<WorkspaceMember>>
+Promise<ApiResponse<WorkspaceMember>>;
 ```
 
 **Errors:**
+
 - `400` — Invalid role
 - `401` — User not authenticated
 - `403` — Only owner can change roles
@@ -506,7 +550,7 @@ import { handleApiError } from '@/lib/api-client';
 
 async function doSomething() {
   const response = await apiClient.assessments.create({...});
-  
+
   const error = handleApiError(response);
   if (error) {
     console.error('API Error:', error.message);
@@ -549,4 +593,4 @@ See `tests/api-client.test.ts` for comprehensive usage examples and test pattern
 
 ---
 
-*Last Updated: 2026-07-15*
+_Last Updated: 2026-07-15_

@@ -27,18 +27,21 @@ This guide documents monitoring, alerting, and observability setup for productio
 Vercel provides native observability for all deployments:
 
 **1. Web Vitals**
+
 - First Contentful Paint (FCP)
 - Largest Contentful Paint (LCP)
 - Cumulative Layout Shift (CLS)
 - Time to Interactive (TTI)
 
 **2. API Route Performance**
+
 - Response time per endpoint
 - Status code distribution
 - Error rates by route
 - Request volume
 
 **3. Deployment Status**
+
 - Build success/failure
 - Build duration
 - Preview URL availability
@@ -130,29 +133,29 @@ Alert on Failure:       After 2 consecutive failures
 
 **Workspace Creation (POST /api/workspace)**
 
-| Metric | Target | Alert Threshold | Notes |
-|--------|--------|-----------------|-------|
-| Response Time (P95) | < 1s | > 2s | RPC timeout guard: 25s |
-| Success Rate | > 99% | < 98% | Expected: 100% on non-network failures |
-| Error Rate | < 0.5% | > 1% | Investigate: auth, RLS, DB connection |
-| Requests/min (peak) | 10-50 | > 100 | Scale plan: add database connections |
+| Metric              | Target | Alert Threshold | Notes                                  |
+| ------------------- | ------ | --------------- | -------------------------------------- |
+| Response Time (P95) | < 1s   | > 2s            | RPC timeout guard: 25s                 |
+| Success Rate        | > 99%  | < 98%           | Expected: 100% on non-network failures |
+| Error Rate          | < 0.5% | > 1%            | Investigate: auth, RLS, DB connection  |
+| Requests/min (peak) | 10-50  | > 100           | Scale plan: add database connections   |
 
 **Assessment CRUD (POST/GET/PATCH/DELETE)**
 
-| Metric | Target | Alert Threshold | Notes |
-|--------|--------|-----------------|-------|
-| GET /api/assessment (list) | < 500ms | > 1s | RLS filtering adds overhead |
-| POST /api/assessment (create) | < 1s | > 2s | Atomic transaction via RPC |
-| PATCH /api/assessment/:id (update) | < 800ms | > 2s | Partial updates via PATCH |
-| DELETE /api/assessment/:id | < 500ms | > 1s | Hard delete (no soft delete) |
+| Metric                             | Target  | Alert Threshold | Notes                        |
+| ---------------------------------- | ------- | --------------- | ---------------------------- |
+| GET /api/assessment (list)         | < 500ms | > 1s            | RLS filtering adds overhead  |
+| POST /api/assessment (create)      | < 1s    | > 2s            | Atomic transaction via RPC   |
+| PATCH /api/assessment/:id (update) | < 800ms | > 2s            | Partial updates via PATCH    |
+| DELETE /api/assessment/:id         | < 500ms | > 1s            | Hard delete (no soft delete) |
 
 **Team Member Management**
 
-| Metric | Target | Alert Threshold | Notes |
-|--------|--------|-----------------|-------|
-| Invitation (POST) | < 1s | > 2s | Triggers email via Resend |
-| Accept Invitation (PATCH) | < 800ms | > 2s | Status transition only |
-| Remove Member (PATCH) | < 500ms | > 1s | Hard delete from workspace_members |
+| Metric                    | Target  | Alert Threshold | Notes                              |
+| ------------------------- | ------- | --------------- | ---------------------------------- |
+| Invitation (POST)         | < 1s    | > 2s            | Triggers email via Resend          |
+| Accept Invitation (PATCH) | < 800ms | > 2s            | Status transition only             |
+| Remove Member (PATCH)     | < 500ms | > 1s            | Hard delete from workspace_members |
 
 ### Implementation (Synthetic Monitoring)
 
@@ -174,25 +177,31 @@ async function healthCheck() {
 
   try {
     // Test 1: Workspace creation idempotency
-    const workspaceRes = await fetch('https://newspulse-ai.vercel.app/api/workspace', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        companyName: 'Health Check Inc.',
-        country: 'US',
-        industry: 'Software',
-      }),
-    });
+    const workspaceRes = await fetch(
+      'https://newspulse-ai.vercel.app/api/workspace',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: 'Health Check Inc.',
+          country: 'US',
+          industry: 'Software',
+        }),
+      }
+    );
     results.workspace_create = workspaceRes.ok;
 
     // Test 2: Assessment list
-    const assessmentRes = await fetch('https://newspulse-ai.vercel.app/api/assessment');
+    const assessmentRes = await fetch(
+      'https://newspulse-ai.vercel.app/api/assessment'
+    );
     results.assessment_list = assessmentRes.ok;
 
     // Test 3: Team members endpoint
-    const teamRes = await fetch('https://newspulse-ai.vercel.app/api/workspace/test/members');
+    const teamRes = await fetch(
+      'https://newspulse-ai.vercel.app/api/workspace/test/members'
+    );
     results.team_members = teamRes.ok || teamRes.status === 401; // 401 is expected for unauthenticated
-
   } catch (error) {
     console.error('Health check failed:', error);
   }
@@ -202,7 +211,9 @@ async function healthCheck() {
 
 export async function GET(req: Request) {
   const results = await healthCheck();
-  const allHealthy = Object.values(results).slice(0, -1).every(v => v === true);
+  const allHealthy = Object.values(results)
+    .slice(0, -1)
+    .every((v) => v === true);
 
   return NextResponse.json(results, { status: allHealthy ? 200 : 503 });
 }
@@ -215,21 +226,25 @@ export async function GET(req: Request) {
 ### Key Metrics to Track
 
 **Connection Pool:**
+
 - Active connections (target: < 10)
 - Connection pool utilization (target: < 80%)
 - Connection timeouts (target: 0)
 
 **Query Performance:**
+
 - Query execution time (P95: < 500ms)
 - Slow queries (> 1s)
 - Query error rate (target: 0%)
 
 **Row Level Security (RLS):**
+
 - RLS policy violations (should be 0)
 - Auth failures (track trends)
 - Permission denials (expected, track volume)
 
 **Replication Lag:**
+
 - Read replica lag (target: < 100ms)
 - WAL queue size (monitor if high)
 
@@ -284,16 +299,14 @@ npm install @sentry/nextjs
 **Step 2: Initialize in `instrumentation.ts`**
 
 ```typescript
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     await Sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV,
-      integrations: [
-        new Sentry.Integrations.Http({ tracing: true }),
-      ],
+      integrations: [new Sentry.Integrations.Http({ tracing: true })],
       tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     });
   }
@@ -304,7 +317,7 @@ export async function register() {
 
 ```typescript
 // app/api/assessment/route.ts
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 export async function POST(req: Request) {
   try {
@@ -336,7 +349,11 @@ Use structured logging to capture context:
 
 ```typescript
 // lib/logger.ts
-export function log(level: 'info' | 'warn' | 'error', message: string, context?: Record<string, any>) {
+export function log(
+  level: 'info' | 'warn' | 'error',
+  message: string,
+  context?: Record<string, any>
+) {
   const entry = {
     timestamp: new Date().toISOString(),
     level,
@@ -357,29 +374,34 @@ export function log(level: 'info' | 'warn' | 'error', message: string, context?:
 ### Critical Events to Log
 
 **Authentication:**
+
 - User sign-up (info)
 - User sign-in (info)
 - Auth failures (warn)
 - Token refresh (debug)
 
 **Workspace Operations:**
+
 - Workspace creation (info)
 - Workspace deletion (warn)
 - Idempotency reuse (info)
 
 **Assessment Operations:**
+
 - Assessment created (info)
 - Assessment updated (info)
 - Assessment deleted (warn)
 - Assessment access denied (warn)
 
 **Database:**
+
 - RPC timeout (error)
 - Connection pool exhaustion (error)
 - RLS policy violation (warn)
 - Query timeout > 5s (warn)
 
 **Email (Resend):**
+
 - Invitation email sent (info)
 - Email delivery failed (error)
 
@@ -390,6 +412,7 @@ export function log(level: 'info' | 'warn' | 'error', message: string, context?:
 ### Alert Severity Levels
 
 **CRITICAL (Page On-Call):**
+
 - Service unavailable (HTTP 503)
 - Database connection pool exhausted
 - Authentication service down
@@ -397,18 +420,21 @@ export function log(level: 'info' | 'warn' | 'error', message: string, context?:
 - Response time P95 > 10s
 
 **HIGH (Notify Via Slack):**
+
 - Error rate > 5% in 5 minutes
 - Response time P95 > 2s
 - Database query timeout > 5s
 - RLS policy violation spike
 
 **MEDIUM (Log & Review):**
+
 - Error rate > 1% in 5 minutes
 - Response time P95 > 1s
 - Individual slow queries (> 1s)
 - Deployment failures
 
 **LOW (Monitor):**
+
 - Build duration increasing
 - Web Vitals degrading
 - New error types
@@ -416,19 +442,23 @@ export function log(level: 'info' | 'warn' | 'error', message: string, context?:
 ### Alert Routing
 
 **CRITICAL:**
+
 - SMS to on-call engineer
 - Slack #critical channel
 - Page via PagerDuty
 
 **HIGH:**
+
 - Slack #alerts channel
 - Email to team
 
 **MEDIUM:**
+
 - Slack #monitoring channel
 - Email digest (daily)
 
 **LOW:**
+
 - Slack thread
 - Dashboard only
 
@@ -504,6 +534,7 @@ Before Production Deployment:
 URL: https://vercel.com/dashboard/newspulse-ai
 
 **Tabs to Monitor:**
+
 - **Deployments:** Build status, deployment history
 - **Analytics:** Web Vitals, API performance
 - **Integrations:** GitHub integration status
@@ -513,6 +544,7 @@ URL: https://vercel.com/dashboard/newspulse-ai
 URL: https://app.supabase.com/
 
 **Pages to Monitor:**
+
 - **Settings → Database:** Connection pool, query logs
 - **Monitoring:** Metrics, alerts
 
@@ -521,6 +553,7 @@ URL: https://app.supabase.com/
 URL: https://sentry.io/organizations/newspulse-ai/
 
 **Views to Monitor:**
+
 - **Issues:** Error trends, new issues
 - **Performance:** Slow transactions, bottlenecks
 - **Releases:** Error rate per deployment
@@ -532,18 +565,22 @@ URL: https://sentry.io/organizations/newspulse-ai/
 ### SLOs (Service Level Objectives)
 
 **Availability:** 99.9% (43 minutes downtime/month)
+
 - Measured: `/api/health` returns 200
 - Excluded: Planned maintenance
 
 **Response Time (P95):** < 1 second
+
 - Measured: API route response time, including network
 - Excluded: Slow client connections
 
 **Error Rate:** < 0.5%
+
 - Measured: HTTP 5xx responses / total requests
 - Excluded: User errors (4xx)
 
 **RLS Enforcement:** 100%
+
 - Measured: No unauthorized data access in logs
 - Expected: 0 security incidents
 
@@ -552,24 +589,28 @@ URL: https://sentry.io/organizations/newspulse-ai/
 ## Part 12: Implementation Timeline
 
 **Week 1 (Pre-Production):**
+
 - [ ] Enable Vercel Analytics
 - [ ] Deploy health check endpoint
 - [ ] Configure Sentry
 - [ ] Set up structured logging
 
 **Week 2:**
+
 - [ ] Configure Supabase monitoring
 - [ ] Set up uptime monitoring
 - [ ] Create alert routing
 - [ ] Train team on dashboards
 
 **Week 3:**
+
 - [ ] Load test monitoring setup
 - [ ] Run incident simulation
 - [ ] Document runbooks
 - [ ] Final checklist review
 
 **Ongoing (Post-Production):**
+
 - [ ] Daily metrics review (first week)
 - [ ] Weekly metrics review (ongoing)
 - [ ] Monthly incident review
@@ -580,16 +621,19 @@ URL: https://sentry.io/organizations/newspulse-ai/
 ## Quick Reference
 
 **Dashboard URLs:**
+
 - Vercel: https://vercel.com/dashboard
 - Supabase: https://app.supabase.com
 - Sentry: https://sentry.io
 
 **Key Contacts:**
+
 - On-Call: [TBD]
 - Database: Supabase support
 - Errors: Sentry alerts
 
 **Escalation:**
+
 - CRITICAL: Immediate page
 - HIGH: Slack notification
 - MEDIUM: Slack thread + email digest

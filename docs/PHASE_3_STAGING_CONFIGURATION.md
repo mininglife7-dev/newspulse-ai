@@ -17,6 +17,7 @@
 **Why separate:** Staging database is isolated; data from staging cannot reach production under any circumstances.
 
 **Steps:**
+
 1. Log in to https://supabase.com
 2. Create new project or reuse existing staging project
 3. Note down: **Project URL** and **Anon Key** and **Service Role Key**
@@ -28,18 +29,19 @@
 
 ### 2. GitHub Secrets (For CI/CD Workflows)
 
-**Configuration Location:** 
+**Configuration Location:**
+
 - Go to: Repository → Settings → Secrets and variables → Actions
 - **NEVER** use Repository Secrets for tests that read from public artifacts
 - **Always use Repository Secrets** for sensitive values
 
 **Add these secrets** (Founder only, via GitHub UI):
 
-| Secret Name | Value | Source | Used By | Visibility |
-|-------------|-------|--------|---------|------------|
-| `SUPABASE_STAGING_URL` | Your Supabase staging project URL | Supabase project settings | CI workflows, integration tests | ❌ Secret |
-| `SUPABASE_STAGING_ANON_KEY` | Staging anon key (public-safe) | Supabase project → Settings → API Keys | Integration tests, preview builds | ✅ Variable* |
-| `SUPABASE_STAGING_SERVICE_ROLE_KEY` | Staging service role key (admin) | Supabase project → Settings → API Keys | Admin test operations, backfill | ❌ Secret |
+| Secret Name                         | Value                             | Source                                 | Used By                           | Visibility   |
+| ----------------------------------- | --------------------------------- | -------------------------------------- | --------------------------------- | ------------ |
+| `SUPABASE_STAGING_URL`              | Your Supabase staging project URL | Supabase project settings              | CI workflows, integration tests   | ❌ Secret    |
+| `SUPABASE_STAGING_ANON_KEY`         | Staging anon key (public-safe)    | Supabase project → Settings → API Keys | Integration tests, preview builds | ✅ Variable* |
+| `SUPABASE_STAGING_SERVICE_ROLE_KEY` | Staging service role key (admin)  | Supabase project → Settings → API Keys | Admin test operations, backfill   | ❌ Secret    |
 
 *Note: `SUPABASE_STAGING_ANON_KEY` is technically public-safe (used by browser clients), but store it as a Secret here to keep all staging config in one place.
 
@@ -61,6 +63,7 @@ gh secret set SUPABASE_STAGING_SERVICE_ROLE_KEY --body "eyJhbGciOiJIUzI1..."
 ```
 
 **Verification:**
+
 ```bash
 # In workflows, these are accessible as:
 env.SUPABASE_STAGING_URL
@@ -75,6 +78,7 @@ env.SUPABASE_STAGING_SERVICE_ROLE_KEY
 **Configuration Location:** Settings → Secrets and variables → Variables
 
 **Store here** (public values, readable from Actions):
+
 - (None required for this phase)
 
 ---
@@ -87,11 +91,11 @@ env.SUPABASE_STAGING_SERVICE_ROLE_KEY
 
 **Add these environment variables:**
 
-| Variable | Value | Environment | Scope | Type |
-|----------|-------|-------------|-------|------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Staging URL | Preview + Staging (not Production) | Staging only | Reference |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Staging anon key | Preview + Staging (not Production) | Staging only | Reference |
-| `SUPABASE_SERVICE_ROLE_KEY` | Staging service role | Development (serverless) | Staging only | Secret |
+| Variable                        | Value                | Environment                        | Scope        | Type      |
+| ------------------------------- | -------------------- | ---------------------------------- | ------------ | --------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Staging URL          | Preview + Staging (not Production) | Staging only | Reference |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Staging anon key     | Preview + Staging (not Production) | Staging only | Reference |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Staging service role | Development (serverless)           | Staging only | Secret    |
 
 **Manual Entry Instructions:**
 
@@ -165,6 +169,7 @@ npm run test -- integration-staging
 - **Used For:** Read-only access validation, role-based restrictions
 
 **How to Create:**
+
 1. Log into Supabase staging → Authentication → Users
 2. Click "Create new user"
 3. Enter email, password, confirm
@@ -207,6 +212,7 @@ Use this checklist to verify setup is complete before running integration tests:
 ### Connectivity Test
 
 **Quick verification:**
+
 ```bash
 # From branch root:
 curl -I "https://your-project-ref.supabase.co/rest/v1/"
@@ -234,20 +240,24 @@ curl -I "https://your-project-ref.supabase.co/rest/v1/"
 ## Troubleshooting
 
 ### "Integration tests still skipped"
+
 - Verify `SUPABASE_STAGING_URL` and `SUPABASE_STAGING_ANON_KEY` are set in GitHub Secrets
 - Re-run workflow or push a new commit to trigger fresh build
 
 ### "401 Unauthorized when running integration tests"
+
 - Verify staging project is running (Supabase dashboard → Project settings)
 - Verify anon key and URL are correct (no trailing slashes, exact copy)
 - Test key manually: `curl -H "Authorization: Bearer $KEY" https://project-url/rest/v1/`
 
 ### "Timeout connecting to Supabase"
+
 - Check network policy (if behind corporate proxy)
 - Verify Supabase project region is accessible
 - Check Supabase status page: https://status.supabase.com
 
 ### "Test users not created"
+
 - Go to Supabase → Authentication → Users
 - Click "Create new user"
 - Verify email format and strong password
@@ -257,12 +267,14 @@ curl -I "https://your-project-ref.supabase.co/rest/v1/"
 ## Security Reminders
 
 ✅ **DO:**
+
 - Store credentials in GitHub Secrets (never in git)
 - Use separate staging URL/keys (never share with production)
 - Rotate test account passwords regularly
 - Log out of Supabase dashboard after configuration
 
 ❌ **DON'T:**
+
 - Paste credentials into chat or messages
 - Commit `.env.local` to git
 - Use production database for staging tests
@@ -283,11 +295,11 @@ curl -I "https://your-project-ref.supabase.co/rest/v1/"
 **Estimated duration:** 2-3 hours for full staging validation
 
 **Timeline:**
+
 - Configuration (now): 15 minutes
 - Staging validation: 2-3 hours
 - Production approval: same day or next day
 
 ---
 
-*This document is a checklist for manual credential configuration. Update this file when procedures change, but never commit actual credentials.*
-
+_This document is a checklist for manual credential configuration. Update this file when procedures change, but never commit actual credentials._

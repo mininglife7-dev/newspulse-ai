@@ -23,7 +23,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 // Skip entire suite if staging credentials not provided
-const SKIP_SUITE = !process.env.SUPABASE_STAGING_URL || !process.env.SUPABASE_STAGING_ANON_KEY;
+const SKIP_SUITE =
+  !process.env.SUPABASE_STAGING_URL || !process.env.SUPABASE_STAGING_ANON_KEY;
 
 // Test helpers
 interface TestUser {
@@ -76,7 +77,8 @@ class StagingTestClient {
       }),
     });
 
-    if (!response.ok) throw new Error(`Failed to create workspace: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Failed to create workspace: ${response.statusText}`);
     const data = await response.json();
     return {
       id: data[0].id,
@@ -107,7 +109,8 @@ class StagingTestClient {
       }),
     });
 
-    if (!response.ok) throw new Error(`Failed to create assessment: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Failed to create assessment: ${response.statusText}`);
     const data = await response.json();
     return {
       id: data[0].id,
@@ -124,24 +127,22 @@ class StagingTestClient {
     email: string,
     role: 'admin' | 'member' | 'viewer' = 'member'
   ): Promise<{ memberId: string; status: 'pending' | 'active' }> {
-    const response = await fetch(
-      `${this.baseUrl}/rest/v1/workspace_members`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.anonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          workspace_id: workspaceId,
-          email,
-          role,
-          status: 'pending',
-        }),
-      }
-    );
+    const response = await fetch(`${this.baseUrl}/rest/v1/workspace_members`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        workspace_id: workspaceId,
+        email,
+        role,
+        status: 'pending',
+      }),
+    });
 
-    if (!response.ok) throw new Error(`Failed to invite member: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Failed to invite member: ${response.statusText}`);
     const data = await response.json();
     return {
       memberId: data[0].id,

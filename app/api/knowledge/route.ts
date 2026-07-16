@@ -1,3 +1,4 @@
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextResponse } from 'next/server';
 import {
   readKnowledge,
@@ -31,6 +32,9 @@ export const dynamic = 'force-dynamic';
  * Returns: Array of knowledge entries matching the query.
  */
 export async function GET(req: Request) {
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   const url = new URL(req.url);
   const type = url.searchParams.get('type') as KnowledgeEntry['type'] | null;
   const tag = url.searchParams.get('tag');
@@ -123,17 +127,31 @@ export async function GET(req: Request) {
  * Returns: The created entry.
  */
 export async function POST(req: Request) {
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   try {
     const body = await req.json();
 
     // Validate input using schema
     const validationResult = validate(body, {
-      type: validators.enum(['decision', 'learning', 'pattern', 'fix', 'risk'] as const),
+      type: validators.enum([
+        'decision',
+        'learning',
+        'pattern',
+        'fix',
+        'risk',
+      ] as const),
       title: validators.string({ minLength: 1, maxLength: 255 }),
       description: validators.string({ minLength: 1, maxLength: 5000 }),
-      evidence: validators.array(validators.string({ maxLength: 2000 }), { minLength: 1 }),
+      evidence: validators.array(validators.string({ maxLength: 2000 }), {
+        minLength: 1,
+      }),
       impact: validators.enum(['high', 'medium', 'low'] as const),
-      tags: validators.array(validators.string({ minLength: 1, maxLength: 100 }), { minLength: 1 }),
+      tags: validators.array(
+        validators.string({ minLength: 1, maxLength: 100 }),
+        { minLength: 1 }
+      ),
       relatedDNA: validators.optional(validators.string({ maxLength: 255 })),
       resolved: validators.optional(validators.boolean()),
     });

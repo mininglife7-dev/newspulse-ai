@@ -77,11 +77,13 @@ export function SLAMonitor() {
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <div className={`border rounded-lg p-4 flex items-center justify-between ${
-        data.allPassed
-          ? 'bg-green-50 border-green-200'
-          : 'bg-red-50 border-red-200'
-      }`}>
+      <div
+        className={`border rounded-lg p-4 flex items-center justify-between ${
+          data.allPassed
+            ? 'bg-green-50 border-green-200'
+            : 'bg-red-50 border-red-200'
+        }`}
+      >
         <div className="flex items-center gap-3">
           {data.allPassed ? (
             <CheckCircle className="w-6 h-6 text-green-600" />
@@ -89,12 +91,16 @@ export function SLAMonitor() {
             <AlertCircle className="w-6 h-6 text-red-600" />
           )}
           <div>
-            <p className={`font-semibold ${data.allPassed ? 'text-green-900' : 'text-red-900'}`}>
+            <p
+              className={`font-semibold ${data.allPassed ? 'text-green-900' : 'text-red-900'}`}
+            >
               {data.allPassed
                 ? 'All SLAs Met'
                 : `${data.violatingEndpoints} Endpoint${data.violatingEndpoints !== 1 ? 's' : ''} Violating SLA`}
             </p>
-            <p className={`text-sm ${data.allPassed ? 'text-green-700' : 'text-red-700'}`}>
+            <p
+              className={`text-sm ${data.allPassed ? 'text-green-700' : 'text-red-700'}`}
+            >
               {data.totalEndpoints} endpoints monitored
             </p>
           </div>
@@ -129,7 +135,10 @@ export function SLAMonitor() {
                   ))}
                 </div>
                 <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
-                  <p>Target: p95 &lt; {result.sla.p95MaxMs}ms, p99 &lt; {result.sla.p99MaxMs}ms</p>
+                  <p>
+                    Target: p95 &lt; {result.sla.p95MaxMs}ms, p99 &lt;{' '}
+                    {result.sla.p99MaxMs}ms
+                  </p>
                 </div>
               </div>
             ))}
@@ -138,10 +147,13 @@ export function SLAMonitor() {
       )}
 
       {/* Passing Endpoints */}
-      {data.results.filter((r) => r.passed && r.metrics.count > 0).length > 0 && (
+      {data.results.filter((r) => r.passed && r.metrics.count > 0).length >
+        0 && (
         <div className="bg-white border border-green-200 rounded-lg overflow-hidden">
           <div className="p-4 border-b border-green-200 bg-green-50">
-            <h3 className="font-semibold text-green-900">Compliant Endpoints</h3>
+            <h3 className="font-semibold text-green-900">
+              Compliant Endpoints
+            </h3>
           </div>
           <div className="divide-y divide-gray-200">
             {data.results
@@ -154,10 +166,12 @@ export function SLAMonitor() {
                     </p>
                     <div className="text-right">
                       <p className="text-gray-600">
-                        p95: {Math.round(result.metrics.p95)}ms / {result.sla.p95MaxMs}ms
+                        p95: {Math.round(result.metrics.p95)}ms /{' '}
+                        {result.sla.p95MaxMs}ms
                       </p>
                       <p className="text-gray-600">
-                        p99: {Math.round(result.metrics.p99)}ms / {result.sla.p99MaxMs}ms
+                        p99: {Math.round(result.metrics.p99)}ms /{' '}
+                        {result.sla.p99MaxMs}ms
                       </p>
                     </div>
                   </div>

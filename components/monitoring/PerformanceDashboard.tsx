@@ -87,7 +87,9 @@ export function PerformanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Performance Monitoring</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Performance Monitoring
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             Last updated: {new Date(metrics.timestamp).toLocaleTimeString()}
           </p>
@@ -110,7 +112,9 @@ export function PerformanceDashboard() {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">Total Requests</p>
+              <p className="text-xs font-medium text-gray-500 uppercase">
+                Total Requests
+              </p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
                 {summary.totalRequests.toLocaleString()}
               </p>
@@ -123,7 +127,9 @@ export function PerformanceDashboard() {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">Avg Latency</p>
+              <p className="text-xs font-medium text-gray-500 uppercase">
+                Avg Latency
+              </p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
                 {summary.averageLatencyMs}ms
               </p>
@@ -133,17 +139,23 @@ export function PerformanceDashboard() {
         </div>
 
         {/* P95 Latency */}
-        <div className={`border rounded-lg p-4 ${
-          latencyHealthy
-            ? 'bg-green-50 border-green-200'
-            : 'bg-red-50 border-red-200'
-        }`}>
+        <div
+          className={`border rounded-lg p-4 ${
+            latencyHealthy
+              ? 'bg-green-50 border-green-200'
+              : 'bg-red-50 border-red-200'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">P95 Latency</p>
-              <p className={`text-2xl font-bold mt-1 ${
-                latencyHealthy ? 'text-green-700' : 'text-red-700'
-              }`}>
+              <p className="text-xs font-medium text-gray-500 uppercase">
+                P95 Latency
+              </p>
+              <p
+                className={`text-2xl font-bold mt-1 ${
+                  latencyHealthy ? 'text-green-700' : 'text-red-700'
+                }`}
+              >
                 {summary.p95LatencyMs}ms
               </p>
             </div>
@@ -159,7 +171,9 @@ export function PerformanceDashboard() {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">P99 Latency</p>
+              <p className="text-xs font-medium text-gray-500 uppercase">
+                P99 Latency
+              </p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
                 {summary.p99LatencyMs}ms
               </p>
@@ -171,16 +185,22 @@ export function PerformanceDashboard() {
 
       {/* Latency Range */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Latency Range</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Latency Range
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <p className="text-sm text-gray-500 uppercase font-medium">Min</p>
             <p className="text-xl font-bold text-gray-900 mt-1">
-              {summary.minLatencyMs === Infinity ? '—' : `${summary.minLatencyMs}ms`}
+              {summary.minLatencyMs === Infinity
+                ? '—'
+                : `${summary.minLatencyMs}ms`}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-500 uppercase font-medium">P50 (Median)</p>
+            <p className="text-sm text-gray-500 uppercase font-medium">
+              P50 (Median)
+            </p>
             <p className="text-xl font-bold text-gray-900 mt-1">
               {summary.p50LatencyMs}ms
             </p>
@@ -188,13 +208,16 @@ export function PerformanceDashboard() {
           <div>
             <p className="text-sm text-gray-500 uppercase font-medium">Max</p>
             <p className="text-xl font-bold text-gray-900 mt-1">
-              {summary.maxLatencyMs === -Infinity ? '—' : `${summary.maxLatencyMs}ms`}
+              {summary.maxLatencyMs === -Infinity
+                ? '—'
+                : `${summary.maxLatencyMs}ms`}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-500 uppercase font-medium">Range</p>
             <p className="text-xl font-bold text-gray-900 mt-1">
-              {summary.maxLatencyMs === -Infinity || summary.minLatencyMs === Infinity
+              {summary.maxLatencyMs === -Infinity ||
+              summary.minLatencyMs === Infinity
                 ? '—'
                 : `${summary.maxLatencyMs - summary.minLatencyMs}ms`}
             </p>
@@ -206,18 +229,32 @@ export function PerformanceDashboard() {
       {Object.keys(metrics.byEndpoint).length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Endpoint Performance</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Endpoint Performance
+            </h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left font-medium text-gray-700">Endpoint</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-700">Requests</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-700">P50</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-700">P95</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-700">P99</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-700">Max</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">
+                    Endpoint
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">
+                    Requests
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">
+                    P50
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">
+                    P95
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">
+                    P99
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">
+                    Max
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -231,10 +268,18 @@ export function PerformanceDashboard() {
                       <td className="px-6 py-3 text-gray-700">
                         {metric.count.toLocaleString()}
                       </td>
-                      <td className="px-6 py-3 text-gray-700">{Math.round(metric.p50)}ms</td>
-                      <td className="px-6 py-3 text-gray-700">{Math.round(metric.p95)}ms</td>
-                      <td className="px-6 py-3 text-gray-700">{Math.round(metric.p99)}ms</td>
-                      <td className="px-6 py-3 text-gray-700">{Math.round(metric.max)}ms</td>
+                      <td className="px-6 py-3 text-gray-700">
+                        {Math.round(metric.p50)}ms
+                      </td>
+                      <td className="px-6 py-3 text-gray-700">
+                        {Math.round(metric.p95)}ms
+                      </td>
+                      <td className="px-6 py-3 text-gray-700">
+                        {Math.round(metric.p99)}ms
+                      </td>
+                      <td className="px-6 py-3 text-gray-700">
+                        {Math.round(metric.max)}ms
+                      </td>
                     </tr>
                   ))}
               </tbody>

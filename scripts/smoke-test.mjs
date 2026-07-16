@@ -153,20 +153,45 @@ async function run() {
     assert(html.includes('404'), '404 page content missing');
   });
 
-  // ----- Protected Routes -----
-  await check('page', 'GET /dashboard redirects (protected route)', async () => {
-    const res = await get('/dashboard');
-    assert(res.status === 307, `expected 307 redirect, got ${res.status}`);
-    const location = res.headers.get('location');
-    assert(location?.includes('/auth/signin'), `expected redirect to /auth/signin, got ${location}`);
-  });
+  // ----- Public legal pages -----
+  for (const path of ['/privacy', '/terms']) {
+    await check('page', `GET ${path} renders (public legal page)`, async () => {
+      const res = await get(path);
+      assert(res.status === 200, `expected 200, got ${res.status}`);
+      const html = await res.text();
+      assert(html.includes('EURO AI'), 'EURO AI brand missing from page');
+    });
+  }
 
-  await check('page', 'GET /workspace/setup redirects (protected route)', async () => {
-    const res = await get('/workspace/setup');
-    assert(res.status === 307, `expected 307 redirect, got ${res.status}`);
-    const location = res.headers.get('location');
-    assert(location?.includes('/auth/signin'), `expected redirect to /auth/signin, got ${location}`);
-  });
+  // ----- Protected Routes -----
+  // Every customer-workspace and internal-ops page must bounce anonymous
+  // visitors to sign-in. A page missing from this list once shipped publicly
+  // (/compliance, /obligations, /team) — keep this matrix in sync with
+  // PROTECTED_PREFIXES in lib/routes.ts.
+  const PROTECTED_PAGES = [
+    '/dashboard',
+    '/workspace/setup',
+    '/inventory',
+    '/assessment',
+    '/compliance',
+    '/obligations',
+    '/evidence',
+    '/team',
+    '/governance',
+    '/evolution',
+    '/hercules',
+  ];
+  for (const path of PROTECTED_PAGES) {
+    await check('page', `GET ${path} redirects anonymous to sign-in`, async () => {
+      const res = await get(path);
+      assert(res.status === 307, `expected 307 redirect, got ${res.status}`);
+      const location = res.headers.get('location');
+      assert(
+        location?.includes('/auth/signin'),
+        `expected redirect to /auth/signin, got ${location}`
+      );
+    });
+  }
 
   // ----- Health -----
   await check('api', '/api/health reports degraded without Supabase', async () => {

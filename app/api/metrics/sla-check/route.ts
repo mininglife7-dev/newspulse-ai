@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMetrics, validateSLA, type PerformanceMetric, type SLAConfig } from '@/lib/performance-metrics';
+import {
+  getMetrics,
+  validateSLA,
+  type PerformanceMetric,
+  type SLAConfig,
+} from '@/lib/performance-metrics';
 import { withLogging } from '@/lib/middleware-logging';
 import { processSLAViolations } from '@/lib/sla-alert-monitor';
 
@@ -146,7 +151,8 @@ export async function GET(request: NextRequest) {
           }
         );
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
           {
             ok: false,

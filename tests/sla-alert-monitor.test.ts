@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { processSLAViolations, getSeverity, formatSLAViolation } from '@/lib/sla-alert-monitor';
+import {
+  processSLAViolations,
+  getSeverity,
+  formatSLAViolation,
+} from '@/lib/sla-alert-monitor';
 import * as alertHub from '@/lib/alert-hub';
 
 // Mock alert-hub

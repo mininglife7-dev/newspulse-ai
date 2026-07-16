@@ -60,7 +60,9 @@ let logIndex = 0;
 /**
  * Extract IP from request headers
  */
-export function getRequestIp(headers: Headers | Record<string, string>): string {
+export function getRequestIp(
+  headers: Headers | Record<string, string>
+): string {
   if (headers instanceof Headers) {
     return (
       headers.get('x-forwarded-for')?.split(',')[0].trim() ||
@@ -93,7 +95,8 @@ export function logRequest(params: {
   responseSize?: number;
   error?: string;
 }): RequestLog {
-  const level = params.status >= 500 ? 'error' : params.status >= 400 ? 'warn' : 'info';
+  const level =
+    params.status >= 500 ? 'error' : params.status >= 400 ? 'warn' : 'info';
 
   const log: LogEntry = {
     id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,

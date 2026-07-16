@@ -49,7 +49,8 @@ export function processSLAViolations(
   const hasHighValueViolation = violations.some((v) =>
     criticalEndpoints.includes(v.endpoint)
   );
-  const severity = violations.length >= 2 || hasHighValueViolation ? 'critical' : 'warning';
+  const severity =
+    violations.length >= 2 || hasHighValueViolation ? 'critical' : 'warning';
 
   // Record alert for violation event
   recordAlert(
@@ -57,10 +58,7 @@ export function processSLAViolations(
     severity,
     `SLA Violations Detected (${violations.length} endpoint${violations.length !== 1 ? 's' : ''})`,
     `${totalViolating} endpoints are violating SLA targets:\n${violations
-      .map(
-        (v) =>
-          `• ${v.endpoint}: ${v.violations.join('; ')}`
-      )
+      .map((v) => `• ${v.endpoint}: ${v.violations.join('; ')}`)
       .join('\n')}`,
     `Check /api/metrics/sla-check for details. Consider scaling or investigating root cause.`
   );

@@ -1,3 +1,4 @@
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   analyzeMigrationBatch,
@@ -12,6 +13,9 @@ import {
  * Can accept a query parameter to test with sample migrations.
  */
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   const searchParams = request.nextUrl.searchParams;
   const mode = searchParams.get('mode') || 'health';
 
@@ -87,6 +91,9 @@ export async function GET(request: NextRequest) {
  * Analyzes submitted schema migrations for safety.
  */
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body = (await request.json()) as {
       migrations: Array<{

@@ -10,8 +10,13 @@ export interface AssessmentBody {
 }
 
 function resolveContext(supabase: any) {
-  return new Promise<{ workspace_id?: string; error?: { status: number; message: string } }>(async (resolve) => {
-    const { data: { user } } = await supabase.auth.getUser();
+  return new Promise<{
+    workspace_id?: string;
+    error?: { status: number; message: string };
+  }>(async (resolve) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       resolve({ error: { status: 401, message: 'Authentication required' } });
       return;
@@ -26,7 +31,12 @@ function resolveContext(supabase: any) {
       .maybeSingle();
 
     if (!membership) {
-      resolve({ error: { status: 409, message: 'No workspace yet — complete company setup first' } });
+      resolve({
+        error: {
+          status: 409,
+          message: 'No workspace yet — complete company setup first',
+        },
+      });
       return;
     }
 
@@ -95,9 +105,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!body.risk_level || !['unacceptable', 'high', 'medium', 'low'].includes(body.risk_level)) {
+  if (
+    !body.risk_level ||
+    !['unacceptable', 'high', 'medium', 'low'].includes(body.risk_level)
+  ) {
     return NextResponse.json(
-      { ok: false, error: 'risk_level must be one of: unacceptable, high, medium, low' },
+      {
+        ok: false,
+        error: 'risk_level must be one of: unacceptable, high, medium, low',
+      },
       { status: 400 }
     );
   }

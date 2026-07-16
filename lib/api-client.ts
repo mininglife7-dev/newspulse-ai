@@ -193,10 +193,15 @@ export class TeamClient {
   /**
    * List all members in a workspace
    */
-  async listMembers(workspaceId: string): Promise<ApiResponse<WorkspaceMember[]>> {
-    const res = await fetch(`${this.baseUrl}/workspace/${workspaceId}/members`, {
-      method: 'GET',
-    });
+  async listMembers(
+    workspaceId: string
+  ): Promise<ApiResponse<WorkspaceMember[]>> {
+    const res = await fetch(
+      `${this.baseUrl}/workspace/${workspaceId}/members`,
+      {
+        method: 'GET',
+      }
+    );
 
     const data: MemberListResponse = await res.json();
     return {
@@ -217,11 +222,14 @@ export class TeamClient {
       role?: 'owner' | 'admin' | 'member' | 'viewer';
     }
   ): Promise<ApiResponse<WorkspaceMember>> {
-    const res = await fetch(`${this.baseUrl}/workspace/${workspaceId}/members`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(options),
-    });
+    const res = await fetch(
+      `${this.baseUrl}/workspace/${workspaceId}/members`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options),
+      }
+    );
 
     const data: InvitationResponse = await res.json();
     return {
@@ -235,12 +243,18 @@ export class TeamClient {
    * Accept an invitation to join a workspace
    * Must be the invited user
    */
-  async acceptInvitation(workspaceId: string, memberId: string): Promise<ApiResponse<WorkspaceMember>> {
-    const res = await fetch(`${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'accept' }),
-    });
+  async acceptInvitation(
+    workspaceId: string,
+    memberId: string
+  ): Promise<ApiResponse<WorkspaceMember>> {
+    const res = await fetch(
+      `${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept' }),
+      }
+    );
 
     const data = await res.json();
     return {
@@ -254,12 +268,18 @@ export class TeamClient {
    * Reject an invitation or remove yourself from workspace
    * Can be done by invited user or owner/admin
    */
-  async rejectInvitation(workspaceId: string, memberId: string): Promise<ApiResponse<void>> {
-    const res = await fetch(`${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject' }),
-    });
+  async rejectInvitation(
+    workspaceId: string,
+    memberId: string
+  ): Promise<ApiResponse<void>> {
+    const res = await fetch(
+      `${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' }),
+      }
+    );
 
     const data = await res.json();
     return {
@@ -273,12 +293,18 @@ export class TeamClient {
    * Requires owner or admin role
    * Cannot remove yourself
    */
-  async removeMember(workspaceId: string, memberId: string): Promise<ApiResponse<void>> {
-    const res = await fetch(`${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'remove' }),
-    });
+  async removeMember(
+    workspaceId: string,
+    memberId: string
+  ): Promise<ApiResponse<void>> {
+    const res = await fetch(
+      `${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'remove' }),
+      }
+    );
 
     const data = await res.json();
     return {
@@ -297,11 +323,14 @@ export class TeamClient {
     memberId: string,
     role: 'admin' | 'member' | 'viewer'
   ): Promise<ApiResponse<WorkspaceMember>> {
-    const res = await fetch(`${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'change_role', role }),
-    });
+    const res = await fetch(
+      `${this.baseUrl}/workspace/${workspaceId}/members/${memberId}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'change_role', role }),
+      }
+    );
 
     const data = await res.json();
     return {
