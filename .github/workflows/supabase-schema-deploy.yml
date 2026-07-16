@@ -149,7 +149,19 @@ jobs:
           # that use the Session Pooler instead of db.{ref}.supabase.co).
           if [ -n "$SUPABASE_DB_URL" ]; then
             echo "ℹ️  Using SUPABASE_DB_URL for connection"
-            PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+            if [[ "$SUPABASE_DB_URL" == psql\ * ]]; then
+              # The dashboard also offers a ready-made "psql -h ... -U ..." command;
+              # pasted verbatim, psql would treat the whole string as a database
+              # name and fall back to a local socket. Parse it into arguments.
+              echo "ℹ️  Value is a pasted 'psql ...' command — parsing its flags"
+              read -r -a PSQL_CONN_ARGS <<< "${SUPABASE_DB_URL#psql }"
+            else
+              PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+            fi
+            # Pooler URIs / psql commands usually omit the password; supply it via env.
+            if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+              export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            fi
           else
             # Fall back to direct connection (requires IPv4 add-on on newer projects)
             echo "ℹ️  Constructing direct connection from project ID and password"
@@ -239,7 +251,15 @@ jobs:
           echo "🔐 Running security tests..."
 
           if [ -n "$SUPABASE_DB_URL" ]; then
-            PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+            # Accept both a connection URI and a pasted "psql ..." command (see deploy step).
+            if [[ "$SUPABASE_DB_URL" == psql\ * ]]; then
+              read -r -a PSQL_CONN_ARGS <<< "${SUPABASE_DB_URL#psql }"
+            else
+              PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
+            fi
+            if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+              export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+            fi
           else
             PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
             PGPORT="5432"
