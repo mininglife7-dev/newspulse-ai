@@ -5,7 +5,13 @@ import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { HeaderNav } from '@/components/HeaderNav';
+import { initializeMonitoring } from '@/lib/init-monitoring';
 import './globals.css';
+
+// Initialize autonomous monitoring on app startup
+initializeMonitoring().catch((error) => {
+  console.error('[Governor] Monitoring initialization error:', error);
+});
 
 const inter = Inter({
   subsets: ['latin'],
