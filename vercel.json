@@ -12,7 +12,7 @@
     "app/api/production-health/route.ts": {
       "maxDuration": 30
     },
-    "app/api/dependency-health/route.ts": {
+    "app/api/dependency-security/route.ts": {
       "maxDuration": 60
     },
     "app/api/verify-deployment/route.ts": {
@@ -21,8 +21,11 @@
     "app/api/error-rate/route.ts": {
       "maxDuration": 30
     },
-    "app/api/cost-monitoring/route.ts": {
+    "app/api/cost-anomaly/route.ts": {
       "maxDuration": 120
+    },
+    "app/api/ceis/run/route.ts": {
+      "maxDuration": 300
     }
   },
   "env": {
@@ -31,28 +34,16 @@
   },
   "crons": [
     {
-      "path": "/api/blocking-conditions",
-      "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/production-health",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/dependency-health",
+      "path": "/api/dependency-security",
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/verify-deployment",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/error-rate",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cost-monitoring",
+      "path": "/api/cost-anomaly",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/ceis/run",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
