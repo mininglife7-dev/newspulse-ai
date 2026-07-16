@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logger } from '@/lib/logger';
+import { validators, validate } from '@/lib/input-validation';
 import { SYSTEM_TYPES, SYSTEM_STATUSES } from '@/lib/ai-systems';
 import { resolveWorkspaceContext } from '@/lib/ai-systems-server';
 
@@ -11,10 +13,9 @@ interface UpdateAiSystemBody {
   systemType?: string;
   vendor?: string;
   purpose?: string;
-  status?: string;
+  status?: 'active' | 'pilot' | 'deprecated';
 }
 
-// Next 15 delivers dynamic route params as a Promise.
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
@@ -50,7 +51,7 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
     .select('id');
 
   if (error) {
-    console.error('[api/ai-systems/:id] delete failed:', error);
+    logger.error('AI system deletion failed', 'SYSTEM_DELETE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Could not delete the AI system' },
       { status: 500 }
@@ -87,20 +88,31 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     );
   }
 
-  // Build the update from only the fields provided; validate enums when present.
+  const validationResult = validate(body, {
+    name: validators.optional(validators.string({ minLength: 1 })),
+    systemType: validators.optional(validators.string()),
+    vendor: validators.optional(validators.string()),
+    purpose: validators.optional(validators.string()),
+    status: validators.optional(validators.enum(['active', 'pilot', 'deprecated'])),
+  });
+
+  if (!validationResult.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'Invalid input', errors: validationResult.errors },
+      { status: 400 }
+    );
+  }
+
+  const validated = validationResult.value as UpdateAiSystemBody;
   const updates: Record<string, string | null> = {};
-  if (body.name !== undefined) {
-    const name = body.name.trim();
-    if (!name) {
-      return NextResponse.json(
-        { ok: false, error: 'name cannot be empty' },
-        { status: 400 }
-      );
-    }
+
+  if (validated.name !== undefined) {
+    const name = validated.name.trim();
     updates.name = name;
   }
-  if (body.systemType !== undefined) {
-    if (body.systemType && !SYSTEM_TYPES.includes(body.systemType as any)) {
+
+  if (validated.systemType !== undefined) {
+    if (validated.systemType && !SYSTEM_TYPES.includes(validated.systemType)) {
       return NextResponse.json(
         {
           ok: false,
@@ -109,25 +121,28 @@ export async function PATCH(req: Request, { params }: RouteContext) {
         { status: 400 }
       );
     }
-    updates.system_type = body.systemType || null;
+    updates.system_type = validated.systemType || null;
   }
-  if (body.vendor !== undefined) updates.vendor = body.vendor.trim() || null;
-  if (body.purpose !== undefined) updates.purpose = body.purpose.trim() || null;
-  if (body.status !== undefined) {
-    if (!SYSTEM_STATUSES.includes(body.status as any)) {
-      return NextResponse.json(
-        { ok: false, error: 'status must be active, pilot or deprecated' },
-        { status: 400 }
-      );
-    }
-    updates.status = body.status;
+
+  if (validated.vendor !== undefined) {
+    updates.vendor = validated.vendor.trim() || null;
   }
+
+  if (validated.purpose !== undefined) {
+    updates.purpose = validated.purpose.trim() || null;
+  }
+
+  if (validated.status !== undefined) {
+    updates.status = validated.status;
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(
       { ok: false, error: 'No fields to update' },
       { status: 400 }
     );
   }
+
   updates.updated_at = new Date().toISOString();
 
   const supabase = await createRouteClient();
@@ -151,7 +166,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     );
 
   if (error) {
-    console.error('[api/ai-systems/:id] update failed:', error);
+    logger.error('AI system update failed', 'SYSTEM_UPDATE_ERROR', error);
     return NextResponse.json(
       { ok: false, error: 'Could not update the AI system' },
       { status: 500 }
