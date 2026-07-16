@@ -5,8 +5,38 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-15 20:45 UTC (OPERATION FINAL GREEN GATE complete; production deployed; awaiting Founder administrative actions)
-**State:** CONDITIONAL GO (All engineering complete; Platform deployed to production; 1051/1051 tests passing; Blocked externally pending 2 Founder actions)
+**Last updated:** 2026-07-16 07:30 UTC (Production database schema DEPLOYED and verified — the launch-blocking gate is closed)
+**State:** GO for first-customer onboarding verification (code + database both live in production; RLS and security tests verified against the live DB)
+
+---
+
+## ✅ 2026-07-16 07:30 UTC: PRODUCTION DATABASE DEPLOYED — Launch Gate Closed
+
+The single customer-blocking item is done. After you created the database
+credentials this morning (thank you — that was the only thing we couldn't do),
+your first dispatch (run `29478929749`) exposed a connection-format defect:
+the stored value was the dashboard's ready-made `psql ...` command rather
+than a URI. Governor fixed the workflow to accept exactly what you pasted
+(PR #148, merged `56dd24e`) and re-dispatched. **Run `29479537494`
+succeeded end-to-end at 07:20 UTC:**
+
+- Base + CEIS schemas deployed to Supabase project `yrroytwfdrafvajdfkog`
+  (Session Pooler, `aws-0-ap-northeast-1`).
+- **Live-database verification passed:** CEIS 5 tables + RLS enabled
+  (hard-verified), multi-tenant isolation, anonymous-access restrictions,
+  full CRUD, workspace membership enforcement — all ✓ PASS. 21 tables,
+  60 indexes, 39 RLS policies.
+- One residual low-risk item (RISK-007): the auth→profiles trigger's state
+  reads Unknown due to a verification-script bug (fix in review); the app
+  does not depend on it for the signup→workspace journey.
+
+**Remaining Founder actions (non-blocking for engineering, needed for full capability):**
+
+1. Vercel env: `CEIS_CRON_SECRET` (optional: `OPENAI_API_KEY`,
+   `FIRECRAWL_API_KEY`) — enables full CEIS capability (RISK-006).
+2. Branch protection on `main` — standing recommendation (RISK-002).
+
+Full record: `docs/governor/deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md`.
 
 ---
 

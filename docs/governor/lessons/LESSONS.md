@@ -40,6 +40,24 @@ Future decisions must consult this file.
 - **Prevention:** Operating rule 3 in [governor README](../README.md);
   health scores must cite evidence (charter requirement).
 
+## L-005 — Accept the format humans actually paste; make checks able to pass
+
+- **What happened:** The first credentialed deploy (run `29478929749`)
+  failed because `SUPABASE_DB_URL` held the dashboard's ready-made
+  `psql -h ...` command, not a URI — a completely natural paste. Separately,
+  the verification script counted triggers in `trigger_schema='public'`
+  while the only expected trigger lives on `auth.users` — a check that could
+  never pass, printing "DEPLOYMENT INCOMPLETE" on every healthy deploy.
+- **Evidence:** Runs `29478929749` (failure) → `29479537494` (success after
+  PR #148 normalized both `psql ...` and URI forms and exported
+  `PGPASSWORD`); verification fix in the follow-up PR.
+- **Lesson:** Config consumed from humans must be normalized, not validated
+  into failure; and a verification check that cannot pass under a correct
+  deployment is worse than no check — it trains everyone to ignore FAIL.
+- **Prevention:** When a workflow reads pasted config, handle every format
+  the source UI offers. When writing verification, prove each check can
+  both pass and fail against reality.
+
 ## L-004 — Autonomous pipelines should be driven to the exact human gate
 
 - **What happened:** The Supabase deploy was "blocked on Founder" for days
