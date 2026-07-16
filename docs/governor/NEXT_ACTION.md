@@ -8,15 +8,17 @@
 
 ## Current State
 
-**STAGE 0 (Repository Reconnaissance)** is **COMPLETE** and **VERIFIED**.
+**STAGE 1 (Governance Kernel)** is **COMPLETE** and **VERIFIED**.
 
 **Evidence**:
-- ✅ `docs/governance/IMPLEMENTATION_ROADMAP.md` created (comprehensive assessment)
-- ✅ `docs/governor/PROJECT_STATE.md` created (institutional state tracking)
-- ✅ Repository inventory complete (file counts, git history, active systems)
-- ✅ Risk baseline established (5 critical/medium risks documented)
-- ✅ Architecture issues identified (5 problem areas with mitigation paths)
-- ✅ Duplication inventory complete (high/medium severity duplications cataloged)
+- ✅ `docs/governance/AGENTS.md` created (Governor Ω role and capabilities)
+- ✅ `docs/governance/GOVERNOR_OPERATIONAL_FRAMEWORK.md` created (decision protocol)
+- ✅ `docs/governance/DECISION_LOG.md` created (permanent decision record)
+- ✅ `docs/governance/REPORTING_STANDARDS.md` created (communication protocol)
+- ✅ `docs/governor/STAGE_1_COMPLETION_CHECKLIST.md` created (verification)
+- ✅ Governor Ω authority established (Class A/B/C/D decisions defined)
+- ✅ Decision escalation protocol operational (7 escalation categories defined)
+- ✅ Reporting standards aligned with FOUNDER_COMMUNICATION_CONSTITUTION.md
 
 **Key Findings**:
 - **~300+ documentation files** with significant duplication and authority confusion
@@ -26,40 +28,38 @@
 
 ---
 
-## Immediate Path Forward: STAGE 1
+## Immediate Path Forward: STAGE 2
 
-### Stage 1: Governance Kernel
+### Stage 2: Repository Organization
 
-**Mission**: Establish Governor Ω as sole institutional authority and create operational governance kernel.
+**Mission**: Consolidate documentation and API duplication into clear, maintainable structures.
 
 **Critical Objectives**:
-1. Create AGENTS.md — Define Governor Ω role and capabilities clearly
-2. Formalize Governor Constitution — Clarify decision authority and boundaries
-3. Establish Project State tracking — Living institutional status (PROJECT_STATE.md created; needs evolution)
-4. Create Decision Log — Permanent record of institutional decisions (DECISION_REGISTER exists but needs governance)
-5. Define Next Action protocol — Founder knows exactly what happens when Governor finishes a stage
-6. Establish reporting format — Governor → Founder communication standard (per FOUNDER_COMMUNICATION_CONSTITUTION.md)
-7. Create Demo Readiness framework — How to verify features before customer release
+1. Consolidate documentation — Move ~250 files to archive, keep <50 authoritative documents
+2. Deduplicate API routes — Consolidate assessment/assessments, deployment verification (3x), error tracking (3x)
+3. Clarify experimental systems — Archive evolution/hercules/cathedral-readiness or activate
+4. Simplify governance doc structure — Single source of truth per topic
+5. Create documentation taxonomy — Clear structure for future docs
+6. Archive old checkpoints — Move 10+ checkpoint snapshots to archive/
 
 **Deliverables**:
-- AGENTS.md (Governor Ω role clarity)
-- GOVERNOR_OPERATIONAL_FRAMEWORK.md (decision authority, boundaries)
-- DECISION_LOG.md (clean log of all architectural decisions)
-- STAGE_1_COMPLETION_CHECKLIST.md (how to know Stage 1 is done)
-- REPORTING_STANDARDS.md (Governor → Founder format and frequency)
+- Repository Organization Report (what consolidated, what moved to archive)
+- Deduplication implementation guide (how consolidation was done)
+- Documentation architecture (how docs are now organized)
+- Archive structure (where old snapshots live)
 
-**Why First?**
-- Without governance clarity, Stage 2 (duplication cleanup) risks decisions being unmade or remade
-- Without authority clarity, Founder won't know when to approve or escalate
-- Without decision logging, future Governors can't understand why the codebase is structured as it is
+**Why Now?**
+- Stage 1 (governance kernel) is complete ✅ — authority clear, decision protocol operational
+- Without consolidation, Stage 2-10 will be hampered by documentation sprawl
+- Documentation cleanup enables clearer thinking for future stages
 
 **Estimated Work**:
-- Create ~3-4 governance documents
-- Update PROJECT_STATE.md with Stage 1 completions
-- No code changes (governance only)
-- No tests (documentation artifacts)
+- 2-3 hours: audit and move files
+- 1-2 hours: test consolidation (verify no broken links, all docs accessible)
+- 1 hour: documentation and reporting
+- Total: ~4-6 hours (one session)
 
-**Founder Decision Required**: YES/NO to proceed with STAGE 1?
+**Founder Decision Required**: Proceed with STAGE 2?
 
 ---
 
@@ -106,83 +106,87 @@ Only then does Governor proceed to next stage.
 
 ---
 
-## STAGE 1 Roadmap (Preview)
+## STAGE 2 Roadmap (Preview)
 
-### Files to Create
+### Files to Create/Update
 
 ```
-docs/governance/
-├── AGENTS.md (Define Governor Ω role and capabilities)
-├── GOVERNOR_OPERATIONAL_FRAMEWORK.md (Authority, boundaries, decision protocol)
-└── DECISION_LOG.md (Clean log of architectural decisions)
-
-docs/governor/
-├── OPERATIONAL_MANUAL.md (How Governor works with Founder)
-├── STAGE_1_COMPLETION_CHECKLIST.md (Verification criteria)
-└── lessons/
-    └── LESSONS.md (Updated with Stage 0 + Stage 1 learnings)
+docs/
+├── governance/
+│   ├── STAGE_2_ROADMAP.md (Detailed implementation plan)
+│   └── CONSOLIDATION_PLAN.md (Specific docs to consolidate, archive)
+├── governor/
+│   ├── STAGE_2_COMPLETION_CHECKLIST.md (Verification criteria)
+│   └── lessons/
+│       └── LESSONS.md (Updated with Stage 2 learnings)
+└── archive/ (new directory)
+    ├── checkpoints/ (old checkpoint snapshots)
+    ├── history/ (old roadmaps/phases)
+    └── deprecated/ (old runbooks, superseded docs)
 ```
 
-### Verification Checklist (Stage 1)
+### Verification Checklist (Stage 2)
 
-- ✅ AGENTS.md created and linked from CLAUDE.md
-- ✅ Governor Ω operational framework documented
-- ✅ DECISION_REGISTER.md migrated to DECISION_LOG.md with clean format
-- ✅ Decision logging protocol established (how new decisions get recorded)
-- ✅ PROJECT_STATE.md updated showing Stage 1 complete
-- ✅ Reporting standards documented (format, frequency, escalation)
-- ✅ No code duplication, governance only
-- ✅ All documents linked from docs/governor/README.md
-- ✅ NEXT_ACTION.md updated with Stage 2 preview
+- ✅ ~250 old files moved to docs/archive/ (checkpoints, old roadmaps, deprecated runbooks)
+- ✅ Documentation consolidated: <50 authoritative documents remain
+- ✅ API deduplication: assessment/assessments → assessment, 3x deployment → deployment-verification, 3x error → errors
+- ✅ Experimental systems clarified (evolution/hercules/cathedral-readiness archived or activated)
+- ✅ Documentation taxonomy created (clear structure)
+- ✅ All broken links fixed
+- ✅ STAGE_2_ROADMAP.md created (detailed plan)
+- ✅ PROJECT_STATE.md updated showing Stage 2 complete
+- ✅ NEXT_ACTION.md updated with Stage 3 preview
 
 ---
 
-## What Happens If You Approve
+## What Happens If You Approve Stage 2
 
 **Immediate** (Governor Ω autonomous):
-1. Create STAGE_1_ROADMAP.md (detailed implementation plan)
-2. Create AGENTS.md (Governor role clarity)
-3. Create GOVERNOR_OPERATIONAL_FRAMEWORK.md (decision authority)
-4. Create DECISION_LOG.md (migration of DECISION_REGISTER)
-5. Create REPORTING_STANDARDS.md (communication protocol)
-6. Update PROJECT_STATE.md (Stage 1 in progress)
-7. Create STAGE_1_COMPLETION_CHECKLIST.md
-8. Commit all to branch: `claude/alpha-cathedral-roadmap-2tea9o`
-9. Push to origin
-10. Create PR (draft) if not already open
-11. Update NEXT_ACTION.md with Stage 1 completion and Stage 2 preview
+1. Create STAGE_2_ROADMAP.md (detailed implementation plan)
+2. Audit all ~300 documentation files
+3. Move ~250 old files to docs/archive/ (checkpoints, old roadmaps, deprecated runbooks)
+4. Consolidate governance documents (single source of truth per topic)
+5. Deduplicate API routes (assessment/assessments, deployment verification, error tracking)
+6. Clarify experimental systems status (evolution/hercules/cathedral-readiness)
+7. Verify no broken links
+8. Update PROJECT_STATE.md (Stage 2 in progress)
+9. Create STAGE_2_COMPLETION_CHECKLIST.md
+10. Commit all to branch: `claude/alpha-cathedral-roadmap-2tea9o`
+11. Push to origin
+12. Update PR with Stage 2 completion report
+13. Update NEXT_ACTION.md with Stage 3 preview
 
-**Timeline**: ~2-3 hours (governance documents, no code/tests)
+**Timeline**: ~4-6 hours (file consolidation, deduplication, verification)
 
-**Result**: Governance kernel in place. Founder can proceed to Stage 2 with clear authority and decision protocol.
+**Result**: Repository organized. Documentation consolidated. API duplication addressed. Ready for STAGE 3 (Engineering Standards).
 
 ---
 
 ## Founder Action Required
 
-**Question**: Should Governor Ω proceed with STAGE 1 (Governance Kernel)?
+**Question**: Should Governor Ω proceed with STAGE 2 (Repository Organization)?
 
-**Option A: YES** → Governor will implement Stage 1 immediately and report completion.
+**Option A: YES** → Governor will implement Stage 2 immediately (consolidate docs, deduplicate API) and report completion.
 
-**Option B: ADJUST** → Governor will modify plan based on your feedback and replan Stage 1.
+**Option B: ADJUST** → Governor will modify plan based on your feedback and replan Stage 2.
 
-**Option C: SKIP** → Governor will move to Stage 2 (Repository Organization) directly. ⚠️ Not recommended — governance clarity needed first.
+**Option C: CONTINUE STAGE 1** → Governor will refine governance documents. ⚠️ Not recommended — governance is complete ✅.
 
 **Option D: HALT** → Governor will pause the program. NEXT_ACTION.md will wait for further instruction.
 
 ---
 
-## Risk Assessment (Stage 1)
+## Risk Assessment (Stage 2)
 
-**Risks of Proceeding**: NONE identified. Governance documents are safe, reversible, and non-breaking.
+**Risks of Proceeding**: LOW. Documentation reorganization and API consolidation are reversible if issues arise.
 
 **Risks of NOT Proceeding**: 
-- Stage 2 (code consolidation) will lack decision authority clarity
-- Founder may not know when to approve/escalate
-- Future governance decisions may contradict earlier ones
-- Future Governors won't have institutional memory
+- ~300 documentation files will remain scattered, causing confusion
+- API duplication will persist, increasing maintenance burden
+- Future stages (3-10) will be hampered by sprawl
+- Founder clarity will suffer without consolidated docs
 
-**Mitigation**: Proceed with Stage 1. It's foundational and low-risk.
+**Mitigation**: Proceed with Stage 2. It's foundational for future stages and reversible.
 
 ---
 
