@@ -4,6 +4,24 @@ import { ErrorMetrics, ErrorPattern } from '@/lib/error-tracking';
 
 export const dynamic = 'force-dynamic';
 
+// Authentication helper
+function verifyAuth(request: NextRequest): boolean {
+  const authHeader = request.headers.get('Authorization');
+  const secret = process.env.PRODUCTION_WIRING_SECRET;
+
+  if (!secret) {
+    console.error('PRODUCTION_WIRING_SECRET not configured');
+    return false;
+  }
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return false;
+  }
+
+  const token = authHeader.slice(7);
+  return token === secret;
+}
+
 interface ProductionWiringRequest {
   deploymentId: string;
   errorMetrics: {
@@ -23,12 +41,35 @@ interface ProductionWiringRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!verifyAuth(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body: ProductionWiringRequest = await request.json();
     const { deploymentId, errorMetrics, errorPatterns } = body;
 
     if (!deploymentId || !errorMetrics || !errorPatterns) {
       return NextResponse.json(
         { error: 'deploymentId, errorMetrics, and errorPatterns required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate deploymentId format (alphanumeric, dash, underscore only, max 100 chars)
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(deploymentId)) {
+      return NextResponse.json(
+        { error: 'Invalid deploymentId format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate error patterns have reasonable message lengths
+    if (!Array.isArray(errorPatterns) || errorPatterns.some((p) => typeof p.message !== 'string' || p.message.length > 10000)) {
+      return NextResponse.json(
+        { error: 'Invalid error patterns' },
         { status: 400 }
       );
     }
@@ -123,6 +164,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    if (!verifyAuth(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const deploymentId = request.nextUrl.searchParams.get('deploymentId');
     const alertId = request.nextUrl.searchParams.get('alertId');
 
@@ -169,6 +217,13 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    if (!verifyAuth(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       deploymentId,

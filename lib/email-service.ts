@@ -117,7 +117,8 @@ export class EmailService {
         return false;
       }
 
-      console.log(`[EMAIL] Sent via SendGrid to ${to}: "${subject}"`);
+      const maskedEmail = to.replace(/(.{2}).*(@.*)/, '$1***$2');
+      console.log(`[EMAIL] Sent via SendGrid to ${maskedEmail}: "${subject}"`);
       return true;
     } finally {
       clearTimeout(timeoutId);
@@ -184,7 +185,8 @@ export class EmailService {
 
       const response = await Promise.race([sendPromise, timeoutPromise]) as any;
 
-      console.log(`[EMAIL] Sent via SES to ${to}: "${subject}" (MessageId: ${response.MessageId})`);
+      const maskedEmail = to.replace(/(.{2}).*(@.*)/, '$1***$2');
+      console.log(`[EMAIL] Sent via SES to ${maskedEmail}: "${subject}" (MessageId: ${response.MessageId})`);
       return true;
     } catch (error) {
       console.error('SES send failed:', error);
@@ -202,15 +204,9 @@ export class EmailService {
     html?: string,
     text?: string
   ): Promise<boolean> {
-    console.log(`
-[EMAIL_LOG]
-From: ${from}
-To: ${to}
-Subject: ${subject}
----
-${html || text || '(empty body)'}
----
-`);
+    const maskedEmail = to.replace(/(.{2}).*(@.*)/, '$1***$2');
+    const bodySize = (html || text || '').length;
+    console.log(`[EMAIL_LOG] From: ${from} To: ${maskedEmail} Subject: ${subject} BodySize: ${bodySize}B`);
     return true;
   }
 

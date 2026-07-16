@@ -63,7 +63,7 @@ describe('Email Service', () => {
 
       expect(result).toBe(true);
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[EMAIL_LOG]'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('test@example.com'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('te***@example.com'));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Test Subject'));
     });
 
@@ -77,7 +77,10 @@ describe('Email Service', () => {
         html: '<h1>Critical Alert</h1>',
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('<h1>Critical Alert</h1>'));
+      // Body content is not logged for security (sensitive incident data)
+      // Instead, log contains the subject and body size
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Alert'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('BodySize'));
     });
 
     it('should include text content in log', async () => {
@@ -90,7 +93,10 @@ describe('Email Service', () => {
         text: 'Critical Alert in plain text',
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Critical Alert in plain text'));
+      // Body content is not logged for security (sensitive incident data)
+      // Instead, log contains the subject and body size
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Alert'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('BodySize'));
     });
 
     it('should use default FROM address', async () => {
@@ -262,7 +268,9 @@ describe('Email Service', () => {
         html: '<strong>Bold</strong>',
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('<strong>Bold</strong>'));
+      // Body content is not logged for security, check for subject and BodySize instead
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('HTML Email'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('BodySize'));
       consoleSpy.mockRestore();
     });
 
@@ -276,7 +284,9 @@ describe('Email Service', () => {
         text: 'Plain text message',
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Plain text message'));
+      // Body content is not logged for security, check for subject and BodySize instead
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Text Email'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('BodySize'));
       consoleSpy.mockRestore();
     });
 
@@ -291,8 +301,9 @@ describe('Email Service', () => {
         text: 'Text version',
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('HTML version'));
-      // Text is not logged when HTML is present (html || text prioritizes html)
+      // Body content is not logged for security, check for subject and BodySize instead
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Dual Email'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('BodySize'));
       consoleSpy.mockRestore();
     });
   });
@@ -310,7 +321,9 @@ describe('Email Service', () => {
       });
 
       expect(result).toBe(true);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Simple string content'));
+      // Body content is not logged for security, check for subject and BodySize instead
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Alert'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('BodySize'));
       consoleSpy.mockRestore();
     });
 

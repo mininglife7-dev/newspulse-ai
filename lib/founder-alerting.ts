@@ -14,6 +14,18 @@ import { DetectedIncident } from './incident-detection';
 import { OrchestrationDecision } from './incident-orchestration';
 import { getEmailService } from './email-service';
 
+// HTML escape user content to prevent injection
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
 export interface AlertChannel {
   type: 'email' | 'slack';
   enabled: boolean;
@@ -140,9 +152,12 @@ export class FounderAlertingSystem {
           ? `✅ Incident ${incidentId} resolved in ${(recoveryTimeMs / 1000).toFixed(1)}s`
           : `❌ Incident ${incidentId} remediation failed`;
 
+        const escapedAction = escapeHtml(actionTaken);
+        const escapedLesson = lessonLearned ? escapeHtml(lessonLearned) : undefined;
+
         const htmlBody = success
-          ? `<h2>✅ Incident Resolved</h2><p><strong>Incident ID:</strong> ${incidentId}</p><p><strong>Recovery Time:</strong> ${(recoveryTimeMs / 1000).toFixed(1)}s</p><p><strong>Action Taken:</strong> ${actionTaken}</p>${lessonLearned ? `<p><strong>Lesson Learned:</strong> ${lessonLearned}</p>` : ''}`
-          : `<h2>❌ Remediation Failed</h2><p><strong>Incident ID:</strong> ${incidentId}</p><p><strong>Action Attempted:</strong> ${actionTaken}</p>`;
+          ? `<h2>✅ Incident Resolved</h2><p><strong>Incident ID:</strong> ${incidentId}</p><p><strong>Recovery Time:</strong> ${(recoveryTimeMs / 1000).toFixed(1)}s</p><p><strong>Action Taken:</strong> ${escapedAction}</p>${escapedLesson ? `<p><strong>Lesson Learned:</strong> ${escapedLesson}</p>` : ''}`
+          : `<h2>❌ Remediation Failed</h2><p><strong>Incident ID:</strong> ${incidentId}</p><p><strong>Action Attempted:</strong> ${escapedAction}</p>`;
 
         emailSent = await this.sendEmail(this.founderEmail, subject, {
           html: htmlBody,
@@ -188,6 +203,9 @@ export class FounderAlertingSystem {
     occurrenceCount: number,
     suggestedPrevention: string
   ): Promise<{ emailSent: boolean; slackSent: boolean }> {
+    const escapedPattern = escapeHtml(pattern);
+    const escapedPrevention = escapeHtml(suggestedPrevention);
+
     const message = `Repeated error pattern detected: ${pattern} (${occurrenceCount} occurrences). Suggested prevention: ${suggestedPrevention}`;
 
     let emailSent = false;
@@ -195,8 +213,8 @@ export class FounderAlertingSystem {
 
     try {
       if (this.emailEnabled && this.founderEmail) {
-        const htmlBody = `<h2>⚠️ Repeated Error Pattern Detected</h2><p><strong>Pattern:</strong> ${pattern}</p><p><strong>Fingerprint:</strong> ${fingerprint}</p><p><strong>Occurrences:</strong> ${occurrenceCount}</p><p><strong>Suggested Prevention:</strong> ${suggestedPrevention}</p>`;
-        emailSent = await this.sendEmail(this.founderEmail, `⚠️ Repeated Error Pattern: ${pattern}`, {
+        const htmlBody = `<h2>⚠️ Repeated Error Pattern Detected</h2><p><strong>Pattern:</strong> ${escapedPattern}</p><p><strong>Fingerprint:</strong> ${fingerprint}</p><p><strong>Occurrences:</strong> ${occurrenceCount}</p><p><strong>Suggested Prevention:</strong> ${escapedPrevention}</p>`;
+        emailSent = await this.sendEmail(this.founderEmail, `⚠️ Repeated Error Pattern: ${escapedPattern}`, {
           html: htmlBody,
           text: `Repeated Error Pattern Detected\n\nPattern: ${pattern}\nOccurrences: ${occurrenceCount}\nSuggestion: ${suggestedPrevention}`,
         });

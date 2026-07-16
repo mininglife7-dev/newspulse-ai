@@ -20,8 +20,17 @@ export const maxDuration = 30; // 30 seconds (Vercel Hobby limit)
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // 1. Verify authorization
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      console.error('CRON_SECRET environment variable not configured');
+      return NextResponse.json(
+        { error: 'Server misconfiguration: CRON_SECRET not set' },
+        { status: 500 }
+      );
+    }
+
     const authHeader = request.headers.get('authorization');
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+    const expectedAuth = `Bearer ${cronSecret}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
       return NextResponse.json(
