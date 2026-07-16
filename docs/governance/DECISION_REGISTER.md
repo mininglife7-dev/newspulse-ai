@@ -7,6 +7,42 @@ are never requested from the Founder.
 
 ---
 
+## DR-0022 — CEIS endpoint hardening merged; PR queue reconciled (6 closed, 2 adopted)
+
+- **Decision:** (a) Merged PR #145: fail-closed auth across all CEIS endpoints
+  (ADMIN_TOKEN on founder review mutations, triple-secret bearer + production
+  503 fail-closed on `/api/ceis/run`, session-gating with an admin-bearer
+  bypass on the strategy-bearing reads, token prompt in `/evolution`).
+  (b) Reconciled the open-PR queue against main: closed #103, #105, #110,
+  #115, #138 (superseded — evidence in each close comment) and #126
+  (superseded + 16 merge conflicts); adopted and merged the idle-session
+  docs PRs #127 (pre-pivot doc banners) and #130 (claim protocol,
+  branch-protection founder guide, and the missing `assessment_obligations`
+  drop-first guards in `supabase/schema.sql`). Closed stale automation
+  issue #85. Left open: #144 (actively owned, complementary — merged by its
+  session shortly after as `388e038`/DR-0021) and #124 (billing-adjacent —
+  Founder domain).
+- **Reason:** CEIS mutating/read endpoints were the last unauthenticated
+  surface of the subsystem; the stale-PR queue was the #1 documented source
+  of wasted parallel work (DR-0006). The #130 schema guard also protects the
+  pending Supabase deploy: without drop-first, a re-run of `schema.sql`
+  fails under `ON_ERROR_STOP=1`.
+- **Alternatives considered:** Leaving stale PRs open (keeps queue noise and
+  duplicate-work risk); rebasing #126 (recreates the DR-0009/DR-0006
+  duplicate-implementation problem).
+- **Evidence:** PR #145 CI green twice (heads `6033adf`, `779ee79`); 1,265
+  unit tests, lint/type-check clean, build green, smoke 10/10; merge commits
+  `6515347`, `1c11b3a`, `86988b9` (main CI verified green on all); per-PR
+  close comments with verification against main; `git merge-tree` clean for
+  #127/#130, 16 conflicts for #126.
+- **Confidence:** High
+- **Expected impact:** No anonymous access to CEIS strategy or triggers;
+  founder review actions authenticated; PR queue reduced from 10 to 2 open
+  items, both legitimately active; schema re-runs idempotent.
+- **Risk assessment:** Low — all closes are reversible (reopen), merges are
+  docs + additive SQL guards + auth gates covered by 13 new regression tests.
+- **Timestamp:** 2026-07-16
+
 ## DR-0021 — Gate all internal ops/telemetry API endpoints behind ADMIN_TOKEN
 
 - **Decision:** Extend the auth middleware and per-route guards so no internal
