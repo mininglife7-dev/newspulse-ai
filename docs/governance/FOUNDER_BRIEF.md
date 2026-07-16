@@ -5,8 +5,9 @@ Rolling status summary maintained under the
 [Founder Autonomous Execution Constitution](./FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md).
 Updated continuously; read this instead of being interrupted.
 
-**Last updated:** 2026-07-16 10:15 UTC (Production database DEPLOYED; RISK-008 EU migration APPROVED; Phase 1 preparation COMPLETE)
-**State:** EU MIGRATION IN PROGRESS — Database verified in Tokyo (production-ready); awaiting EU Supabase project creation; then verification and first-customer launch
+**Last updated:** 2026-07-16 11:00 UTC (CONDITIONAL GO — Evidence-based governance policy adopted; final production certification pending EU environment verification)
+**Certification:** 🟡 **CONDITIONAL GO** — Engineering/Security/Documentation complete; Final GO pending EU Supabase provisioning + 4-phase autonomous verification
+**Policy:** [PRODUCTION-CERTIFICATION-POLICY.md](PRODUCTION-CERTIFICATION-POLICY.md) — Only issue GO when objective evidence confirms ALL launch-critical requirements
 
 ---
 
