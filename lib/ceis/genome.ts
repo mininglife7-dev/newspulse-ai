@@ -82,7 +82,7 @@ export const SEED_GENOME: GenomeEntry[] = [
   seed(
     'capability',
     'Production health and deployment monitoring',
-    'Health, production-health, error-rate, blocking-conditions and verify-deployment API endpoints report system state truthfully for uptime probes and launch gates.',
+    'Health, production-health, error-rate, blocking-conditions, deployment-verification and deployment-canary API endpoints report system state truthfully for uptime probes and launch gates.',
     ['health', 'monitoring', 'observability', 'deployment', 'uptime', 'api']
   ),
   seed(

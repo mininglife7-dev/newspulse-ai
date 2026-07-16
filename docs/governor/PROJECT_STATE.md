@@ -8,9 +8,9 @@
 
 ## Current Institutional State
 
-**Stage**: STAGE 1 ✅ COMPLETE → STAGE 2 READY
+**Stage**: STAGE 2 🟡 IN PROGRESS (Phase 1: Documentation Consolidation ✅ COMPLETE, Phase 2: API Route Consolidation ✅ COMPLETE)
 
-**Execution Status**: Governance kernel implemented. Governor Ω authority established. Decision protocol operational. Ready for code consolidation.
+**Execution Status**: Governance kernel ✅ complete. Documentation consolidated ✅ complete (~200 → 50 files + 111 archived). API routes consolidated ✅ complete (3 deprecated routes archived). Ready for STAGE 3.
 
 **Verified Operational State**:
 - Production deployment: ✅ Active (Vercel + Supabase EU)
@@ -20,9 +20,9 @@
 - CI/CD pipeline: ✅ Functional (GitHub Actions)
 
 **Critical Issues Identified**:
-- 🔴 RISK-001: Documentation authority fragmented (~300 files, multiple versions of governance docs)
-- 🔴 RISK-002: API route duplication (42 directories, overlapping concerns)
-- 🔴 RISK-003: Governance layering (multiple Governor versions, unclear consolidation)
+- 🔴 RISK-001: Documentation authority fragmented — ✅ MITIGATED (STAGE 2 Phase 1)
+- 🔴 RISK-002: API route duplication — ✅ MITIGATED (STAGE 2 Phase 2)
+- 🔴 RISK-003: Governance layering — ✅ MITIGATED (STAGE 1)
 - 🟡 RISK-004: Test/verification gaps (customer journey not end-to-end verified)
 - 🟡 RISK-005: Observability incomplete (endpoints exist, no dashboard)
 
@@ -60,7 +60,7 @@
 |-------|---------|--------|----------|------|
 | 0 | Repository Reconnaissance | ✅ COMPLETE | IMPLEMENTATION_ROADMAP.md | All risks documented |
 | 1 | Governance Kernel | ✅ COMPLETE | AGENTS.md, GOVERNOR_OPERATIONAL_FRAMEWORK.md, DECISION_LOG.md, REPORTING_STANDARDS.md, STAGE_1_COMPLETION_CHECKLIST.md | RISK-003 mitigated |
-| 2 | Repository Organization | 🔵 READY | Depends on Stage 1 ✅ | RISK-001, RISK-002 |
+| 2 | Repository Organization | ✅ COMPLETE | STAGE_2_ROADMAP.md, STAGE_2_API_CONSOLIDATION_PLAN.md, docs/archive/ | RISK-001, RISK-002 mitigated |
 | 3 | Engineering Standards | 🔵 QUEUED | Depends on Stage 1 | Procedural clarity |
 | 4 | Knowledge Architecture | 🔵 QUEUED | Depends on Stage 2 | Documentation scalability |
 | 5 | Reusable Skills | 🔵 QUEUED | Depends on Stage 3 | Automation foundation |
@@ -76,14 +76,13 @@
 
 ### API Layer Duplication
 
-```
-CRITICAL (requires Stage 2 consolidation):
-├── assessment/ + assessments/ (both exist, unclear primary)
-├── deployment-verification/ + deployment-canary/ + verify-deployment/
-├── errors/ + error-tracking/ + error-rate/
-└── compliance-dashboard/ (route exists, unclear if active)
+**RESOLVED (STAGE 2 Phase 2)**:
+- ✅ `/api/assessment/` archived (superseded by `/api/assessments/`)
+- ✅ `/api/verify-deployment/` archived (superseded by `/api/deployment-verification/` + `/api/deployment-canary/`)
+- ✅ `/api/errors/` archived (skeleton; functionality in `/api/error-tracking/` + `/api/error-rate/`)
 
-MEDIUM (requires Stage 2 investigation):
+**REMAINING (MEDIUM priority)**:
+```
 ├── reports/ (main route + multiple subdirectories)
 ├── metrics/ (main route + subdirectories)
 └── evidence/ (main route + subdirectories)
@@ -94,22 +93,23 @@ EXPERIMENTAL (unclear status):
 └── cathedral-readiness/ (experimental feature?)
 ```
 
+**Archive Location**: `docs/archive/api-routes/` (3 deprecated routes with documentation)
+
 ### Documentation Duplication
 
-```
-CRITICAL (requires Stage 2 consolidation):
-├── FOUNDER-BRIEF (4 versions in different locations)
-├── DECISION_REGISTER (unclear versioning)
-├── FOUNDER-DECISION-BRIEF vs. FOUNDER-QUICK-REFERENCE
-├── Runbooks (4 different versions, unclear authority)
-└── Checkpoint files (10+ snapshots from different dates)
+**RESOLVED (STAGE 2 Phase 1)**:
+- ✅ Consolidated ~200 scattered files → ~50 authoritative + 111 archived
+- ✅ Established single source of truth per document type
+- ✅ Created `docs/archive/` structure with 6 categories
+- ✅ All versions < final version archived with clear authority chain
 
-MEDIUM (requires Stage 4 archive):
-├── Pre-deployment/production readiness checklists (6+ versions)
-├── Customer communication templates (root + docs/customer/)
-├── Risk registers (scattered across locations)
-└── Launch procedures (root + docs/governance/)
-```
+**Archive Contents**:
+- `checkpoints/` — 14 snapshot files from different dates
+- `phases/` — 7 phase-specific files
+- `launch/` — 13 launch/readiness checklists
+- `deprecated/` — 8 deprecated/obsolete files
+- `infrastructure/` — 18 infrastructure/operations files
+- `reports/` — 51 historical reports and briefs
 
 ### Code Quality
 
