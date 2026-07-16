@@ -47,3 +47,14 @@ completed 2026-07-16 07:20 UTC). All 3 jobs, all steps `success`.
 - RISK-005 (observability unverified) → now unblocked for verification.
 - RISK-006 (post-deploy env vars) → now the active Founder follow-up.
 - Lesson L-005 recorded.
+
+## Addendum — confirmation run (07:28 UTC)
+
+Run [`29479962355`](https://github.com/mininglife7-dev/newspulse-ai/actions/runs/29479962355)
+(idempotent re-deploy on `main` @ `17998ad`, after the verification fix in
+PR #156) completed **success** with every check green:
+`✓✓✓ DEPLOYMENT SUCCESSFUL ✓✓✓` — 22 tables, 62 indexes, 43 RLS policies,
+**triggers 1/1** (`on_auth_user_created` confirmed present), 3 functions;
+CEIS hard-verify and all security tests passed, including
+"Anonymous cannot read profiles". RISK-007 closed — the trigger was present
+all along; the prior FAIL was the verification script's schema filter.
