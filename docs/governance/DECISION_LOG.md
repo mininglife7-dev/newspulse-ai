@@ -197,6 +197,57 @@ All other Governor variants are now methodologies/departments within Governor Ω
 
 ---
 
+### DR-0105 — Engineering Standards Framework: Codify Baseline Code Quality
+
+**Date**: 2026-07-16  
+**Title**: Establish engineering standards for code quality, testing, and documentation  
+**Context**: STAGE 2 consolidated repository structure; now need to enforce consistency across codebase to enable sustainable scaling. De-facto patterns exist but are not documented, leading to inconsistency and review friction.
+
+**Options Considered**:
+1. ❌ No formal standards (rely on code review) — risk: inconsistent patterns, slow onboarding, subjective review
+2. ✅ Document observed patterns, enforce with tooling — recommended: clear expectations, faster review, easier onboarding
+
+**Decision**: STAGE 3 implements:
+- `ENGINEERING_STANDARDS.md` — Codify observed best practices:
+  - TypeScript strict mode, no `any` types
+  - API route structure with error handling
+  - Library/domain logic patterns
+  - React component patterns (server vs client)
+  - Database/Supabase patterns (RLS enforcement)
+  - Security checklist (input validation, auth, data leakage)
+  - Pre-push verification (type-check, lint, test, format)
+
+- `INTEGRATION_TEST_STANDARD.md` — Customer journey testing:
+  - Test environment setup (Supabase test instance)
+  - 4 critical journeys (Auth, Inventory, Assessment, Evidence)
+  - Error scenario coverage
+  - Coverage targets (80%+ lib, 100% auth/RLS)
+  - CI/CD integration
+
+- `.husky/pre-push` hook — Automated enforcement:
+  - TypeScript type checking
+  - ESLint verification
+  - Prettier format check
+  - Unit test execution
+  - Blocks push on failures
+
+**Impact**:
+- Consistency: All code follows documented patterns
+- Quality: Standards prevent common bugs (implicit types, missing error handling, RLS bypasses)
+- Onboarding: New developers learn from examples, not subjective feedback
+- Speed: Pre-push enforcement blocks problems before review
+- Traceability: Every committed change meets standards
+
+**Owner**: Governor Ω  
+**Status**: Active (STAGE 3 Phase 3.1 complete, Phase 3.2 enforcement in progress)  
+**Related**:
+- `docs/governance/ENGINEERING_STANDARDS.md`
+- `docs/governance/INTEGRATION_TEST_STANDARD.md`
+- `.husky/pre-push` (enforcement hook)
+- STAGE 3 (Engineering Standards) roadmap
+
+---
+
 ## Archived Decisions
 
 See `docs/governance/DECISION_REGISTER.md` for historical decisions (DR-0001 through DR-0099).
