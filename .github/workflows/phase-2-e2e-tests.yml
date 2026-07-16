@@ -1,0 +1,115 @@
+name: Phase 2 E2E Tests
+
+# Run Phase 2 customer journey tests against preview/staging environment
+on:
+  schedule:
+    # Run every 15 minutes once Phase 2 automation begins
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment for tests
+        required: false
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+          - localhost
+
+jobs:
+  phase-2-e2e:
+    name: Phase 2 Customer Journey Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: claude/governor-omega-consolidation-yrifw7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --omit=optional
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Determine target environment
+        id: env
+        run: |
+          ENV="${{ github.event.inputs.environment || 'preview' }}"
+          if [ "$ENV" = "preview" ]; then
+            echo "E2E_URL=https://newspulse-ai-git-claude-governo-b7a1ac-lalit-kumar-d-s-projects.vercel.app" >> $GITHUB_OUTPUT
+            echo "ENVIRONMENT=preview" >> $GITHUB_OUTPUT
+          elif [ "$ENV" = "production" ]; then
+            echo "E2E_URL=https://newspulse.eu" >> $GITHUB_OUTPUT
+            echo "ENVIRONMENT=production" >> $GITHUB_OUTPUT
+          else
+            echo "E2E_URL=http://localhost:3000" >> $GITHUB_OUTPUT
+            echo "ENVIRONMENT=localhost" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Phase 2 readiness
+        id: check
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/verify-phase-2-readiness.js || true
+
+      - name: Run Phase 2 E2E Tests
+        if: steps.check.outputs.SCHEMA_DEPLOYED == 'true' || github.event.inputs.environment == 'manual'
+        env:
+          E2E_URL: ${{ steps.env.outputs.E2E_URL }}
+          CI: true
+        run: |
+          echo "Running Phase 2 tests against: ${{ steps.env.outputs.E2E_URL }}"
+          npx playwright test tests/phase-2-e2e.spec.ts --reporter=github
+
+      - name: Skip tests - schema not ready
+        if: steps.check.outputs.SCHEMA_DEPLOYED != 'true' && github.event.inputs.environment != 'manual'
+        run: |
+          echo "⏳ Phase 2 schema not yet deployed"
+          echo "Tests will run automatically once schema is deployed"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-2-test-results
+          path: test-results/
+          retention-days: 30
+
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const testsPassed = '${{ job.status }}' === 'success';
+            const status = testsPassed ? '✅ Phase 2 E2E Tests' : '❌ Phase 2 E2E Tests';
+            const message = `${status}
+
+            Environment: \`${{ steps.env.outputs.ENVIRONMENT }}\`
+            URL: [\`${{ steps.env.outputs.E2E_URL }}\`](${{ steps.env.outputs.E2E_URL }})
+
+            Tests: Phase 2 customer journey scenarios
+            Details: See [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
