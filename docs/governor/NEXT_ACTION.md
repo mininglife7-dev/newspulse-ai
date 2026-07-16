@@ -1,223 +1,103 @@
-# Alpha Cathedral Ω — Next Action
+# NEXT_ACTION: STAGE 3 Engineering Standards
 
-**Authority**: Governor Ω (STAGE 0 Complete)  
+**Status**: Ready to Execute  
 **Date**: 2026-07-16  
-**Status**: READY FOR FOUNDER DECISION
+**Authority**: Governor Ω Autonomous Execution  
+**Previous Stage**: STAGE 2 ✅ COMPLETE  
 
 ---
 
-## Current State
+## Current Situation
 
-**STAGE 1 (Governance Kernel)** is **COMPLETE** and **VERIFIED**.
+**STAGE 2 Complete** (Repository Organization):
+- ✅ Documentation consolidated (~200 → 50 canonical + 111 archived)
+- ✅ API routes deduplicated (3 redundant routes archived)
+- ✅ Governance authority consolidated (Governor Ω as sole executive)
+- ✅ All critical risks mitigated (RISK-001, RISK-002, RISK-003)
 
-**Evidence**:
-- ✅ `docs/governance/AGENTS.md` created (Governor Ω role and capabilities)
-- ✅ `docs/governance/GOVERNOR_OPERATIONAL_FRAMEWORK.md` created (decision protocol)
-- ✅ `docs/governance/DECISION_LOG.md` created (permanent decision record)
-- ✅ `docs/governance/REPORTING_STANDARDS.md` created (communication protocol)
-- ✅ `docs/governor/STAGE_1_COMPLETION_CHECKLIST.md` created (verification)
-- ✅ Governor Ω authority established (Class A/B/C/D decisions defined)
-- ✅ Decision escalation protocol operational (7 escalation categories defined)
-- ✅ Reporting standards aligned with FOUNDER_COMMUNICATION_CONSTITUTION.md
-
-**Key Findings**:
-- **~300+ documentation files** with significant duplication and authority confusion
-- **42 API route directories** with overlapping concerns requiring consolidation
-- **5 critical/medium risks** all mitigated through the 10-stage program
-- **3 risk categories** that block institutional build: documentation fragmentation, API duplication, governance layering
+Repository is now clean and organized. Foundation for scaling is in place.
 
 ---
 
-## Immediate Path Forward: STAGE 2
+## STAGE 3 Mission: Engineering Standards
 
-### Stage 2: Repository Organization
+**Objective**: Establish consistent engineering procedures and standards enforcement across the codebase to ensure quality, maintainability, and compliance at scale.
 
-**Mission**: Consolidate documentation and API duplication into clear, maintainable structures.
+**Key Deliverables**:
+1. `docs/governance/ENGINEERING_STANDARDS.md` — Code, test, doc standards with examples
+2. `docs/governance/INTEGRATION_TEST_STANDARD.md` — Test strategy and customer journey coverage
+3. Updated `.husky/pre-push` — Enforce standards before push
+4. Refactored critical paths — Apply standards to app/, api/, lib/
+5. Customer journey integration tests — E2E coverage for all workflows
 
-**Critical Objectives**:
-1. Consolidate documentation — Move ~250 files to archive, keep <50 authoritative documents
-2. Deduplicate API routes — Consolidate assessment/assessments, deployment verification (3x), error tracking (3x)
-3. Clarify experimental systems — Archive evolution/hercules/cathedral-readiness or activate
-4. Simplify governance doc structure — Single source of truth per topic
-5. Create documentation taxonomy — Clear structure for future docs
-6. Archive old checkpoints — Move 10+ checkpoint snapshots to archive/
-
-**Deliverables**:
-- Repository Organization Report (what consolidated, what moved to archive)
-- Deduplication implementation guide (how consolidation was done)
-- Documentation architecture (how docs are now organized)
-- Archive structure (where old snapshots live)
-
-**Why Now?**
-- Stage 1 (governance kernel) is complete ✅ — authority clear, decision protocol operational
-- Without consolidation, Stage 2-10 will be hampered by documentation sprawl
-- Documentation cleanup enables clearer thinking for future stages
-
-**Estimated Work**:
-- 2-3 hours: audit and move files
-- 1-2 hours: test consolidation (verify no broken links, all docs accessible)
-- 1 hour: documentation and reporting
-- Total: ~4-6 hours (one session)
-
-**Founder Decision Required**: Proceed with STAGE 2?
+**Risks Addressed**:
+- RISK-004: Customer journey E2E verification gaps
+- RISK-005: Observability incomplete (plan framework)
 
 ---
 
-## How This Works: The Alpha Cathedral Program
+## Execution Plan
 
-### Execution Loop
+### Phase 3.1: Document Standards (1-2 days)
+- Audit existing code patterns in app/, lib/, api/
+- Identify de-facto standards already followed
+- Document with 5-10 concrete examples
+- Create integration test specification
+- Create refactoring checklist
 
-1. **Reconnaissance** (STAGE N) → Repository assessment documented
-2. **Planning** (Governor Ω) → Next stage roadmap created
-3. **Implementation** (Governor Ω) → Code/docs written, tests executed
-4. **Verification** → Evidence collected, risks documented
-5. **Founder Review** → Founder decides: approve/adjust/halt
-6. **Continue** → Move to next stage OR return to current for adjustment
+### Phase 3.2: Enforce Standards (2-3 days)
+- Update `.husky/pre-push` with enforcement gates
+- Refactor critical paths (top 30% by impact)
+- Run test suite on refactored code
+- Document refactoring decisions in DECISION_LOG.md
 
-### Completion Criteria Per Stage
+### Phase 3.3: Integration Tests (1-2 days)
+- Create test templates for each customer journey
+- Implement E2E tests for 5 critical paths
+- Run against test database
+- Document coverage and gaps
 
-Every stage MUST finish with:
-- ✅ **Files changed/created** documented in commit
-- ✅ **Tests executed** (if code changes) with output
-- ✅ **Evidence collected** (screenshots, logs, reports)
-- ✅ **Remaining risks** documented in NEXT_ACTION.md
-- ✅ **Lessons learned** appended to docs/governor/lessons/LESSONS.md
-- ✅ **Next recommended stage** clearly stated
+### Phase 3.4: Verification (1 day)
+- Verify all standards applied
+- Verify all tests pass
+- Verify pre-push enforcement works
+- Update PROJECT_STATE.md with completion
 
-Only then does Governor proceed to next stage.
-
-### Founder Authority Boundaries
-
-**Governor executes autonomously** (no approval needed):
-- ✅ Creating governance documents
-- ✅ Consolidating duplicated code
-- ✅ Refactoring architecture
-- ✅ Adding tests and verification
-- ✅ Documenting decisions
-- ✅ Merging code to the branch
-
-**Governor escalates to Founder** (approval required):
-- ⚠️ Credentials or tokens needed
-- ⚠️ Legal or compliance decisions
-- ⚠️ Financial commitments
-- ⚠️ Customer-facing feature changes not covered in planning
-- ⚠️ Irreversible destructive operations
-- ⚠️ Product strategy or mission changes
+**Total Duration**: ~34 hours ≈ 4-5 sessions
 
 ---
 
-## STAGE 2 Roadmap (Preview)
+## Success Criteria
 
-### Files to Create/Update
-
-```
-docs/
-├── governance/
-│   ├── STAGE_2_ROADMAP.md (Detailed implementation plan)
-│   └── CONSOLIDATION_PLAN.md (Specific docs to consolidate, archive)
-├── governor/
-│   ├── STAGE_2_COMPLETION_CHECKLIST.md (Verification criteria)
-│   └── lessons/
-│       └── LESSONS.md (Updated with Stage 2 learnings)
-└── archive/ (new directory)
-    ├── checkpoints/ (old checkpoint snapshots)
-    ├── history/ (old roadmaps/phases)
-    └── deprecated/ (old runbooks, superseded docs)
-```
-
-### Verification Checklist (Stage 2)
-
-- ✅ ~250 old files moved to docs/archive/ (checkpoints, old roadmaps, deprecated runbooks)
-- ✅ Documentation consolidated: <50 authoritative documents remain
-- ✅ API deduplication: assessment/assessments → assessment, 3x deployment → deployment-verification, 3x error → errors
-- ✅ Experimental systems clarified (evolution/hercules/cathedral-readiness archived or activated)
-- ✅ Documentation taxonomy created (clear structure)
-- ✅ All broken links fixed
-- ✅ STAGE_2_ROADMAP.md created (detailed plan)
-- ✅ PROJECT_STATE.md updated showing Stage 2 complete
-- ✅ NEXT_ACTION.md updated with Stage 3 preview
-
----
-
-## What Happens If You Approve Stage 2
-
-**Immediate** (Governor Ω autonomous):
-1. Create STAGE_2_ROADMAP.md (detailed implementation plan)
-2. Audit all ~300 documentation files
-3. Move ~250 old files to docs/archive/ (checkpoints, old roadmaps, deprecated runbooks)
-4. Consolidate governance documents (single source of truth per topic)
-5. Deduplicate API routes (assessment/assessments, deployment verification, error tracking)
-6. Clarify experimental systems status (evolution/hercules/cathedral-readiness)
-7. Verify no broken links
-8. Update PROJECT_STATE.md (Stage 2 in progress)
-9. Create STAGE_2_COMPLETION_CHECKLIST.md
-10. Commit all to branch: `claude/alpha-cathedral-roadmap-2tea9o`
-11. Push to origin
-12. Update PR with Stage 2 completion report
-13. Update NEXT_ACTION.md with Stage 3 preview
-
-**Timeline**: ~4-6 hours (file consolidation, deduplication, verification)
-
-**Result**: Repository organized. Documentation consolidated. API duplication addressed. Ready for STAGE 3 (Engineering Standards).
+- ✅ All code follows documented standards
+- ✅ ESLint strict, TypeScript strict across codebase
+- ✅ Customer journey integration tests complete
+- ✅ Pre-push enforcement blocks non-compliant code
+- ✅ Full test suite passes (unit + integration + E2E)
 
 ---
 
 ## Founder Action Required
 
-**Question**: Should Governor Ω proceed with STAGE 2 (Repository Organization)?
+**None** — Governor Ω operates autonomously for:
+- Code refactoring, test implementation
+- Documentation standards, engineering procedures
 
-**Option A: YES** → Governor will implement Stage 2 immediately (consolidate docs, deduplicate API) and report completion.
-
-**Option B: ADJUST** → Governor will modify plan based on your feedback and replan Stage 2.
-
-**Option C: CONTINUE STAGE 1** → Governor will refine governance documents. ⚠️ Not recommended — governance is complete ✅.
-
-**Option D: HALT** → Governor will pause the program. NEXT_ACTION.md will wait for further instruction.
-
----
-
-## Risk Assessment (Stage 2)
-
-**Risks of Proceeding**: LOW. Documentation reorganization and API consolidation are reversible if issues arise.
-
-**Risks of NOT Proceeding**: 
-- ~300 documentation files will remain scattered, causing confusion
-- API duplication will persist, increasing maintenance burden
-- Future stages (3-10) will be hampered by sprawl
-- Founder clarity will suffer without consolidated docs
-
-**Mitigation**: Proceed with Stage 2. It's foundational for future stages and reversible.
+Will escalate only for:
+- Standards conflicting with business requirements
+- Test failures revealing product issues
+- Architecture changes (out of scope)
+- Spending decisions
 
 ---
 
-## Lessons from Stage 0
+## References
 
-1. **300+ documentation files indicate institutional scale** — Requires consolidation structure, not just archival
-2. **API duplication happened because governance was unclear** — Can't prevent it without authority; can only consolidate after establishing authority
-3. **Repository reconnaissance is prerequisite for all future work** — Worth the session time; prevents rework
-4. **Verification-first culture prevents rework** — Every stage must produce verifiable artifacts
-5. **Sequential stages are essential** — Can't do governance + code consolidation + architecture in parallel; would produce fragmentation
-
----
-
-## Success Metrics (After All 10 Stages)
-
-When Alpha Cathedral Ω is complete:
-
-- ✅ **Governance**: Single Governor Ω authority, clear decision protocol, permanent decision log
-- ✅ **Documentation**: Living documents (not snapshots), single source of truth per topic, <50 files in docs/
-- ✅ **Architecture**: No API duplication, clear domain boundaries, <30 route directories
-- ✅ **Engineering**: Reusable skills, testing standards, CI/CD fully automated
-- ✅ **Operations**: Complete observability, dashboards, incident response procedures
-- ✅ **Verification**: Every feature has customer journey verification
-- ✅ **Institutional Memory**: Future Governors can resume work from repository alone, without conversation history
+- Current State: `docs/governor/PROJECT_STATE.md`
+- STAGE 2 Complete: `docs/governor/STAGE_2_COMPLETION_CHECKLIST.md`
+- Risk Register: `docs/governor/risks/RISK-REGISTER.md`
+- Roadmap: `docs/governance/IMPLEMENTATION_ROADMAP.md`
 
 ---
 
-## Updated By
-
-**Session**: Governor Ω (2026-07-16)  
-**Stage**: 0 COMPLETE → 1 QUEUED  
-**Authority**: Alpha Cathedral Ω Directive
-
-**Awaiting**: Founder decision on Stage 1 approval.
+**Ready to Proceed**: Yes ✅
