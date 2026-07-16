@@ -40,3 +40,4 @@ next-env.d.ts
 
 # runtime cache written by /api/security-scan
 docs/governance/.security-scan-cache.json
+.production-readiness-report.txt
