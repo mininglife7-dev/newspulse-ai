@@ -18,34 +18,39 @@ Supabase production schema deployment completed successfully. All 15 production 
 
 ### Successful Deployment Runs
 
-| Run ID | Time | Status | Schema | CEIS | Verification | Security Tests |
-|--------|------|--------|--------|------|---------------|----|
-| 29479537494 | 07:20 UTC | ✅ SUCCESS | ✅ | ✅ | ✅ | ✅ |
-| 29479962355 | 07:28 UTC | ✅ SUCCESS | ✅ | ✅ | ✅ | ✅ |
+| Run ID      | Time      | Status     | Schema | CEIS | Verification | Security Tests |
+| ----------- | --------- | ---------- | ------ | ---- | ------------ | -------------- |
+| 29479537494 | 07:20 UTC | ✅ SUCCESS | ✅     | ✅   | ✅           | ✅             |
+| 29479962355 | 07:28 UTC | ✅ SUCCESS | ✅     | ✅   | ✅           | ✅             |
 
 **Source:** `docs/governor/deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md`
 
 ### Database Objects Verified
 
 #### Schema Structure
+
 - **Tables:** 22 total (≥15 required) ✅
-- **Indexes:** 62 total (≥25 required) ✅  
+- **Indexes:** 62 total (≥25 required) ✅
 - **RLS Policies:** 43 total (≥31 required) ✅
 - **Functions:** 3 total (≥1 required) ✅
 - **Triggers:** 1/1 (on_auth_user_created) ✅
 
 #### Key Components
+
 ✅ **Base Application Schema** (`supabase/schema.sql`)
+
 - Idempotent (CREATE/DROP IF EXISTS on all objects)
 - Row-level security: 43 policies enforcing tenant isolation
 - Full CRUD operations verified
 
 ✅ **CEIS Schema** (`supabase/ceis-schema.sql`, DNA-300)
+
 - 5 CEIS tables deployed (ceis_recommendations, ceis_audit, etc.)
 - Hard RLS verification with `ON_ERROR_STOP=1` (fail-closed)
 - Security tests passed
 
 ✅ **Authentication**
+
 - `on_auth_user_created` trigger confirmed present
 - Session management ready
 - Profile upsert workflow verified
@@ -60,29 +65,29 @@ All tests executed and PASSED:
 ✅ **Full CRUD workflows** — All customer journey paths verified  
 ✅ **Workspace membership** — Team access controls enforced  
 ✅ **RLS hard verification** — All 43 policies active and functioning  
-✅ **CEIS endpoint auth** — Fail-closed authentication configured  
+✅ **CEIS endpoint auth** — Fail-closed authentication configured
 
 ---
 
 ## Production Readiness Gates (15/15 ✅)
 
-| Gate | Status | Evidence | Last Verified |
-|------|--------|----------|---------------|
-| Database schema deployed | ✅ GREEN | 22 tables, 62 indexes, 43 policies | 07:28 UTC |
-| RLS policies active | ✅ GREEN | 43/43 policies verified (hard-fail ON_ERROR_STOP=1) | 07:28 UTC |
-| Authentication trigger deployed | ✅ GREEN | on_auth_user_created present and functional | 07:28 UTC |
-| CEIS tables created | ✅ GREEN | 5 ceis_* tables with RLS | 07:28 UTC |
-| Security tests passing | ✅ GREEN | 100% pass (multi-tenant, access controls) | 07:28 UTC |
-| Connection via Session Pooler | ✅ GREEN | aws-0-ap-northeast-1.pooler.supabase.com:5432 | 07:20 UTC |
-| Idempotent deployment | ✅ GREEN | Confirmed re-run (29479962355) succeeded | 07:28 UTC |
-| Functions operational | ✅ GREEN | 3 functions deployed and tested | 07:28 UTC |
-| Indexes created | ✅ GREEN | 62 indexes ≥25 required | 07:28 UTC |
-| Trigger count | ✅ GREEN | 1/1 (was false negative in prior verification) | 07:28 UTC |
-| Customer journey paths | ✅ GREEN | Registration → Inventory → Assessment → Report | Pre-deploy |
-| Data isolation verified | ✅ GREEN | Workspace-level RLS enforced | 07:28 UTC |
-| Service role protection | ✅ GREEN | HERCULES endpoints secured | Pre-deploy |
-| Post-deployment scripts | ✅ GREEN | All verification scripts passing | 07:28 UTC |
-| Production monitoring | ✅ GREEN | 18 DNA systems deployed and active | Pre-deploy |
+| Gate                            | Status   | Evidence                                            | Last Verified |
+| ------------------------------- | -------- | --------------------------------------------------- | ------------- |
+| Database schema deployed        | ✅ GREEN | 22 tables, 62 indexes, 43 policies                  | 07:28 UTC     |
+| RLS policies active             | ✅ GREEN | 43/43 policies verified (hard-fail ON_ERROR_STOP=1) | 07:28 UTC     |
+| Authentication trigger deployed | ✅ GREEN | on_auth_user_created present and functional         | 07:28 UTC     |
+| CEIS tables created             | ✅ GREEN | 5 ceis_* tables with RLS                            | 07:28 UTC     |
+| Security tests passing          | ✅ GREEN | 100% pass (multi-tenant, access controls)           | 07:28 UTC     |
+| Connection via Session Pooler   | ✅ GREEN | aws-0-ap-northeast-1.pooler.supabase.com:5432       | 07:20 UTC     |
+| Idempotent deployment           | ✅ GREEN | Confirmed re-run (29479962355) succeeded            | 07:28 UTC     |
+| Functions operational           | ✅ GREEN | 3 functions deployed and tested                     | 07:28 UTC     |
+| Indexes created                 | ✅ GREEN | 62 indexes ≥25 required                             | 07:28 UTC     |
+| Trigger count                   | ✅ GREEN | 1/1 (was false negative in prior verification)      | 07:28 UTC     |
+| Customer journey paths          | ✅ GREEN | Registration → Inventory → Assessment → Report      | Pre-deploy    |
+| Data isolation verified         | ✅ GREEN | Workspace-level RLS enforced                        | 07:28 UTC     |
+| Service role protection         | ✅ GREEN | HERCULES endpoints secured                          | Pre-deploy    |
+| Post-deployment scripts         | ✅ GREEN | All verification scripts passing                    | 07:28 UTC     |
+| Production monitoring           | ✅ GREEN | 18 DNA systems deployed and active                  | Pre-deploy    |
 
 **Overall:** 🟢 **15/15 COMPONENTS GREEN**
 
@@ -93,27 +98,32 @@ All tests executed and PASSED:
 ### Arc: Diagnosis → Fix → Success
 
 **Run 29478929749 (07:08 UTC) — First Attempt: FAILED**
+
 - ❌ Issue: SUPABASE_DB_URL stored as dashboard's pasted `psql -h ... -U ...` command, not a URI
 - Root cause: psql expected a connection URI or environment variables, not a command string
 - Action: Diagnosed and planned fix
 
 **PR #148 — Fix: Connection Normalization**
+
 - Merged (commit 56dd24e)
 - Fixed URL parsing at both connection sites
 - Added PGPASSWORD export from SUPABASE_DB_PASSWORD
 - Normalized pasted `psql ...` commands to proper URIs
 
 **Run 29479537494 (07:20 UTC) — Second Attempt: ✅ SUCCESS**
+
 - ✅ Base schema deployed
 - ✅ CEIS schema deployed
 - ⚠️ Trigger verification showed false negative (verification script filter issue)
 
 **PR #156 — Fix: Verification Script**
+
 - Merged (commit 17998ad)
 - Fixed trigger query (was filtering `trigger_schema='public'` but trigger is on `auth.users`)
 - Query now uses `pg_trigger.tgname` for accurate detection
 
 **Run 29479962355 (07:28 UTC) — Confirmation: ✅ SUCCESS**
+
 - ✅ All 15 gates verified GREEN
 - ✅ Trigger count confirmed: 1/1
 - ✅ Full verification suite passed
@@ -127,7 +137,8 @@ All tests executed and PASSED:
 
 **Issue:** Database is deployed to AWS Tokyo (ap-northeast-1), not EU region  
 **Impact:** EU AI Act compliance product with non-EU data residency  
-**Mitigation:** 
+**Mitigation:**
+
 - Identified in Decision Register (DR-0023)
 - Escalated to Founder in PR #158
 - Migration cost is near-zero (early stage)
@@ -149,7 +160,7 @@ All technical prerequisites for customer onboarding are satisfied:
 ✅ **Customer journey** — Registration → Inventory → Assessment → Report paths verified  
 ✅ **Security** — Multi-tenant isolation, CEIS auth, all tests passing  
 ✅ **Monitoring** — 18 DNA health systems deployed and active  
-✅ **Incident response** — Playbooks and escalation procedures ready  
+✅ **Incident response** — Playbooks and escalation procedures ready
 
 ### ⚠️ Pending: Residency Decision
 
@@ -198,16 +209,16 @@ Before first customer data is written to production, Founder must decide:
 
 ## Summary
 
-| Aspect | Status | Evidence |
-|--------|--------|----------|
-| **Schema Deployment** | ✅ Complete | Runs 29479537494, 29479962355 |
-| **Database Verification** | ✅ Complete | 22 tables, 62 indexes, 43 policies, 1 trigger |
-| **Security Tests** | ✅ Complete | Multi-tenant isolation, access controls, CEIS |
-| **RLS Enforcement** | ✅ Complete | 43 policies active, ON_ERROR_STOP hard verification |
-| **Production Readiness** | ✅ 15/15 GREEN | All gates verified |
-| **Monitoring** | ✅ Active | 18 DNA systems deployed |
-| **Documentation** | ✅ Complete | All playbooks and procedures ready |
-| **Data Residency** | ⚠️ Decision Pending | Tokyo region; Founder decision required |
+| Aspect                    | Status              | Evidence                                            |
+| ------------------------- | ------------------- | --------------------------------------------------- |
+| **Schema Deployment**     | ✅ Complete         | Runs 29479537494, 29479962355                       |
+| **Database Verification** | ✅ Complete         | 22 tables, 62 indexes, 43 policies, 1 trigger       |
+| **Security Tests**        | ✅ Complete         | Multi-tenant isolation, access controls, CEIS       |
+| **RLS Enforcement**       | ✅ Complete         | 43 policies active, ON_ERROR_STOP hard verification |
+| **Production Readiness**  | ✅ 15/15 GREEN      | All gates verified                                  |
+| **Monitoring**            | ✅ Active           | 18 DNA systems deployed                             |
+| **Documentation**         | ✅ Complete         | All playbooks and procedures ready                  |
+| **Data Residency**        | ⚠️ Decision Pending | Tokyo region; Founder decision required             |
 
 ---
 
@@ -217,7 +228,8 @@ Before first customer data is written to production, Founder must decide:
 
 **Conditional on:** Founder decision on data residency (Tokyo accept or EU migrate)
 
-**Timeline:** 
+**Timeline:**
+
 - Residency decision: Next 15 minutes
 - Customer launch: Immediately after decision
 - Customer operational: Within 60 minutes

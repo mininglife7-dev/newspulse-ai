@@ -14,6 +14,7 @@
 **Status:** 🔴 **BLOCKING** — Must complete before customer onboarding
 
 **Specification:**
+
 - **What:** Deploy database schema to Supabase production environment
 - **Why:** Platform requires 8+ database tables to accept customer data; none exist until schema is deployed
 - **When:** Before first customer account creation
@@ -56,6 +57,7 @@ Expected output: `✅ LAUNCH READINESS: GREEN`
 **Reference Document:** `LAUNCH-DAY-QUICK-REFERENCE.md` → "Action 1"
 
 **Business Impact:**
+
 - **If Done:** Platform ready to accept customers
 - **If Delayed:** Customers cannot create accounts; launch blocked
 - **If Failed:** Roll back via Supabase dashboard (previous schema state recoverable)
@@ -69,6 +71,7 @@ Expected output: `✅ LAUNCH READINESS: GREEN`
 **Status:** 🟡 **REQUIRED** — Enables production monitoring
 
 **Specification:**
+
 - **What:** Set GitHub Actions spending limit to $50/month
 - **Why:** Production monitoring workflows (health checks, alerts, incident response automation) require budget allocation
 - **When:** Before or during first week of customer operations
@@ -92,6 +95,7 @@ Revisit the same URL — "Spending limit" should now display "$50/month"
 **Reference Document:** `LAUNCH-DAY-QUICK-REFERENCE.md` → "Action 2"
 
 **Business Impact:**
+
 - **If Done:** Automated monitoring and alerts active; rapid incident detection
 - **If Delayed:** Monitoring workflows may not run; manual health checks required
 - **If Failed:** Try again; no data loss or recovery needed
@@ -105,6 +109,7 @@ Revisit the same URL — "Spending limit" should now display "$50/month"
 **Status:** ⏳ **AWAITING FOUNDER DECISION**
 
 **Context:**
+
 - Engineering readiness: ✅ GREEN
 - Platform verified: ✅ Stable
 - Monitoring ready: ✅ Active
@@ -115,12 +120,14 @@ Revisit the same URL — "Spending limit" should now display "$50/month"
 When should the first customer launch occur?
 
 **Options:**
+
 1. **Immediate (Today)** — Execute both actions above, welcome customer today
 2. **Tomorrow** — Execute actions tomorrow morning, launch customer tomorrow afternoon
 3. **Next Week** — Schedule for specific date after additional testing/preparation
 4. **After Consolidation PR Merged** — Merge consolidation work first, then launch
 
 **Reference Documents:**
+
 - `HANDOFF-CHECKLIST.md` — Engineering readiness summary
 - `LAUNCH-DAY-QUICK-REFERENCE.md` — Timeline and procedures
 - `docs/customer/FIRST-CUSTOMER-PLAYBOOK.md` — Customer journey
@@ -136,6 +143,7 @@ When should the first customer launch occur?
 **Status:** ⏳ **AWAITING FOUNDER REVIEW & APPROVAL**
 
 **Specification:**
+
 - **PR:** #150 — Operation Single Throne: Consolidate all parallel executives into Governor Ω
 - **Status:** Draft, all CI passing
 - **Changes:** Governance documentation only; no code changes
@@ -146,6 +154,7 @@ When should the first customer launch occur?
 Should consolidation work be merged to main before customer launch, or kept separate?
 
 **Options:**
+
 1. **Merge Before Launch** — Consolidate governance, then launch customer
 2. **Launch First** — Keep on consolidation branch, merge after first customer is stable
 3. **Deploy to Separate Branch** — Keep consolidation separate indefinitely
@@ -226,19 +235,23 @@ Founder provides:
 ## DOCUMENT REFERENCES
 
 **For Launch Execution:**
+
 - `LAUNCH-DAY-QUICK-REFERENCE.md` — Keep open during launch
 - `LAUNCH-DAY-TROUBLESHOOTING.md` — If issues arise
 - `HANDOFF-CHECKLIST.md` — What engineering completed
 
 **For Customer Success:**
+
 - `docs/customer/FIRST-CUSTOMER-WELCOME-EMAIL.md` — Customer email template
 - `docs/customer/FIRST-CUSTOMER-PLAYBOOK.md` — Customer journey guide
 
 **For Week 1 Operations:**
+
 - `WEEK-1-MONITORING-CHECKLIST.md` — Daily operations
 - `WEEK-1-LAUNCH-OPERATIONS.md` — Detailed procedures
 
 **For Governance:**
+
 - `docs/governor/` — Governor Ω institutional memory
 - `docs/governance/DECISION_REGISTER.md` — All decisions logged
 - `docs/PRODUCTION-READINESS-CONTINUOUS-VERIFICATION.md` — Monitoring framework
@@ -261,12 +274,12 @@ Founder provides:
 
 ## FOUNDER DECISION SUMMARY TABLE
 
-| Action | Status | Required | Time | Risk | Impact | Next Step |
-|--------|--------|----------|------|------|--------|-----------|
-| **Deploy Supabase Schema** | Awaiting Founder | YES | 15-30m | LOW | CRITICAL | Execute Action 1 |
-| **Set GitHub Budget** | Awaiting Founder | YES | 5m | LOW | HIGH | Execute Action 2 |
-| **Merge Consolidation PR** | Awaiting Review | NO* | 1m | NONE | GOVERNANCE | Review & Approve PR #150 |
-| **Launch Customer #1** | Awaiting Decision | YES | 20-30m | LOW | BUSINESS | Decide timing |
+| Action                     | Status            | Required | Time   | Risk | Impact     | Next Step                |
+| -------------------------- | ----------------- | -------- | ------ | ---- | ---------- | ------------------------ |
+| **Deploy Supabase Schema** | Awaiting Founder  | YES      | 15-30m | LOW  | CRITICAL   | Execute Action 1         |
+| **Set GitHub Budget**      | Awaiting Founder  | YES      | 5m     | LOW  | HIGH       | Execute Action 2         |
+| **Merge Consolidation PR** | Awaiting Review   | NO*      | 1m     | NONE | GOVERNANCE | Review & Approve PR #150 |
+| **Launch Customer #1**     | Awaiting Decision | YES      | 20-30m | LOW  | BUSINESS   | Decide timing            |
 
 *Can be done anytime; recommended before launch for clean governance
 
@@ -306,4 +319,3 @@ Once customer launches successfully:
 **Production readiness is GREEN.**
 
 **Ready to serve EURO AI's first customers.**
-
