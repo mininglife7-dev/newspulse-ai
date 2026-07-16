@@ -18,8 +18,10 @@
 | Deployment to Production | `RUNBOOKS/DEPLOYMENT.md` | 15-30 min | Deployer, Release Lead |
 | Incident Response | `RUNBOOKS/INCIDENT_RESPONSE.md` | Varies | On-call, Incident Commander |
 | Database Operations | `RUNBOOKS/DATABASE_OPERATIONS.md` | Varies | DBA, DevOps |
-| Release Verification | `RUNBOOKS/RELEASE_VERIFICATION.md` | 30 min | Deployer, QA |
+| Release Verification | `RUNBOOKS/RELEASE_VERIFICATION.md` | 30-60 min | Deployer, QA |
 | Customer Onboarding | `RUNBOOKS/CUSTOMER_ONBOARDING.md` | 1-2 hours | Sales, Customer Success |
+| Monitoring & Alerting | `RUNBOOKS/MONITORING_AND_ALERTING.md` | Varies | DevOps, On-call |
+| Security Operations | `RUNBOOKS/SECURITY_OPERATIONS.md` | Varies | Security, All Engineers |
 
 ### Checklists (Verification & Quality Gates)
 
@@ -39,10 +41,11 @@
 
 | Procedure | File | Purpose |
 |-----------|------|---------|
-| Git Workflow | `PROCEDURES/GIT_WORKFLOW.md` | Standard git operations |
+| Git Workflow | `PROCEDURES/GIT_WORKFLOW.md` | Standard git operations and commit conventions |
 | Testing Procedures | `PROCEDURES/TESTING_PROCEDURES.md` | Running tests locally and in CI |
-| Verification Steps | `PROCEDURES/VERIFICATION_STEPS.md` | How to verify deployments work |
+| Verification Steps | `PROCEDURES/VERIFICATION_STEPS.md` | How to verify deployments work across 7 dimensions |
 | Rollback Procedures | `PROCEDURES/ROLLBACK.md` | How to roll back on-production errors |
+| On-Call Procedures | `PROCEDURES/ON_CALL_PROCEDURES.md` | On-call rotation, response, escalation, handoff |
 
 ---
 
@@ -55,10 +58,12 @@
 4. Escalate to on-call if issues arise
 
 ### I'm On-Call
-1. Know `RUNBOOKS/INCIDENT_RESPONSE.md` — keep nearby
-2. Know `PROCEDURES/ROLLBACK.md` — for quick recovery
-3. After incident, complete `CHECKLISTS/INCIDENT_POSTMORTEM.md`
-4. Update `LEARNING_LOG.md` with lessons
+1. Prepare with `PROCEDURES/ON_CALL_PROCEDURES.md` — before your shift
+2. Know `RUNBOOKS/INCIDENT_RESPONSE.md` — keep nearby
+3. Know `PROCEDURES/ROLLBACK.md` — for quick recovery
+4. Monitor with `RUNBOOKS/MONITORING_AND_ALERTING.md` — understand alerts
+5. After incident, complete `CHECKLISTS/INCIDENT_POSTMORTEM.md`
+6. Update lessons from incident
 
 ### I'm a Database Administrator
 1. Read `RUNBOOKS/DATABASE_OPERATIONS.md` — all database ops
@@ -120,20 +125,23 @@ Review with team
 
 | Document | Status | Owner | Last Updated |
 |----------|--------|-------|--------------|
-| DEPLOYMENT.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| INCIDENT_RESPONSE.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| DATABASE_OPERATIONS.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| RELEASE_VERIFICATION.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| CUSTOMER_ONBOARDING.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| PRE_DEPLOYMENT.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| POST_DEPLOYMENT_VERIFICATION.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| INCIDENT_POSTMORTEM.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| WEEKLY_OPS_REVIEW.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| MONTHLY_COMPLIANCE_AUDIT.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| GIT_WORKFLOW.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| TESTING_PROCEDURES.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| VERIFICATION_STEPS.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
-| ROLLBACK.md | 🔵 Queued | Governor Ω | STAGE 4 Phase 4.2 |
+| DEPLOYMENT.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| INCIDENT_RESPONSE.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| DATABASE_OPERATIONS.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| RELEASE_VERIFICATION.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| CUSTOMER_ONBOARDING.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| MONITORING_AND_ALERTING.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| SECURITY_OPERATIONS.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| PRE_DEPLOYMENT.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| POST_DEPLOYMENT_VERIFICATION.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| INCIDENT_POSTMORTEM.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| WEEKLY_OPS_REVIEW.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| MONTHLY_COMPLIANCE_AUDIT.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| GIT_WORKFLOW.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| TESTING_PROCEDURES.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| VERIFICATION_STEPS.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| ROLLBACK.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
+| ON_CALL_PROCEDURES.md | 🟢 Complete | Governor Ω | STAGE 4 Phase 4.2 |
 
 ---
 
@@ -146,8 +154,17 @@ Review with team
 
 ---
 
+## Summary
+
+**Phase 4.2 (Operational Knowledge)**: 100% Complete
+- 8 Runbooks (deployment, incidents, database, releases, onboarding, monitoring, security)
+- 5 Checklists (pre-deploy, post-deploy, postmortem, weekly review, monthly audit)
+- 5 Procedures (git, testing, verification, rollback, on-call)
+- **Total**: 17 comprehensive operational documents
+
 ## Updated By
 
-**Session**: Governor Ω (STAGE 4 Phase 4.1)  
+**Session**: Governor Ω (STAGE 4 Phase 4.2)  
 **Date**: 2026-07-16  
-**Next**: Phase 4.2 - Create all runbooks and checklists
+**Status**: Phase 4.2 Complete - Ready for Phase 4.3 (Engineering Knowledge)  
+**Next**: Phase 4.3 - Document engineering architecture, patterns, and standards
