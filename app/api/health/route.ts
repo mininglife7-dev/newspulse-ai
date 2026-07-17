@@ -34,19 +34,34 @@ export async function GET() {
       }
     } catch (err) {
       dbOk = false;
-      dbStatus = err instanceof Error ? `error: ${err.message}` : 'unknown error';
+      dbStatus =
+        err instanceof Error ? `error: ${err.message}` : 'unknown error';
     }
   }
 
   const allOk = envOk && dbOk;
+
+  // The Supabase project host is public by design (it ships in every client
+  // bundle); reporting it lets ops verify which project/region the runtime
+  // is actually wired to. Never expose keys here.
+  let supabaseHost: string | null = null;
+  try {
+    supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
+      : null;
+  } catch {
+    supabaseHost = 'invalid-url';
+  }
 
   return NextResponse.json(
     {
       ok: allOk,
       status: allOk ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
-      uptime_s: typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
+      uptime_s:
+        typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
       db: dbStatus,
+      supabase_host: supabaseHost,
       checks,
     },
     { status: allOk ? 200 : 503 }
