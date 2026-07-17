@@ -2,16 +2,65 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, Loader2, ArrowLeft, Trash2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  Trash2,
+  Download,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+
+  const handleExportData = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await fetch('/api/account/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const data = (await response.json()) as { error?: string };
+        throw new Error(data.error || 'Failed to export data');
+      }
+
+      // Download the file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download =
+        response.headers
+          .get('content-disposition')
+          ?.split('filename="')[1]
+          ?.split('"')[0] || 'euro-ai-data-export.json';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setSuccessMessage(
+        'Your data has been exported successfully. The file should download shortly.'
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!deleteConfirmed) {
@@ -76,6 +125,66 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+
+        {successMessage && (
+          <div className="mb-6 rounded-md border border-green-800/60 bg-green-950/30 px-4 py-3 text-green-200">
+            <div className="flex gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+              <p>{successMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Data Export Section */}
+        <div className="mb-8 rounded-lg border border-blue-800/40 bg-blue-950/20 p-6">
+          <div className="mb-4 flex items-start gap-3">
+            <Download className="mt-1 h-6 w-6 text-blue-400" />
+            <div>
+              <h2 className="text-xl font-bold text-blue-300">
+                Export Your Data
+              </h2>
+              <p className="mt-1 text-sm text-blue-200/70">
+                GDPR Article 20 (Right to Data Portability)
+              </p>
+            </div>
+          </div>
+
+          <p className="mb-4 text-sm text-slate-300">
+            Download all your personal data in a portable JSON format,
+            including:
+          </p>
+          <ul className="mb-6 space-y-2 text-sm text-slate-400">
+            <li className="flex gap-2">
+              <span className="text-blue-400">•</span>
+              <span>Your profile and account information</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-blue-400">•</span>
+              <span>All workspaces and team memberships</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-blue-400">•</span>
+              <span>Companies, AI systems, and risk assessments</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-blue-400">•</span>
+              <span>Obligations, evidence, and remediation plans</span>
+            </li>
+          </ul>
+
+          <button
+            onClick={handleExportData}
+            className="flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {loading ? 'Exporting...' : 'Export My Data'}
+          </button>
+        </div>
 
         {/* Account Deletion Section */}
         <div className="rounded-lg border border-red-800/40 bg-red-950/20 p-6">
