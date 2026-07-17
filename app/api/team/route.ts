@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
+import { logMemberOperation, getClientIp } from '@/lib/audit-logger';
 import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
@@ -176,6 +177,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { ok: false, error: 'Failed to send invitation' },
       { status: 500 }
+    );
+  }
+
+  // Log member addition (GDPR Article 30)
+  // Note: ctx.userId may not be available; extract from auth
+  if (ctx.userId && ctx.workspaceId) {
+    await logMemberOperation(
+      ctx.workspaceId,
+      'member_add',
+      ctx.userId,
+      undefined,
+      { email: normalizedEmail, role: validated.role },
+      getClientIp(request),
+      request.headers.get('user-agent') || undefined
     );
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
+import { logCreate, getClientIp } from '@/lib/audit-logger';
 import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
@@ -170,6 +171,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { ok: false, error: 'Failed to create evidence record' },
       { status: 500 }
+    );
+  }
+
+  // Log creation (GDPR Article 30)
+  const {
+    data: { user: evidenceUser },
+  } = await supabase.auth.getUser();
+  if (evidenceUser?.id && ctx.workspaceId) {
+    await logCreate(
+      ctx.workspaceId,
+      'evidence',
+      data.id,
+      evidenceUser.id,
+      { title: data.title, obligationId: validated.obligationId },
+      getClientIp(request),
+      request.headers.get('user-agent') || undefined
     );
   }
 

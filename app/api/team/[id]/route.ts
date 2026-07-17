@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
+import { logMemberOperation, getClientIp } from '@/lib/audit-logger';
 import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
@@ -101,6 +102,16 @@ export async function PUT(
   const validated = validationResult.value as UpdateMemberRequest;
 
   const supabase = await createRouteClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return NextResponse.json(
+      { ok: false, error: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -154,6 +165,19 @@ export async function PUT(
     );
   }
 
+  // Log permission change (GDPR Article 30)
+  if (ctx.workspaceId) {
+    await logMemberOperation(
+      ctx.workspaceId,
+      'permission_change',
+      user.id,
+      id,
+      updateData,
+      getClientIp(request),
+      request.headers.get('user-agent') || undefined
+    );
+  }
+
   return NextResponse.json({ ok: true, member: data });
 }
 
@@ -175,6 +199,16 @@ export async function DELETE(
   }
 
   const supabase = await createRouteClient();
+  const {
+    data: { user: deleteUser },
+  } = await supabase.auth.getUser();
+  if (!deleteUser?.id) {
+    return NextResponse.json(
+      { ok: false, error: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -231,6 +265,19 @@ export async function DELETE(
     return NextResponse.json(
       { ok: false, error: 'Failed to remove member' },
       { status: 500 }
+    );
+  }
+
+  // Log member removal (GDPR Article 30)
+  if (ctx.workspaceId) {
+    await logMemberOperation(
+      ctx.workspaceId,
+      'member_remove',
+      deleteUser.id,
+      id,
+      { role: member.role },
+      getClientIp(_request),
+      _request.headers.get('user-agent') || undefined
     );
   }
 

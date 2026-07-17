@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
+import { logUpdate, logDelete, getClientIp } from '@/lib/audit-logger';
 import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
@@ -100,6 +101,16 @@ export async function PUT(
   const validated = validationResult.value as UpdateEvidenceRequest;
 
   const supabase = await createRouteClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return NextResponse.json(
+      { ok: false, error: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
   const ctx = await resolveContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -149,6 +160,19 @@ export async function PUT(
     );
   }
 
+  // Log update (GDPR Article 30)
+  if (ctx.workspaceId) {
+    await logUpdate(
+      ctx.workspaceId,
+      'evidence',
+      id,
+      user.id,
+      updateData,
+      getClientIp(request),
+      request.headers.get('user-agent') || undefined
+    );
+  }
+
   return NextResponse.json({ ok: true, evidence: data });
 }
 
@@ -187,6 +211,23 @@ export async function DELETE(
     return NextResponse.json(
       { ok: false, error: 'Failed to delete evidence' },
       { status: 500 }
+    );
+  }
+
+  // Log deletion (GDPR Article 30)
+  // Note: user auth already verified in resolveContext, but we need it for audit log
+  const {
+    data: { user: deleteUser },
+  } = await supabase.auth.getUser();
+  if (deleteUser?.id && ctx.workspaceId) {
+    await logDelete(
+      ctx.workspaceId,
+      'evidence',
+      id,
+      deleteUser.id,
+      {},
+      getClientIp(_request),
+      _request.headers.get('user-agent') || undefined
     );
   }
 

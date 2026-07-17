@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logMemberOperation, getClientIp } from '@/lib/audit-logger';
 
 interface InviteMemberBody {
   email: string;
@@ -181,6 +182,17 @@ export async function POST(
       .single();
 
     if (inviteError) throw inviteError;
+
+    // Log member addition (GDPR Article 30)
+    await logMemberOperation(
+      id,
+      'member_add',
+      user.id,
+      undefined,
+      { email: body.email.toLowerCase(), role: inviteRole },
+      getClientIp(req),
+      req.headers.get('user-agent') || undefined
+    );
 
     // TODO: Send invitation email with acceptance link
     // For now, return the invitation record

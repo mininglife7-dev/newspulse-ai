@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
 import { classifyRisk } from '@/lib/risk-assessment';
+import { logCreate, logUpdate, getClientIp } from '@/lib/audit-logger';
 import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
@@ -213,6 +214,7 @@ export async function POST(request: NextRequest) {
   };
 
   let response: unknown;
+  let isCreating = false;
 
   if (existing) {
     const { data, error } = await supabase
@@ -255,11 +257,43 @@ export async function POST(request: NextRequest) {
     }
 
     response = data;
+    isCreating = true;
+  }
+
+  // Log creation or update (GDPR Article 30)
+  const assessmentId = (response as Record<string, unknown>)?.id as
+    string | undefined;
+  const {
+    data: { user: assessmentUser },
+  } = await supabase.auth.getUser();
+  if (assessmentId && isCreating && assessmentUser?.id && ctx.workspaceId) {
+    await logCreate(
+      ctx.workspaceId,
+      'risk_assessment',
+      assessmentId,
+      assessmentUser.id,
+      { aiSystemId: validated.aiSystemId, riskLevel: result.riskLevel },
+      getClientIp(request),
+      request.headers.get('user-agent') || undefined
+    );
+  } else if (
+    assessmentId &&
+    !isCreating &&
+    assessmentUser?.id &&
+    ctx.workspaceId
+  ) {
+    await logUpdate(
+      ctx.workspaceId,
+      'risk_assessment',
+      assessmentId,
+      assessmentUser.id,
+      { status: validated.status, answers: validated.answers },
+      getClientIp(request),
+      request.headers.get('user-agent') || undefined
+    );
   }
 
   // Auto-generate obligations based on risk level and recommendations
-  const assessmentId = (response as Record<string, unknown>)?.id as
-    string | undefined;
   if (assessmentId) {
     try {
       const priorityMap: Record<string, string> = {

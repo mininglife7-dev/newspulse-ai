@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
+import { logCreate } from '@/lib/audit-logger';
+import { getClientIp } from '@/lib/audit-logger';
 import {
   validators,
   validate,
@@ -113,6 +115,16 @@ export async function POST(req: Request) {
   const status = validated.status ?? 'active';
 
   const supabase = await createRouteClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return NextResponse.json(
+      { ok: false, error: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
   const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -149,5 +161,17 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+
+  // Log creation (GDPR Article 30)
+  await logCreate(
+    ctx.workspaceId,
+    'ai_system',
+    data.id,
+    user.id,
+    { name: data.name, type: data.system_type, vendor: data.vendor },
+    getClientIp(req as NextRequest),
+    (req as NextRequest).headers.get('user-agent') || undefined
+  );
+
   return NextResponse.json({ ok: true, system: data });
 }

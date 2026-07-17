@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
+import { logDelete, logUpdate, getClientIp } from '@/lib/audit-logger';
 import { validators, validate } from '@/lib/input-validation';
 import { SYSTEM_TYPES, SYSTEM_STATUSES } from '@/lib/ai-systems';
 import { resolveWorkspaceContext } from '@/lib/ai-systems-server';
@@ -21,7 +22,7 @@ interface RouteContext {
 }
 
 /** DELETE /api/ai-systems/:id — remove a system from the workspace inventory. */
-export async function DELETE(_req: Request, { params }: RouteContext) {
+export async function DELETE(req: Request, { params }: RouteContext) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json(
@@ -31,6 +32,16 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
   }
 
   const supabase = await createRouteClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return NextResponse.json(
+      { ok: false, error: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
   const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -65,6 +76,17 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
     );
   }
 
+  // Log deletion (GDPR Article 30)
+  await logDelete(
+    ctx.workspaceId,
+    'ai_system',
+    id,
+    user.id,
+    {},
+    getClientIp(req as NextRequest),
+    (req as NextRequest).headers.get('user-agent') || undefined
+  );
+
   return NextResponse.json({ ok: true, deleted: id });
 }
 
@@ -75,6 +97,17 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     return NextResponse.json(
       { ok: false, error: 'Missing id' },
       { status: 400 }
+    );
+  }
+
+  const supabase = await createRouteClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return NextResponse.json(
+      { ok: false, error: 'Authentication required' },
+      { status: 401 }
     );
   }
 
@@ -150,7 +183,6 @@ export async function PATCH(req: Request, { params }: RouteContext) {
 
   updates.updated_at = new Date().toISOString();
 
-  const supabase = await createRouteClient();
   const ctx = await resolveWorkspaceContext(supabase);
   if (ctx.status !== 200) {
     return NextResponse.json(
@@ -183,5 +215,17 @@ export async function PATCH(req: Request, { params }: RouteContext) {
       { status: 404 }
     );
   }
+
+  // Log update (GDPR Article 30)
+  await logUpdate(
+    ctx.workspaceId,
+    'ai_system',
+    id,
+    user.id,
+    updates,
+    getClientIp(req as NextRequest),
+    (req as NextRequest).headers.get('user-agent') || undefined
+  );
+
   return NextResponse.json({ ok: true, system: data[0] });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { logger } from '@/lib/logger';
 import { classifyRisk } from '@/lib/risk-assessment';
+import { logUpdate, getClientIp } from '@/lib/audit-logger';
 import { validators, validate } from '@/lib/input-validation';
 
 export const runtime = 'nodejs';
@@ -155,6 +156,22 @@ export async function PUT(
     return NextResponse.json(
       { ok: false, error: 'Assessment not found' },
       { status: 404 }
+    );
+  }
+
+  // Log update (GDPR Article 30)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user?.id && ctx.workspaceId) {
+    await logUpdate(
+      ctx.workspaceId,
+      'risk_assessment',
+      id,
+      user.id,
+      updateData,
+      getClientIp(request),
+      request.headers.get('user-agent') || undefined
     );
   }
 

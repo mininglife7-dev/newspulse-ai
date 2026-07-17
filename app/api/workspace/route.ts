@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { logCreate, getClientIp } from '@/lib/audit-logger';
 import {
   validators,
   validate,
@@ -38,7 +39,7 @@ function slugify(name: string): string {
  * and owner membership in one call. Runs as the signed-in user, so every
  * write is checked by Row Level Security.
  */
-export async function POST(req: Request) {
+export async function POST(req: Request | NextRequest) {
   let body: WorkspaceSetupBody;
   try {
     body = await req.json();
@@ -207,6 +208,22 @@ export async function POST(req: Request) {
       }
     );
   }
+
+  // Log workspace creation (GDPR Article 30)
+  await logCreate(
+    workspace.id,
+    'workspace',
+    workspace.id,
+    user.id,
+    {
+      name: companyName,
+      country,
+      industry,
+      legalName: body.legalName?.trim(),
+    },
+    getClientIp(req as NextRequest),
+    (req as NextRequest).headers.get('user-agent') || undefined
+  );
 
   return NextResponse.json({
     ok: true,
