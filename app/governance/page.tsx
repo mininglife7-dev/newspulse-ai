@@ -1,16 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import type { DashboardState, DashboardError } from '@/types/governance';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import LaunchReadinessDashboard from '@/components/dashboard/LaunchReadinessDashboard';
-import MissionTracker from '@/components/dashboard/MissionTracker';
-import BlockerRegistry from '@/components/dashboard/BlockerRegistry';
-import CategoryScorecard from '@/components/dashboard/CategoryScorecard';
-import ConsistencyCheck from '@/components/dashboard/ConsistencyCheck';
 import DataSourceLabel from '@/components/dashboard/DataSourceLabel';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
+
+const LaunchReadinessDashboard = lazy(
+  () => import('@/components/dashboard/LaunchReadinessDashboard')
+);
+const MissionTracker = lazy(
+  () => import('@/components/dashboard/MissionTracker')
+);
+const BlockerRegistry = lazy(
+  () => import('@/components/dashboard/BlockerRegistry')
+);
+const CategoryScorecard = lazy(
+  () => import('@/components/dashboard/CategoryScorecard')
+);
+const ConsistencyCheck = lazy(
+  () => import('@/components/dashboard/ConsistencyCheck')
+);
+
+const TabLoader = () => <div className="h-64 animate-pulse rounded bg-card" />;
 
 interface DashboardData {
   state?: DashboardState;
@@ -162,30 +175,40 @@ export default function DashboardPage() {
 
         {/* Readiness Tab */}
         <TabsContent value="readiness" className="mt-6">
-          <LaunchReadinessDashboard state={state} />
+          <Suspense fallback={<TabLoader />}>
+            <LaunchReadinessDashboard state={state} />
+          </Suspense>
         </TabsContent>
 
         {/* Missions Tab */}
         <TabsContent value="missions" className="mt-6">
-          <MissionTracker
-            missions={state.missions}
-            missionProgress={state.missionProgress}
-          />
+          <Suspense fallback={<TabLoader />}>
+            <MissionTracker
+              missions={state.missions}
+              missionProgress={state.missionProgress}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* Blockers Tab */}
         <TabsContent value="blockers" className="mt-6">
-          <BlockerRegistry blockers={state.blockers} />
+          <Suspense fallback={<TabLoader />}>
+            <BlockerRegistry blockers={state.blockers} />
+          </Suspense>
         </TabsContent>
 
         {/* Categories Tab */}
         <TabsContent value="categories" className="mt-6">
-          <CategoryScorecard categories={state.categories} />
+          <Suspense fallback={<TabLoader />}>
+            <CategoryScorecard categories={state.categories} />
+          </Suspense>
         </TabsContent>
 
         {/* Consistency Tab */}
         <TabsContent value="consistency" className="mt-6">
-          <ConsistencyCheck inconsistencies={state.inconsistencies} />
+          <Suspense fallback={<TabLoader />}>
+            <ConsistencyCheck inconsistencies={state.inconsistencies} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
