@@ -195,10 +195,16 @@ foreach ($candidate in $candidateFolders) {
                 $isDirty = ($status.Count -gt 0)
                 $untrackedCount = @(& git ls-files --others --exclude-standard 2>$null).Count
 
-                # Get remotes
+                # Get remotes (sanitized to prevent credential leakage)
                 $remoteOutput = & git remote -v 2>$null
                 if ($remoteOutput) {
-                    $remote = ($remoteOutput[0] -split "\s+")[1]
+                    $rawRemote = ($remoteOutput[0] -split "\s+")[1]
+                    # Strip credentials from URL (e.g., https://user:token@host/repo.git -> https://host/repo.git)
+                    if ($rawRemote -match "^(https?|git|ssh)://(.+@)?(.+)$") {
+                        $remote = $matches[1] + "://" + $matches[3]
+                    } else {
+                        $remote = $rawRemote
+                    }
                 }
             } catch {
                 # Git command failed - directory might not be a proper repo
@@ -212,8 +218,8 @@ foreach ($candidate in $candidateFolders) {
         if (Test-Path (Join-Path $candidate "requirements.txt")) { $languages += "Python" }
         if (Test-Path (Join-Path $candidate "Cargo.toml")) { $languages += "Rust" }
         if (Test-Path (Join-Path $candidate "go.mod")) { $languages += "Go" }
-        if (Test-Path (Join-Path $candidate "*.py") -Path) { $languages += "Python" }
-        if (Test-Path (Join-Path $candidate "*.js") -Path) { $languages += "JavaScript" }
+        if ((Get-ChildItem -Path $candidate -Filter "*.py" -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0) { $languages += "Python" }
+        if ((Get-ChildItem -Path $candidate -Filter "*.js" -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0) { $languages += "JavaScript" }
 
         # Interesting files
         $hasEnv = Test-Path (Join-Path $candidate ".env*")

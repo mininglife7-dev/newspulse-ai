@@ -18,9 +18,16 @@
 ### CI Status
 
 ✅ **Lint & Build:** PASSED  
+Evidence: [GitHub Actions run 29551387866, job 87794455761](https://github.com/mininglife7-dev/newspulse-ai/actions/runs/29551387866/job/87794455761)
+
 ✅ **E2E smoke:** PASSED  
+Evidence: [GitHub Actions run 29551387866, job 87794455797](https://github.com/mininglife7-dev/newspulse-ai/actions/runs/29551387866/job/87794455797)
+
 ✅ **Vercel Preview:** PASSED (deployed)  
-✅ **Vercel deployment:** DEPLOYED (ready)
+Evidence: [Vercel check run 87794531634](https://vercel.com/github)
+
+✅ **Vercel deployment:** DEPLOYED (ready)  
+Evidence: Vercel deployment successful as of 2026-07-17T03:02:41Z
 
 ### Security Scan
 
