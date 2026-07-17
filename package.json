@@ -17,6 +17,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "check-env": "node --env-file=.env.local scripts/check-env.mjs",
     "test:smoke": "node scripts/smoke-test.mjs",
+    "performance:baseline": "node scripts/performance-baseline.mjs",
+    "performance:baseline:save": "node scripts/performance-baseline.mjs --save",
     "prepare": "husky install"
   },
   "dependencies": {
