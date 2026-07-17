@@ -8,10 +8,15 @@
 deploy and verify the schema against the new EU-intended Supabase project
 `cwbcvjiklrrkpmybefdp`, prove its region from run logs, and repoint the
 platform. Founder provided project ref + Data-API keys in session (keys
-held out-of-repo — Law 4). **Blocked on one Founder step:** repo secret
-`SUPABASE_DB_URL` must be set to the NEW project's Session Pooler
-connection string (this environment cannot write GitHub secrets — API
-proxy-blocked, Verified).
+held out-of-repo — Law 4). **Status 2026-07-17:** Founder set the credentials; region **proven
+Frankfurt** (`aws-0-eu-central-1`) from run logs; workflow now parses the
+pasted URI natively (#171). Runs `29584989863`/`29585382999` failed at the
+final gate: **password authentication failed** — the stored password is
+not accepted by the database. **Blocked on Founder:** verify/reset the DB
+password for `cwbcvjiklrrkpmybefdp` (Dashboard → Settings → Database →
+Reset database password) and update the GitHub value — this time as a
+**Secret** named `SUPABASE_DB_URL` (the current _variable_ prints
+unmasked in logs; leaked run logs were deleted). Any paste format works.
 
 ## Why this mission is first
 

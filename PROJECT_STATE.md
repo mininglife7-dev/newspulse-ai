@@ -1,6 +1,6 @@
 # PROJECT_STATE — Verified Facts Only
 
-**Last verified:** 2026-07-16 ~13:15 UTC (truth-reconciliation mission COMPLETE — proving run `29499904621` green)
+**Last verified:** 2026-07-17 ~14:00 UTC (EU migration in progress — Frankfurt reached, password auth failing)
 Rules: facts only, each labelled and evidence-cited. Unknown stays UNKNOWN
 until verified. Update whenever verified reality changes.
 
@@ -28,12 +28,15 @@ until verified. Update whenever verified reality changes.
   Evidence: runs `29479537494`, `29479962355`, `29490828367` (all success;
   last at 10:26 UTC — 22 tables, 62 indexes, 43 RLS policies, trigger 1/1,
   CEIS hard-verify, security tests all PASS). — Verified
-- **EU migration (RISK-008): NOT COMPLETE.** All successful deploy runs
-  target the Tokyo project — verified from run `29490828367` job logs
-  (`SUPABASE_PROJECT_ID: yrroytwfdrafvajdfkog`, pooler
-  `aws-0-ap-northeast-1`). The former "EU deployment verified / GO
-  certification" documents are **bannered as unsupported and void**
-  (Law 3 correction, DR-0024). — Verified
+- **EU migration (RISK-008): IN PROGRESS, one gate left.** Founder created
+  EU project `cwbcvjiklrrkpmybefdp` and updated repo credentials; runs
+  `29584989863`/`29585382999` (2026-07-17) prove the pipeline reaches
+  **Frankfurt** (`aws-0-eu-central-1.pooler.supabase.com`) but fail with
+  `password authentication failed` — stored DB password not accepted.
+  Founder must verify/reset the password and store the pooler URI as a
+  **Secret** (current variable prints unmasked; leaked run logs deleted).
+  All _successful_ deploys to date still target Tokyo; the void
+  EU-GO-certification banners (DR-0024) remain accurate. — Verified
 - **Deploy workflow:** restored to the proven `56dd24e` version
   (`SUPABASE_DB_URL` pooler/psql-paste handling, `PGPASSWORD` export, CEIS
   deploy + hard verification; `db_password` workflow input removed — Law 4).
