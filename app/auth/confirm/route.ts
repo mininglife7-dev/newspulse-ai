@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createRouteClient } from '@/lib/supabase-server';
 import { safeRedirectPath } from '@/lib/routes';
+import { recordConsent } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,16 +25,27 @@ export async function GET(req: Request) {
 
   try {
     const supabase = await createRouteClient();
+    let verified = false;
 
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (!error) return NextResponse.redirect(new URL(next, url));
+      if (!error) verified = true;
     } else if (tokenHash && type) {
       const { error } = await supabase.auth.verifyOtp({
         type,
         token_hash: tokenHash,
       });
-      if (!error) return NextResponse.redirect(new URL(next, url));
+      if (!error) verified = true;
+    }
+
+    if (verified) {
+      // Record GDPR Article 7 consent (non-blocking)
+      // Fire-and-forget: don't wait for consent recording or fail if it errors
+      recordConsent(true, false, '1.0').catch((err) => {
+        console.error('[auth/confirm] consent recording failed:', err);
+      });
+
+      return NextResponse.redirect(new URL(next, url));
     }
   } catch (err) {
     console.error('[auth/confirm] verification failed:', err);

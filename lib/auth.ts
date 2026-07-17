@@ -108,3 +108,30 @@ export async function updatePassword(newPassword: string) {
 
   if (error) throw error;
 }
+
+/**
+ * Record user GDPR Article 7 consent (lawful basis for data processing)
+ * Called immediately after successful signup/email verification.
+ */
+export async function recordConsent(
+  gdprConsent: boolean,
+  marketingConsent: boolean = false,
+  consentVersion: string = '1.0'
+) {
+  const response = await fetch('/api/consent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      gdprConsent,
+      marketingConsent,
+      consentVersion,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to record consent');
+  }
+
+  return response.json();
+}
