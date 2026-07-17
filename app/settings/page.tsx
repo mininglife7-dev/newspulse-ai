@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -8,6 +8,8 @@ import {
   ArrowLeft,
   Trash2,
   Download,
+  Shield,
+  CheckCircle2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -19,6 +21,74 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+
+  // Consent state
+  const [consentLoading, setConsentLoading] = useState(true);
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [consentUpdated, setConsentUpdated] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch current consent status
+    const fetchConsent = async () => {
+      try {
+        const response = await fetch('/api/consent', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = (await response.json()) as {
+            gdprConsent?: boolean;
+            marketingConsent?: boolean;
+          };
+          setGdprConsent(data.gdprConsent ?? false);
+          setMarketingConsent(data.marketingConsent ?? false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch consent status:', err);
+      } finally {
+        setConsentLoading(false);
+      }
+    };
+    fetchConsent();
+  }, []);
+
+  const handleConsentChange = async (
+    type: 'gdpr' | 'marketing',
+    value: boolean
+  ) => {
+    setConsentLoading(true);
+    setConsentUpdated(null);
+
+    try {
+      const response = await fetch('/api/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gdprConsent: type === 'gdpr' ? value : gdprConsent,
+          marketingConsent: type === 'marketing' ? value : marketingConsent,
+          consentVersion: '1.0',
+        }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const data = (await response.json()) as { error?: string };
+        throw new Error(data.error || 'Failed to update consent');
+      }
+
+      if (type === 'gdpr') {
+        setGdprConsent(value);
+      } else {
+        setMarketingConsent(value);
+      }
+      setConsentUpdated('Consent preferences updated successfully');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update consent');
+    } finally {
+      setConsentLoading(false);
+    }
+  };
 
   const handleExportData = async () => {
     setLoading(true);
@@ -184,6 +254,95 @@ export default function SettingsPage() {
             )}
             {loading ? 'Exporting...' : 'Export My Data'}
           </button>
+        </div>
+
+        {/* Consent Management Section */}
+        <div className="mb-8 rounded-lg border border-purple-800/40 bg-purple-950/20 p-6">
+          <div className="mb-4 flex items-start gap-3">
+            <Shield className="mt-1 h-6 w-6 text-purple-400" />
+            <div>
+              <h2 className="text-xl font-bold text-purple-300">
+                Consent Preferences
+              </h2>
+              <p className="mt-1 text-sm text-purple-200/70">
+                GDPR Article 7 (Lawful Basis for Processing)
+              </p>
+            </div>
+          </div>
+
+          <p className="mb-6 text-sm text-slate-300">
+            Manage your consent preferences for data processing and
+            communications:
+          </p>
+
+          {consentUpdated && (
+            <div className="mb-4 rounded-md border border-green-800/60 bg-green-950/30 px-3 py-2 text-sm text-green-200 flex gap-2">
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              {consentUpdated}
+            </div>
+          )}
+
+          {consentLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+              <span className="ml-2 text-slate-400">
+                Loading consent status...
+              </span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* GDPR Consent */}
+              <label className="flex items-start gap-4 rounded-md border border-slate-700 bg-slate-900/50 p-4 cursor-pointer hover:bg-slate-900/70 transition">
+                <input
+                  type="checkbox"
+                  checked={gdprConsent}
+                  onChange={(e) =>
+                    handleConsentChange('gdpr', e.target.checked)
+                  }
+                  disabled={consentLoading}
+                  className="mt-1 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <p className="font-medium text-white">
+                    GDPR Processing Consent
+                  </p>
+                  <p className="text-sm text-slate-400 mt-1">
+                    I consent to EURO AI processing my personal data for
+                    compliance services, system management, and communication
+                    about my account. This is required to use EURO AI services.
+                  </p>
+                </div>
+              </label>
+
+              {/* Marketing Consent */}
+              <label className="flex items-start gap-4 rounded-md border border-slate-700 bg-slate-900/50 p-4 cursor-pointer hover:bg-slate-900/70 transition">
+                <input
+                  type="checkbox"
+                  checked={marketingConsent}
+                  onChange={(e) =>
+                    handleConsentChange('marketing', e.target.checked)
+                  }
+                  disabled={consentLoading}
+                  className="mt-1 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <p className="font-medium text-white">
+                    Marketing Communications
+                  </p>
+                  <p className="text-sm text-slate-400 mt-1">
+                    I consent to receive marketing emails about new features,
+                    updates, and offers from EURO AI. You can unsubscribe at any
+                    time.
+                  </p>
+                </div>
+              </label>
+
+              <p className="text-xs text-slate-500 mt-4">
+                Your consent preferences are recorded and audited for
+                compliance. Changes take effect immediately.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Account Deletion Section */}
