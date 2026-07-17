@@ -17,6 +17,69 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // Static pages: aggressive caching
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/terms',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800',
+          },
+        ],
+      },
+      {
+        source: '/privacy',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800',
+          },
+        ],
+      },
+      // Semi-dynamic pages: moderate caching
+      {
+        source: '/compliance',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'public, max-age=1800, s-maxage=7200, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/(workspace|inventory|team)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              'private, max-age=600, s-maxage=1800, stale-while-revalidate=3600',
+          },
+        ],
+      },
+      // Authentication pages: no cache
+      {
+        source: '/auth/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      // All pages: security headers
       {
         source: '/(.*)',
         headers: [
@@ -72,4 +135,9 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Optional: Bundle analyzer for performance optimization
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+module.exports = withBundleAnalyzer(nextConfig);
