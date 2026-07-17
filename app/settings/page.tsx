@@ -96,7 +96,7 @@ export default function SettingsPage() {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch('/api/account/export', {
+      const response = await fetch('/api/account/personal-export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -144,11 +144,22 @@ export default function SettingsPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/account/delete', {
+      // First, show password prompt (in a real UI, this would be a modal)
+      const password = window.prompt(
+        'Enter your password to confirm account deletion:'
+      );
+      if (!password) {
+        setError('Password required to delete account');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/account/deletion/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          confirmed: true,
+          password,
+          confirmationCode: 'DELETE_MY_ACCOUNT_PERMANENTLY',
           reason: deleteReason || 'User requested account deletion',
         }),
         credentials: 'include',
@@ -158,15 +169,16 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         throw new Error(
-          data.error || 'Failed to delete account. Please try again.'
+          data.error || 'Failed to request account deletion. Please try again.'
         );
       }
 
-      // Redirect to homepage after successful deletion
-      // Session will be cleared by Supabase auth
+      setSuccessMessage(
+        'Account deletion scheduled. You have 30 days to cancel. Check your email for confirmation.'
+      );
       setTimeout(() => {
         router.push('/');
-      }, 1000);
+      }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLoading(false);
