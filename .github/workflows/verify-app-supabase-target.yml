@@ -60,8 +60,15 @@ jobs:
               echo "   ⚠️  Non-expected Supabase references also present (see list above)"
             fi
             echo "   /api/health response:"
-            curl -sL --max-time 30 "$URL/api/health" | head -c 500 || echo "(unreachable)"
+            health=$(curl -sL --max-time 30 "$URL/api/health" || echo "(unreachable)")
+            echo "$health" | head -c 500
             echo ""
+            # Runtime evidence outranks bundle-grep: the server reports the
+            # host it is actually configured with (supabase_host field).
+            if echo "$health" | grep -q "\"supabase_host\":\"${EXPECTED_REF}.supabase.co\""; then
+              echo "   ✅ RUNTIME MATCH: /api/health reports supabase_host=${EXPECTED_REF}.supabase.co"
+              overall=0
+            fi
           done
           echo "=============================="
           if [ $overall -eq 0 ]; then
