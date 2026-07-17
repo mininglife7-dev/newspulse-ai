@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
-import * as Sentry from '@sentry/nextjs';
 
 export default function GlobalError({
   error,
@@ -13,20 +12,6 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Report error to Sentry with context
-    Sentry.captureException(error, {
-      tags: {
-        component: 'error-boundary',
-        error_type: 'global',
-      },
-      contexts: {
-        react: {
-          digest: error.digest,
-        },
-      },
-    });
-
-    // Log to console for local debugging
     console.error('[EURO AI error boundary]', error);
   }, [error]);
 

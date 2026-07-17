@@ -4,7 +4,6 @@ import { Inter } from 'next/font/google';
 import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
-import { SentryInitialize } from '@/components/SentryInitialize';
 import { HeaderNav } from '@/components/HeaderNav';
 import './globals.css';
 
@@ -82,7 +81,6 @@ export default function RootLayout({
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
-        <SentryInitialize />
         <ServiceWorkerRegister />
         <footer className="mt-20 border-t border-slate-800/50 py-8 text-center text-sm text-slate-400">
           <p className="mb-3">
