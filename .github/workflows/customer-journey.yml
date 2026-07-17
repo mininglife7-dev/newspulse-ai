@@ -1,0 +1,67 @@
+name: Customer Journey Verification
+
+# Runs scripts/customer-journey-probe.mjs against LIVE production from a
+# GitHub runner (Governor sandboxes cannot reach vercel.app/supabase.co).
+# Uses only the public anon/publishable key — no secrets. Uploads every
+# request/response as an evidence artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: 'Production app URL'
+        required: false
+        default: 'https://newspulse-ai-eight.vercel.app'
+        type: string
+      supabase_url:
+        description: 'Supabase project URL (public)'
+        required: false
+        default: 'https://cwbcvjiklrrkpmybefdp.supabase.co'
+        type: string
+
+jobs:
+  journey:
+    name: First-customer journey probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve public anon key from the live app bundle
+        id: anon
+        env:
+          APP_URL: ${{ inputs.app_url }}
+        run: |
+          # The anon/publishable key ships in every client bundle by design.
+          html=$(curl -sL --max-time 30 "$APP_URL/auth/login" || curl -sL --max-time 30 "$APP_URL")
+          key=$(echo "$html" | grep -oE 'sb_publishable_[A-Za-z0-9_]+' | head -1 || true)
+          if [ -z "$key" ]; then
+            for js in $(echo "$html" | grep -oE '"/_next/static/[^"]+\.js"' | tr -d '"' | sort -u | head -30); do
+              chunk=$(curl -sL --max-time 30 "$APP_URL$js")
+              key=$(echo "$chunk" | grep -oE 'sb_publishable_[A-Za-z0-9_]+' | head -1 || true)
+              [ -z "$key" ] && key=$(echo "$chunk" | grep -oE 'eyJ[A-Za-z0-9_-]{20,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}' | head -1 || true)
+              [ -n "$key" ] && break
+            done
+          fi
+          if [ -z "$key" ]; then
+            echo "❌ Could not extract public anon key from app bundle"
+            exit 1
+          fi
+          echo "✅ anon key extracted from live bundle (${#key} chars)"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+
+      - name: Run journey probe
+        env:
+          APP_URL: ${{ inputs.app_url }}
+          SUPABASE_URL: ${{ inputs.supabase_url }}
+          SUPABASE_ANON_KEY: ${{ steps.anon.outputs.key }}
+        run: node scripts/customer-journey-probe.mjs
+
+      - name: Upload evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: customer-journey-evidence-${{ github.run_id }}
+          path: journey-artifacts/
+          retention-days: 90
