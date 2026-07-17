@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@next/bundle-analyzer": "^16.2.10",
-    "@sentry/nextjs": "^10.66.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.7",
     "clsx": "^2.1.1",
