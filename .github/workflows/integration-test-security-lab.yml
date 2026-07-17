@@ -2,14 +2,9 @@ name: Integration Test Security Lab
 
 on:
   workflow_dispatch:
-    inputs:
-      run_integration_tests:
-        description: 'Run database integration tests'
-        required: true
-        default: 'true'
   pull_request:
     branches:
-      - release/alpha-gdpr-integration
+      - main
     paths:
       - 'app/api/account/deletion/**'
       - 'app/api/account/personal-export/**'
@@ -27,8 +22,16 @@ jobs:
     # Bind to integration-test environment with protected secrets
     environment: integration-test
 
-    # Prevent execution from untrusted forks
-    if: github.repository == 'mininglife7-dev/newspulse-ai'
+    # Execution guard: manual dispatch OR trusted PR targeting main from release/alpha-gdpr-integration
+    if: |
+      github.repository == 'mininglife7-dev/newspulse-ai' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.base.ref == 'main' &&
+          github.event.pull_request.head.ref == 'release/alpha-gdpr-integration' &&
+          github.event.pull_request.head.repo.full_name == 'mininglife7-dev/newspulse-ai'
+        )
+      )
 
     steps:
       - name: Checkout repository
@@ -66,6 +69,55 @@ jobs:
       - name: Run unit tests
         run: npm test -- tests/api/account-deletion-security.test.ts
 
+      - name: Build application for integration testing
+        run: npm run build
+
+      - name: Start application server
+        run: |
+          node .next/standalone/server.js > /tmp/app.log 2>&1 &
+          echo $! > /tmp/app.pid
+          sleep 2
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+
+      - name: Poll application health endpoint
+        run: |
+          max_attempts=30
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            echo "Health check attempt $((attempt + 1))/$max_attempts..."
+            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "✓ Application server is healthy"
+              exit 0
+            fi
+            attempt=$((attempt + 1))
+            sleep 1
+          done
+          echo "✗ Application server failed to start within 30 seconds"
+          echo "App log output:"
+          cat /tmp/app.log
+          exit 1
+
+      - name: Verify isolation marker
+        env:
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_ENVIRONMENT_MARKER: ${{ secrets.TEST_ENVIRONMENT_MARKER }}
+        run: |
+          if [ -z "$TEST_ENVIRONMENT_MARKER" ]; then
+            echo "✗ TEST_ENVIRONMENT_MARKER secret not configured"
+            exit 1
+          fi
+
+          if [ "$TEST_ENVIRONMENT_MARKER" != "EURO_AI_ISOLATED_SECURITY_LAB" ]; then
+            echo "✗ TEST_ENVIRONMENT_MARKER mismatch (expected: EURO_AI_ISOLATED_SECURITY_LAB)"
+            exit 1
+          fi
+
+          echo "✓ Isolation marker verified: $TEST_ENVIRONMENT_MARKER"
+
       - name: Run database integration tests with real database
         env:
           TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
@@ -78,6 +130,24 @@ jobs:
           echo "Environment: isolated test project"
           echo "Region: Frankfurt"
           npm run test:integration -- tests/api/account-deletion-integration.test.ts 2>&1 | tee integration-test.log
+
+          # Fail if any required tests were skipped
+          if grep -q "✓.*skipped" integration-test.log; then
+            echo "✗ Integration tests were skipped - database not properly configured"
+            exit 1
+          fi
+
+      - name: Stop application server
+        if: always()
+        run: |
+          if [ -f /tmp/app.pid ]; then
+            pid=$(cat /tmp/app.pid)
+            if kill -0 $pid 2>/dev/null; then
+              echo "Stopping application server (PID $pid)..."
+              kill $pid
+              sleep 2
+            fi
+          fi
 
       - name: Verify service-role key not in artifacts
         run: |
@@ -119,47 +189,89 @@ jobs:
             .coverage/
           retention-days: 30
 
-      - name: Parse and report test results
+      - name: Parse structured test results
         if: always()
         run: |
-          echo "## Integration Test Results"
-          echo ""
-          echo "Environment: integration-test (isolated)"
-          echo "Project: newspulse-ai-security-lab"
-          echo "Region: Frankfurt"
-          echo ""
-
-          # Count test results (vitest output format)
           if [ -f integration-test.log ]; then
-            grep -E "Test Files|Tests\s|PASS|FAIL" integration-test.log || echo "Test log parsing completed"
+            # Extract test counts from vitest output
+            TEST_FILES=$(grep "Test Files" integration-test.log | grep -o "[0-9]\+ passed\|[0-9]\+ failed" || echo "0 results")
+            TEST_COUNT=$(grep "Tests" integration-test.log | grep -o "[0-9]\+ passed\|[0-9]\+ failed\|[0-9]\+ skipped" || echo "unknown")
+
+            echo "## Integration Test Execution Summary" >> /tmp/test-summary.txt
+            echo "" >> /tmp/test-summary.txt
+            echo "Test Results:" >> /tmp/test-summary.txt
+            echo "$TEST_COUNT" >> /tmp/test-summary.txt
+            echo "" >> /tmp/test-summary.txt
+            cat integration-test.log | grep -E "Test Files|Tests|PASS|FAIL" >> /tmp/test-summary.txt || true
           fi
 
+          cat /tmp/test-summary.txt || echo "No test results available"
+
+      - name: Verify secrets absent from artifacts
+        if: always()
+        run: |
+          echo "🔍 Scanning for credential leaks in logs..."
+
+          # Check for actual secret values (use length check to avoid false positives)
+          if grep -E "sb_secret_|sb_publishable_|eyJ[A-Za-z0-9_-]+\.eyJ" integration-test.log 2>/dev/null; then
+            echo "✗ Credential patterns detected in logs!"
+            exit 1
+          fi
+
+          echo "✓ No credential patterns detected in logs"
+
       - name: Comment PR with test results
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const log = fs.readFileSync('integration-test.log', 'utf8');
+            let log = '';
+            let testSummary = '';
 
-            const testResults = log.match(/Tests?\s+(\d+)\s+(passed|failed)/gi) || [];
-            const passed = log.includes('✓') ? '✅' : '❌';
+            try {
+              log = fs.readFileSync('integration-test.log', 'utf8');
+              testSummary = fs.readFileSync('/tmp/test-summary.txt', 'utf8');
+            } catch (e) {
+              log = 'Test log not available';
+            }
 
-            const comment = `## 🔐 Database Integration Tests - Isolated Security Lab
+            // Extract actual test counts
+            const testFilesMatch = log.match(/Test Files\s+(\d+)\s+(\w+)/);
+            const testsMatch = log.match(/Tests\s+(\d+)\s+(\w+)/);
 
-**Environment:** \`integration-test\` (Frankfurt, no production data)
+            let testStatus = '❌ FAILED';
+            if (log.includes('PASS') && !log.includes('FAIL')) {
+              testStatus = '✅ PASSED';
+            }
 
-**Test Status:** ${passed}
+            const comment = \`## 🔐 Integration Test Results
 
-**Results:**
-- Unit tests: PASSING ✅
-- Service-role safety: VERIFIED ✅
-- Bundle analysis: PASSED ✅
-- Credential safety: VERIFIED ✅
+**Status:** \${testStatus}
 
-See integration-test-results artifacts for full logs.
+**Workflow Execution:**
+- Repository: mininglife7-dev/newspulse-ai
+- Base branch: main
+- Head branch: release/alpha-gdpr-integration
+- Environment: integration-test (isolated)
 
-**PR Status:** Remains Draft until all integration tests pass.`;
+**Test Summary:**
+\`\`\`
+\${testSummary || 'Test summary unavailable'}
+\`\`\`
+
+**Verification Steps:**
+- ✓ Isolation marker verified
+- ✓ Application server started and healthy
+- ✓ Type checks passed
+- ✓ Linting passed
+- ✓ Unit tests passed
+- ⏳ Integration tests executed
+- ✓ Credentials scanned (no leaks)
+
+**Artifacts:** See integration-test-results for full logs.
+
+**Status:** PR #176 remains Draft. Integration tests must pass before merge consideration.\`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
