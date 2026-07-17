@@ -58,7 +58,9 @@ export async function detectActionsOutage(
       };
     }
 
-    const data = (await response.json()) as { workflow_runs: Array<{ created_at: string; conclusion: string }> };
+    const data = (await response.json()) as {
+      workflow_runs: Array<{ created_at: string; conclusion: string }>;
+    };
     const runs = data.workflow_runs || [];
 
     if (runs.length === 0) {
@@ -109,7 +111,8 @@ export async function detectActionsOutage(
       description: `Could not check GitHub Actions: ${error instanceof Error ? error.message : 'Unknown error'}`,
       evidence: [`Exception during Actions check`],
       discoveredAt: new Date().toISOString(),
-      recommendedAction: 'Retry the check. If persistent, verify network access.',
+      recommendedAction:
+        'Retry the check. If persistent, verify network access.',
       estimatedImpact: 'Cannot verify Actions health status.',
     };
   }

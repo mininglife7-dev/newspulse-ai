@@ -58,13 +58,14 @@ This allows customers to sign up with email + magic link verification.
 Run this SQL query in the SQL Editor to confirm all tables exist:
 
 ```sql
-select table_name 
-from information_schema.tables 
-where table_schema = 'public' 
+select table_name
+from information_schema.tables
+where table_schema = 'public'
 order by table_name;
 ```
 
 **You should see:**
+
 - `companies`
 - `governance_priorities`
 - `profiles`
@@ -92,6 +93,7 @@ Once you've deployed to Vercel:
 2. Confirm you see `"status": "healthy"` (not error messages)
 
 If you see missing env vars, add them in the Vercel dashboard:
+
 - **Project Settings → Environment Variables**
 - Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
@@ -118,6 +120,7 @@ If you see missing env vars, add them in the Vercel dashboard:
 
 **Cause:** Environment variables not set, or Supabase project is down.  
 **Fix:**
+
 1. Check Vercel dashboard → Environment Variables (confirm keys are set)
 2. Check Supabase status at https://status.supabase.com
 

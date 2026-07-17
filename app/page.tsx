@@ -70,9 +70,7 @@ export default function LandingPage() {
       {/* Features */}
       <section id="features" className="space-y-8 py-12">
         <div className="space-y-2 text-center">
-          <h2 className="text-4xl font-bold text-white">
-            Everything You Need
-          </h2>
+          <h2 className="text-4xl font-bold text-white">Everything You Need</h2>
           <p className="text-lg text-slate-400">
             Complete AI governance in one elegant platform
           </p>

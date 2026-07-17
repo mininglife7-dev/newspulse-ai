@@ -18,7 +18,10 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
             created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
             conclusion: 'success',
           },
-          { created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), conclusion: 'success' },
+          {
+            created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+            conclusion: 'success',
+          },
         ],
       };
 
@@ -51,7 +54,9 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
             conclusion: 'failure',
           },
           {
-            created_at: new Date(Date.now() - 2.5 * 60 * 60 * 1000).toISOString(),
+            created_at: new Date(
+              Date.now() - 2.5 * 60 * 60 * 1000
+            ).toISOString(),
             conclusion: 'failure',
           },
         ],
@@ -66,7 +71,9 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
       expect(result).not.toBeNull();
       expect(result?.type).toBe('actions_no_recent_runs');
       expect(result?.severity).toBe('critical');
-      expect(result?.description).toContain('No successful workflow runs in the last 2 hours');
+      expect(result?.description).toContain(
+        'No successful workflow runs in the last 2 hours'
+      );
     });
 
     it('detects API errors', async () => {
@@ -108,7 +115,11 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
         json: async () => mockRuns,
       });
 
-      const result = await detectAllBlockingConditions('owner', 'repo', 'token');
+      const result = await detectAllBlockingConditions(
+        'owner',
+        'repo',
+        'token'
+      );
       expect(result).toHaveLength(0);
     });
 
@@ -118,7 +129,11 @@ describe('DNA-GOV-001: Blocking Condition Detector', () => {
         json: async () => ({ workflow_runs: [] }),
       });
 
-      const result = await detectAllBlockingConditions('owner', 'repo', 'token');
+      const result = await detectAllBlockingConditions(
+        'owner',
+        'repo',
+        'token'
+      );
       expect(result.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('actions_no_recent_runs');
     });

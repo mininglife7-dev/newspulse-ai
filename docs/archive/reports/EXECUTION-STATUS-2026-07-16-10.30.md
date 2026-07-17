@@ -23,6 +23,7 @@ All autonomous technical work on production readiness is complete or in progress
 ## COMPLETED WORK (THIS SESSION)
 
 ### ✅ Production Database Deployment (Verified)
+
 - **Status:** Tokyo Supabase project deployment VERIFIED COMPLETE
 - **Project:** `yrroytwfdrafvajdfkog` (ap-northeast-1)
 - **Runs:** 29479537494 (07:20 UTC) + 29479962355 (07:28 UTC)
@@ -32,6 +33,7 @@ All autonomous technical work on production readiness is complete or in progress
 - **Evidence:** [Deployment Record](deployments/2026-07-16-SUPABASE-SCHEMA-DEPLOY.md), [Verification Report](../SUPABASE-DEPLOYMENT-VERIFICATION-REPORT.md)
 
 ### ✅ RISK-008 EU Migration (Phase 1 Complete)
+
 - **Status:** Founder decision approved (Option B — require EU residency)
 - **Preparation:** All Phase 1 work completed
   - Current state documented (Tokyo project, schema inventory)
@@ -42,6 +44,7 @@ All autonomous technical work on production readiness is complete or in progress
 - **Awaiting:** Founder creates EU Supabase project, provides credentials
 
 ### ✅ RISK-005 Observability (Closed)
+
 - **Status:** Observability infrastructure verified end-to-end
 - **Endpoints:** `/api/health` (with real DB test) ✅, `/api/alerts` (multi-source aggregation) ✅
 - **Workflows:** 7 monitoring workflows configured and ready ✅
@@ -51,6 +54,7 @@ All autonomous technical work on production readiness is complete or in progress
 - **Evidence:** [RISK-005-OBSERVABILITY-CLOSURE.md](risks/RISK-005-OBSERVABILITY-CLOSURE.md)
 
 ### ✅ RISK-006 Post-Deploy Env Vars (Mitigated)
+
 - **Status:** Comprehensive setup guide created
 - **Required:** CEIS_CRON_SECRET (compliance automation)
 - **Optional:** OPENAI_API_KEY (enhanced risk assessment), FIRECRAWL_API_KEY (web monitoring)
@@ -59,12 +63,14 @@ All autonomous technical work on production readiness is complete or in progress
 - **Awaiting:** Founder action (10-15 min, can be done anytime after launch)
 
 ### ✅ Founder Brief (Updated)
+
 - **Status:** Latest status documented
 - **Content:** Current Tokyo deployment, RISK-008 authorization, EU migration phase 1 complete
 - **Clarity:** Explicit next step (create EU Supabase project, provide 4 credentials)
 - **Timeline:** 35 minutes autonomously after credentials
 
 ### ✅ Risk Register (Updated)
+
 - **Status:** RISK-005 marked closed, RISK-008 in progress
 - **Last updated:** 2026-07-16 10:30 UTC
 - **Open risks:** RISK-002 (branch protection, Founder action), RISK-004 (documentation sprawl, Governor ownership), RISK-006 (env vars, mitigated)
@@ -74,6 +80,7 @@ All autonomous technical work on production readiness is complete or in progress
 ## CURRENT WORK (IN PROGRESS)
 
 ### ⏳ EU Database Migration (Phases 3-7, Ready to Execute)
+
 - **Phase 3:** Update GitHub Secrets + Variables (5 min) — READY
 - **Phase 4:** Deploy to EU project (10 min) — READY
 - **Phase 5:** Validate all gates (5 min) — READY
@@ -93,6 +100,7 @@ All autonomous technical work on production readiness is complete or in progress
 **Provides:** 4 credentials that trigger Governor EU migration execution
 
 **Next steps for Founder:**
+
 1. Create new Supabase project → select **Region: Frankfurt (eu-central-1)**
 2. Generate database password during project creation
 3. Wait for project initialization (2-3 min)
@@ -150,6 +158,7 @@ All autonomous technical work on production readiness is complete or in progress
 ## STANDING ACTIONS (Can Be Done Anytime)
 
 ### ⏱️ RISK-002: Branch Protection (Founder Action, Recommended)
+
 - **What:** Enable branch protection on `main`
 - **Why:** Prevents accidental force-pushes that erase history (incident occurred 2026-07-10)
 - **Where:** GitHub → Repository Settings → Branches → Add rule for `main`
@@ -158,6 +167,7 @@ All autonomous technical work on production readiness is complete or in progress
 - **Urgency:** Medium (standing recommendation, not blocking launch)
 
 ### ⏱️ RISK-006: Post-Deploy Environment Variables (Founder Action, Recommended)
+
 - **CEIS_CRON_SECRET:** Set before first customer (enables compliance automation)
 - **OPENAI_API_KEY:** Optional, set after launch if desired
 - **FIRECRAWL_API_KEY:** Optional, set after launch if desired
@@ -169,48 +179,48 @@ All autonomous technical work on production readiness is complete or in progress
 
 ## VERIFICATION STATUS
 
-| Component | Status | Evidence |
-|-----------|--------|----------|
-| **Database Deployment** | ✅ VERIFIED | Runs 29479537494, 29479962355 all gates GREEN |
-| **Security Testing** | ✅ VERIFIED | 100% pass rate on RLS, multi-tenant, access controls |
-| **RLS Policies** | ✅ VERIFIED | 43 policies active, hard-verification ON_ERROR_STOP=1 |
-| **Authentication** | ✅ VERIFIED | auth→profiles trigger confirmed present |
-| **CEIS Schema** | ✅ VERIFIED | 5 tables deployed with RLS enabled |
-| **Observability** | ✅ VERIFIED | Endpoints, workflows, alert infrastructure all tested |
-| **Code Quality** | ✅ READY | Production build passing (551/551 tests baseline) |
-| **Documentation** | ✅ COMPLETE | 2,500+ lines governance + operational docs |
-| **Rollback Path** | ✅ DOCUMENTED | Simple secret revert, zero data loss |
-| **EU Migration** | ✅ READY | Phase 1 complete, phases 3-7 prepared for execution |
+| Component               | Status        | Evidence                                              |
+| ----------------------- | ------------- | ----------------------------------------------------- |
+| **Database Deployment** | ✅ VERIFIED   | Runs 29479537494, 29479962355 all gates GREEN         |
+| **Security Testing**    | ✅ VERIFIED   | 100% pass rate on RLS, multi-tenant, access controls  |
+| **RLS Policies**        | ✅ VERIFIED   | 43 policies active, hard-verification ON_ERROR_STOP=1 |
+| **Authentication**      | ✅ VERIFIED   | auth→profiles trigger confirmed present               |
+| **CEIS Schema**         | ✅ VERIFIED   | 5 tables deployed with RLS enabled                    |
+| **Observability**       | ✅ VERIFIED   | Endpoints, workflows, alert infrastructure all tested |
+| **Code Quality**        | ✅ READY      | Production build passing (551/551 tests baseline)     |
+| **Documentation**       | ✅ COMPLETE   | 2,500+ lines governance + operational docs            |
+| **Rollback Path**       | ✅ DOCUMENTED | Simple secret revert, zero data loss                  |
+| **EU Migration**        | ✅ READY      | Phase 1 complete, phases 3-7 prepared for execution   |
 
 ---
 
 ## PLATFORM READINESS SCORECARD
 
-| Aspect | Status | Notes |
-|--------|--------|-------|
-| **Engineering** | ✅ READY | Code deployed, tests passing, build green |
-| **Database** | ✅ READY (Tokyo) | Production deployment verified; EU deployment prepared |
-| **Security** | ✅ VERIFIED | RLS, multi-tenant isolation, access controls tested |
-| **Observability** | ✅ VERIFIED | Health checks, alerts, monitoring workflows ready |
-| **Customer Journey** | ✅ READY | Registration → onboarding → compliance verified |
-| **Documentation** | ✅ COMPLETE | Governance, operations, playbooks, troubleshooting |
-| **RISK-008 (Residency)** | 🟡 IN PROGRESS | EU migration phase 1 complete, awaiting project creation |
-| **Overall** | 🟢 CONDITIONAL GO | Launch-ready pending EU residency decision execution |
+| Aspect                   | Status            | Notes                                                    |
+| ------------------------ | ----------------- | -------------------------------------------------------- |
+| **Engineering**          | ✅ READY          | Code deployed, tests passing, build green                |
+| **Database**             | ✅ READY (Tokyo)  | Production deployment verified; EU deployment prepared   |
+| **Security**             | ✅ VERIFIED       | RLS, multi-tenant isolation, access controls tested      |
+| **Observability**        | ✅ VERIFIED       | Health checks, alerts, monitoring workflows ready        |
+| **Customer Journey**     | ✅ READY          | Registration → onboarding → compliance verified          |
+| **Documentation**        | ✅ COMPLETE       | Governance, operations, playbooks, troubleshooting       |
+| **RISK-008 (Residency)** | 🟡 IN PROGRESS    | EU migration phase 1 complete, awaiting project creation |
+| **Overall**              | 🟢 CONDITIONAL GO | Launch-ready pending EU residency decision execution     |
 
 ---
 
 ## RISKS & MITIGATIONS
 
-| Risk | Status | Mitigation |
-|------|--------|-----------|
-| **RISK-001** | ✅ CLOSED | Schema deployed + verified (runs 29479537494, 29479962355) |
-| **RISK-002** | 🟡 OPEN | Recommendation: Enable branch protection on `main` |
-| **RISK-003** | ✅ MITIGATED | PR queue reconciled, duplicate work detection active |
-| **RISK-004** | 🟡 OPEN | Documentation consolidation ongoing, single-source rule applied |
-| **RISK-005** | ✅ CLOSED | Observability verified end-to-end, 84 tests passing |
-| **RISK-006** | ✅ MITIGATED | Post-deploy env var setup guide created |
-| **RISK-007** | ✅ CLOSED | Auth trigger confirmed present in production |
-| **RISK-008** | 🟡 IN PROGRESS | EU migration phase 1 complete, awaiting project creation |
+| Risk         | Status         | Mitigation                                                      |
+| ------------ | -------------- | --------------------------------------------------------------- |
+| **RISK-001** | ✅ CLOSED      | Schema deployed + verified (runs 29479537494, 29479962355)      |
+| **RISK-002** | 🟡 OPEN        | Recommendation: Enable branch protection on `main`              |
+| **RISK-003** | ✅ MITIGATED   | PR queue reconciled, duplicate work detection active            |
+| **RISK-004** | 🟡 OPEN        | Documentation consolidation ongoing, single-source rule applied |
+| **RISK-005** | ✅ CLOSED      | Observability verified end-to-end, 84 tests passing             |
+| **RISK-006** | ✅ MITIGATED   | Post-deploy env var setup guide created                         |
+| **RISK-007** | ✅ CLOSED      | Auth trigger confirmed present in production                    |
+| **RISK-008** | 🟡 IN PROGRESS | EU migration phase 1 complete, awaiting project creation        |
 
 ---
 
@@ -228,11 +238,13 @@ All autonomous technical work on production readiness is complete or in progress
 ## IMMEDIATE NEXT STEPS
 
 ### For Founder (Action Required)
+
 1. ⏳ Create EU Supabase project (Frankfurt region)
 2. ⏳ Provide 4 credentials (project ref, URL, connection string, keys)
 3. 📋 (Optional) Review RISK-002 branch protection recommendation
 
 ### For Governor (Ready to Execute)
+
 1. ⏳ Phase 3-7 EU migration (35 min after credentials received)
 2. 📋 Monitor credentials provided via reply/message
 3. ✅ Execute autonomously once credentials confirmed
@@ -257,6 +269,7 @@ All autonomous technical work on production readiness is complete or in progress
 ## COMMUNICATION CHECKLIST
 
 **Founder:**
+
 - ✅ Production deployment success confirmed (verified complete)
 - ✅ RISK-008 decision approved and authorized (Option B — EU migration)
 - ✅ Preparation complete and documented (Phase 1 done)
@@ -265,6 +278,7 @@ All autonomous technical work on production readiness is complete or in progress
 - ⏳ Awaiting: 4 credential values to trigger EU migration
 
 **Future Sessions:**
+
 - ✅ Institutional memory complete (governance docs, lessons learned, risk register)
 - ✅ Evidence trail preserved (all decisions backed by deployment records, test results)
 - ✅ Rollback procedures documented (can revert to Tokyo or abort EU migration)
@@ -275,4 +289,3 @@ All autonomous technical work on production readiness is complete or in progress
 **Report by:** Governor Ω  
 **Confidence Level:** HIGH (all work verified with evidence)  
 **Next update:** After EU Supabase project created or 24 hours, whichever is first
-

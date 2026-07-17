@@ -210,6 +210,7 @@
 ## Completion Evidence
 
 **Files Created**:
+
 - `docs/governance/AGENTS.md` (450 lines)
 - `docs/governance/GOVERNOR_OPERATIONAL_FRAMEWORK.md` (400 lines)
 - `docs/governance/DECISION_LOG.md` (550 lines)
@@ -217,6 +218,7 @@
 - `docs/governor/STAGE_1_COMPLETION_CHECKLIST.md` (this file)
 
 **Files Updated**:
+
 - `docs/governor/PROJECT_STATE.md` (added Stage 1 completion)
 - `docs/governor/NEXT_ACTION.md` (Stage 2 preview)
 

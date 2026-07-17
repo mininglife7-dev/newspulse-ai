@@ -15,7 +15,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 
 **Base URL**: `https://newspulse-ai.vercel.app/api`  
 **Auth**: Bearer token in `Authorization: Bearer <JWT>`  
-**Format**: JSON request/response  
+**Format**: JSON request/response
 
 ---
 
@@ -26,6 +26,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Endpoint**: `POST /auth/login`
 
 **Request**:
+
 ```json
 {
   "email": "user@example.com",
@@ -34,6 +35,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (200):
+
 ```json
 {
   "user": {
@@ -50,6 +52,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Errors**:
+
 - `401 Unauthorized` — Invalid credentials
 - `429 Too Many Requests` — Too many login attempts
 
@@ -60,6 +63,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Endpoint**: `POST /auth/signup`
 
 **Request**:
+
 ```json
 {
   "email": "newuser@example.com",
@@ -69,6 +73,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (201):
+
 ```json
 {
   "user": {
@@ -80,6 +85,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Errors**:
+
 - `400 Bad Request` — Invalid email or password format
 - `409 Conflict` — Email already registered
 
@@ -92,6 +98,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Response** (200):
+
 ```json
 {
   "message": "Logged out successfully"
@@ -109,6 +116,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Response** (200):
+
 ```json
 {
   "workspaces": [
@@ -134,6 +142,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "name": "New Organization",
@@ -144,6 +153,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (201):
+
 ```json
 {
   "workspace": {
@@ -159,6 +169,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Errors**:
+
 - `400 Bad Request` — Missing required fields
 - `409 Conflict` — Workspace name already exists for user
 
@@ -171,6 +182,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Response** (200):
+
 ```json
 {
   "workspace": {
@@ -189,6 +201,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Errors**:
+
 - `404 Not Found` — Workspace doesn't exist or not accessible
 - `403 Forbidden` — User not in workspace
 
@@ -203,11 +216,13 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Query Parameters**:
+
 - `status` (optional): Filter by status (active, inactive, development)
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Results per page (default: 20, max: 100)
 
 **Response** (200):
+
 ```json
 {
   "systems": [
@@ -242,6 +257,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "name": "Fraud Detection System",
@@ -254,6 +270,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (201):
+
 ```json
 {
   "system": {
@@ -271,6 +288,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Errors**:
+
 - `400 Bad Request` — Missing required fields
 - `409 Conflict` — System name already exists in workspace
 
@@ -283,6 +301,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "status": "inactive",
@@ -291,6 +310,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (200):
+
 ```json
 {
   "system": {
@@ -323,6 +343,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Response** (200):
+
 ```json
 {
   "assessments": [
@@ -352,6 +373,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "status": "in_progress",
@@ -364,6 +386,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (201):
+
 ```json
 {
   "assessment": {
@@ -386,6 +409,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Response** (200):
+
 ```json
 {
   "assessment": {
@@ -408,10 +432,12 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Query Parameters**:
+
 - `status` (optional): Filter by status (open, in_progress, completed)
 - `assessment_id` (optional): Filter by assessment
 
 **Response** (200):
+
 ```json
 {
   "obligations": [
@@ -439,6 +465,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request** (suggested obligations returned from assessment):
+
 ```json
 {
   "obligation_ids": ["obl-123", "obl-124"]
@@ -446,6 +473,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (201):
+
 ```json
 {
   "obligations": [
@@ -472,6 +500,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "status": "in_progress",
@@ -480,6 +509,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (200):
+
 ```json
 {
   "obligation": {
@@ -502,6 +532,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Response** (200):
+
 ```json
 {
   "evidence": [
@@ -529,6 +560,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "title": "Assessment Results Summary",
@@ -539,6 +571,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (201):
+
 ```json
 {
   "evidence": {
@@ -560,6 +593,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "status": "approved"
@@ -567,6 +601,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (200):
+
 ```json
 {
   "evidence": {
@@ -598,6 +633,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Response** (200):
+
 ```json
 {
   "members": [
@@ -628,6 +664,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "email": "newmember@example.com",
@@ -636,6 +673,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (200):
+
 ```json
 {
   "invitation": {
@@ -656,6 +694,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Headers**: `Authorization: Bearer <JWT>`
 
 **Request**:
+
 ```json
 {
   "role": "admin"
@@ -663,6 +702,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 ```
 
 **Response** (200):
+
 ```json
 {
   "member": {
@@ -693,6 +733,7 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 **Endpoint**: `GET /health`
 
 **Response** (200):
+
 ```json
 {
   "status": "healthy",
@@ -727,30 +768,32 @@ REST API endpoints for EURO AI platform. All endpoints require authentication (J
 
 ### HTTP Status Codes
 
-| Status | Meaning | Example |
-|--------|---------|---------|
-| 200 | OK | Request succeeded |
-| 201 | Created | Resource created |
-| 204 | No Content | Deletion successful |
-| 400 | Bad Request | Invalid input |
-| 401 | Unauthorized | Missing/invalid JWT |
-| 403 | Forbidden | No access to resource |
-| 404 | Not Found | Resource doesn't exist |
-| 409 | Conflict | Duplicate resource |
-| 429 | Too Many Requests | Rate limited |
-| 500 | Server Error | Internal error |
-| 503 | Service Unavailable | Maintenance |
+| Status | Meaning             | Example                |
+| ------ | ------------------- | ---------------------- |
+| 200    | OK                  | Request succeeded      |
+| 201    | Created             | Resource created       |
+| 204    | No Content          | Deletion successful    |
+| 400    | Bad Request         | Invalid input          |
+| 401    | Unauthorized        | Missing/invalid JWT    |
+| 403    | Forbidden           | No access to resource  |
+| 404    | Not Found           | Resource doesn't exist |
+| 409    | Conflict            | Duplicate resource     |
+| 429    | Too Many Requests   | Rate limited           |
+| 500    | Server Error        | Internal error         |
+| 503    | Service Unavailable | Maintenance            |
 
 ---
 
 ## Rate Limiting
 
 All endpoints are rate limited:
+
 - **Default**: 60 requests per minute per user
 - **Auth endpoints**: 10 requests per minute per IP
 - **File uploads**: 10 requests per minute per user
 
 **Header** in response:
+
 ```
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45

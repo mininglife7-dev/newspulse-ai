@@ -70,6 +70,7 @@ Before deploying schema.sql to production Supabase:
 ```
 
 **Expected Output:**
+
 ```
 === PREFLIGHT SUMMARY ===
 INDEXES    | X
@@ -88,6 +89,7 @@ GO: Database is clean. Safe to deploy schema.sql
 ### Step 2: Deploy Schema
 
 **Copy Schema File:**
+
 ```bash
 # Option A: Direct copy (recommended for Windows users)
 # Open file: /home/user/newspulse-ai/supabase/schema.sql
@@ -100,6 +102,7 @@ cat /home/user/newspulse-ai/supabase/schema.sql | xclip   # Linux
 ```
 
 **Deploy to Supabase:**
+
 ```
 1. Go to: https://app.supabase.com/project/yrroytwfdrafvajdfkog/sql/new
 2. Create NEW QUERY (important: not opening existing query)
@@ -109,11 +112,13 @@ cat /home/user/newspulse-ai/supabase/schema.sql | xclip   # Linux
 ```
 
 **Success Indicator:**
+
 - No error messages
 - Query completes without "ERROR" or "FATAL"
 - Browser shows query execution time (e.g., "Query completed in 0.5s")
 
 **Failure Indicator:**
+
 - Red error message: "ERROR: ..."
 - Query timeout (>30 seconds with no progress)
 - Connection lost message
@@ -133,6 +138,7 @@ If failure occurs: See [Rollback Procedures](#rollback-procedures) → Scenario 
 ```
 
 **Expected Output:**
+
 ```
 ✓ PASS: table_status
 ✓ PASS: index_status
@@ -159,6 +165,7 @@ If failure occurs: See [Rollback Procedures](#rollback-procedures) → Scenario 
 ```
 
 **Expected Output:**
+
 ```
 ✓ PASS: User A sees only their own workspace
 ✓ PASS: User A sees only their workspace companies
@@ -175,6 +182,7 @@ If failure occurs: See [Rollback Procedures](#rollback-procedures) → Scenario 
 **Manual verification via application UI:**
 
 1. Create new test user:
+
    ```
    - Sign up with test email: test-deploy-smoke@example.com
    - Verify profile auto-created (check Supabase)
@@ -182,6 +190,7 @@ If failure occurs: See [Rollback Procedures](#rollback-procedures) → Scenario 
    ```
 
 2. Create test workspace:
+
    ```
    - Name: "Smoke Test Workspace"
    - Verify workspace created
@@ -189,6 +198,7 @@ If failure occurs: See [Rollback Procedures](#rollback-procedures) → Scenario 
    ```
 
 3. Create test company:
+
    ```
    - Name: "Test Company"
    - Verify company accessible
@@ -209,6 +219,7 @@ If failure occurs: See [Rollback Procedures](#rollback-procedures) → Scenario 
 ### ✅ Deployment Complete
 
 **Sign-off:**
+
 - [ ] Preflight check: GO
 - [ ] Schema deployment: Success
 - [ ] POST_DEPLOYMENT_VERIFICATION: All PASS
@@ -232,7 +243,7 @@ SELECT COUNT(*) as orphaned_profiles
 FROM public.profiles
 WHERE id NOT IN (SELECT id FROM auth.users);
 
-SELECT COUNT(*) as orphaned_workspaces  
+SELECT COUNT(*) as orphaned_workspaces
 FROM public.workspaces
 WHERE owner_id NOT IN (SELECT id FROM auth.users);
 
@@ -283,6 +294,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Scenario 1: Deployment Failed (Partial Objects)
 
 **Symptoms:**
+
 - Deployment stopped mid-execution
 - Error message: "ERROR: ..."
 - Some tables/indexes created, others missing
@@ -306,6 +318,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Scenario 2: RLS Policies Blocking All Access
 
 **Symptoms:**
+
 - Deployment succeeded
 - Customers report "permission denied" on all queries
 - Error: `ERROR: new row violates row-level security policy`
@@ -339,6 +352,7 @@ ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 ### Scenario 3: Signup Trigger Not Working
 
 **Symptoms:**
+
 - New users created but no profiles
 - Users cannot log in
 - Error: `new row violates not-null constraint`
@@ -376,6 +390,7 @@ WHERE p.id IS NULL;
 ### Issue 1: "relation already exists"
 
 **Error Message:**
+
 ```
 ERROR: relation "profiles" already exists
 ```
@@ -383,6 +398,7 @@ ERROR: relation "profiles" already exists
 **Cause:** Schema already deployed; running twice
 
 **Resolution:**
+
 ```
 This is OK! The schema uses CREATE TABLE IF NOT EXISTS.
 The error appears when CREATE TABLE IF NOT EXISTS runs on existing table,
@@ -397,6 +413,7 @@ If all objects present, deployment is successful.
 ### Issue 2: "policy already exists"
 
 **Error Message:**
+
 ```
 ERROR: policy "Users can read their own profile" for table "profiles" already exists
 ```
@@ -404,6 +421,7 @@ ERROR: policy "Users can read their own profile" for table "profiles" already ex
 **Cause:** DROP POLICY IF EXISTS didn't fire; policy wasn't dropped
 
 **Resolution:**
+
 ```
 This indicates the schema.sql was not fully executed the first time.
 
@@ -419,6 +437,7 @@ Solution:
 ### Issue 3: "permission denied" on updates
 
 **Error Message:**
+
 ```
 ERROR: permission denied for schema public
 or
@@ -428,6 +447,7 @@ ERROR: new row violates row-level security policy
 **Cause:** RLS policy is too strict; user doesn't have access
 
 **Resolution:**
+
 ```sql
 -- STEP 1: Check which policies exist
 SELECT tablename, policyname FROM pg_policies
@@ -452,12 +472,14 @@ WHERE user_id = 'user-id-here' AND status = 'active';
 ### Issue 4: Deployment takes >60 seconds
 
 **Symptoms:**
+
 - Schema deployment running for 1+ minutes
 - No error but not completing
 
 **Cause:** Large number of policies; slow index creation on big tables
 
 **Resolution:**
+
 ```
 Wait. The schema has 37 policies and 25 indexes.
 On first deployment, PostgreSQL needs to:
@@ -484,10 +506,10 @@ After 2 minutes, if still running, check Supabase logs.
 
 ```sql
 -- 1. RLS Policy Latency
-SELECT 
+SELECT
   tablename,
   COUNT(*) as policy_count,
-  (SELECT AVG(duration) FROM pg_stat_statements 
+  (SELECT AVG(duration) FROM pg_stat_statements
    WHERE query LIKE '%workspace_members%') as avg_policy_check_ms
 FROM pg_policies
 WHERE schemaname = 'public'
@@ -495,7 +517,7 @@ GROUP BY tablename;
 -- RLS policy checks should be < 1ms
 
 -- 2. Index Hit Ratio
-SELECT 
+SELECT
   schemaname,
   tablename,
   indexname,
@@ -519,7 +541,7 @@ LIMIT 10;
 
 ```sql
 -- Query performance trends
-SELECT 
+SELECT
   DATE_TRUNC('day', query_start_time)::date as day,
   COUNT(*) as query_count,
   AVG(query_time_ms) as avg_latency,
@@ -530,7 +552,7 @@ ORDER BY day DESC
 LIMIT 7;
 
 -- Table growth rate
-SELECT 
+SELECT
   tablename,
   pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
   (SELECT COUNT(*) FROM pg_class WHERE relname = tablename) as row_count
@@ -546,6 +568,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Level 1: Minor Issue (Service Degraded)
 
 **Symptoms:**
+
 - Some users seeing "slow" queries
 - Occasional "permission denied" errors
 - 1-5 users affected
@@ -553,11 +576,12 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 **Response Time:** Within 1 hour
 
 **Actions:**
+
 1. Check RLS policy latency (see [Performance Monitoring](#performance-monitoring))
 2. Check for missing indexes
 3. Add indexes if needed:
    ```sql
-   create index if not exists workspace_members_workspace_user_status_idx 
+   create index if not exists workspace_members_workspace_user_status_idx
      on public.workspace_members(workspace_id, user_id, status);
    ```
 4. Monitor query performance before/after
@@ -567,6 +591,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Level 2: Major Issue (Service Down)
 
 **Symptoms:**
+
 - Most users seeing "permission denied"
 - Cannot create workspaces
 - Cannot query companies
@@ -574,24 +599,30 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 **Response Time:** Immediate (< 15 minutes)
 
 **Actions:**
+
 1. Verify RLS is enabled:
+
    ```sql
    SELECT tablename, rowsecurity FROM pg_tables
    WHERE schemaname = 'public' AND rowsecurity = true;
    ```
 
 2. Check if profiles exist:
+
    ```sql
    SELECT COUNT(*) FROM auth.users WHERE id NOT IN (SELECT id FROM public.profiles);
    ```
+
    If > 0, see [Scenario 3: Signup Trigger Not Working](#scenario-3-signup-trigger-not-working)
 
 3. Check workspace membership:
+
    ```sql
    SELECT COUNT(*) FROM public.workspace_members WHERE status = 'active';
    ```
 
 4. If critical: Temporarily disable RLS (emergency):
+
    ```sql
    ALTER TABLE public.workspaces DISABLE ROW LEVEL SECURITY;
    ALTER TABLE public.companies DISABLE ROW LEVEL SECURITY;
@@ -607,6 +638,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Level 3: Critical Issue (Data Corruption)
 
 **Symptoms:**
+
 - Orphaned records detected
 - Foreign key constraint violations
 - Cascade delete creating unexpected data loss
@@ -614,6 +646,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 **Response Time:** Immediate (< 5 minutes)
 
 **Actions:**
+
 1. STOP all schema modifications (no migrations, no ALTER TABLE)
 2. Create backup snapshot (Supabase auto-creates daily; request point-in-time restore)
 3. Identify affected tables:
@@ -633,8 +666,9 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Weekly Maintenance
 
 **Task 1: Analyze Table Growth**
+
 ```sql
-SELECT 
+SELECT
   tablename,
   n_live_tup as live_rows,
   pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
@@ -642,18 +676,22 @@ FROM pg_stat_user_tables
 WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
+
 **Action:** If any table > 1GB, analyze query patterns for optimization
 
 **Task 2: Index Maintenance**
+
 ```sql
 -- Reindex unused indexes
 SELECT indexname FROM pg_stat_user_indexes
 WHERE idx_scan = 0
 ORDER BY idx_scan;
 ```
+
 **Action:** Consider dropping unused indexes (frees space, speeds writes)
 
 **Task 3: Vacuum & Analyze**
+
 ```
 -- Supabase runs this automatically, but can be manual:
 VACUUM ANALYZE public.workspace_members;
@@ -663,6 +701,7 @@ VACUUM ANALYZE public.companies;
 ### Monthly Maintenance
 
 **Task 1: Audit Log Cleanup**
+
 ```sql
 -- Archive old audit logs (older than 90 days)
 -- Then delete
@@ -671,6 +710,7 @@ WHERE created_at < NOW() - interval '90 days';
 ```
 
 **Task 2: Policy Performance Review**
+
 ```sql
 -- Review slowest RLS checks
 SELECT query, calls, mean_exec_time
@@ -679,9 +719,11 @@ WHERE query LIKE '%workspace_members%'
 ORDER BY mean_exec_time DESC
 LIMIT 10;
 ```
+
 **Action:** If any RLS check > 10ms, investigate and add indexes
 
 **Task 3: Data Integrity Check**
+
 ```sql
 -- Verify no orphaned records
 SELECT COUNT(*) as orphaned_ai_systems

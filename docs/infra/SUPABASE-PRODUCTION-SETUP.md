@@ -3,7 +3,7 @@
 **Objective:** Deploy production database schema and configure Supabase for customer data  
 **Timeline:** 15-30 minutes (mostly manual setup + waiting for deployment)  
 **Prerequisites:** Supabase account with active project (EU region recommended for EURO AI)  
-**Status:** READY FOR EXECUTION (code schema is tested and validated)  
+**Status:** READY FOR EXECUTION (code schema is tested and validated)
 
 ---
 
@@ -12,6 +12,7 @@
 This guide walks through deploying the NewsPulse AI database schema to production Supabase and configuring authentication for live customers.
 
 **What's Included:**
+
 - ✅ Complete database schema (tables, RLS policies, indexes)
 - ✅ Authentication setup (Email/Password, OAuth-ready)
 - ✅ Row-Level Security (RLS) for multi-tenant data isolation
@@ -19,6 +20,7 @@ This guide walks through deploying the NewsPulse AI database schema to productio
 - ✅ Testing procedures (verify connectivity and data access)
 
 **What You'll Have After:**
+
 - ✅ Production database running on Supabase
 - ✅ User authentication enabled
 - ✅ Workspace multi-tenancy configured
@@ -56,12 +58,14 @@ This guide walks through deploying the NewsPulse AI database schema to productio
 The schema is located in your repo: `supabase/schema.sql`
 
 **Option A: Copy-paste from file**
+
 1. Open `supabase/schema.sql` in your text editor
 2. Copy the entire file contents
 3. Paste into Supabase SQL editor
 4. Review the SQL (should see tables, policies, functions)
 
 **Option B: Use Supabase CLI (Advanced)**
+
 ```bash
 # Install Supabase CLI if not already installed
 npm install -g supabase
@@ -83,17 +87,18 @@ supabase db push
 4. Check for any errors in the output
 
 **Expected output:**
+
 ```
 Success! SQL executed.
 ```
 
 **Common issues and fixes:**
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| "Table already exists" | Schema was already deployed | Safe to ignore, schema is idempotent |
-| "Permission denied" | User lacks privileges | Ensure you're using project owner account |
-| "Extension not found" | pgcrypto or uuid-ossp missing | Should auto-enable; contact Supabase support if not |
+| Error                  | Cause                         | Fix                                                 |
+| ---------------------- | ----------------------------- | --------------------------------------------------- |
+| "Table already exists" | Schema was already deployed   | Safe to ignore, schema is idempotent                |
+| "Permission denied"    | User lacks privileges         | Ensure you're using project owner account           |
+| "Extension not found"  | pgcrypto or uuid-ossp missing | Should auto-enable; contact Supabase support if not |
 
 ### Step 1.4: Verify Tables Created
 
@@ -135,6 +140,7 @@ After schema deployment:
 ### Step 2.2: Configure Email Templates
 
 Supabase sends automated emails for:
+
 - Email confirmation
 - Password reset
 - Magic link login
@@ -228,6 +234,7 @@ curl http://localhost:3000/api/health
 ### Step 4.1: Test Database Connection
 
 **Via API:**
+
 ```bash
 curl -X GET http://localhost:3000/api/health \
   -H "Content-Type: application/json"
@@ -237,6 +244,7 @@ curl -X GET http://localhost:3000/api/health \
 ```
 
 **Via Supabase Dashboard:**
+
 1. Go to **"SQL Editor"**
 2. Run test query:
    ```sql
@@ -256,6 +264,7 @@ curl -X GET http://localhost:3000/api/health \
 8. Should redirect back to app, logged in
 
 **Check data was saved:**
+
 - Go to Supabase → **Table Editor** → `auth.users`
 - Should see your test user
 - Go to `public.profiles` table
@@ -333,6 +342,7 @@ Before declaring production-ready, verify all items:
 Once verified locally:
 
 1. Commit env changes (if using version control):
+
    ```bash
    # DO NOT COMMIT SERVICE_ROLE_KEY to public repo!
    # Only commit NEXT_PUBLIC_SUPABASE_URL and ANON_KEY if needed
@@ -341,6 +351,7 @@ Once verified locally:
    ```
 
 2. Push to production branch:
+
    ```bash
    git push origin main
    ```
@@ -384,6 +395,7 @@ Update Supabase email settings to use production domain:
 **Symptom:** Error when running schema in SQL editor
 
 **Solutions:**
+
 1. Copy-paste entire `schema.sql` file (not partial)
 2. Check for comment typos or syntax errors
 3. Run in fresh Supabase project (new projects sometimes have issues)
@@ -394,6 +406,7 @@ Update Supabase email settings to use production domain:
 **Symptom:** Sign-up email confirmation never arrives
 
 **Solutions:**
+
 1. Check email spam folder
 2. Verify email address in Supabase → **Authentication** → **Users**
 3. Check email rate limiting (Supabase free tier: 1 email/sec)
@@ -404,6 +417,7 @@ Update Supabase email settings to use production domain:
 **Symptom:** Stuck on sign-in page after confirmation
 
 **Solutions:**
+
 1. Check browser console for errors
 2. Clear browser cookies/localStorage
 3. Verify session cookie is set (check browser DevTools → Application → Cookies)
@@ -414,6 +428,7 @@ Update Supabase email settings to use production domain:
 **Symptom:** Works locally, fails in production
 
 **Solutions:**
+
 1. Verify environment variables are set in Vercel dashboard
 2. Restart Vercel deployment (redeploy from dashboard)
 3. Compare local `.env.local` with Vercel environment vars
@@ -424,16 +439,19 @@ Update Supabase email settings to use production domain:
 ## Post-Launch Maintenance
 
 ### Daily Checks
+
 - Monitor error rate via Vercel Analytics
 - Check Supabase logs for authentication errors
 - Verify daily backups are completing
 
 ### Weekly Checks
+
 - Review RLS policies for new tables (if added)
 - Check database storage usage
 - Monitor query performance (Supabase → Statistics)
 
 ### Monthly Checks
+
 - Review user growth and database scaling needs
 - Update auth provider credentials if expired
 - Archive old logs if needed
@@ -481,7 +499,9 @@ Before going live with customers, verify:
 ## FAQ
 
 ### Q: Can I use Supabase free tier for production?
+
 **A:** Not recommended. Free tier has:
+
 - 500 MB database
 - 2 GB bandwidth/month
 - No priority support
@@ -490,35 +510,45 @@ Before going live with customers, verify:
 **Recommendation:** Upgrade to paid plan ($25/month) for production.
 
 ### Q: How do I migrate data from dev to production?
+
 **A:** Supabase provides migration tools:
+
 1. Export data from dev environment
 2. Import into production
 3. Use Supabase Migration Tool for larger datasets
 4. Contact support for complex migrations
 
 ### Q: What if I need to update the schema after launch?
+
 **A:** Use Supabase Migrations:
+
 1. Create SQL migration file
 2. Apply via Supabase CLI: `supabase db push`
 3. Verify on production before merging to main
 4. Use zero-downtime migrations (ADD COLUMN with DEFAULT)
 
 ### Q: How do I scale the database as users grow?
+
 **A:** Supabase handles scaling automatically:
+
 - For read-heavy workloads: Enable Read Replicas
 - For write-heavy: Optimize queries
 - Monitor storage usage: Upgrade plan if needed
 - Contact Supabase support for custom scaling
 
 ### Q: Can I use custom domain for email?
+
 **A:** Yes, via SMTP configuration:
+
 1. Supabase → Authentication → Email
 2. Enable Custom SMTP
 3. Provide your email provider (SendGrid, AWS SES, etc.)
 4. Configure branding in email templates
 
 ### Q: How do I handle GDPR/data deletion requests?
+
 **A:** Supabase provides:
+
 1. User deletion via Dashboard
 2. Bulk deletion via SQL (for admins)
 3. Automatic deletion after 30 days if requested
@@ -558,8 +588,7 @@ Production database is ready when:
 **Status:** READY FOR DEPLOYMENT  
 **Effort:** 15-30 minutes  
 **Risk Level:** LOW (schema is tested, procedure is straightforward)  
-**Launch Impact:** CRITICAL (required for customer data)  
+**Launch Impact:** CRITICAL (required for customer data)
 
 **Document created:** 2026-07-10  
 **Last updated:** 2026-07-10
-

@@ -1,6 +1,14 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { bridgeSecurityScanToAlerts, shouldUpdateSecurityAlert } from '@/lib/security-alert-bridge';
-import { resetAlertHub, getActiveAlerts, getAlertHubReport, recordAlert } from '@/lib/alert-hub';
+import {
+  bridgeSecurityScanToAlerts,
+  shouldUpdateSecurityAlert,
+} from '@/lib/security-alert-bridge';
+import {
+  resetAlertHub,
+  getActiveAlerts,
+  getAlertHubReport,
+  recordAlert,
+} from '@/lib/alert-hub';
 import type { SecurityScanResult } from '@/lib/dependency-security-scanner';
 
 describe('Security Alert Bridge (DNA-GOV-008 ↔ DNA-GOV-005)', () => {
@@ -290,7 +298,12 @@ describe('Security Alert Bridge (DNA-GOV-008 ↔ DNA-GOV-005)', () => {
     bridgeSecurityScanToAlerts(securityResult);
 
     // Simulate other DNA systems recording alerts
-    recordAlert('blocking-conditions', 'critical', 'GitHub Actions outage', 'No runs');
+    recordAlert(
+      'blocking-conditions',
+      'critical',
+      'GitHub Actions outage',
+      'No runs'
+    );
     recordAlert('deployment', 'warning', 'Deployment issue', 'Code not live');
 
     const report = getAlertHubReport();
@@ -298,7 +311,7 @@ describe('Security Alert Bridge (DNA-GOV-008 ↔ DNA-GOV-005)', () => {
     expect(report.criticalCount).toBe(2); // security + blocking-conditions
     expect(report.warningCount).toBe(1); // deployment
 
-    const sources = report.alerts.map(a => a.source);
+    const sources = report.alerts.map((a) => a.source);
     expect(sources).toContain('security');
     expect(sources).toContain('blocking-conditions');
     expect(sources).toContain('deployment');

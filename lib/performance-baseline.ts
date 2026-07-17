@@ -11,49 +11,52 @@
  */
 
 export interface PerformanceMetric {
-  name: string
-  value: number
-  unit: 'ms' | 'bytes' | 'seconds'
-  timestamp: string
-  environment: 'production' | 'staging' | 'local'
+  name: string;
+  value: number;
+  unit: 'ms' | 'bytes' | 'seconds';
+  timestamp: string;
+  environment: 'production' | 'staging' | 'local';
 }
 
 export interface BaselineEntry {
-  timestamp: string
-  metrics: PerformanceMetric[]
-  buildId: string
-  gitCommit: string
-  buildDuration: number // milliseconds
+  timestamp: string;
+  metrics: PerformanceMetric[];
+  buildId: string;
+  gitCommit: string;
+  buildDuration: number; // milliseconds
 }
 
 export interface RegressionAlert {
-  metric: string
-  baseline: number
-  current: number
-  change: number // absolute
-  changePercent: number // %
-  threshold: number // alert if change > threshold%
-  severity: 'critical' | 'warning' | 'info'
+  metric: string;
+  baseline: number;
+  current: number;
+  change: number; // absolute
+  changePercent: number; // %
+  threshold: number; // alert if change > threshold%
+  severity: 'critical' | 'warning' | 'info';
 }
 
 export interface PerformanceReport {
-  timestamp: string
-  buildId: string
-  metricsTracked: number
-  regressionsFound: number
-  regressions: RegressionAlert[]
-  improvements: RegressionAlert[]
-  summary: string
+  timestamp: string;
+  buildId: string;
+  metricsTracked: number;
+  regressionsFound: number;
+  regressions: RegressionAlert[];
+  improvements: RegressionAlert[];
+  summary: string;
 }
 
 // Performance baselines and thresholds
-const PERFORMANCE_THRESHOLDS: Record<string, { baseline: number; threshold: number }> = {
+const PERFORMANCE_THRESHOLDS: Record<
+  string,
+  { baseline: number; threshold: number }
+> = {
   'build-time': { baseline: 60000, threshold: 20 }, // 60s baseline, alert >20% regression
   'page-load-lcp': { baseline: 2500, threshold: 15 }, // 2.5s LCP, alert >15% regression
   'api-workspace-response': { baseline: 500, threshold: 25 }, // 500ms, alert >25%
   'api-health-response': { baseline: 200, threshold: 25 }, // 200ms, alert >25%
   'bundle-total': { baseline: 500000, threshold: 10 }, // 500KB, alert >10%
-}
+};
 
 /**
  * Record a performance baseline from a build
@@ -70,7 +73,7 @@ export function recordBaseline(
     buildId,
     gitCommit,
     buildDuration,
-  }
+  };
 }
 
 /**
@@ -80,21 +83,21 @@ export function detectRegressions(
   current: PerformanceMetric[],
   baseline: PerformanceMetric[]
 ): RegressionAlert[] {
-  const regressions: RegressionAlert[] = []
+  const regressions: RegressionAlert[] = [];
 
   for (const currentMetric of current) {
-    const baselineMetric = baseline.find((m) => m.name === currentMetric.name)
+    const baselineMetric = baseline.find((m) => m.name === currentMetric.name);
 
     if (!baselineMetric) {
-      continue // New metric, no baseline to compare
+      continue; // New metric, no baseline to compare
     }
 
-    const change = currentMetric.value - baselineMetric.value
-    const changePercent = Math.round((change / baselineMetric.value) * 100)
+    const change = currentMetric.value - baselineMetric.value;
+    const changePercent = Math.round((change / baselineMetric.value) * 100);
 
-    const thresholdConfig = PERFORMANCE_THRESHOLDS[currentMetric.name]
+    const thresholdConfig = PERFORMANCE_THRESHOLDS[currentMetric.name];
     if (!thresholdConfig) {
-      continue // No threshold defined for this metric
+      continue; // No threshold defined for this metric
     }
 
     if (changePercent >= thresholdConfig.threshold) {
@@ -105,12 +108,15 @@ export function detectRegressions(
         change,
         changePercent,
         threshold: thresholdConfig.threshold,
-        severity: changePercent >= thresholdConfig.threshold * 2 ? 'critical' : 'warning',
-      })
+        severity:
+          changePercent >= thresholdConfig.threshold * 2
+            ? 'critical'
+            : 'warning',
+      });
     }
   }
 
-  return regressions
+  return regressions;
 }
 
 /**
@@ -120,17 +126,17 @@ export function detectImprovements(
   current: PerformanceMetric[],
   baseline: PerformanceMetric[]
 ): RegressionAlert[] {
-  const improvements: RegressionAlert[] = []
+  const improvements: RegressionAlert[] = [];
 
   for (const currentMetric of current) {
-    const baselineMetric = baseline.find((m) => m.name === currentMetric.name)
+    const baselineMetric = baseline.find((m) => m.name === currentMetric.name);
 
     if (!baselineMetric) {
-      continue
+      continue;
     }
 
-    const change = currentMetric.value - baselineMetric.value
-    const changePercent = Math.round((change / baselineMetric.value) * 100)
+    const change = currentMetric.value - baselineMetric.value;
+    const changePercent = Math.round((change / baselineMetric.value) * 100);
 
     // Only report improvements > 5%
     if (changePercent < -5) {
@@ -142,11 +148,11 @@ export function detectImprovements(
         changePercent: Math.abs(changePercent),
         threshold: 5,
         severity: 'info',
-      })
+      });
     }
   }
 
-  return improvements
+  return improvements;
 }
 
 /**
@@ -157,21 +163,23 @@ export function generatePerformanceReport(
   baseline: PerformanceMetric[],
   buildId: string
 ): PerformanceReport {
-  const regressions = detectRegressions(current, baseline)
-  const improvements = detectImprovements(current, baseline)
+  const regressions = detectRegressions(current, baseline);
+  const improvements = detectImprovements(current, baseline);
 
-  let summary = ''
+  let summary = '';
   if (regressions.length === 0 && improvements.length === 0) {
-    summary = '✅ All metrics stable (no significant changes)'
+    summary = '✅ All metrics stable (no significant changes)';
   } else if (regressions.length > 0) {
-    const critical = regressions.filter((r) => r.severity === 'critical').length
-    const warnings = regressions.filter((r) => r.severity === 'warning').length
-    summary = `🔴 Performance regression: ${critical} critical, ${warnings} warnings`
+    const critical = regressions.filter(
+      (r) => r.severity === 'critical'
+    ).length;
+    const warnings = regressions.filter((r) => r.severity === 'warning').length;
+    summary = `🔴 Performance regression: ${critical} critical, ${warnings} warnings`;
     if (improvements.length > 0) {
-      summary += `; but ${improvements.length} metrics improved`
+      summary += `; but ${improvements.length} metrics improved`;
     }
   } else {
-    summary = `✅ ${improvements.length} metrics improved, no regressions`
+    summary = `✅ ${improvements.length} metrics improved, no regressions`;
   }
 
   return {
@@ -182,33 +190,33 @@ export function generatePerformanceReport(
     regressions,
     improvements,
     summary,
-  }
+  };
 }
 
 /**
  * Format performance report for Founder visibility
  */
 export function formatPerformanceAlert(report: PerformanceReport): string {
-  let output = `Performance Baseline Report (Build: ${report.buildId})\n`
-  output += `${report.summary}\n\n`
+  let output = `Performance Baseline Report (Build: ${report.buildId})\n`;
+  output += `${report.summary}\n\n`;
 
   if (report.regressions.length > 0) {
-    output += `Regressions (${report.regressions.length}):\n`
+    output += `Regressions (${report.regressions.length}):\n`;
     report.regressions.forEach((r) => {
-      const icon = r.severity === 'critical' ? '🔴' : '⚠️'
-      output += `  ${icon} ${r.metric}: ${r.baseline} → ${r.current} (${r.changePercent > 0 ? '+' : ''}${r.changePercent}%)\n`
-    })
-    output += '\n'
+      const icon = r.severity === 'critical' ? '🔴' : '⚠️';
+      output += `  ${icon} ${r.metric}: ${r.baseline} → ${r.current} (${r.changePercent > 0 ? '+' : ''}${r.changePercent}%)\n`;
+    });
+    output += '\n';
   }
 
   if (report.improvements.length > 0) {
-    output += `Improvements (${report.improvements.length}):\n`
+    output += `Improvements (${report.improvements.length}):\n`;
     report.improvements.forEach((r) => {
-      output += `  ✅ ${r.metric}: ${r.baseline} → ${r.current} (-${r.changePercent}%)\n`
-    })
+      output += `  ✅ ${r.metric}: ${r.baseline} → ${r.current} (-${r.changePercent}%)\n`;
+    });
   }
 
-  return output
+  return output;
 }
 
 /**
@@ -244,5 +252,5 @@ export function estimateMetricsFromBuild(): PerformanceMetric[] {
       timestamp: new Date().toISOString(),
       environment: 'production',
     },
-  ]
+  ];
 }

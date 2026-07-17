@@ -7,6 +7,7 @@
 ## What This Was
 
 Placeholder error metrics endpoint:
+
 - `GET /api/errors?last_hours=<n>` — Fetch error metrics for time window
 - Returned hardcoded example response structure with no actual data
 - Contained status classification logic (critical/warning/healthy)
@@ -14,6 +15,7 @@ Placeholder error metrics endpoint:
 ## Why It Was Archived
 
 This was a skeleton/placeholder implementation that was never completed:
+
 - No actual error data collection (returned empty metrics with hardcoded examples)
 - No database or tracking backend integration
 - Functionality is properly provided by two complete, active endpoints:
@@ -33,6 +35,7 @@ This was a skeleton/placeholder implementation that was never completed:
 ## Migration Path
 
 If you find references to `/api/errors/`:
+
 - For capturing errors: Use `/api/error-tracking/` with POST endpoint
 - For monitoring error rate: Use `/api/error-rate/` GET endpoint
 - Both endpoints provide comprehensive error handling that this skeleton did not

@@ -22,9 +22,12 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
       if (report.decision === 'ROLLBACK' || report.decision === 'ESCALATE') {
         // Step 2: Detect incidents from verification report
         const detector = new IncidentDetector();
-        const incidents = await detector.detectIncidents('deploy-e2e-critical', {
-          verificationReport: report,
-        });
+        const incidents = await detector.detectIncidents(
+          'deploy-e2e-critical',
+          {
+            verificationReport: report,
+          }
+        );
 
         expect(incidents.length).toBeGreaterThan(0);
         const primaryIncident = incidents[0];
@@ -41,11 +44,14 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
         expect(decision.recommendedAction).toBeDefined();
 
         // Step 4: Execute decision
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident: primaryIncident,
-          verificationReport: report,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident: primaryIncident,
+            verificationReport: report,
+            previousAttempts: [],
+          }
+        );
 
         expect(result.finalState).toBeDefined();
         expect(result.success).toBeDefined();
@@ -75,15 +81,20 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
           previousAttempts: [],
         });
 
-        expect(['throttle-traffic', 'scale-infrastructure', 'verify-remediation']).toContain(
-          decision.recommendedAction
-        );
+        expect([
+          'throttle-traffic',
+          'scale-infrastructure',
+          'verify-remediation',
+        ]).toContain(decision.recommendedAction);
 
         // Execute mitigation
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident: perfIncident,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident: perfIncident,
+            previousAttempts: [],
+          }
+        );
 
         expect(result.success).toBe(true);
       }
@@ -100,7 +111,9 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
         ],
       });
 
-      const cascade = incidents.find((inc) => inc.category === 'cascading-failure');
+      const cascade = incidents.find(
+        (inc) => inc.category === 'cascading-failure'
+      );
       if (cascade) {
         const orchestrator = new IncidentOrchestrator();
         const decision = await orchestrator.orchestrateIncident({
@@ -112,10 +125,13 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
         expect(decision.severity).toBe('critical');
 
         // Execute escalation
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident: cascade,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident: cascade,
+            previousAttempts: [],
+          }
+        );
 
         expect(result.finalState).toBe('escalated-to-founder');
       }
@@ -127,11 +143,18 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
       const detector = new IncidentDetector();
 
       // Detect multiple incidents with different severities
-      const criticalIncidents = await detector.detectIncidents('deploy-multi-1', {
-        recentErrors: [
-          { message: 'Database connection timeout', category: 'database', count: 200 },
-        ],
-      });
+      const criticalIncidents = await detector.detectIncidents(
+        'deploy-multi-1',
+        {
+          recentErrors: [
+            {
+              message: 'Database connection timeout',
+              category: 'database',
+              count: 200,
+            },
+          ],
+        }
+      );
 
       const lowIncidents = await detector.detectIncidents('deploy-multi-2', {
         errorRate: 0.02,
@@ -195,10 +218,13 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
         expect(state).toBeDefined();
 
         // Step 5: Execute and verify final state
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident,
+            previousAttempts: [],
+          }
+        );
 
         expect(result.finalState).toBeDefined();
       }
@@ -234,7 +260,10 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
 
         // Check if incidents are correlated
         const lastIncident = history[history.length - 1];
-        if (lastIncident.previousIncidents && lastIncident.previousIncidents.length > 0) {
+        if (
+          lastIncident.previousIncidents &&
+          lastIncident.previousIncidents.length > 0
+        ) {
           expect(lastIncident.previousIncidents.length).toBeGreaterThan(0);
         }
       }
@@ -295,7 +324,10 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
         previousAttempts: [failedAttempt, failedAttempt, failedAttempt],
       });
 
-      if (decision4.previousAttempts && decision4.previousAttempts.length >= 3) {
+      if (
+        decision4.previousAttempts &&
+        decision4.previousAttempts.length >= 3
+      ) {
         expect(decision4.shouldEscalateToFounder).toBe(true);
       }
     });
@@ -344,9 +376,12 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
   describe('Incident resolution verification', () => {
     it('should verify incident is resolved after remediation', async () => {
       const detector = new IncidentDetector();
-      const incidents = await detector.detectIncidents('deploy-verify-resolved', {
-        errorRate: 0.15,
-      });
+      const incidents = await detector.detectIncidents(
+        'deploy-verify-resolved',
+        {
+          errorRate: 0.15,
+        }
+      );
 
       if (incidents.length > 0) {
         const incident = incidents[0];
@@ -359,10 +394,13 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
         });
 
         // Execute decision
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident,
+            previousAttempts: [],
+          }
+        );
 
         // Verify final state indicates some form of resolution
         const validFinalStates = [
@@ -381,9 +419,12 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
   describe('Audit compliance', () => {
     it('should maintain complete audit trail for incident response', async () => {
       const detector = new IncidentDetector();
-      const incidents = await detector.detectIncidents('deploy-audit-compliance', {
-        errorRate: 0.15,
-      });
+      const incidents = await detector.detectIncidents(
+        'deploy-audit-compliance',
+        {
+          errorRate: 0.15,
+        }
+      );
 
       if (incidents.length > 0) {
         const incident = incidents[0];
@@ -417,16 +458,30 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
           expect(date.getTime()).toBeGreaterThan(0);
 
           // Verify state transitions are valid
-          expect(['detected', 'analyzing', 'escalated-to-founder', 'auto-remediation-initiated',
-            'remediation-in-progress', 'remediation-complete', 'remediation-failed',
-            'verification-in-progress', 'incident-resolved', 'incident-unresolved']).toContain(
-            entry.previousState
-          );
-          expect(['detected', 'analyzing', 'escalated-to-founder', 'auto-remediation-initiated',
-            'remediation-in-progress', 'remediation-complete', 'remediation-failed',
-            'verification-in-progress', 'incident-resolved', 'incident-unresolved']).toContain(
-            entry.newState
-          );
+          expect([
+            'detected',
+            'analyzing',
+            'escalated-to-founder',
+            'auto-remediation-initiated',
+            'remediation-in-progress',
+            'remediation-complete',
+            'remediation-failed',
+            'verification-in-progress',
+            'incident-resolved',
+            'incident-unresolved',
+          ]).toContain(entry.previousState);
+          expect([
+            'detected',
+            'analyzing',
+            'escalated-to-founder',
+            'auto-remediation-initiated',
+            'remediation-in-progress',
+            'remediation-complete',
+            'remediation-failed',
+            'verification-in-progress',
+            'incident-resolved',
+            'incident-unresolved',
+          ]).toContain(entry.newState);
         });
       }
     });
@@ -438,9 +493,12 @@ describe('Incident Response Integration (DNA-GOV-013)', () => {
 
       // Get incident status
       const detector = new IncidentDetector();
-      const incidents = await detector.detectIncidents('deploy-recovery-check', {
-        verificationReport: report,
-      });
+      const incidents = await detector.detectIncidents(
+        'deploy-recovery-check',
+        {
+          verificationReport: report,
+        }
+      );
 
       // Verify current deployment status
       if (report.passedChecks >= 8) {

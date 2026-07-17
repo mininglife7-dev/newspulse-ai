@@ -1,4 +1,5 @@
 # Cathedral — Customer Pilot Briefing
+
 ## 2026-09-01 Launch Ready
 
 **Platform:** Cathedral (EURO AI Living Enterprise Operating System)  
@@ -27,6 +28,7 @@ Cathedral is an autonomous governance platform for enterprises. It enables:
 ### What You'll Access
 
 **Week 1: Onboarding**
+
 - [ ] Create account via email signup
 - [ ] Confirm email address
 - [ ] Set up your workspace
@@ -34,6 +36,7 @@ Cathedral is an autonomous governance platform for enterprises. It enables:
 - [ ] Review initial dashboard
 
 **Week 2-4: Core Features**
+
 - [ ] View decision registry (all decisions logged)
 - [ ] Track governance priorities
 - [ ] Enable feature flags for your team
@@ -41,6 +44,7 @@ Cathedral is an autonomous governance platform for enterprises. It enables:
 - [ ] Monitor system health via dashboards
 
 **Week 4-8: Production Readiness**
+
 - [ ] Pilot autonomous deployment (safe canary strategy)
 - [ ] Test schema migrations (zero-downtime DB changes)
 - [ ] Evaluate governance automation
@@ -51,14 +55,14 @@ Cathedral is an autonomous governance platform for enterprises. It enables:
 
 During the pilot, we monitor:
 
-| Metric | Target | Action if Below |
-|--------|--------|-----------------|
-| **Availability** | 99.5% uptime | Escalate to engineering |
-| **Signup time** | <2 minutes | Investigate UX blockers |
-| **API response** | <200ms p95 | Optimize database |
-| **Email delivery** | 99%+ received | Check spam folder / retry |
-| **Error rate** | <0.1% | Debug and fix |
-| **Feature flag accuracy** | 100% | Verify rollout logic |
+| Metric                    | Target        | Action if Below           |
+| ------------------------- | ------------- | ------------------------- |
+| **Availability**          | 99.5% uptime  | Escalate to engineering   |
+| **Signup time**           | <2 minutes    | Investigate UX blockers   |
+| **API response**          | <200ms p95    | Optimize database         |
+| **Email delivery**        | 99%+ received | Check spam folder / retry |
+| **Error rate**            | <0.1%         | Debug and fix             |
+| **Feature flag accuracy** | 100%          | Verify rollout logic      |
 
 **SLA:** If any metric misses target, we fix it within 4 business hours.
 
@@ -67,6 +71,7 @@ During the pilot, we monitor:
 ## Getting Started (Day 1)
 
 ### Step 1: Create Your Account (5 min)
+
 1. Go to https://newspulse-ai.vercel.app
 2. Click "Sign Up"
 3. Enter your email
@@ -76,6 +81,7 @@ During the pilot, we monitor:
 7. ✅ Welcome to Cathedral!
 
 ### Step 2: Set Up Your Workspace (10 min)
+
 1. On dashboard, click "Create Workspace"
 2. Enter organization name (e.g., "ACME Corp")
 3. Select employee count range
@@ -83,6 +89,7 @@ During the pilot, we monitor:
 5. ✅ Workspace created
 
 ### Step 3: Invite Team Members (5 min)
+
 1. In workspace, click "Settings" → "Team"
 2. Click "Invite User"
 3. Enter team member email
@@ -150,11 +157,12 @@ During the pilot, we monitor:
 ✅ Decision registry  
 ✅ Audit logging  
 ✅ Email authentication  
-✅ Email support (24-hour response)  
+✅ Email support (24-hour response)
 
 ### After Pilot (Production Pricing - TBD)
 
 Once pilot ends, pricing TBD based on:
+
 - Number of team members
 - Usage volume
 - Feature tier (Core vs Premium)
@@ -169,17 +177,17 @@ Once pilot ends, pricing TBD based on:
 
 **Documentation:** https://github.com/mininglife7-dev/newspulse-ai/docs/  
 **Email Support:** [TBD by Founder] (24-hour response)  
-**Direct Escalation:** Report critical issues and we'll fix within 4 hours  
+**Direct Escalation:** Report critical issues and we'll fix within 4 hours
 
 ### Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| Can't sign up | Check spam folder for confirmation email |
-| Password reset not working | Try signing up as new user, we'll merge accounts |
-| Team member can't access workspace | Verify their email / re-send invitation |
-| Feature flag not working | Clear browser cache and refresh |
-| Seeing old data after update | Check database read replicas (may lag 30s) |
+| Issue                              | Solution                                         |
+| ---------------------------------- | ------------------------------------------------ |
+| Can't sign up                      | Check spam folder for confirmation email         |
+| Password reset not working         | Try signing up as new user, we'll merge accounts |
+| Team member can't access workspace | Verify their email / re-send invitation          |
+| Feature flag not working           | Clear browser cache and refresh                  |
+| Seeing old data after update       | Check database read replicas (may lag 30s)       |
 
 ### How to Report Issues
 
@@ -207,12 +215,14 @@ After 8 weeks of piloting, we measure:
 ## Timeline & Expectations
 
 ### Week 1-2: Onboarding Phase
+
 - Get familiar with platform
 - Set up team and workspace
 - Ask questions, give feedback
 - **Not expected to use in production yet**
 
 ### Week 3-4: Feature Exploration
+
 - Test feature flags
 - Test decision tracking
 - Get feedback from team
@@ -220,6 +230,7 @@ After 8 weeks of piloting, we measure:
 - **Light production use OK**
 
 ### Week 5-8: Production Pilot
+
 - Deploy features using feature flags
 - Use schema migrations in non-critical tables
 - Participate in canary deployments
@@ -227,6 +238,7 @@ After 8 weeks of piloting, we measure:
 - **Real production usage**
 
 ### Week 9: Graduation Decision
+
 - Review pilot results
 - Provide feedback (what worked, what didn't)
 - Decide: Continue (paying) or conclude pilot
@@ -237,24 +249,31 @@ After 8 weeks of piloting, we measure:
 ## FAQ
 
 ### Q: Will Cathedral slow down my deployments?
+
 **A:** No, the opposite. Feature flags enable instant rollouts (no build time). Schema migrations are zero-downtime (no maintenance windows). Overall deployment time should ↓ by 50%+.
 
 ### Q: What if something breaks in production?
+
 **A:** Canary deployment strategy catches issues before reaching all users. If you need to rollback, it's one click and instant (no waiting for new build).
 
 ### Q: Is my data safe?
+
 **A:** Yes. Each workspace is isolated with row-level security. Your team can only see your data. Backups are automatic. Encryption is end-to-end.
 
 ### Q: Can I export my data if I leave?
+
 **A:** Yes. At any time, you can export your workspace data in standard formats (CSV, JSON, SQL dump).
 
 ### Q: Will Cathedral integrate with my tools?
+
 **A:** Currently, Cathedral is standalone. Integrations (Slack, GitHub, Jira, etc.) are on the roadmap for post-pilot.
 
 ### Q: What happens if you (Cathedral team) go out of business?
+
 **A:** Your data remains yours. We provide export capability. We've designed Cathedral so it can run self-hosted if needed (contact support for licensing).
 
 ### Q: Can I suggest features?
+
 **A:** Absolutely. Use Dashboard → "Feedback" or email support with feature requests. We prioritize based on pilot feedback.
 
 ---
@@ -286,33 +305,38 @@ If you have questions before the 2026-09-01 pilot launch:
 
 **Founder:** [Contact info TBD]  
 **Engineering:** [Contact info TBD]  
-**Support:** [Contact info TBD]  
+**Support:** [Contact info TBD]
 
 ---
 
 ## What to Expect After You Sign Up
 
 **Day 1:**
+
 - Welcome email with quick-start guide
 - Invitations for team members to join
 - Initial dashboard walkthrough
 
 **Day 7:**
+
 - Check-in from support: "How's it going?"
 - Feedback form: Tell us what's working/not working
 - Office hours: Live Q&A session (optional)
 
 **Day 30:**
+
 - Pilot progress review
 - Performance metrics dashboard
 - Feature request prioritization session
 
 **Day 60:**
+
 - Mid-pilot assessment
 - Feature flag performance analysis
 - Production readiness check
 
 **Day 90:**
+
 - Graduation decision: Continue or conclude?
 - Pricing discussion (if converting to paid)
 - Feedback synthesis for next cohort
@@ -335,4 +359,3 @@ Cathedral is production-ready. All 476 tests passing. All systems verified.
 **Last Updated:** 2026-07-12
 
 Welcome to Cathedral. Let's make governance a competitive advantage. 🏛️
-

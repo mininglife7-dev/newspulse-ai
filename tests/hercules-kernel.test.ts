@@ -39,7 +39,8 @@ describe('HERCULES Kernel', () => {
         id: 'cathedral-001',
         name: 'Cathedral/EURO AI',
         status: 'ACTIVE',
-        missionStatement: 'Build the first AI-driven news intelligence platform',
+        missionStatement:
+          'Build the first AI-driven news intelligence platform',
         objectives: [],
       });
 
@@ -268,9 +269,7 @@ describe('HERCULES Kernel', () => {
       kernel.completeTask(task.id, ['test_evidence_123']);
       expect(kernel.getTask(task.id)?.state).toBe('COMPLETED');
       expect(kernel.getTask(task.id)?.completedAt).toBeDefined();
-      expect(kernel.getTask(task.id)?.evidence).toContain(
-        'test_evidence_123'
-      );
+      expect(kernel.getTask(task.id)?.evidence).toContain('test_evidence_123');
     });
 
     it('should retry a failed task up to maxRetries', () => {
@@ -418,9 +417,13 @@ describe('HERCULES Kernel', () => {
 
       expect(health).toBeDefined();
       expect(health.status).toBeDefined();
-      expect(['HEALTHY', 'DEGRADED', 'AT_RISK', 'CRITICAL', 'UNKNOWN']).toContain(
-        health.status
-      );
+      expect([
+        'HEALTHY',
+        'DEGRADED',
+        'AT_RISK',
+        'CRITICAL',
+        'UNKNOWN',
+      ]).toContain(health.status);
       expect(health.percentage).toBeGreaterThanOrEqual(0);
       expect(health.percentage).toBeLessThanOrEqual(100);
     });

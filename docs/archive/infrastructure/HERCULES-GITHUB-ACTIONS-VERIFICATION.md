@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-12  
 **Status:** ✅ VERIFIED — CI/CD Pipeline Ready  
-**Verification Level:** PRODUCTION GO  
+**Verification Level:** PRODUCTION GO
 
 ---
 
@@ -11,6 +11,7 @@
 GitHub Actions CI/CD pipeline has been verified for HERCULES v1.0 deployment readiness. All critical checks (lint, type-check, build, test) pass reproducibly. The pipeline is configured to run on all commits to main and feature branches.
 
 **CI/CD Status:**
+
 - ✅ CI pipeline exists (`.github/workflows/ci.yml`)
 - ✅ All checks pass (lint, TypeScript, build, tests)
 - ✅ Pipeline runs on all commits
@@ -26,6 +27,7 @@ GitHub Actions CI/CD pipeline has been verified for HERCULES v1.0 deployment rea
 **Trigger:** Runs on all commits to any branch and all PRs
 
 **Stages:**
+
 1. **Lint Check** — ESLint validation
 2. **Type Check** — TypeScript strict mode compilation
 3. **Build** — Next.js production build
@@ -65,17 +67,20 @@ Shows current month's CI minute consumption.
 ### Check 2: Identify Spending Limit Failure
 
 **Symptom:** CI workflow stops abruptly without test output
+
 - Message: "Workflow cancelled due to minutes limit"
 - All previous stages passed successfully
 - No error in the logs
 
 **If Spending Limit Hit:**
+
 1. Upgrade to GitHub Pro ($4/month) for 3,000 minutes
 2. Or defer non-critical workflows until next billing cycle
 
 ### Check 3: Distinguish from Real CI Failures
 
 **Real CI Failure Symptoms:**
+
 - Lint errors in output: `ESLint error: ...`
 - TypeScript errors: `TS2304: Cannot find name ...`
 - Build error: `Failed to compile: ...`
@@ -145,6 +150,7 @@ npm run build
 **Repository Settings → Branch Protection Rules**
 
 For main branch:
+
 - ✅ Require status checks to pass before merging
 - ✅ Require branches to be up to date before merging
 - ✅ Require code reviews before merging (1 approval)
@@ -154,6 +160,7 @@ For main branch:
 ### Gates for HERCULES Deployment
 
 **To Deploy HERCULES:**
+
 1. All CI checks must pass (lint, type-check, build, test)
 2. At least 1 code review approval required
 3. Branch must be up to date with main
@@ -161,6 +168,7 @@ For main branch:
 
 **Manual Override (Founder Only):**
 If urgent deployment needed (e.g., security patch):
+
 1. Go to Settings → Branch Protection Rules
 2. Remove the branch temporarily
 3. Deploy
@@ -197,10 +205,12 @@ If urgent deployment needed (e.g., security patch):
 ### If CI is Failing
 
 **Step 1: Check the error in GitHub Actions**
+
 - Go to: **Actions → Latest run → Failed job**
 - Read the error message carefully
 
 **Step 2: Reproduce locally**
+
 ```bash
 # Run the equivalent stage locally
 npm run lint      # if lint failed
@@ -210,12 +220,14 @@ npm test          # if tests failed
 ```
 
 **Step 3: Fix the issue**
+
 - For lint errors: usually fixable with `eslint --fix`
 - For TypeScript: fix type annotations
 - For build: check for missing imports or syntax
 - For test: fix the failing test or code
 
 **Step 4: Commit and push**
+
 ```bash
 git add .
 git commit -m "fix: Resolve CI failure"
@@ -223,27 +235,32 @@ git push
 ```
 
 **Step 5: Monitor the new run**
+
 - Go to: **Actions → Latest run**
 - Watch for completion (usually 3-4 minutes)
 
 ### If Spending Limit is Hit
 
 **Step 1: Check GitHub Actions billing**
+
 - Go to: **Settings → Billing and plans**
 - Look for "Actions usage" section
 
 **Step 2: Check if spending limit enabled**
+
 - Go to: **Settings → Billing and plans → Actions**
 - Look for "Spending limit" toggle
 
 **Step 3: Upgrade or pause workflows**
 
 Option A: Upgrade to GitHub Pro ($4/month)
+
 - Go to: **Settings → Billing and plans**
 - Click "Upgrade to GitHub Pro"
 - Confirm billing
 
 Option B: Pause non-critical workflows temporarily
+
 - Go to: `.github/workflows/`
 - Rename non-critical workflows to `.yml.disabled`
 - Push the change
@@ -256,6 +273,7 @@ Option B: Pause non-critical workflows temporarily
 ### Dashboard: GitHub Actions Status
 
 **Quick Links:**
+
 - Actions tab: https://github.com/mininglife7-dev/newspulse-ai/actions
 - Main branch status: Filter by branch="main"
 - Recent runs: Shows last 30 workflow runs
@@ -288,7 +306,7 @@ PASSED=$(echo "$RECENT_RUNS" | grep "success" | awk '{print $1}' || echo "0")
 if [ "$TOTAL" -gt 0 ]; then
   SUCCESS_RATE=$((PASSED * 100 / TOTAL))
   echo "Success rate: $SUCCESS_RATE% ($PASSED/$TOTAL)"
-  
+
   if [ "$SUCCESS_RATE" -lt 90 ]; then
     echo "⚠️  Warning: Success rate below 90%"
   else
@@ -311,6 +329,7 @@ fi
 ### Manual Checks
 
 Before hitting merge:
+
 - [ ] All CI checks passed (green checkmarks on PR)
 - [ ] At least 1 code review approval received
 - [ ] Branch is up to date with main
@@ -368,6 +387,7 @@ jobs:
 ## Success Criteria
 
 ✅ **Phase 7b (GitHub Actions) COMPLETE when:**
+
 - [x] CI pipeline runs on all commits
 - [x] All checks pass (lint, type-check, build, test)
 - [x] Success rate >95% on main branch

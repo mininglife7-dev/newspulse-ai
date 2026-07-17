@@ -10,6 +10,7 @@
 ## STAGE 2 Mission
 
 Consolidate the EURO AI repository from a fragmented, redundant state into a clean, organized structure with:
+
 - Single source of truth for each document type
 - Canonical API endpoints (no duplicate implementations)
 - Clear governance authority
@@ -78,11 +79,11 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
   - `/api/assessment/` (v1) → Archived
     - Superseded by `/api/assessments/` (v2) with risk classification + obligation auto-generation
     - Archive: `docs/archive/api-routes/assessment-v1-deprecated/`
-  
+
   - `/api/verify-deployment/` → Archived
     - Simple CI/CD check superseded by comprehensive endpoints
     - Archive: `docs/archive/api-routes/verify-deployment-deprecated/`
-  
+
   - `/api/errors/` → Archived
     - Incomplete skeleton with hardcoded data
     - Archive: `docs/archive/api-routes/errors-skeleton/`
@@ -117,13 +118,13 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 - [x] No active code references to archived routes
   - Grep verified: assessment/, verify-deployment/, errors/ not imported
   - Only documentation reference was genome.ts (updated)
-  
+
 - [x] No TypeScript errors introduced
   - `npm run type-check` passes (pre-existing baseUrl deprecation warning unrelated)
-  
+
 - [x] No ESLint violations
   - `npm run lint` clean
-  
+
 - [x] Build structure verified
   - All 3 routes successfully moved to archive
   - Subdirectory structure preserved
@@ -141,6 +142,7 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 ## Overall STAGE 2 Impact
 
 ### Repository State Before
+
 - ~200 scattered documentation files
 - Multiple duplicate API route implementations
 - Unclear authority hierarchy
@@ -148,6 +150,7 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 - Fragmented governance structure
 
 ### Repository State After
+
 - ~50 canonical files + 111 organized archive
 - 42 API routes → 3 redundant routes archived
 - Clear governance authority (Governor Ω)
@@ -155,6 +158,7 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 - Consolidated governance structure
 
 ### Metrics
+
 - **Documentation**: 200 → 161 files (80.5% reduction in chaos)
   - 50 canonical files (25% of original)
   - 111 archived files (organized by purpose)
@@ -167,22 +171,25 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 ## Completion Evidence
 
 ### Commit History
+
 1. **47d4eb3** — STAGE 2 Phase 1: Documentation Consolidation Complete
    - 118 files changed
    - docs/archive/ structure created
    - Broken links fixed
-   
+
 2. **3b50abc** — STAGE 2 Phase 2: API Route Consolidation
    - 11 files changed, 413 insertions
    - 3 routes archived
    - Documentation updated
 
 ### Deployment Status
+
 - PR #165 successfully deployed to Vercel
 - All builds green (no TypeScript errors, no lint violations)
 - Preview environment available: `newspulse-ai-git-claude-alpha-c-1777d4...vercel.app`
 
 ### Documentation Created
+
 - `docs/governor/STAGE_2_API_CONSOLIDATION_PLAN.md` — 150 lines, complete analysis
 - `docs/archive/api-routes/README.md` — 60 lines, consolidation summary
 - 3x `ARCHIVE_NOTICE.md` files — per-route documentation
@@ -192,15 +199,18 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 ## STAGE 2 → STAGE 3 Transition
 
 ### Current State (Post-STAGE 2)
+
 ✅ Governance kernel operational (STAGE 1)  
 ✅ Repository organized (STAGE 2)  
-✅ All critical risks mitigated  
+✅ All critical risks mitigated
 
 ### Next Stage: STAGE 3 (Engineering Standards)
+
 **Mission**: Establish engineering procedures and standards enforcement  
 **Dependencies**: Completed ✅  
 **Estimated Duration**: 2-3 sessions  
 **Key Deliverables**:
+
 - `docs/governance/ENGINEERING_STANDARDS.md` — Code/test/doc standards with examples
 - `docs/governance/INTEGRATION_TEST_STANDARD.md` — Test execution and coverage standards
 - `.husky/pre-push` — Enforce standards before push
@@ -208,6 +218,7 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 - Documentation review process
 
 **Risks to Address**:
+
 - RISK-004: Customer journey E2E verification gaps
 - RISK-005: Observability dashboard incomplete
 
@@ -236,21 +247,24 @@ Consolidate the EURO AI repository from a fragmented, redundant state into a cle
 ## Appendix: Detailed Route Analysis
 
 ### Assessment Routes
-| Route | Version | Status | Reason |
-|-------|---------|--------|--------|
-| `/api/assessment/` | v1 | Archived | Superseded by v2 |
-| `/api/assessments/` | v2 | Canonical | Complete, with risk classification + obligation auto-gen |
+
+| Route               | Version | Status    | Reason                                                   |
+| ------------------- | ------- | --------- | -------------------------------------------------------- |
+| `/api/assessment/`  | v1      | Archived  | Superseded by v2                                         |
+| `/api/assessments/` | v2      | Canonical | Complete, with risk classification + obligation auto-gen |
 
 ### Deployment Verification Routes
-| Route | Feature | Status | Reason |
-|-------|---------|--------|--------|
-| `/api/deployment-verification/` | Health checks + rollback | Canonical | Comprehensive |
-| `/api/deployment-canary/` | Gradual rollout | Canonical | Specialized feature |
-| `/api/verify-deployment/` | Simple status check | Archived | Superseded; unused in code |
+
+| Route                           | Feature                  | Status    | Reason                     |
+| ------------------------------- | ------------------------ | --------- | -------------------------- |
+| `/api/deployment-verification/` | Health checks + rollback | Canonical | Comprehensive              |
+| `/api/deployment-canary/`       | Gradual rollout          | Canonical | Specialized feature        |
+| `/api/verify-deployment/`       | Simple status check      | Archived  | Superseded; unused in code |
 
 ### Error Tracking Routes
-| Route | Feature | Status | Reason |
-|-------|---------|--------|--------|
+
+| Route                  | Feature                   | Status    | Reason                            |
+| ---------------------- | ------------------------- | --------- | --------------------------------- |
 | `/api/error-tracking/` | Error capture + aggregate | Canonical | Active, used by production-wiring |
-| `/api/error-rate/` | Error rate monitoring | Canonical | Active, DNA-GOV-004 endpoint |
-| `/api/errors/` | Skeleton implementation | Archived | Incomplete; hardcoded data |
+| `/api/error-rate/`     | Error rate monitoring     | Canonical | Active, DNA-GOV-004 endpoint      |
+| `/api/errors/`         | Skeleton implementation   | Archived  | Incomplete; hardcoded data        |

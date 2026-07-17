@@ -21,13 +21,13 @@ Expected output: All return `"ok": true` or `"status": "ready"`
 
 ## Dashboard URLs (Bookmark These)
 
-| Dashboard | URL | Check For |
-|---|---|---|
-| **Vercel Deployment** | https://vercel.com/lalit-kumar-d-s-projects/newspulse-ai | Status: "Ready" |
-| **Vercel Analytics** | https://vercel.com/dashboard/analytics | Uptime >99%, errors <1% |
-| **Supabase Health** | https://app.supabase.com → [Project] → Status | All green |
-| **GitHub Actions** | https://github.com/mininglife7-dev/newspulse-ai/actions | Latest workflow: ✅ or ⚠️ |
-| **Alerts Hub** | https://newspulse-ai.vercel.app/api/alerts | No critical alerts |
+| Dashboard             | URL                                                      | Check For                 |
+| --------------------- | -------------------------------------------------------- | ------------------------- |
+| **Vercel Deployment** | https://vercel.com/lalit-kumar-d-s-projects/newspulse-ai | Status: "Ready"           |
+| **Vercel Analytics**  | https://vercel.com/dashboard/analytics                   | Uptime >99%, errors <1%   |
+| **Supabase Health**   | https://app.supabase.com → [Project] → Status            | All green                 |
+| **GitHub Actions**    | https://github.com/mininglife7-dev/newspulse-ai/actions  | Latest workflow: ✅ or ⚠️ |
+| **Alerts Hub**        | https://newspulse-ai.vercel.app/api/alerts               | No critical alerts        |
 
 ---
 
@@ -46,21 +46,22 @@ If **any red flag**, open INCIDENT_RESPONSE.md (below).
 
 ## Weekly Deep Dive (Friday, 15 min)
 
-| Check | Where | Action |
-|---|---|---|
-| Uptime | Vercel Analytics | Target: >99.9% |
-| Error rate | /api/error-rate | Target: <1% |
-| Performance | /api/performance-baseline | Watch for >1.5x baseline latency |
-| Security | /api/security-scan | Update npm if critical vulnerabilities |
-| Costs | Vercel + Supabase dashboards | Alert if >$50/month total |
-| Customer usage | /api/customer-retention | Are customers active and engaged? |
-| Knowledge log | /api/knowledge | Any patterns or risks recorded? |
+| Check          | Where                        | Action                                 |
+| -------------- | ---------------------------- | -------------------------------------- |
+| Uptime         | Vercel Analytics             | Target: >99.9%                         |
+| Error rate     | /api/error-rate              | Target: <1%                            |
+| Performance    | /api/performance-baseline    | Watch for >1.5x baseline latency       |
+| Security       | /api/security-scan           | Update npm if critical vulnerabilities |
+| Costs          | Vercel + Supabase dashboards | Alert if >$50/month total              |
+| Customer usage | /api/customer-retention      | Are customers active and engaged?      |
+| Knowledge log  | /api/knowledge               | Any patterns or risks recorded?        |
 
 ---
 
 ## Key Metrics at a Glance
 
 **System Health:**
+
 ```
 ✅ Vercel uptime:    99.95%
 ✅ Supabase uptime:  99.99%
@@ -69,6 +70,7 @@ If **any red flag**, open INCIDENT_RESPONSE.md (below).
 ```
 
 **Customer Metrics:**
+
 ```
 📊 Active workspaces:  [NUMBER]
 📊 Avg daily users:    [NUMBER]
@@ -77,6 +79,7 @@ If **any red flag**, open INCIDENT_RESPONSE.md (below).
 ```
 
 **Operational:**
+
 ```
 💾 Database size:     [SIZE] GB
 💾 Backup status:     ✅ Daily
@@ -118,14 +121,14 @@ If **any red flag**, open INCIDENT_RESPONSE.md (below).
 
 ## Quick Incident Response (See full playbook in OPERATIONAL_READINESS.md)
 
-| Symptom | Likely Cause | Action |
-|---|---|---|
-| Signup failing, 403 error | Supabase schema not deployed | Deploy schema (SUPABASE-PRODUCTION-SETUP.md) |
-| All APIs returning 500 | Database connection failed | Check Supabase health + restart connection pool |
-| Page loads slow (>5s) | Heavy load or query inefficiency | Check Vercel analytics, may need to scale |
-| Email not sending | Supabase email config | Check Email auth enabled in Supabase settings |
-| Monitoring alerts not working | GitHub Actions spending limit | Increase spending limit (Priority 2 action) |
-| Customer reports data missing | Database issue | Check Supabase backups, restore if needed |
+| Symptom                       | Likely Cause                     | Action                                          |
+| ----------------------------- | -------------------------------- | ----------------------------------------------- |
+| Signup failing, 403 error     | Supabase schema not deployed     | Deploy schema (SUPABASE-PRODUCTION-SETUP.md)    |
+| All APIs returning 500        | Database connection failed       | Check Supabase health + restart connection pool |
+| Page loads slow (>5s)         | Heavy load or query inefficiency | Check Vercel analytics, may need to scale       |
+| Email not sending             | Supabase email config            | Check Email auth enabled in Supabase settings   |
+| Monitoring alerts not working | GitHub Actions spending limit    | Increase spending limit (Priority 2 action)     |
+| Customer reports data missing | Database issue                   | Check Supabase backups, restore if needed       |
 
 ---
 
@@ -174,18 +177,18 @@ You're doing great if:
 ✅ API response time <500ms  
 ✅ Uptime >99.9%  
 ✅ Customer support response time <2 hours  
-✅ Zero customer data loss incidents  
+✅ Zero customer data loss incidents
 
 ---
 
 ## Emergency Contacts
 
-| Service | Status Page | Support |
-|---|---|---|
-| Vercel | status.vercel.com | Support dashboard |
-| Supabase | status.supabase.com | In-app support chat |
-| GitHub | status.github.com | Issue tracker |
-| CloudFlare (CDN) | status.cloudflare.com | Dashboard |
+| Service          | Status Page           | Support             |
+| ---------------- | --------------------- | ------------------- |
+| Vercel           | status.vercel.com     | Support dashboard   |
+| Supabase         | status.supabase.com   | In-app support chat |
+| GitHub           | status.github.com     | Issue tracker       |
+| CloudFlare (CDN) | status.cloudflare.com | Dashboard           |
 
 ---
 

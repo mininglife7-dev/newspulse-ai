@@ -1,4 +1,5 @@
 # Operation Single Throne: Consolidation Inventory
+
 **Status:** PHASE 1 FREEZE IN EFFECT  
 **Date:** 2026-07-16  
 **Authority:** Founder Directive — Operation Single Throne
@@ -8,8 +9,9 @@
 ## PHASE 1: IMMEDIATE FREEZE (IN EFFECT)
 
 All sessions and branches **except Governor Ω consolidation** are **FROZEN**:
+
 - ❌ No new work
-- ❌ No merges  
+- ❌ No merges
 - ❌ No deployments
 - ❌ No new branches
 - ❌ No independent Founder requests
@@ -23,107 +25,117 @@ All sessions and branches **except Governor Ω consolidation** are **FROZEN**:
 ### Remote Branches by Category (46 total)
 
 #### GOVERNOR VARIANTS (14 branches)
+
 Primary executive governors and evolutionary phases.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `claude/governor-omega-v2-w29yi4` | #148 | 1 | DRAFT | MERGE INTO Ω |
-| `claude/governor-omega-autonomy-h0amg5` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-v3-eos-1kl8vx` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-v3-eos-s3vkss` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-bootstrap-protocol-h56kwb` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-evolution-charter-xac47i` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-decision-constitution-3zoi9n` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-prime-directive-mg6p2d` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-founder-freedom-mfeog4` | — | TBD | UNKNOWN | ASSESS |
-| `claude/governor-iphone-pwa-i4jm4t` | — | TBD | UNKNOWN | ASSESS |
-| `claude/autonomous-process-governor-szwxi7` | — | TBD | UNKNOWN | ASSESS |
-| `claude/executive-governor-directive-rbmmlb` | — | TBD | UNKNOWN | ASSESS |
-| `claude/dashboard-integrity-governor-aa6upb` | — | TBD | UNKNOWN | ASSESS |
-| `claude/founder-advisor-constitution-670h62` | — | TBD | UNKNOWN | ASSESS |
+| Branch                                         | PR   | Commits Ahead | Status  | Disposition  |
+| ---------------------------------------------- | ---- | ------------- | ------- | ------------ |
+| `claude/governor-omega-v2-w29yi4`              | #148 | 1             | DRAFT   | MERGE INTO Ω |
+| `claude/governor-omega-autonomy-h0amg5`        | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-v3-eos-1kl8vx`                | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-v3-eos-s3vkss`                | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-bootstrap-protocol-h56kwb`    | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-evolution-charter-xac47i`     | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-decision-constitution-3zoi9n` | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-prime-directive-mg6p2d`       | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-founder-freedom-mfeog4`       | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/governor-iphone-pwa-i4jm4t`            | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/autonomous-process-governor-szwxi7`    | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/executive-governor-directive-rbmmlb`   | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/dashboard-integrity-governor-aa6upb`   | —    | TBD           | UNKNOWN | ASSESS       |
+| `claude/founder-advisor-constitution-670h62`   | —    | TBD           | UNKNOWN | ASSESS       |
 
 #### CATHEDRAL (1 branch)
+
 Architecture and integration methodology.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `claude/cathedral-evolution-system-ku0h5l` | #146 | 1 | DRAFT | PRESERVE & ASSESS |
+| Branch                                     | PR   | Commits Ahead | Status | Disposition       |
+| ------------------------------------------ | ---- | ------------- | ------ | ----------------- |
+| `claude/cathedral-evolution-system-ku0h5l` | #146 | 1             | DRAFT  | PRESERVE & ASSESS |
 
 #### HERCULES (2 branches)
+
 High-intensity execution and recovery playbooks.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `claude/hercules-living-enterprise-oj7wyb` | — | TBD | UNKNOWN | ASSESS |
-| `reconcile/compliance-plus-hercules` | — | TBD | UNKNOWN | ASSESS |
+| Branch                                     | PR  | Commits Ahead | Status  | Disposition |
+| ------------------------------------------ | --- | ------------- | ------- | ----------- |
+| `claude/hercules-living-enterprise-oj7wyb` | —   | TBD           | UNKNOWN | ASSESS      |
+| `reconcile/compliance-plus-hercules`       | —   | TBD           | UNKNOWN | ASSESS      |
 
 #### EURO AI (5 branches)
+
 Product platform evolution and deployment.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `claude/euro-ai-blocker-elimination-r7b4lw` | — | TBD | UNKNOWN | ASSESS |
-| `claude/euro-ai-go-conversion-hffcky` | — | TBD | UNKNOWN | ASSESS |
-| `claude/euro-ai-governance-transform-r5rydy` | — | TBD | UNKNOWN | ASSESS |
-| `claude/euro-ai-product-vision-pt8s3x` | — | TBD | UNKNOWN | ASSESS |
-| `claude/euro-pilot-deployment-p3sqb4` | — | TBD | UNKNOWN | ASSESS |
+| Branch                                       | PR  | Commits Ahead | Status  | Disposition |
+| -------------------------------------------- | --- | ------------- | ------- | ----------- |
+| `claude/euro-ai-blocker-elimination-r7b4lw`  | —   | TBD           | UNKNOWN | ASSESS      |
+| `claude/euro-ai-go-conversion-hffcky`        | —   | TBD           | UNKNOWN | ASSESS      |
+| `claude/euro-ai-governance-transform-r5rydy` | —   | TBD           | UNKNOWN | ASSESS      |
+| `claude/euro-ai-product-vision-pt8s3x`       | —   | TBD           | UNKNOWN | ASSESS      |
+| `claude/euro-pilot-deployment-p3sqb4`        | —   | TBD           | UNKNOWN | ASSESS      |
 
 #### INFRASTRUCTURE & DEPLOYMENT (5 branches)
+
 Deployment automation, observability, infrastructure validation.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `claude/autonomous-deployment-verify-xqlpc2` | — | TBD | UNKNOWN | ASSESS |
-| `claude/deployment-audit-v2` | — | TBD | UNKNOWN | ASSESS |
-| `claude/deployment-reality-audit-hog4gc` | — | TBD | UNKNOWN | ASSESS |
-| `claude/founder-infrastructure-dashboard-n45p3s` | — | TBD | UNKNOWN | ASSESS |
-| `fix/production-infrastructure-clean-land` | — | TBD | UNKNOWN | ASSESS |
+| Branch                                           | PR  | Commits Ahead | Status  | Disposition |
+| ------------------------------------------------ | --- | ------------- | ------- | ----------- |
+| `claude/autonomous-deployment-verify-xqlpc2`     | —   | TBD           | UNKNOWN | ASSESS      |
+| `claude/deployment-audit-v2`                     | —   | TBD           | UNKNOWN | ASSESS      |
+| `claude/deployment-reality-audit-hog4gc`         | —   | TBD           | UNKNOWN | ASSESS      |
+| `claude/founder-infrastructure-dashboard-n45p3s` | —   | TBD           | UNKNOWN | ASSESS      |
+| `fix/production-infrastructure-clean-land`       | —   | TBD           | UNKNOWN | ASSESS      |
 
 #### FEATURES & FIXES (11 branches)
+
 Targeted feature development and bug fixes.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `claude/repair-git-remotes-p1ez7c` | #124 | **261** | DRAFT | **CRITICAL: PRESERVE** |
-| `feat/rate-limiter-telemetry` | — | TBD | UNKNOWN | ASSESS |
-| `feat/sla-violation-alerting` | — | TBD | UNKNOWN | ASSESS |
-| `claude/durable-rate-limiting` | — | TBD | UNKNOWN | ASSESS |
-| `claude/dashboard-truth-reconciliation-amas7q` | — | TBD | UNKNOWN | ASSESS |
-| `claude/continuing-tasks-q5rud5` | — | TBD | UNKNOWN | ASSESS |
-| `claude/ai-cto-evolution-nqcnua` | — | TBD | UNKNOWN | ASSESS |
-| `claude/founder-advisor-constitution-gofboy` | — | TBD | UNKNOWN | ASSESS |
-| `claude/founder-communication-constitution-g6lpzw` | — | TBD | UNKNOWN | ASSESS |
-| `claude/founder-directive-approval-nr722y` | — | TBD | UNKNOWN | ASSESS |
-| `claude/glo-foundation-dna-339vzu` | — | TBD | UNKNOWN | ASSESS |
+| Branch                                             | PR   | Commits Ahead | Status  | Disposition            |
+| -------------------------------------------------- | ---- | ------------- | ------- | ---------------------- |
+| `claude/repair-git-remotes-p1ez7c`                 | #124 | **261**       | DRAFT   | **CRITICAL: PRESERVE** |
+| `feat/rate-limiter-telemetry`                      | —    | TBD           | UNKNOWN | ASSESS                 |
+| `feat/sla-violation-alerting`                      | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/durable-rate-limiting`                     | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/dashboard-truth-reconciliation-amas7q`     | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/continuing-tasks-q5rud5`                   | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/ai-cto-evolution-nqcnua`                   | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/founder-advisor-constitution-gofboy`       | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/founder-communication-constitution-g6lpzw` | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/founder-directive-approval-nr722y`         | —    | TBD           | UNKNOWN | ASSESS                 |
+| `claude/glo-foundation-dna-339vzu`                 | —    | TBD           | UNKNOWN | ASSESS                 |
 
 #### PHASES & INTEGRATIONS (3 branches)
+
 Multi-phase rollouts and system integrations.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `phase2-governance-clean-rebuild` | — | TBD | UNKNOWN | ASSESS |
-| `integrate/observability-extraction` | — | TBD | UNKNOWN | ASSESS |
-| `next16-migration-amas7q` | — | TBD | UNKNOWN | ASSESS |
+| Branch                               | PR  | Commits Ahead | Status  | Disposition |
+| ------------------------------------ | --- | ------------- | ------- | ----------- |
+| `phase2-governance-clean-rebuild`    | —   | TBD           | UNKNOWN | ASSESS      |
+| `integrate/observability-extraction` | —   | TBD           | UNKNOWN | ASSESS      |
+| `next16-migration-amas7q`            | —   | TBD           | UNKNOWN | ASSESS      |
 
 #### BACKUP (1 branch)
+
 Safety backup of production state.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `backup/main-pre-forcepush-1719dcf` | — | N/A | BACKUP | PRESERVE FOR HISTORY |
+| Branch                              | PR  | Commits Ahead | Status | Disposition          |
+| ----------------------------------- | --- | ------------- | ------ | -------------------- |
+| `backup/main-pre-forcepush-1719dcf` | —   | N/A           | BACKUP | PRESERVE FOR HISTORY |
 
 #### PRODUCTION-READINESS (1 branch)
+
 Final deployment validation.
 
-| Branch | PR | Commits Ahead | Status | Disposition |
-|--------|----|----|--------|-----------|
-| `claude/production-readiness-final` | — | TBD | UNKNOWN | ASSESS |
+| Branch                              | PR  | Commits Ahead | Status  | Disposition |
+| ----------------------------------- | --- | ------------- | ------- | ----------- |
+| `claude/production-readiness-final` | —   | TBD           | UNKNOWN | ASSESS      |
 
 ---
 
 ## OPEN PRs (3 total — all DRAFT)
 
 ### PR #148: Governor Ω v2.0 Institutional Memory
+
 - **Branch:** `claude/governor-omega-v2-w29yi4`
 - **Commits:** 1 (new files only)
 - **Files:** 6 (CLAUDE.md, docs/governor/*, Risk Register)
@@ -132,6 +144,7 @@ Final deployment validation.
 - **Disposition:** **MERGE INTO current Ω consolidation after review**
 
 ### PR #146: Cathedral Evolution / DR-0021
+
 - **Branch:** `claude/cathedral-evolution-system-ku0h5l`
 - **Commits:** 1 (DECISION_REGISTER update)
 - **Files:** 1 (docs/governance/DECISION_REGISTER.md)
@@ -140,6 +153,7 @@ Final deployment validation.
 - **Disposition:** **PRESERVE and assess for merge or archival**
 
 ### PR #124: Billing & Team Management API
+
 - **Branch:** `claude/repair-git-remotes-p1ez7c`
 - **Commits:** 261 (diverged from main)
 - **Files:** Significant (billing system, obligations API, team management)
@@ -235,4 +249,3 @@ Consolidation is complete when:
 - **Executor:** Governor Ω
 - **Freeze:** All parallel work frozen until consolidation complete
 - **Escalation:** Founder only if data loss risk or irreversible destruction required
-

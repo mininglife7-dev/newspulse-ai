@@ -1,5 +1,8 @@
 import { DetectedIncident, IncidentSeverity } from './incident-detection';
-import { RollbackDecisionEngine, RollbackDecision } from './rollback-decision-engine';
+import {
+  RollbackDecisionEngine,
+  RollbackDecision,
+} from './rollback-decision-engine';
 import { DeploymentVerificationReport } from './deployment-verification';
 
 export type IncidentState =
@@ -117,7 +120,10 @@ export class IncidentOrchestrator {
     if (incident.severity === 'critical') {
       evidence.push('Critical severity incident');
 
-      if (incident.canAutoRemediate && incident.category === 'deployment-failure') {
+      if (
+        incident.canAutoRemediate &&
+        incident.category === 'deployment-failure'
+      ) {
         recommendedAction = 'initiate-rollback';
         reason = 'Critical deployment failure with auto-remediation available';
       } else if (incident.category === 'data-loss-risk') {
@@ -169,11 +175,15 @@ export class IncidentOrchestrator {
     }
 
     // Check if we need to escalate due to repeated failures
-    const storedAttempts = this.remediationAttempts.get(incident.deploymentId) || [];
+    const storedAttempts =
+      this.remediationAttempts.get(incident.deploymentId) || [];
     const allAttempts = [...storedAttempts, ...context.previousAttempts];
     const failedAttempts = allAttempts.filter((a) => !a.success);
 
-    if (allAttempts.length >= this.maxRemediationAttempts && failedAttempts.length > 0) {
+    if (
+      allAttempts.length >= this.maxRemediationAttempts &&
+      failedAttempts.length > 0
+    ) {
       shouldEscalateToFounder = true;
       reason = `Max remediation attempts (${this.maxRemediationAttempts}) reached`;
       recommendedAction = 'notify-founder';
@@ -228,7 +238,8 @@ export class IncidentOrchestrator {
     result?: any;
     error?: string;
   }> {
-    const previousState = this.incidentStates.get(decision.incidentId) || 'detected';
+    const previousState =
+      this.incidentStates.get(decision.incidentId) || 'detected';
     let newState: IncidentState = previousState;
     let success = false;
     let result: any;
@@ -301,7 +312,8 @@ export class IncidentOrchestrator {
 
       // Record audit entry
       const completedAt = new Date().toISOString();
-      const duration = new Date(completedAt).getTime() - new Date(startedAt).getTime();
+      const duration =
+        new Date(completedAt).getTime() - new Date(startedAt).getTime();
       this.auditLog.push({
         timestamp: completedAt,
         incidentId: decision.incidentId,
@@ -318,7 +330,10 @@ export class IncidentOrchestrator {
       });
 
       // Track remediation attempt
-      if (decision.recommendedAction !== 'none' && decision.recommendedAction !== 'notify-founder') {
+      if (
+        decision.recommendedAction !== 'none' &&
+        decision.recommendedAction !== 'notify-founder'
+      ) {
         if (!this.remediationAttempts.has(decision.deploymentId)) {
           this.remediationAttempts.set(decision.deploymentId, []);
         }
@@ -361,7 +376,9 @@ export class IncidentOrchestrator {
   ): Promise<boolean> {
     // In a real system, this would integrate with the notification system
     // For now, we simulate it
-    console.log(`FOUNDER NOTIFICATION: Incident ${decision.incidentId} requires attention`);
+    console.log(
+      `FOUNDER NOTIFICATION: Incident ${decision.incidentId} requires attention`
+    );
     console.log(`Reason: ${decision.reason}`);
     console.log(`Evidence: ${decision.evidence.join(', ')}`);
     return true;
@@ -389,7 +406,9 @@ export class IncidentOrchestrator {
     }
 
     // Simple heuristic: if current deployment passes most checks, consider remediation successful
-    const passPercentage = context.verificationReport.passedChecks / context.verificationReport.checks.length;
+    const passPercentage =
+      context.verificationReport.passedChecks /
+      context.verificationReport.checks.length;
     return passPercentage >= 0.8;
   }
 
@@ -402,7 +421,7 @@ export class IncidentOrchestrator {
       'scale-infrastructure': 'remediation-in-progress',
       'throttle-traffic': 'remediation-in-progress',
       'drain-queue': 'remediation-in-progress',
-      'none': 'incident-resolved',
+      none: 'incident-resolved',
     };
 
     return stateMap[action];

@@ -183,13 +183,16 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
 
       const actions = determineRemediationActions(failures);
 
-      expect(actions.filter(a => a === 'circuit-break')).toHaveLength(1);
+      expect(actions.filter((a) => a === 'circuit-break')).toHaveLength(1);
     });
   });
 
   describe('executeRemediationAction', () => {
     it('executes rollback-deployment action', async () => {
-      const attempt = await executeRemediationAction('rollback-deployment', 'api');
+      const attempt = await executeRemediationAction(
+        'rollback-deployment',
+        'api'
+      );
 
       expect(attempt.action).toBe('rollback-deployment');
       expect(attempt.success).toBe(true);
@@ -399,7 +402,14 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
             description: 'High error rate',
             affectedService: 'api',
             detectedAt: new Date().toISOString(),
-            evidence: [{ metric: 'error_rate', value: 8, threshold: 5, timestamp: new Date().toISOString() }],
+            evidence: [
+              {
+                metric: 'error_rate',
+                value: 8,
+                threshold: 5,
+                timestamp: new Date().toISOString(),
+              },
+            ],
             suggestedActions: ['circuit-break' as const],
             isRecurring: false,
             recurringCount: 1,
@@ -588,7 +598,14 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
             description: 'Recurring error spike',
             affectedService: 'api',
             detectedAt: new Date().toISOString(),
-            evidence: [{ metric: 'error_rate_percent', value: 8, threshold: 5, timestamp: new Date().toISOString() }],
+            evidence: [
+              {
+                metric: 'error_rate_percent',
+                value: 8,
+                threshold: 5,
+                timestamp: new Date().toISOString(),
+              },
+            ],
             suggestedActions: ['circuit-break'],
             isRecurring: true,
             recurringCount: 3,
@@ -652,18 +669,23 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
 
         // Fourth attempt should be blocked (maxAttemptsPerIncident = 3)
         expect(attempts).toHaveLength(3);
-        const report = generateRemediationReport([{
-          id: failureId,
-          category: 'unhealthy-service',
-          severity: 'critical',
-          description: 'Service unresponsive',
-          affectedService: 'api',
-          detectedAt: new Date().toISOString(),
-          evidence: [],
-          suggestedActions: ['restart-service'],
-          isRecurring: true,
-          recurringCount: 4,
-        }], attempts);
+        const report = generateRemediationReport(
+          [
+            {
+              id: failureId,
+              category: 'unhealthy-service',
+              severity: 'critical',
+              description: 'Service unresponsive',
+              affectedService: 'api',
+              detectedAt: new Date().toISOString(),
+              evidence: [],
+              suggestedActions: ['restart-service'],
+              isRecurring: true,
+              recurringCount: 4,
+            },
+          ],
+          attempts
+        );
 
         expect(report.escalatedToFounder).toBe(true); // Should escalate after exhaustion
       });
@@ -700,7 +722,8 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
         const attempt2Time = attempt1Time + 30000; // 30 seconds later
 
         // cooldown is 60 seconds, so 30 seconds is still within cooldown
-        const withinCooldown = (attempt2Time - attempt1Time) < (guardrail.cooldownSeconds * 1000);
+        const withinCooldown =
+          attempt2Time - attempt1Time < guardrail.cooldownSeconds * 1000;
         expect(withinCooldown).toBe(true);
       });
     });
@@ -884,7 +907,8 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
           completedAt: new Date().toISOString(),
           success: true,
           result: 'Service restarted',
-          recoveryProof: 'Health check passed post-restart; error rate returned to baseline (< 2%)',
+          recoveryProof:
+            'Health check passed post-restart; error rate returned to baseline (< 2%)',
         };
 
         expect(attempt.recoveryProof).toBeDefined();
@@ -976,7 +1000,15 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
           description: 'Transient error spike',
           affectedService: 'api',
           detectedAt: detectedAt.toISOString(),
-          evidence: [{ metric: 'error_rate_percent', value: 7, threshold: 5, timestamp: detectedAt.toISOString(), duration: 3 }],
+          evidence: [
+            {
+              metric: 'error_rate_percent',
+              value: 7,
+              threshold: 5,
+              timestamp: detectedAt.toISOString(),
+              duration: 3,
+            },
+          ],
           suggestedActions: ['circuit-break'],
           isRecurring: false,
           recurringCount: 1,
@@ -1038,7 +1070,7 @@ describe('Autonomous Remediation (DNA-GOV-011)', () => {
         const actions = determineRemediationActions(failures);
 
         // Should deduplicate "clear-cache" action
-        const cacheClears = actions.filter(a => a === 'clear-cache');
+        const cacheClears = actions.filter((a) => a === 'clear-cache');
         expect(cacheClears.length).toBe(1); // Only one, not two
       });
     });

@@ -8,20 +8,21 @@
 
 ## Quick Reference: Rollback Decision Tree
 
-| Scenario | Severity | Action |
-|----------|----------|--------|
-| Deployment failed mid-run (partial objects) | CRITICAL | Execute FULL_ROLLBACK.sql immediately |
-| RLS policies preventing customer access | CRITICAL | Execute RLS_EMERGENCY_DISABLE.sql, then diagnose |
-| Signup trigger not firing (new users stuck) | HIGH | Execute TRIGGER_RESTORE.sql, then investigate |
-| Wrong table/index created (typo in schema) | HIGH | MANUAL: DROP object, re-run schema |
-| Data corruption on existing records | CRITICAL | BACKUP from before-deployment snapshot; contact Supabase support |
-| Network timeout during execution | MEDIUM | Re-run PREFLIGHT_CHECK.sql, then resume deployment |
+| Scenario                                    | Severity | Action                                                           |
+| ------------------------------------------- | -------- | ---------------------------------------------------------------- |
+| Deployment failed mid-run (partial objects) | CRITICAL | Execute FULL_ROLLBACK.sql immediately                            |
+| RLS policies preventing customer access     | CRITICAL | Execute RLS_EMERGENCY_DISABLE.sql, then diagnose                 |
+| Signup trigger not firing (new users stuck) | HIGH     | Execute TRIGGER_RESTORE.sql, then investigate                    |
+| Wrong table/index created (typo in schema)  | HIGH     | MANUAL: DROP object, re-run schema                               |
+| Data corruption on existing records         | CRITICAL | BACKUP from before-deployment snapshot; contact Supabase support |
+| Network timeout during execution            | MEDIUM   | Re-run PREFLIGHT_CHECK.sql, then resume deployment               |
 
 ---
 
 ## Scenario 1: Complete Deployment Failure (Partial Objects)
 
 **Symptoms:**
+
 - Deployment stopped mid-execution
 - Some tables created, others missing
 - RLS policies partially applied
@@ -30,6 +31,7 @@
 **Recovery Steps:**
 
 ### Option A: Full Rollback (Recommended)
+
 ```sql
 -- Run in Supabase SQL Editor with service-role key
 -- This removes all deployed objects and resets to pre-deployment state
@@ -69,6 +71,7 @@ WHERE table_schema = 'public';
 ```
 
 ### Option B: Retry Deployment
+
 After full rollback (or if only minor objects missing):
 
 1. Run PREFLIGHT_CHECK.sql to verify clean state
@@ -80,12 +83,14 @@ After full rollback (or if only minor objects missing):
 ## Scenario 2: RLS Policies Blocking All Customer Access
 
 **Symptoms:**
+
 - Customers report "permission denied" on all queries
 - INSERT/UPDATE/DELETE operations fail immediately
 - SELECT returns empty results even for user's own data
 - Error: `ERROR: new row violates row-level security policy`
 
 **Root Causes:**
+
 - Policies have wrong conditions (e.g., checking wrong column)
 - User membership not marked as "active"
 - Trigger failed to create profiles for new users
@@ -93,6 +98,7 @@ After full rollback (or if only minor objects missing):
 **Recovery Steps:**
 
 ### Step 1: Verify Signup Trigger Worked
+
 ```sql
 -- Check if profiles exist for all auth.users
 SELECT
@@ -106,6 +112,7 @@ ORDER BY u.created_at DESC;
 ```
 
 If profiles are missing:
+
 ```sql
 -- Manually create missing profiles
 INSERT INTO public.profiles (id, email, created_at, updated_at)
@@ -115,6 +122,7 @@ WHERE role = 'authenticated' AND id NOT IN (SELECT id FROM public.profiles);
 ```
 
 ### Step 2: Verify Workspace Membership Status
+
 ```sql
 -- Check that members are marked as 'active'
 SELECT workspace_id, user_id, status
@@ -129,6 +137,7 @@ WHERE status IN ('pending', 'inactive', 'invited');
 ```
 
 ### Step 3: Test Customer Access with Service Role
+
 ```sql
 -- Use service role to verify policies don't block system operations
 -- This bypasses RLS and proves data exists
@@ -150,6 +159,7 @@ GROUP BY tablename;
 If service-role can see data but customers cannot, the issue is RLS policy logic (not data integrity).
 
 ### Step 4: Emergency: Temporarily Disable RLS (Last Resort)
+
 ```sql
 -- ONLY if you need customers accessing data immediately during investigation
 -- This DISABLES all security — use for maximum 1 hour
@@ -176,6 +186,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ## Scenario 3: Signup Trigger Not Working (New Users Have No Profiles)
 
 **Symptoms:**
+
 - New users created in auth.users but no profiles in public.profiles
 - Customers cannot log in (profile required for app)
 - Error: `ERROR: new row violates not-null constraint "profiles.email"`
@@ -222,6 +233,7 @@ WHERE u.role = 'authenticated' AND p.id IS NULL;
 ## Scenario 4: Duplicate Table or Index Exists (Schema Run Twice Accidentally)
 
 **Symptoms:**
+
 - Schema deployment appeared to succeed
 - But data seems wrong or exists twice
 - Error on second run: `ERROR: relation "table_name" already exists`
@@ -247,6 +259,7 @@ DROP TABLE IF EXISTS table_name_1 CASCADE;
 ## Scenario 5: Partial Network Failure During Deployment
 
 **Symptoms:**
+
 - Deployment stopped with "connection timeout" or "query timeout"
 - Some statements executed, others didn't
 - Cannot determine exactly which succeeded
@@ -275,6 +288,7 @@ DROP TABLE IF EXISTS table_name_1 CASCADE;
 ## Scenario 6: Data Corruption on Existing Records
 
 **Symptoms:**
+
 - Data in tables changed unexpectedly
 - Foreign key violations or constraint failures
 - Deployment didn't insert data, but something changed values
@@ -298,6 +312,7 @@ This should NOT happen with the corrected schema (it only creates, not modifies)
 ## Scenario 7: Foreign Key Constraint Violations
 
 **Symptoms:**
+
 - INSERT fails: `ERROR: insert or update on table "ai_systems" violates foreign key constraint`
 - DELETE fails: `ERROR: update or delete on "companies" violates foreign key constraint`
 
@@ -305,6 +320,7 @@ This should NOT happen with the corrected schema (it only creates, not modifies)
 Foreign keys configured with CASCADE delete. If parent deleted, children auto-delete.
 
 **Recovery:**
+
 ```sql
 -- Check cascade delete configuration
 SELECT constraint_name, table_name, column_name, foreign_table_name, foreign_column_name
@@ -391,18 +407,21 @@ After ANY rollback or recovery, execute in order:
 ## Appendix: Emergency Scripts
 
 ### Full Rollback Script
+
 ```sql
 -- Copy from FULL_ROLLBACK.sql in this directory
 -- Or execute the DROP statements listed in Scenario 1 above
 ```
 
 ### Restore Signup Trigger
+
 ```sql
 -- Copy from TRIGGER_RESTORE.sql in this directory
 -- Recreates handle_new_user() function and on_auth_user_created trigger
 ```
 
 ### Verify Data Integrity
+
 ```sql
 -- Copy from DATA_INTEGRITY_CHECK.sql in this directory
 -- Identifies orphaned records and constraint violations

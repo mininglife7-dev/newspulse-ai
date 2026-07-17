@@ -11,7 +11,10 @@
  */
 
 import { DetectedIncident, IncidentDetector } from './incident-detection';
-import { IncidentOrchestrator, OrchestrationDecision } from './incident-orchestration';
+import {
+  IncidentOrchestrator,
+  OrchestrationDecision,
+} from './incident-orchestration';
 import { ErrorEvent, ErrorPattern, ErrorMetrics } from './error-tracking';
 
 export interface ProductionWiringConfig {
@@ -65,8 +68,10 @@ export class ProductionWiring {
       remediationCooldown: config.remediationCooldown ?? 300000,
       alertThresholds: {
         criticalErrorRate: config.alertThresholds?.criticalErrorRate ?? 10,
-        cascadingFailureThreshold: config.alertThresholds?.cascadingFailureThreshold ?? 3,
-        dataLossRiskThreshold: config.alertThresholds?.dataLossRiskThreshold ?? 50,
+        cascadingFailureThreshold:
+          config.alertThresholds?.cascadingFailureThreshold ?? 3,
+        dataLossRiskThreshold:
+          config.alertThresholds?.dataLossRiskThreshold ?? 50,
       },
     };
   }
@@ -78,8 +83,12 @@ export class ProductionWiring {
   ): Promise<DetectedIncident[]> {
     // Convert error metrics and patterns into incident detection context
     const errorRate = errorMetrics.errorRate;
-    const databaseErrors = errorPatterns.filter((p) => p.category === 'database');
-    const criticalPatterns = errorPatterns.filter((p) => p.severity === 'critical');
+    const databaseErrors = errorPatterns.filter(
+      (p) => p.category === 'database'
+    );
+    const criticalPatterns = errorPatterns.filter(
+      (p) => p.severity === 'critical'
+    );
 
     const recentErrors = errorPatterns.map((p) => ({
       message: p.message,
@@ -109,7 +118,10 @@ export class ProductionWiring {
     const lastRemediationMs = this.lastRemediationTime.get(deploymentId) || 0;
     const timeSinceLastRemediation = Date.now() - lastRemediationMs;
 
-    if (timeSinceLastRemediation < this.config.remediationCooldown && incident.severity === 'medium') {
+    if (
+      timeSinceLastRemediation < this.config.remediationCooldown &&
+      incident.severity === 'medium'
+    ) {
       // Skip remediation for medium severity incidents within cooldown
       return {
         decision: {
@@ -120,10 +132,11 @@ export class ProductionWiring {
           shouldEscalateToFounder: false,
           reason: 'Cooldown active from previous remediation',
           evidence: ['Cooldown enforcement'],
-          estimatedRecoveryTime: Math.max(
-            0,
-            this.config.remediationCooldown - timeSinceLastRemediation
-          ) / 1000,
+          estimatedRecoveryTime:
+            Math.max(
+              0,
+              this.config.remediationCooldown - timeSinceLastRemediation
+            ) / 1000,
           riskOfAction: 'low',
           timestamp: new Date().toISOString(),
         },
@@ -149,14 +162,22 @@ export class ProductionWiring {
     let executed = false;
     let feedback: RemediationFeedback | undefined;
 
-    if (this.config.enableAutoRemediation && !decision.shouldEscalateToFounder) {
-      const beforeMetrics = errorMetrics ? { errorRate: errorMetrics.errorRate } : undefined;
+    if (
+      this.config.enableAutoRemediation &&
+      !decision.shouldEscalateToFounder
+    ) {
+      const beforeMetrics = errorMetrics
+        ? { errorRate: errorMetrics.errorRate }
+        : undefined;
       const executionStarted = Date.now();
 
-      const result = await this.orchestrator.executeOrchestrationDecision(decision, {
-        incident,
-        previousAttempts: [],
-      });
+      const result = await this.orchestrator.executeOrchestrationDecision(
+        decision,
+        {
+          incident,
+          previousAttempts: [],
+        }
+      );
 
       executed = result.success;
       const executionDuration = Date.now() - executionStarted;
@@ -164,7 +185,9 @@ export class ProductionWiring {
       if (executed) {
         this.lastRemediationTime.set(deploymentId, Date.now());
 
-        const afterMetrics: Partial<ErrorMetrics> = errorMetrics ? { errorRate: 0 } : {};
+        const afterMetrics: Partial<ErrorMetrics> = errorMetrics
+          ? { errorRate: 0 }
+          : {};
 
         feedback = {
           incidentId: incident.incidentId,
@@ -263,7 +286,10 @@ export class ProductionWiring {
     }
 
     // Auto-remediation success gets info alert
-    if (decision.recommendedAction !== 'none' && decision.recommendedAction !== 'notify-founder') {
+    if (
+      decision.recommendedAction !== 'none' &&
+      decision.recommendedAction !== 'notify-founder'
+    ) {
       const alertId = `alert-${Date.now()}-remediation`;
       const mapping: IncidentToAlertMapping = {
         incidentId: incident.incidentId,
@@ -281,7 +307,10 @@ export class ProductionWiring {
     return alerts;
   }
 
-  private recordRemediationFeedback(deploymentId: string, feedback: RemediationFeedback): void {
+  private recordRemediationFeedback(
+    deploymentId: string,
+    feedback: RemediationFeedback
+  ): void {
     if (!this.remediationHistory.has(deploymentId)) {
       this.remediationHistory.set(deploymentId, []);
     }
@@ -311,7 +340,10 @@ export class ProductionWiring {
     const history = this.remediationHistory.get(deploymentId) || [];
     if (history.length === 0) return 0;
 
-    const totalRecoveryTime = history.reduce((sum, f) => sum + f.recoveryTime, 0);
+    const totalRecoveryTime = history.reduce(
+      (sum, f) => sum + f.recoveryTime,
+      0
+    );
     return totalRecoveryTime / history.length;
   }
 
@@ -320,12 +352,16 @@ export class ProductionWiring {
     if (!mapping) return false;
 
     // Mark alert as acknowledged (in real system, update database)
-    console.log(`Alert ${alertId} acknowledged: ${mapping.severity} in channel ${mapping.channel}`);
+    console.log(
+      `Alert ${alertId} acknowledged: ${mapping.severity} in channel ${mapping.channel}`
+    );
     return true;
   }
 
   getAlertStatus(incidentId: string): IncidentToAlertMapping[] {
-    return Array.from(this.alertMappings.values()).filter((m) => m.incidentId === incidentId);
+    return Array.from(this.alertMappings.values()).filter(
+      (m) => m.incidentId === incidentId
+    );
   }
 
   getConfig(): ProductionWiringConfig {
@@ -356,11 +392,17 @@ export async function wireProductionIncidentResponse(
   const wiring = new ProductionWiring();
 
   // Process errors into incidents
-  const incidents = await wiring.processErrorsIntoIncidents(deploymentId, errorMetrics, errorPatterns);
+  const incidents = await wiring.processErrorsIntoIncidents(
+    deploymentId,
+    errorMetrics,
+    errorPatterns
+  );
 
   // Orchestrate and execute response for each incident
   const orchestrations = await Promise.all(
-    incidents.map((incident) => wiring.orchestrateAndExecute(deploymentId, incident, errorMetrics))
+    incidents.map((incident) =>
+      wiring.orchestrateAndExecute(deploymentId, incident, errorMetrics)
+    )
   );
 
   // Collect all alerts

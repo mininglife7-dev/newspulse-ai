@@ -8,7 +8,14 @@ interface Props {
 }
 
 export default function LaunchReadinessDashboard({ state }: Props) {
-  const { launchReadiness, infraHealth, engineeringReadiness, securityStatus, customerReadiness, pilotReadiness } = state;
+  const {
+    launchReadiness,
+    infraHealth,
+    engineeringReadiness,
+    securityStatus,
+    customerReadiness,
+    pilotReadiness,
+  } = state;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -63,24 +70,29 @@ export default function LaunchReadinessDashboard({ state }: Props) {
             </div>
             <p className="mb-4 text-white/70">{launchReadiness.reasoning}</p>
 
-            {launchReadiness.conditions && launchReadiness.conditions.length > 0 && (
-              <div>
-                <h3 className="mb-2 font-semibold text-accent-300">Conditions to reach GO:</h3>
-                <ul className="space-y-1 text-sm text-white/60">
-                  {launchReadiness.conditions.map((condition, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="mt-1 inline-block h-1 w-1 rounded-full bg-accent-500" />
-                      <span>{condition}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {launchReadiness.conditions &&
+              launchReadiness.conditions.length > 0 && (
+                <div>
+                  <h3 className="mb-2 font-semibold text-accent-300">
+                    Conditions to reach GO:
+                  </h3>
+                  <ul className="space-y-1 text-sm text-white/60">
+                    {launchReadiness.conditions.map((condition, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-1 w-1 rounded-full bg-accent-500" />
+                        <span>{condition}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
           </div>
 
           <div className="flex flex-col items-end gap-2">
             <div className="text-right">
-              <div className="text-5xl font-bold text-accent-300">{launchReadiness.percentage}</div>
+              <div className="text-5xl font-bold text-accent-300">
+                {launchReadiness.percentage}
+              </div>
               <div className="text-xs text-white/40">Overall Score</div>
             </div>
             <div className="h-2 w-40 overflow-hidden rounded-full bg-border">
@@ -105,7 +117,9 @@ export default function LaunchReadinessDashboard({ state }: Props) {
             ) : (
               <AlertTriangle className="h-5 w-5 text-yellow-500" />
             )}
-            <span className="font-semibold">{state.criticalGates.buildStatus.toUpperCase()}</span>
+            <span className="font-semibold">
+              {state.criticalGates.buildStatus.toUpperCase()}
+            </span>
           </div>
         </div>
 
@@ -119,7 +133,9 @@ export default function LaunchReadinessDashboard({ state }: Props) {
             ) : (
               <AlertTriangle className="h-5 w-5 text-yellow-500" />
             )}
-            <span className="font-semibold">{state.criticalGates.ciStatus.toUpperCase()}</span>
+            <span className="font-semibold">
+              {state.criticalGates.ciStatus.toUpperCase()}
+            </span>
           </div>
         </div>
 
@@ -149,7 +165,9 @@ export default function LaunchReadinessDashboard({ state }: Props) {
             ) : (
               <AlertTriangle className="h-5 w-5 text-yellow-500" />
             )}
-            <span className="font-semibold capitalize">{state.criticalGates.securityAudit}</span>
+            <span className="font-semibold capitalize">
+              {state.criticalGates.securityAudit}
+            </span>
           </div>
         </div>
       </div>
@@ -157,11 +175,15 @@ export default function LaunchReadinessDashboard({ state }: Props) {
       {/* Health Summary */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className={`rounded-lg border p-4 ${getStatusColor(infraHealth)}`}>
-          <div className="text-xs uppercase text-white/40">Infrastructure Health</div>
+          <div className="text-xs uppercase text-white/40">
+            Infrastructure Health
+          </div>
           <div className="mt-2">{getStatusText(infraHealth)}</div>
         </div>
 
-        <div className={`rounded-lg border p-4 ${getStatusColor(securityStatus)}`}>
+        <div
+          className={`rounded-lg border p-4 ${getStatusColor(securityStatus)}`}
+        >
           <div className="text-xs uppercase text-white/40">Security Status</div>
           <div className="mt-2">{getStatusText(securityStatus)}</div>
         </div>
@@ -170,9 +192,13 @@ export default function LaunchReadinessDashboard({ state }: Props) {
       {/* Readiness Metrics */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs uppercase text-white/40">Customer Readiness</div>
+          <div className="text-xs uppercase text-white/40">
+            Customer Readiness
+          </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold">{customerReadiness.percentage}</span>
+            <span className="text-3xl font-bold">
+              {customerReadiness.percentage}
+            </span>
             <span className="text-white/40">%</span>
           </div>
           {customerReadiness.blockers.length > 0 && (
@@ -185,7 +211,9 @@ export default function LaunchReadinessDashboard({ state }: Props) {
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="text-xs uppercase text-white/40">Pilot Readiness</div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold">{pilotReadiness.percentage}</span>
+            <span className="text-3xl font-bold">
+              {pilotReadiness.percentage}
+            </span>
             <span className="text-white/40">%</span>
           </div>
           {pilotReadiness.blockers.length > 0 && (
@@ -196,9 +224,13 @@ export default function LaunchReadinessDashboard({ state }: Props) {
         </div>
 
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs uppercase text-white/40">Engineering Readiness</div>
+          <div className="text-xs uppercase text-white/40">
+            Engineering Readiness
+          </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold">{Math.round(engineeringReadiness.percentage)}</span>
+            <span className="text-3xl font-bold">
+              {Math.round(engineeringReadiness.percentage)}
+            </span>
             <span className="text-white/40">%</span>
           </div>
           {engineeringReadiness.blockers.length > 0 && (

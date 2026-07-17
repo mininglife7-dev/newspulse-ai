@@ -24,6 +24,7 @@ Standardized procedure for verifying code changes before deployment. Provides re
 New to verification? Follow this for common changes:
 
 ### Bug Fix
+
 ```
 1. Reproduce original bug (confirm it exists)
 2. Make code change
@@ -34,6 +35,7 @@ New to verification? Follow this for common changes:
 ```
 
 ### Feature Addition
+
 ```
 1. Understand feature requirements
 2. Write/update tests (test-driven preferred)
@@ -46,6 +48,7 @@ New to verification? Follow this for common changes:
 ```
 
 ### Refactoring
+
 ```
 1. Understand current behavior
 2. Refactor code
@@ -61,16 +64,16 @@ New to verification? Follow this for common changes:
 
 Choose verification dimension based on change type:
 
-| Change Type | Dimensions | Time |
-|------------|-----------|------|
-| Bug fix | Functionality, Regression | 10-15min |
-| Feature | Functionality, Edge Cases, UX, Security | 20-30min |
-| Performance | Perf, Functionality, Regression | 15-20min |
-| Security | Security, Functionality, Regression | 15-25min |
-| UI/UX | Functionality, UX, Accessibility, Regression | 20-30min |
-| Refactor | Functionality, Regression, Perf | 10-20min |
-| Database | Data Integrity, Performance, Rollback | 20-40min |
-| API | Functionality, Security, Performance, Regression | 20-30min |
+| Change Type | Dimensions                                       | Time     |
+| ----------- | ------------------------------------------------ | -------- |
+| Bug fix     | Functionality, Regression                        | 10-15min |
+| Feature     | Functionality, Edge Cases, UX, Security          | 20-30min |
+| Performance | Perf, Functionality, Regression                  | 15-20min |
+| Security    | Security, Functionality, Regression              | 15-25min |
+| UI/UX       | Functionality, UX, Accessibility, Regression     | 20-30min |
+| Refactor    | Functionality, Regression, Perf                  | 10-20min |
+| Database    | Data Integrity, Performance, Rollback            | 20-40min |
+| API         | Functionality, Security, Performance, Regression | 20-30min |
 
 ---
 
@@ -80,6 +83,7 @@ Choose verification dimension based on change type:
 **Time**: 5-10 minutes per feature
 
 ### Happy Path Test
+
 Test the main, expected workflow:
 
 ```
@@ -95,6 +99,7 @@ For feature "Link evidence to obligation":
 ```
 
 **Verification checklist**:
+
 - [ ] Feature works as described in requirements
 - [ ] Main workflow completes without error
 - [ ] Output/result is correct and meaningful
@@ -102,6 +107,7 @@ For feature "Link evidence to obligation":
 - [ ] User receives success confirmation
 
 ### Required Field Testing
+
 Test that required fields are validated:
 
 ```
@@ -115,11 +121,13 @@ For form "Create evidence":
 ```
 
 **Verification checklist**:
+
 - [ ] Required fields enforced
 - [ ] Error messages clear and specific
 - [ ] Form doesn't submit with invalid data
 
 ### State Transitions
+
 Test state changes work correctly:
 
 ```
@@ -135,6 +143,7 @@ For evidence status: submitted → approved → completed
 ```
 
 **Verification checklist**:
+
 - [ ] State transitions work as defined
 - [ ] Invalid transitions rejected with error
 - [ ] State history preserved (if applicable)
@@ -163,6 +172,7 @@ For "Add systems to inventory":
 ```
 
 **Verification checklist**:
+
 - [ ] Minimum values work (1, empty, null)
 - [ ] Maximum values handled (100, 10000, limits)
 - [ ] Special characters handled correctly
@@ -187,6 +197,7 @@ For API endpoint POST /api/obligations:
 ```
 
 **Verification checklist**:
+
 - [ ] Invalid input rejected with helpful message
 - [ ] Missing required fields caught
 - [ ] Out-of-range values rejected
@@ -210,6 +221,7 @@ For "List evidence for obligation":
 ```
 
 **Verification checklist**:
+
 - [ ] Empty states handled gracefully
 - [ ] No crashes with null/undefined
 - [ ] User-friendly empty messages
@@ -234,21 +246,23 @@ Test page speed:
 5. Check Total load time
 ```
 
-| Page | Target | Acceptable | Status |
-|------|--------|-----------|--------|
-| Login | <2s | <3s | |
-| Workspace | <2s | <3s | |
-| Inventory | <3s | <4s | |
-| Assessment | <3s | <4s | |
-| Evidence list | <3s | <4s | |
+| Page          | Target | Acceptable | Status |
+| ------------- | ------ | ---------- | ------ |
+| Login         | <2s    | <3s        |        |
+| Workspace     | <2s    | <3s        |        |
+| Inventory     | <3s    | <4s        |        |
+| Assessment    | <3s    | <4s        |        |
+| Evidence list | <3s    | <4s        |        |
 
 **If slow** (>acceptable):
+
 - Check Network tab for slow requests
 - Check which API calls are slow
 - Profile backend queries
 - Add index or optimize query
 
 **Verification checklist**:
+
 - [ ] Page loads within acceptable time
 - [ ] No 404 or failed requests
 - [ ] Assets cached (2nd load faster)
@@ -260,24 +274,27 @@ Test query speed:
 
 ```sql
 -- New query to check
-EXPLAIN ANALYZE 
+EXPLAIN ANALYZE
 SELECT * FROM evidence WHERE obligation_id = '...' LIMIT 10;
 
 -- Check execution time and plan
 ```
 
 **Targets**:
+
 - Simple queries: <100ms
 - Complex queries: <500ms
 - Aggregations: <1000ms
 
 **If slow**:
+
 - Check EXPLAIN plan for table scans
 - Add index on WHERE columns
 - Consider query optimization
 - Check for N+1 patterns
 
 **Verification checklist**:
+
 - [ ] Query execution time acceptable
 - [ ] No full table scans (if avoidable)
 - [ ] Index used if appropriate
@@ -296,6 +313,7 @@ Test for memory leaks:
 ```
 
 **Verification checklist**:
+
 - [ ] Memory stable (not growing)
 - [ ] No event listener leaks
 - [ ] Timers properly cleared
@@ -324,6 +342,7 @@ Test login security:
 ```
 
 **Verification checklist**:
+
 - [ ] Protected pages require login
 - [ ] Expired sessions logged out
 - [ ] Logout clears session
@@ -344,6 +363,7 @@ For workspace with roles: Owner, Admin, Analyst, Viewer
 ```
 
 **Verification checklist**:
+
 - [ ] Different roles see different options
 - [ ] Unauthorized actions rejected (403)
 - [ ] Cannot change own role
@@ -365,6 +385,7 @@ Test that workspaces are isolated:
 ```
 
 **Verification checklist**:
+
 - [ ] Cannot access other workspace's data
 - [ ] RLS policies enforced
 - [ ] No data leaks via API
@@ -397,6 +418,7 @@ Test CSRF:
 ```
 
 **Verification checklist**:
+
 - [ ] SQL injection attempt blocked
 - [ ] XSS attempt blocked/escaped
 - [ ] CSRF tokens present
@@ -411,11 +433,11 @@ Test that sensitive data isn't leaked:
    → No passwords in response
    → No database IDs exposed unnecessarily
    → No internal implementation details in errors
-   
+
 2. Check error messages
    → Generic messages: "Invalid input"
    → NOT detailed: "Column 'obligation_id' must be UUID"
-   
+
 3. Check logs (if viewing)
    → No password values logged
    → No sensitive user data logged
@@ -423,6 +445,7 @@ Test that sensitive data isn't leaked:
 ```
 
 **Verification checklist**:
+
 - [ ] Passwords never in response
 - [ ] Error messages generic (don't reveal structure)
 - [ ] Sensitive data not logged
@@ -443,20 +466,21 @@ Test that UI is clear:
 1. Buttons have clear labels
    → "Save" not "OK"
    → "Delete" not "Remove"
-   
+
 2. Forms show what's required
    → Asterisk (*) or label text: "required"
-   
+
 3. Instructions are clear
    → Example: "System name must be unique"
    → Not: "Validation error on field"
-   
+
 4. Success/error messages are clear
    → "Obligation created successfully"
    → Not: "201 Created"
 ```
 
 **Verification checklist**:
+
 - [ ] Labels are clear and specific
 - [ ] Required fields marked
 - [ ] Instructions are helpful
@@ -481,6 +505,7 @@ Test keyboard accessibility:
 ```
 
 **Verification checklist**:
+
 - [ ] Tab order logical (top-to-bottom, left-to-right)
 - [ ] Focus visible at all times
 - [ ] Enter/Space activates buttons
@@ -501,6 +526,7 @@ Test for accessibility:
 ```
 
 **Verification checklist**:
+
 - [ ] Headings marked with `<h1-h6>` tags
 - [ ] Form labels associated with inputs
 - [ ] Buttons have text or aria-label
@@ -527,6 +553,7 @@ Test on mobile:
 ```
 
 **Verification checklist**:
+
 - [ ] Layout responsive (no horizontal scroll)
 - [ ] Touch targets ≥44x44px
 - [ ] Text readable at mobile size
@@ -556,12 +583,14 @@ Test these unrelated features:
 ```
 
 **How to test**:
+
 1. Identify core workflows
 2. Perform each workflow
 3. Verify no errors
 4. Check that data persists
 
 **Verification checklist**:
+
 - [ ] Login/logout works
 - [ ] Workspace switching works
 - [ ] Navigation works
@@ -585,6 +614,7 @@ Test related features:
 ```
 
 **Verification checklist**:
+
 - [ ] Direct related features work
 - [ ] Dependent features work
 - [ ] No console errors
@@ -610,6 +640,7 @@ For each browser:
 ```
 
 **Verification checklist**:
+
 - [ ] Works in Chrome
 - [ ] Works in Firefox
 - [ ] Works in Safari
@@ -642,6 +673,7 @@ Test database changes:
 ```
 
 **Verification checklist**:
+
 - [ ] Migration syntax correct
 - [ ] Schema changed as expected
 - [ ] Constraints in place
@@ -664,6 +696,7 @@ Test that data integrity is maintained:
 ```
 
 **Verification checklist**:
+
 - [ ] No data lost
 - [ ] Foreign key relationships valid
 - [ ] Constraints enforced
@@ -684,6 +717,7 @@ Test that migration is reversible:
 ```
 
 **Verification checklist**:
+
 - [ ] Rollback migration created
 - [ ] Rollback syntax correct
 - [ ] Rollback tested locally
@@ -697,19 +731,19 @@ Before marking verification complete:
 
 - [ ] Run type-check: `npm run type-check`
   - Expected: 0 errors
-  
+
 - [ ] Run lint: `npm run lint`
   - Expected: 0 errors
-  
+
 - [ ] Run tests: `npm test`
   - Expected: All passing, >80% coverage lib/
-  
+
 - [ ] Run integration tests: `npm test:integration`
   - Expected: All passing
-  
+
 - [ ] Run E2E tests (if UI change): `npm run test:e2e`
   - Expected: All passing
-  
+
 - [ ] Run build: `npm run build`
   - Expected: Successful build, no errors
 
@@ -768,6 +802,7 @@ None
 **Problem**: Change works locally but fails in production
 
 **Solution**:
+
 1. Test with production-like data
 2. Test with production environment variables
 3. Check for environment-specific code
@@ -778,6 +813,7 @@ None
 **Problem**: Bug discovered after deploy
 
 **Solution**:
+
 1. Use test-driven development
 2. Write tests BEFORE code
 3. Review test coverage
@@ -788,6 +824,7 @@ None
 **Problem**: Breaking change discovered later
 
 **Solution**:
+
 1. Always run full test suite
 2. Manual smoke test of core features
 3. Test related features
@@ -798,6 +835,7 @@ None
 **Problem**: Injection vulnerability in production
 
 **Solution**:
+
 1. Always test auth/authorization
 2. Always test input validation
 3. Always check for data leaks
@@ -807,15 +845,15 @@ None
 
 ## Quick Reference
 
-| Task | Command | Expected |
-|------|---------|----------|
-| Type check | npm run type-check | 0 errors |
-| Lint | npm run lint | 0 errors |
-| Unit tests | npm test | All pass, >80% coverage |
-| Integration | npm test:integration | All pass |
-| E2E | npm run test:e2e | All pass |
-| Build | npm run build | Success |
-| Smoke | npm run test:smoke | All pass |
+| Task        | Command              | Expected                |
+| ----------- | -------------------- | ----------------------- |
+| Type check  | npm run type-check   | 0 errors                |
+| Lint        | npm run lint         | 0 errors                |
+| Unit tests  | npm test             | All pass, >80% coverage |
+| Integration | npm test:integration | All pass                |
+| E2E         | npm run test:e2e     | All pass                |
+| Build       | npm run build        | Success                 |
+| Smoke       | npm run test:smoke   | All pass                |
 
 ---
 

@@ -315,7 +315,9 @@ describe('Feature Flag Controller - DNA-GOV-013', () => {
       const match = evaluateFlag('flag-1', { userEmail: 'admin@example.com' });
       expect(match.enabled).toBe(true);
 
-      const noMatch = evaluateFlag('flag-1', { userEmail: 'other@example.com' });
+      const noMatch = evaluateFlag('flag-1', {
+        userEmail: 'other@example.com',
+      });
       expect(noMatch.enabled).toBe(false);
     });
 
@@ -358,7 +360,9 @@ describe('Feature Flag Controller - DNA-GOV-013', () => {
 
       registerFlag(flag);
 
-      const match = evaluateFlag('flag-1', { tags: ['beta-tester', 'early-access'] });
+      const match = evaluateFlag('flag-1', {
+        tags: ['beta-tester', 'early-access'],
+      });
       expect(match.enabled).toBe(true);
 
       const noMatch = evaluateFlag('flag-1', { tags: ['other'] });
@@ -956,10 +960,14 @@ describe('Feature Flag Controller - DNA-GOV-013', () => {
       const betaUser2 = evaluateFlag('beta-feature', { userId: 'beta-user-2' });
       expect(betaUser2.enabled).toBe(true);
 
-      const taggedUser = evaluateFlag('beta-feature', { tags: ['beta-tester'] });
+      const taggedUser = evaluateFlag('beta-feature', {
+        tags: ['beta-tester'],
+      });
       expect(taggedUser.enabled).toBe(true);
 
-      const regularUser = evaluateFlag('beta-feature', { userId: 'regular-user' });
+      const regularUser = evaluateFlag('beta-feature', {
+        userId: 'regular-user',
+      });
       expect(regularUser.enabled).toBe(false);
     });
   });

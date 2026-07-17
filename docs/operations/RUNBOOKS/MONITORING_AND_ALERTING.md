@@ -25,24 +25,28 @@ Monitoring setup for production platform. Covers metric collection, alert config
 ### Data Sources
 
 **Application Logs**
+
 - Source: Vercel & Supabase
 - Format: JSON structured logs
 - Retention: 30 days
 - Use: Error tracking, debugging
 
 **Database Metrics**
+
 - Source: Supabase monitoring dashboard
 - Metrics: CPU, memory, disk, connections, query time
 - Frequency: Real-time
 - Use: Performance monitoring
 
 **Request Metrics**
+
 - Source: Vercel analytics
 - Metrics: Request count, latency, status codes
 - Frequency: Per request
 - Use: Availability and performance
 
 **Custom Metrics**
+
 - Source: Application instrumentation
 - Metrics: Business events, custom counters
 - Frequency: As events occur
@@ -66,10 +70,12 @@ Monitoring setup for production platform. Covers metric collection, alert config
 **Metric**: Health endpoint response status
 
 **Threshold**:
+
 - Health endpoint returns non-200 status
 - OR health endpoint doesn't respond within 10 seconds
 
 **Trigger**:
+
 ```bash
 # Manual test
 curl -s https://newspulse-ai.vercel.app/api/health | jq .
@@ -79,6 +85,7 @@ curl -s https://newspulse-ai.vercel.app/api/health | jq .
 ```
 
 **Action**:
+
 1. Verify service down (ping, access website)
 2. Check Vercel status page for outages
 3. If Vercel OK: Check database connection
@@ -96,14 +103,17 @@ curl -s https://newspulse-ai.vercel.app/api/health | jq .
 **Metric**: HTTP 5XX responses (server errors)
 
 **Threshold**:
+
 - Error rate >5% of requests
 - OR >100 errors in 1 minute
 
 **Trigger**:
+
 - Consecutive 5XX responses
 - Example: 3 requests in a row return 500
 
 **Action**:
+
 1. Check error logs (Supabase/Vercel dashboard)
 2. Identify error pattern (what endpoint, what cause)
 3. Determine scope (all users or specific workspace)
@@ -111,6 +121,7 @@ curl -s https://newspulse-ai.vercel.app/api/health | jq .
 5. Page on-call engineer if not already aware
 
 **Common causes**:
+
 - Deployment issue (new code)
 - Database migration incomplete
 - Database connectivity lost
@@ -118,6 +129,7 @@ curl -s https://newspulse-ai.vercel.app/api/health | jq .
 - Disk space full
 
 **Fix approach by cause**:
+
 - Code issue: Rollback and investigate
 - Database: Check connection pool and restart if needed
 - Disk: Clean up old logs/backups
@@ -132,13 +144,15 @@ curl -s https://newspulse-ai.vercel.app/api/health | jq .
 **Metric**: Database query average response time
 
 **Threshold**:
+
 - Average query time >500ms (for <100ms queries)
 - OR 99th percentile (P99) >2000ms
 - OR connection count >50
 
 **Trigger**:
+
 ```sql
-SELECT 
+SELECT
   mean_time,
   max_time,
   calls
@@ -148,6 +162,7 @@ LIMIT 5;
 ```
 
 **Action**:
+
 1. Identify slow query (see DATABASE_OPERATIONS.md)
 2. Check for missing indexes
 3. Check connection pool for leaks
@@ -156,6 +171,7 @@ LIMIT 5;
 6. Implement fix or escalate
 
 **Common causes**:
+
 - Missing index
 - N+1 queries (loop fetching)
 - Full table scan
@@ -171,14 +187,17 @@ LIMIT 5;
 **Metric**: Disk usage percentage
 
 **Threshold**:
+
 - Disk >90% full: Alert
 - Disk >95% full: Critical
 
 **Check**:
+
 - Supabase dashboard → Database → Monitoring
 - Disk usage shown (bytes used / total)
 
 **Action**:
+
 1. Estimate time until full (usage growth rate)
 2. Check what's taking space:
    - Data tables (largest ones)
@@ -202,14 +221,17 @@ LIMIT 5;
 **Metric**: CPU usage percentage
 
 **Threshold**:
+
 - CPU >80%: Alert and investigate
 - CPU >95%: Critical, may impact service
 
 **Check**:
+
 - Supabase dashboard → Database → Monitoring → CPU
 - Vercel deployment → Resources
 
 **Action**:
+
 1. Identify what's using CPU:
    - Check slow queries (see Database Operations)
    - Check for runaway processes
@@ -228,15 +250,18 @@ LIMIT 5;
 **Metric**: Vercel build status
 
 **Threshold**:
+
 - Build failed to complete
 - OR build completed but health check failed
 
 **Trigger**:
+
 - GitHub Actions CI/CD shows red ✗
 - Vercel dashboard shows deployment failed
 - Health endpoint returns non-200 after deploy
 
 **Action**:
+
 1. Check Vercel build logs for error
 2. Common failures:
    - Type error (TypeScript)
@@ -258,10 +283,12 @@ LIMIT 5;
 **Metric**: Auth endpoint returning errors
 
 **Threshold**:
+
 - /api/auth endpoints returning 5XX
 - Login failing for all users
 
 **Action**:
+
 1. Check Supabase auth status
 2. Verify database connectivity
 3. Check auth configuration
@@ -306,6 +333,7 @@ fi
 #### Database Alerts
 
 In Supabase dashboard:
+
 1. Go to Database → Monitoring
 2. Set alert thresholds:
    - CPU: >80%
@@ -318,6 +346,7 @@ In Supabase dashboard:
 **Problem**: Too many false alerts (alert fatigue)
 
 **Solution**: Adjust thresholds
+
 1. Review past 30 days of alerts
 2. Identify false positives (alerts that didn't indicate real problems)
 3. Raise threshold on those alerts
@@ -326,12 +355,14 @@ In Supabase dashboard:
 **Problem**: Missing real issues
 
 **Solution**: Lower thresholds
+
 1. Review incidents from past month
 2. Ask: "Would an alert have caught this?"
 3. If no: Lower threshold
 4. Example: Database query degradation → Lower from 1000ms to 500ms
 
-**Best practice**: 
+**Best practice**:
+
 - Review thresholds monthly
 - Adjust based on actual impact
 - Target: 90% of alerts are actionable
@@ -365,6 +396,7 @@ In Supabase dashboard:
 ### Severity Assessment
 
 **CRITICAL (P1)**:
+
 - Service down completely
 - Data loss or corruption
 - Security breach
@@ -372,18 +404,21 @@ In Supabase dashboard:
 - **Response time**: <5 minutes
 
 **HIGH (P2)**:
+
 - Service degraded (slow, errors)
 - Some users affected
 - Features broken
 - **Response time**: <30 minutes
 
 **MEDIUM (P3)**:
+
 - Minor feature issue
 - Performance degraded but acceptable
 - Single user affected
 - **Response time**: <2 hours
 
 **LOW (P4)**:
+
 - Cosmetic issue
 - Informational alert
 - **Response time**: <1 day
@@ -416,6 +451,7 @@ When you receive alert:
 **Alert**: "Health endpoint returning 500"
 
 **Investigation**:
+
 ```bash
 # Step 1: Verify alert
 curl -v https://newspulse-ai.vercel.app/api/health
@@ -432,15 +468,18 @@ curl https://newspulse-ai.vercel.app/api/health | jq '.components'
 ```
 
 **If database down**:
+
 - See DATABASE_OPERATIONS.md → Emergency Recovery
 - Restart database or restore from backup
 
 **If auth down**:
+
 - Check Supabase auth service status
 - Verify auth configuration
 - Restart service
 
 **If all down**:
+
 - Check Vercel deployment status
 - Check for recent deploy issues
 - Rollback if needed (see ROLLBACK.md)
@@ -450,6 +489,7 @@ curl https://newspulse-ai.vercel.app/api/health | jq '.components'
 **Alert**: "Error rate >5% (was <1%)"
 
 **Investigation**:
+
 ```bash
 # What errors are happening?
 # Check Supabase logs:
@@ -458,15 +498,16 @@ curl https://newspulse-ai.vercel.app/api/health | jq '.components'
 ```
 
 **Common patterns**:
+
 - `cannot acquire connection` → Connection pool issue
   - Action: Kill old connections, restart service
-  
+
 - `column does not exist` → Migration didn't run
   - Action: Apply pending migrations, restart
-  
+
 - `insufficient permissions` → RLS policy broken
   - Action: Check RLS policies, roll back recent changes
-  
+
 - `timeout` → Query too slow
   - Action: Add index, optimize query, or rollback
 
@@ -475,6 +516,7 @@ curl https://newspulse-ai.vercel.app/api/health | jq '.components'
 **Alert**: "Query average time >500ms"
 
 **Investigation**:
+
 ```sql
 -- Identify slowest queries
 SELECT query, mean_time, calls
@@ -487,6 +529,7 @@ LIMIT 5;
 ```
 
 **Actions by cause**:
+
 - Missing index → Add index
 - Full table scan → Add WHERE clause or index
 - N+1 pattern → Fix code to batch queries
@@ -497,6 +540,7 @@ LIMIT 5;
 **Alert**: "Disk 95% full"
 
 **Investigation**:
+
 ```sql
 -- What's using space?
 SELECT tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename))
@@ -506,6 +550,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
 
 **Actions**:
+
 - Delete old backups
 - Archive old data to storage
 - Drop old indexes
@@ -517,6 +562,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 **Alert**: "Vercel deployment failed"
 
 **Investigation**:
+
 1. Check Vercel dashboard → Deployments
 2. Find failed deployment
 3. Click to see error log
@@ -527,6 +573,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
    - `Health check failed` → Deploy completed but service down
 
 **Action**:
+
 - Fix error and redeploy
 - Or rollback to previous version (see ROLLBACK.md)
 
@@ -538,18 +585,19 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 Create dashboard showing:
 
-| Metric | Current | Target | Status |
-|--------|---------|--------|--------|
-| Uptime | _% | 99.5% | ✓ |
-| Error rate | _%  | <1% | ✓ |
-| P95 latency | __ms | <500ms | ✓ |
-| CPU | __% | <80% | ✓ |
-| Database connections | __ | <20 | ✓ |
-| Disk used | _% | <90% | ✓ |
+| Metric               | Current | Target | Status |
+| -------------------- | ------- | ------ | ------ |
+| Uptime               | _%      | 99.5%  | ✓      |
+| Error rate           | _%      | <1%    | ✓      |
+| P95 latency          | __ms    | <500ms | ✓      |
+| CPU                  | __%     | <80%   | ✓      |
+| Database connections | __      | <20    | ✓      |
+| Disk used            | _%      | <90%   | ✓      |
 
 ### Weekly Review
 
 Update these metrics in WEEKLY_OPS_REVIEW.md:
+
 - Uptime for past 7 days
 - Average error rate
 - Page load times
@@ -566,11 +614,13 @@ Update these metrics in WEEKLY_OPS_REVIEW.md:
 **Principle**: Alert only on actionable problems
 
 ❌ Bad alerts (create fatigue):
+
 - "CPU is 75%" (normal variation)
 - "Query took 105ms" (normal)
 - "User clicked button" (too detailed)
 
 ✅ Good alerts (actionable):
+
 - "Error rate >5% (was <1%)"
 - "Database slow (avg >500ms)"
 - "Service unreachable"
@@ -579,18 +629,22 @@ Update these metrics in WEEKLY_OPS_REVIEW.md:
 ### Notification Channels
 
 **Immediate (real-time)**:
+
 - CRITICAL alerts → SMS or pager
 - On-call engineer notified
 
 **Urgent (within 30 min)**:
+
 - HIGH alerts → Slack + email
 - Team notified
 
 **Important (within hours)**:
+
 - MEDIUM alerts → Email or dashboard
 - Can be reviewed in morning
 
 **FYI (no urgency)**:
+
 - LOW alerts → Dashboard only
 - Reviewed in weekly ops
 
@@ -632,6 +686,7 @@ For each alert, document:
 Access: https://supabase.com → Select project → Database → Monitoring
 
 Shows:
+
 - CPU, memory, disk usage
 - Connection count
 - Query performance
@@ -642,6 +697,7 @@ Shows:
 Access: https://vercel.com → Select project → Deployments
 
 Shows:
+
 - Deployment status
 - Build logs
 - Function performance
@@ -652,6 +708,7 @@ Shows:
 Access: Supabase → Logs (same dashboard as monitoring)
 
 Shows:
+
 - SQL execution
 - API requests
 - Errors

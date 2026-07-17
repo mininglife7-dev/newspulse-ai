@@ -13,6 +13,7 @@
 **Mission**: Inventory the current state, identify architecture, detect duplication, and identify risks.
 
 **Objectives**:
+
 - Map repository structure and content
 - Identify all governance and documentation layers
 - Detect architectural duplication and deprecated systems
@@ -21,6 +22,7 @@
 - Document existing risks and technical debt
 
 **Deliverables**:
+
 - Repository Assessment Report (this document section)
 - Duplication Inventory
 - Active Systems Catalog
@@ -28,6 +30,7 @@
 - Architecture Map
 
 **Verification Criteria**:
+
 - ✅ Complete file inventory across all directories
 - ✅ Git history reviewed for 50+ recent commits
 - ✅ All governance documents cataloged
@@ -55,26 +58,26 @@
 
 **Documentation Files**: ~300+ markdown files across root, docs/, and subdirectories
 
-| Location | Count | Status | Concern |
-|----------|-------|--------|---------|
-| Root level *.md | ~30 | Operational snapshots | Heavy duplication |
-| docs/governance/ | ~95 | Governance & decisions | Checkpoint overload |
-| docs/governor/ | ~85 | Executive baseline & deployment | Fragmented |
-| docs/infra/ | ~50 | Infrastructure & runbooks | Multiple competing runbooks |
-| docs/integrity/ | ~10 | Product health audits | Inconsistent format |
-| docs/customer/ | ~12 | Customer operations | Duplication with governance |
-| docs/compliance/ | ~2 | Compliance policy | Minimal coverage |
+| Location         | Count | Status                          | Concern                     |
+| ---------------- | ----- | ------------------------------- | --------------------------- |
+| Root level *.md  | ~30   | Operational snapshots           | Heavy duplication           |
+| docs/governance/ | ~95   | Governance & decisions          | Checkpoint overload         |
+| docs/governor/   | ~85   | Executive baseline & deployment | Fragmented                  |
+| docs/infra/      | ~50   | Infrastructure & runbooks       | Multiple competing runbooks |
+| docs/integrity/  | ~10   | Product health audits           | Inconsistent format         |
+| docs/customer/   | ~12   | Customer operations             | Duplication with governance |
+| docs/compliance/ | ~2    | Compliance policy               | Minimal coverage            |
 
 **Application Code**:
 
-| Layer | Status | LOC | Assessment |
-|-------|--------|-----|------------|
-| API Routes | Active | ~6,083 | 42 endpoint directories, significant duplication detected |
-| Pages | Active | ~19 customer-facing pages | Core routes implemented |
-| Components | Active | ~3 major systems | UI layer functional |
-| Library | Active | ~20 core modules | CEIS system primary value driver |
-| Tests | Partial | E2E + unit | ~70% estimated coverage |
-| Database Schema | Stable | ~30 tables | 1 recent cleanup migration |
+| Layer           | Status  | LOC                       | Assessment                                                |
+| --------------- | ------- | ------------------------- | --------------------------------------------------------- |
+| API Routes      | Active  | ~6,083                    | 42 endpoint directories, significant duplication detected |
+| Pages           | Active  | ~19 customer-facing pages | Core routes implemented                                   |
+| Components      | Active  | ~3 major systems          | UI layer functional                                       |
+| Library         | Active  | ~20 core modules          | CEIS system primary value driver                          |
+| Tests           | Partial | E2E + unit                | ~70% estimated coverage                                   |
+| Database Schema | Stable  | ~30 tables                | 1 recent cleanup migration                                |
 
 **Active Systems**:
 
@@ -136,7 +139,7 @@
    - CHECKPOINT-2026-07-10-* (3 variants)
    - CHECKPOINT-2026-07-12-*
    - CHECKPOINT-2026-07-16-*
-   - Plus CHECKPOINT-AUDIT-*, CHECKPOINT-EXECUTION-*, CHECKPOINT-PRE-*
+   - Plus CHECKPOINT-AUDIT-_, CHECKPOINT-EXECUTION-_, CHECKPOINT-PRE-*
    - Risk: Archive bloat, unclear which is actionable
 
 **Medium-Severity Duplication**:
@@ -150,6 +153,7 @@
 ### Active vs. Deprecated Code Systems
 
 **Active**: ✅
+
 - CEIS data extraction and reporting
 - EURO AI SaaS platform (workspace, inventory, assessment, evidence, obligations)
 - Supabase auth and schema
@@ -157,12 +161,14 @@
 - Observability endpoints
 
 **Unclear Status** (needs clarification):
+
 - `app/evolution/` — appears abandoned
 - `app/hercules/` — referenced in docs, unclear if active or reference implementation
 - `/api/cathedral-readiness/` — experimental?
 - `lib/feature-flag-controller.ts` — no flag infrastructure visible
 
 **Deprecated/Archive Candidates**:
+
 - Multiple checkpoint files (should move to archive/)
 - Phase-2/Phase-3 roadmaps (superseded by PHASE-2-ROADMAP.md and Phase 3 work)
 - Old governance snapshots (pre-consolidation)
@@ -170,29 +176,34 @@
 ### Architecture Issues
 
 **Problem 1: API Route Fragmentation**
+
 - 42 API route directories with overlapping concerns
 - No clear naming convention or domain structure
 - Unclear separation between alpha/beta/stable features
 - Risk: Inconsistent API contracts, maintenance burden
 
 **Problem 2: Documentation Authority**
+
 - ~300+ files with unclear versioning or currency
 - Multiple "source of truth" files for same concept
 - Checkpoint snapshots unclear if historical or current
 - Risk: Founder confusion, decision contradictions
 
 **Problem 3: Governance Layering**
+
 - Multiple Governor versions mentioned (v2, v3, Governor Ω, Hercules, Evolution, Cathedral, Living Organism)
 - CONSOLIDATION_REGISTER exists but not applied to codebase
 - Risk: Institutional confusion about authority and process
 
 **Problem 4: Test Coverage Gaps**
+
 - Integration tests separated from standard test run (by design, per recent commit)
 - Smoke tests exist but no monitoring of CI status
 - No automated customer journey verification
 - Risk: Behavioral regressions in customer flows undetected
 
 **Problem 5: Observability Incomplete**
+
 - Health endpoints exist but no centralized dashboard
 - Monitoring setup documented but not integrated
 - Alert configuration in docs, not in code
@@ -231,24 +242,25 @@
 
 ### Next Stages
 
-| Stage | Mission | Priority | Dependencies |
-|-------|---------|----------|--------------|
-| STAGE 1 | Governance Kernel — Establish Governor Ω authority | CRITICAL | STAGE 0 ✅ |
-| STAGE 2 | Repository Organization — Consolidate duplication | CRITICAL | STAGE 1 |
-| STAGE 3 | Engineering Standards — Workflow & templates | HIGH | STAGE 1 |
-| STAGE 4 | Knowledge Architecture — Documentation structure | HIGH | STAGE 2 |
-| STAGE 5 | Reusable Skills — Engineering automation | MEDIUM | STAGE 3 |
-| STAGE 6 | Customer Journey — End-to-end verification | HIGH | STAGE 5 |
-| STAGE 7 | Automation Architecture — Workflows & approval | MEDIUM | STAGE 6 |
-| STAGE 8 | Observability — Monitoring, logging, dashboards | MEDIUM | STAGE 6 |
-| STAGE 9 | Evidence Framework — Every feature evidence-backed | HIGH | STAGE 8 |
-| STAGE 10 | Production Readiness — Final institutional verification | CRITICAL | All prior |
+| Stage    | Mission                                                 | Priority | Dependencies |
+| -------- | ------------------------------------------------------- | -------- | ------------ |
+| STAGE 1  | Governance Kernel — Establish Governor Ω authority      | CRITICAL | STAGE 0 ✅   |
+| STAGE 2  | Repository Organization — Consolidate duplication       | CRITICAL | STAGE 1      |
+| STAGE 3  | Engineering Standards — Workflow & templates            | HIGH     | STAGE 1      |
+| STAGE 4  | Knowledge Architecture — Documentation structure        | HIGH     | STAGE 2      |
+| STAGE 5  | Reusable Skills — Engineering automation                | MEDIUM   | STAGE 3      |
+| STAGE 6  | Customer Journey — End-to-end verification              | HIGH     | STAGE 5      |
+| STAGE 7  | Automation Architecture — Workflows & approval          | MEDIUM   | STAGE 6      |
+| STAGE 8  | Observability — Monitoring, logging, dashboards         | MEDIUM   | STAGE 6      |
+| STAGE 9  | Evidence Framework — Every feature evidence-backed      | HIGH     | STAGE 8      |
+| STAGE 10 | Production Readiness — Final institutional verification | CRITICAL | All prior    |
 
 ---
 
 ## STAGE 0 Completion Evidence
 
 **Verification Checklist**:
+
 - ✅ Repository file structure mapped
 - ✅ ~300+ documentation files inventoried
 - ✅ API endpoints enumerated (42 route directories)
@@ -263,6 +275,7 @@
 **Completion Criteria Met**: All verification items complete. Stage 0 READY FOR STAGE 1.
 
 **Remaining Risks**:
+
 - RISK-001: Documentation authority confusion (mitigated by Stage 1)
 - RISK-002: API duplication (mitigated by Stage 2)
 - RISK-003: Governance fragmentation (mitigated by Stage 1)
@@ -270,6 +283,7 @@
 - RISK-005: Observability incomplete (mitigated by Stage 8)
 
 **Lessons Learned** (documented for LESSONS.md):
+
 1. **Fast iteration at scale produces documentation debt**: 300+ files indicate parallel sessions with checkpoint snapshots instead of versioned living documents.
 2. **Governance consolidation is prerequisite for architecture work**: Can't fix code duplication without authority clarity.
 3. **Institutional build requires sequential stages**: Attempting all at once produces fragmentation observed here.

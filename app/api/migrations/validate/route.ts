@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { analyzeMigration, formatBatchReport, type MigrationRiskLevel } from '@/lib/schema-migration-validator';
+import {
+  analyzeMigration,
+  formatBatchReport,
+  type MigrationRiskLevel,
+} from '@/lib/schema-migration-validator';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,9 +38,15 @@ export async function GET(req: Request) {
     const migrationsDir = './supabase/migrations';
 
     // Scan migrations directory
-    let migrationFiles: Array<{ name: string; sql: string; timestamp?: string }> = [];
+    let migrationFiles: Array<{
+      name: string;
+      sql: string;
+      timestamp?: string;
+    }> = [];
     if (fs.existsSync(migrationsDir)) {
-      const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql'));
+      const files = fs
+        .readdirSync(migrationsDir)
+        .filter((f) => f.endsWith('.sql'));
       migrationFiles = files.map((file) => ({
         name: file,
         sql: fs.readFileSync(path.join(migrationsDir, file), 'utf-8'),
@@ -45,15 +55,20 @@ export async function GET(req: Request) {
     }
 
     // Analyze all migrations
-    const reports = migrationFiles.map((m) => analyzeMigration(m.sql, m.name, m.timestamp));
+    const reports = migrationFiles.map((m) =>
+      analyzeMigration(m.sql, m.name, m.timestamp)
+    );
 
     // Determine if safe for deployment
     const anyBreaking = reports.some((r) => r.riskLevel === 'breaking');
     const anyHighRisk = reports.some((r) => r.riskLevel === 'high-risk');
 
     // Generate batch report
-    const overallRisk: MigrationRiskLevel =
-      anyBreaking ? 'breaking' : anyHighRisk ? 'high-risk' : 'safe';
+    const overallRisk: MigrationRiskLevel = anyBreaking
+      ? 'breaking'
+      : anyHighRisk
+        ? 'high-risk'
+        : 'safe';
     const batchReport = {
       files: reports,
       overallRisk,
@@ -67,7 +82,9 @@ export async function GET(req: Request) {
     const status = anyBreaking ? 400 : 200;
     const ok = !anyBreaking;
 
-    console.log(`[schema-validator] Scanned ${reports.length} migration(s): ${ok ? 'SAFE' : 'BLOCKED'}`);
+    console.log(
+      `[schema-validator] Scanned ${reports.length} migration(s): ${ok ? 'SAFE' : 'BLOCKED'}`
+    );
 
     return NextResponse.json(
       {

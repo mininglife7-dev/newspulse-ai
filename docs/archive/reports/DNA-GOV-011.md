@@ -3,7 +3,7 @@
 **Status:** Implemented  
 **Priority:** Medium  
 **Phase:** 2 (Evolution)  
-**Implemented:** 2026-07-11  
+**Implemented:** 2026-07-11
 
 ---
 
@@ -16,6 +16,7 @@ Detect unusual spending patterns across Vercel and Supabase before they become b
 ## Problem Statement
 
 Production deployments can incur unexpected costs due to:
+
 - Database query inefficiencies (N+1 queries, missing indexes)
 - Function invocation spikes (edge functions, API calls)
 - Data transfer overages (CDN, external APIs)
@@ -32,10 +33,10 @@ Production deployments can incur unexpected costs due to:
 
 Established normal spend ranges for Hobby/Starter tiers:
 
-| Provider | Baseline | High Threshold | Critical Threshold |
-|----------|----------|-------|---------|
-| **Vercel** | $15/mo (pro-rata daily: $0.50) | $45/mo (3x) | $45/mo (3x+) |
-| **Supabase** | $30/mo (pro-rata daily: $1.00) | $60/mo (2x) | $120/mo (4x+) |
+| Provider     | Baseline                       | High Threshold | Critical Threshold |
+| ------------ | ------------------------------ | -------------- | ------------------ |
+| **Vercel**   | $15/mo (pro-rata daily: $0.50) | $45/mo (3x)    | $45/mo (3x+)       |
+| **Supabase** | $30/mo (pro-rata daily: $1.00) | $60/mo (2x)    | $120/mo (4x+)      |
 
 These are conservative (typical hobby costs). As usage grows, the rolling 30-day average becomes the effective baseline.
 
@@ -67,6 +68,7 @@ These are conservative (typical hobby costs). As usage grows, the rolling 30-day
 **Purpose:** On-demand cost anomaly detection with history update.
 
 **Response (200 OK):**
+
 ```json
 {
   "ok": true,
@@ -88,6 +90,7 @@ These are conservative (typical hobby costs). As usage grows, the rolling 30-day
 ```
 
 **Response (503 Service Unavailable if critical anomaly):**
+
 ```json
 {
   "ok": false,
@@ -117,6 +120,7 @@ These are conservative (typical hobby costs). As usage grows, the rolling 30-day
 **Manual trigger:** `workflow_dispatch`
 
 Runs `/api/cost-anomaly` and logs results:
+
 - ✅ No anomalies → Exit 0
 - ⚠️ High anomaly → Exit 0, log warning
 - 🔴 Critical anomaly → Exit 1 (failure notification)
@@ -126,6 +130,7 @@ Runs `/api/cost-anomaly` and logs results:
 ## Integration with DNA-005
 
 Anomalies detected by DNA-GOV-011 are automatically:
+
 1. Converted to alert format via `anomaliesToAlerts()`
 2. Recorded to the alert hub via `recordAlert()`
 3. Included in `GET /api/alerts` unified endpoint
@@ -136,11 +141,13 @@ Anomalies detected by DNA-GOV-011 are automatically:
 ## Required Environment Variables
 
 For Vercel cost checks:
+
 ```bash
 VERCEL_TOKEN=<bearer-token-from-vercel-settings>
 ```
 
 For Supabase cost checks:
+
 ```bash
 SUPABASE_API_TOKEN=<api-key-from-supabase>
 SUPABASE_PROJECT_ID=<project-ref-id>
@@ -155,10 +162,12 @@ Both are optional. If missing, that provider's check is skipped (graceful degrad
 History stored in `.cost-history/` (version controlled in `.gitignore`):
 
 **Files:**
+
 - `.cost-history/vercel-history.json` — Daily Vercel spend (90-day window)
 - `.cost-history/supabase-history.json` — Daily Supabase spend (90-day window)
 
 **Format:**
+
 ```json
 [
   {
@@ -182,6 +191,7 @@ History stored in `.cost-history/` (version controlled in `.gitignore`):
 **Tests:** 17/17 passing
 
 Coverage:
+
 - ✅ Report structure validation
 - ✅ API error handling (Vercel 401, Supabase unavailable)
 - ✅ Baseline threshold detection (critical, high, normal)

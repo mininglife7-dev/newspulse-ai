@@ -1,4 +1,5 @@
 # Checkpoint Contingency Procedures
+
 **Scope:** 2026-07-15 14:30 UTC to 2026-07-17 08:00 UTC (41 hours)  
 **Purpose:** Handle every conceivable failure mode during final countdown to checkpoint audit  
 **Owner:** Governor (autonomous); escalates to Lalit for business decisions
@@ -10,6 +11,7 @@
 **Overall Risk Level:** 🟢 LOW
 
 **Probability of Each Scenario:**
+
 - ✅ **Perfect execution** (no issues): 85%
 - 🟡 **Minor issue, easily fixed**: 12%
 - 🔴 **Major issue, needs escalation**: 3%
@@ -25,7 +27,8 @@
 
 **Probability:** 2% (code is stable, all tests passing)
 
-**Impact:** 
+**Impact:**
+
 - Cannot deploy fixes
 - May prevent traffic to endpoints
 - Measurement window data collection halted
@@ -33,6 +36,7 @@
 **Immediate Response (First 15 Minutes):**
 
 1. **Diagnose:**
+
    ```
    Q1: Did anything change in the code? (No → likely infra issue; Yes → likely code issue)
    Q2: When did it start? (Last 24h → my changes; Before → someone else's changes)
@@ -58,7 +62,7 @@
    - Search for error patterns: `error`, `failed`, `timeout`, `connection`
    - Check when issue started: Compare to last successful deployment
    - Run locally: `npm run build` to see if build works locally
-   
+
 5. **Recovery Procedures:**
    - **If build error:** Fix code locally, test, re-push
    - **If dependency error:** Verify package.json matches expected versions
@@ -72,6 +76,7 @@
    - Measurement window continues on stable version
 
 **Escalation to Lalit:**
+
 - Status: Deployment is down/fixing/recovered
 - Time to fix: X minutes
 - Impact on checkpoint: Can still proceed (checkpoint uses SQL queries, not live API)
@@ -86,6 +91,7 @@
 **Probability:** 1% (Supabase is managed service; very rare outages)
 
 **Impact:**
+
 - All /api/obligations endpoints fail
 - Measurement data cannot be collected
 - System is unusable
@@ -105,6 +111,7 @@
    - If URLs are wrong: Correct them and redeploy
 
 3. **Test Connection Locally:**
+
    ```bash
    # In local terminal, try to connect to Supabase
    # This verifies if issue is network-related or auth-related
@@ -122,6 +129,7 @@
 
 5. **Check for Data Corruption:**
    - Once connection is restored, verify data:
+
    ```sql
    SELECT COUNT(*) FROM obligations;
    SELECT COUNT(*) FROM assessments;
@@ -133,6 +141,7 @@
    - If data is corrupted: See "Scenario 5: Data Corruption" below
 
 **Escalation to Lalit:**
+
 - Status: Supabase down/recovered
 - Duration: X minutes
 - Data status: Intact / Corrupted
@@ -147,6 +156,7 @@
 **Probability:** <1% (policies deployed and tested)
 
 **Impact:**
+
 - Users cannot access obligations (permission denied)
 - Measurement data collection is blocked
 - System appears broken to end users
@@ -154,19 +164,21 @@
 **Immediate Response (First 15 Minutes):**
 
 1. **Verify RLS Policies Exist:**
+
    ```sql
    -- In Supabase SQL Editor
-   SELECT tablename, policyname, permissive 
-   FROM pg_policies 
+   SELECT tablename, policyname, permissive
+   FROM pg_policies
    WHERE tablename = 'obligations'
    ORDER BY policyname;
    ```
-   
+
    - Should return 4 policies (SELECT, INSERT, UPDATE, DELETE)
    - If 0 policies: Policies were accidentally dropped or schema wasn't deployed
    - If >0 policies: Policies exist but may be buggy
 
 2. **Test Policy Access Manually:**
+
    ```sql
    -- Check if you can read obligations as the current user
    SELECT COUNT(*) FROM obligations;
@@ -191,11 +203,13 @@
    ```
 
 **Recovery:**
+
 - Once policies are verified, re-test API endpoint
 - `/api/obligations` should return 200 with data
 - If still 403, likely issue is with user session (not policy)
 
 **Escalation to Lalit:**
+
 - Status: RLS policy issue (diagnosed / fixed)
 - Impact: Users cannot access data temporarily
 - Action: May need to extend measurement window if users can't use system during measurement period
@@ -209,6 +223,7 @@
 **Probability:** 2% (system is simple; queries are indexed)
 
 **Impact:**
+
 - User experience is poor (feels broken)
 - May discourage adoption during measurement window
 - Checkpoint data may show artificially low engagement (users gave up due to slowness)
@@ -222,15 +237,16 @@
    - **Query Performance:** Look for queries with high avg time (>1000ms)
 
 2. **Find Slow Queries:**
+
    ```sql
    -- In Supabase SQL Editor
-   SELECT query, calls, total_time, mean_time 
-   FROM pg_stat_statements 
-   WHERE mean_time > 1000 
-   ORDER BY mean_time DESC 
+   SELECT query, calls, total_time, mean_time
+   FROM pg_stat_statements
+   WHERE mean_time > 1000
+   ORDER BY mean_time DESC
    LIMIT 10;
    ```
-   
+
    - If slow queries found: Identify which API endpoint they're from
    - If no queries: Issue is not in database (likely Vercel function overhead)
 
@@ -245,11 +261,13 @@
    - If unexpected (no reason for spike): Investigate cause
 
 **Recovery:**
+
 - Restart typically fixes the issue
 - Monitor Supabase CPU for 30 minutes to ensure it stays low
 - If issue returns, may indicate a real problem (not just a spike)
 
 **Escalation to Lalit:**
+
 - Status: Performance degradation (temporary / persistent)
 - Severity: High (affects user experience during measurement)
 - Options: Wait for restart to fix / Extend measurement window / Investigate root cause
@@ -263,6 +281,7 @@
 **Probability:** <1% (schema has constraints; RLS prevents cross-workspace access)
 
 **Impact:**
+
 - Measurement data is unreliable
 - Checkpoint metrics will be wrong
 - Cannot trust adoption data to make Phase 3 decision
@@ -270,20 +289,21 @@
 **Immediate Response (First 30 Minutes):**
 
 1. **Detect Corruption:**
+
    ```sql
    -- Run these checks
-   
+
    -- Check for growth spike
    SELECT COUNT(*) FROM obligations WHERE created_at >= now() - interval '1 hour';
    -- Expected: <50 (normal hourly rate). If >500, possible loop.
-   
+
    -- Check for orphaned records
    SELECT COUNT(*) FROM obligations WHERE workspace_id NOT IN (SELECT id FROM workspaces);
    -- Expected: 0. If >0, orphaned data exists.
-   
+
    -- Check for duplicates
-   SELECT title, COUNT(*) FROM obligations 
-   GROUP BY title 
+   SELECT title, COUNT(*) FROM obligations
+   GROUP BY title
    HAVING COUNT(*) > 1
    ORDER BY COUNT(*) DESC;
    -- Expected: 0 (no duplicate titles). If >0, duplicates exist.
@@ -301,17 +321,18 @@
    - Isolate the issue (identify which workspace is affected)
 
 4. **Analysis:**
+
    ```sql
    -- Find which workspace has the problem
-   SELECT workspace_id, COUNT(*) 
-   FROM obligations 
+   SELECT workspace_id, COUNT(*)
+   FROM obligations
    WHERE created_at >= now() - interval '1 hour'
-   GROUP BY workspace_id 
+   GROUP BY workspace_id
    ORDER BY COUNT(*) DESC;
-   
+
    -- Find when corruption started
-   SELECT DATE(created_at), COUNT(*) 
-   FROM obligations 
+   SELECT DATE(created_at), COUNT(*)
+   FROM obligations
    WHERE created_at >= '2026-07-10'
    GROUP BY DATE(created_at)
    ORDER BY DATE(created_at);
@@ -321,9 +342,10 @@
 5. **Recovery Options:**
 
    **Option A: Delete Corrupted Data**
+
    ```sql
    -- If you know which workspace is affected:
-   DELETE FROM obligations 
+   DELETE FROM obligations
    WHERE workspace_id = 'CORRUPTED_WORKSPACE_ID'
    AND created_at >= CORRUPTION_START_TIME;
    ```
@@ -338,6 +360,7 @@
    - Checkpoint uses data from clean period only
 
 **Escalation to Lalit:**
+
 - Status: Data corruption detected (scope: X obligations in Y workspace)
 - Root cause: [loop / import gone wrong / other]
 - Options: Delete corrupted data / Restore backup / Extend measurement window
@@ -353,6 +376,7 @@
 **Probability:** 1% (parallel sessions may merge breaking changes)
 
 **Impact:**
+
 - New deployments are broken
 - Cannot deploy fixes if other changes needed
 - May need to rollback
@@ -370,6 +394,7 @@
    - **If unclear:** Revert to last known-good commit temporarily
 
 3. **Testing Before Re-Deploy:**
+
    ```bash
    npm run test    # Ensure all tests pass
    npm run build   # Ensure build succeeds
@@ -379,6 +404,7 @@
 4. **Deploy Only When All Pass**
 
 **Escalation to Lalit:**
+
 - Status: Code issue (identified / fixed / reverted)
 - Impact: Brief downtime (X minutes) during testing
 - Measurement window: Continues normally
@@ -392,6 +418,7 @@
 **Probability:** 5% (Lalit hasn't deployed schema yet; code-side is ready)
 
 **Impact:**
+
 - System cannot function
 - No measurement data can be collected
 - Measurement window is blocked
@@ -399,13 +426,14 @@
 **Immediate Response (First 5 Minutes):**
 
 1. **Verify Schema Status:**
+
    ```sql
    -- In Supabase SQL Editor
    SELECT table_name FROM information_schema.tables
    WHERE table_schema = 'public'
    ORDER BY table_name;
    ```
-   
+
    - Should see 13+ tables (obligations, assessments, workspaces, etc.)
    - If only see 'auth' table or nothing: Schema was not deployed
 
@@ -423,6 +451,7 @@
 **This Is Lalit's Action Item**
 
 **Escalation to Lalit:**
+
 - Status: Schema not deployed
 - Action: Deploy schema using instructions in SUPABASE-DEPLOYMENT-VERIFICATION.md
 - Time required: 10-15 minutes
@@ -438,6 +467,7 @@
 **Probability:** 30% (depends on distribution of system to customers)
 
 **Impact:**
+
 - This is actually GOOD data (tells us adoption is low)
 - NOT a failure - this is a valid measurement result
 - Means Phase 3 may need to wait; product-market fit work comes first
@@ -445,12 +475,14 @@
 **This Is Not a Problem**
 
 **What It Means:**
+
 - System works (code is correct, data collection is working)
 - Adoption is low (0 signups means no one is using it)
 - Measurement is valid (accurate measurement of true adoption)
 - Next decision: Investigate why adoption is low, improve messaging/distribution, re-measure
 
 **Escalation to Lalit:**
+
 - Status: Measurement window complete; adoption is 0
 - Interpretation: System works; adoption strategy needs adjustment
 - Action: Pivot to improving adoption (better messaging, wider distribution) before Phase 3
@@ -465,6 +497,7 @@
 **Probability:** 5% (parallel sessions may make changes)
 
 **Impact:**
+
 - Cannot push changes
 - Brief delay in deployment
 - Usually easily resolved
@@ -472,6 +505,7 @@
 **Immediate Response (First 10 Minutes):**
 
 1. **See the Conflicts:**
+
    ```bash
    git rebase origin/main
    # If conflicts: Will show which files have conflicts
@@ -482,6 +516,7 @@
    - Look for `<<<<<<<`, `=======`, `>>>>>>>`
    - Choose which version to keep (usually keep both if governance docs)
    - For sequential decisions: Re-number to avoid duplicates
+
    ```bash
    git add <resolved-file>
    git rebase --continue
@@ -495,6 +530,7 @@
 **This Is Routine Maintenance**
 
 **Escalation to Lalit:**
+
 - Usually no escalation needed (handled autonomously)
 - Only if conflict is in critical file and unclear how to resolve
 
@@ -507,6 +543,7 @@
 **Probability:** <1% (environment is managed in cloud)
 
 **Impact:**
+
 - Brief connectivity loss
 - Cannot push changes during outage
 - Measurement window continues unaffected (systems are in cloud)
@@ -527,22 +564,22 @@
 
 **Key Events:**
 
-| Time | Event | Risk | Action |
-|------|-------|------|--------|
-| 08:00 | Pre-verification checklist | Low | Lalit runs checks; confirms GO/NO-GO |
-| 12:00 | System monitoring | Low | Monitor Supabase CPU, Vercel errors |
-| 18:00 | Final sanity check | Low | Verify build still passes; deployment still green |
-| 02:00 | Overnight quiet time | Very Low | Automated monitoring only |
-| 08:00 | Checkpoint begins | Low | All systems should be green |
+| Time  | Event                      | Risk     | Action                                            |
+| ----- | -------------------------- | -------- | ------------------------------------------------- |
+| 08:00 | Pre-verification checklist | Low      | Lalit runs checks; confirms GO/NO-GO              |
+| 12:00 | System monitoring          | Low      | Monitor Supabase CPU, Vercel errors               |
+| 18:00 | Final sanity check         | Low      | Verify build still passes; deployment still green |
+| 02:00 | Overnight quiet time       | Very Low | Automated monitoring only                         |
+| 08:00 | Checkpoint begins          | Low      | All systems should be green                       |
 
 **Contingency During This Window:**
 
-| Issue | Response Time | Impact | Escalation |
-|-------|---|---|---|
-| Build fails | <15 min | High | Fix/rollback |
-| Database slow | <10 min | Medium | Monitor/restart |
-| RLS policy fails | <30 min | Critical | Re-deploy schema |
-| Data corruption | <1 hour | Critical | Extend window |
+| Issue            | Response Time | Impact   | Escalation       |
+| ---------------- | ------------- | -------- | ---------------- |
+| Build fails      | <15 min       | High     | Fix/rollback     |
+| Database slow    | <10 min       | Medium   | Monitor/restart  |
+| RLS policy fails | <30 min       | Critical | Re-deploy schema |
+| Data corruption  | <1 hour       | Critical | Extend window    |
 
 ---
 
@@ -585,15 +622,15 @@ ESCALATION MESSAGE FORMAT:
 
 **These 7 items must be green before checkpoint begins:**
 
-| Item | How to Check | Green State |
-|------|--------------|------------|
-| Deployment | Vercel dashboard | Green status, last build successful |
-| API Endpoints | Vercel Functions tab | All 3 critical endpoints <500ms p95, 0% errors |
-| Database | Supabase Monitoring | CPU <50%, connections <20, no slow queries |
-| Data Integrity | Checkpoint-Audit queries | No orphans, no unexpected growth, data is clean |
-| Error Rate | Vercel Logs | 0 critical errors in last 24h |
-| Code Quality | Local: `npm test` | All tests passing, lint 0 errors, build clean |
-| Schema Deployed | Supabase SQL Editor | 13+ tables exist, RLS policies in place |
+| Item            | How to Check             | Green State                                     |
+| --------------- | ------------------------ | ----------------------------------------------- |
+| Deployment      | Vercel dashboard         | Green status, last build successful             |
+| API Endpoints   | Vercel Functions tab     | All 3 critical endpoints <500ms p95, 0% errors  |
+| Database        | Supabase Monitoring      | CPU <50%, connections <20, no slow queries      |
+| Data Integrity  | Checkpoint-Audit queries | No orphans, no unexpected growth, data is clean |
+| Error Rate      | Vercel Logs              | 0 critical errors in last 24h                   |
+| Code Quality    | Local: `npm test`        | All tests passing, lint 0 errors, build clean   |
+| Schema Deployed | Supabase SQL Editor      | 13+ tables exist, RLS policies in place         |
 
 **If ANY item is not green:** Do NOT proceed to checkpoint. Fix the issue first.
 

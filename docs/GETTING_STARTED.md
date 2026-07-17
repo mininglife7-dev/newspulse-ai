@@ -28,6 +28,7 @@ DEMO_MODE=true npm run dev
 ```
 
 **Demo mode behavior:**
+
 - Search returns mock articles (same data regardless of keyword)
 - History is empty (searches not persisted)
 - All pages work normally (just with sample data)
@@ -42,6 +43,7 @@ To use real news search and AI summaries, configure these services:
 ### 1. Get API Keys
 
 #### Firecrawl (Web Search & Scraping)
+
 ```bash
 # Visit https://firecrawl.dev
 # Sign up for free account
@@ -50,6 +52,7 @@ To use real news search and AI summaries, configure these services:
 ```
 
 #### OpenAI (Article Summarization)
+
 ```bash
 # Visit https://platform.openai.com/api-keys
 # Create new secret key
@@ -57,6 +60,7 @@ To use real news search and AI summaries, configure these services:
 ```
 
 #### Supabase (Search History Storage)
+
 ```bash
 # Visit https://supabase.com/dashboard
 # Create new project
@@ -104,7 +108,7 @@ CREATE TABLE public.news_searches (
 ALTER TABLE public.news_searches ENABLE ROW LEVEL SECURITY;
 
 -- Allow anyone to read (anon key)
-CREATE POLICY "Enable read access for all users" 
+CREATE POLICY "Enable read access for all users"
 ON public.news_searches FOR SELECT USING (true);
 
 -- Allow service role to insert
@@ -236,6 +240,7 @@ npm run test -- --coverage
 
 **Environment Variables:**
 Add to Vercel project settings:
+
 - `FIRECRAWL_API_KEY`
 - `OPENAI_API_KEY`
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -245,6 +250,7 @@ Add to Vercel project settings:
 ### Deploy to Other Platforms
 
 The app is a standard Next.js application and can be deployed to:
+
 - AWS Amplify
 - Netlify
 - Docker (containerized)
@@ -255,20 +261,24 @@ The app is a standard Next.js application and can be deployed to:
 ## Troubleshooting
 
 ### "Missing FIRECRAWL_API_KEY"
+
 - Run with `DEMO_MODE=true` to use mock data
 - Or get API key from https://firecrawl.dev
 
 ### "Missing Supabase credentials"
+
 - Set up Supabase project and add keys to `.env.local`
 - Or run with `DEMO_MODE=true` to skip persistence
 
 ### Port 3000 already in use
+
 ```bash
 # Use a different port
 PORT=3001 npm run dev
 ```
 
 ### TypeScript errors
+
 ```bash
 # Rebuild TypeScript
 npm run type-check
@@ -279,6 +289,7 @@ npm install
 ```
 
 ### Tests fail
+
 ```bash
 # Reset modules and try again
 npm run test -- --reporter=verbose
@@ -293,24 +304,31 @@ npm run test
 ## Development Tips
 
 ### 1. Use Demo Mode During Development
+
 ```bash
 DEMO_MODE=true npm run dev
 ```
+
 This avoids burning through API quota during development.
 
 ### 2. Check API Status
+
 ```bash
 curl http://localhost:3000/api/health
 ```
+
 Shows which services are configured.
 
 ### 3. View Console Logs
+
 Check browser console (`Cmd+Option+J` on Mac, `Ctrl+Shift+J` on Windows) for client-side errors.
 
 ### 4. Inspect Network Requests
+
 Use browser DevTools → Network tab to see API responses and errors.
 
 ### 5. Read API Documentation
+
 See `docs/API.md` for complete endpoint reference.
 
 ---

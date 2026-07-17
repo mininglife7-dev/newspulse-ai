@@ -132,7 +132,9 @@ describe('Error Rate Monitor (DNA-GOV-004)', () => {
       const report = getErrorRateReport();
 
       expect(report.summary.endpointsWithErrors).toBe(1);
-      expect(report.endpoints.find((e) => e.endpoint === '/api/workspace')).toBeDefined();
+      expect(
+        report.endpoints.find((e) => e.endpoint === '/api/workspace')
+      ).toBeDefined();
     });
 
     it('tracks only recent errors in window', () => {

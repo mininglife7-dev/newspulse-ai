@@ -12,7 +12,11 @@
  * without cross-contamination.
  */
 
-import { HerculesKernel, type Enterprise, type Objective } from './hercules-kernel';
+import {
+  HerculesKernel,
+  type Enterprise,
+  type Objective,
+} from './hercules-kernel';
 
 export interface Enterprise002State {
   enterprise: Enterprise;
@@ -35,14 +39,18 @@ export function initializeEnterprise002(): Enterprise002State {
   // Check if already registered
   const existing = kernel.getEnterprise('governance-002');
   if (existing) {
-    console.log('[Enterprise 002 Init] Governance enterprise already registered');
+    console.log(
+      '[Enterprise 002 Init] Governance enterprise already registered'
+    );
     const objectives = existing.objectives || [];
 
     return {
       enterprise: existing,
       objectives,
-      mission: 'Autonomous governance infrastructure proving multi-enterprise isolation',
-      operatingModel: 'HERCULES-native governance with independent authority matrix',
+      mission:
+        'Autonomous governance infrastructure proving multi-enterprise isolation',
+      operatingModel:
+        'HERCULES-native governance with independent authority matrix',
       keyConstraints: [
         'Zero cross-enterprise data visibility',
         'Independent task queue and priority ordering',
@@ -167,8 +175,10 @@ export function initializeEnterprise002(): Enterprise002State {
   return {
     enterprise,
     objectives,
-    mission: 'Autonomous governance infrastructure proving multi-enterprise isolation',
-    operatingModel: 'HERCULES-native governance with independent authority matrix',
+    mission:
+      'Autonomous governance infrastructure proving multi-enterprise isolation',
+    operatingModel:
+      'HERCULES-native governance with independent authority matrix',
     keyConstraints: [
       'Zero cross-enterprise data visibility',
       'Independent task queue and priority ordering',
@@ -197,8 +207,10 @@ export function getEnterprise002State(): Enterprise002State | null {
   return {
     enterprise,
     objectives,
-    mission: 'Autonomous governance infrastructure proving multi-enterprise isolation',
-    operatingModel: 'HERCULES-native governance with independent authority matrix',
+    mission:
+      'Autonomous governance infrastructure proving multi-enterprise isolation',
+    operatingModel:
+      'HERCULES-native governance with independent authority matrix',
     keyConstraints: [
       'Zero cross-enterprise data visibility',
       'Independent task queue and priority ordering',

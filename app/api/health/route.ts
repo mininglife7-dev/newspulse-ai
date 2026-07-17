@@ -29,15 +29,24 @@ export async function GET() {
       if (error) {
         dbOk = false;
         dbStatus = `error: ${error.message}`;
-        logger.error('Database health check failed', 'DB_HEALTH_CHECK_ERROR', error);
+        logger.error(
+          'Database health check failed',
+          'DB_HEALTH_CHECK_ERROR',
+          error
+        );
       } else {
         dbOk = true;
         dbStatus = 'ok';
       }
     } catch (err) {
       dbOk = false;
-      dbStatus = err instanceof Error ? `error: ${err.message}` : 'unknown error';
-      logger.error('Database health check exception', 'DB_HEALTH_CHECK_EXCEPTION', err);
+      dbStatus =
+        err instanceof Error ? `error: ${err.message}` : 'unknown error';
+      logger.error(
+        'Database health check exception',
+        'DB_HEALTH_CHECK_EXCEPTION',
+        err
+      );
     }
   }
 
@@ -48,7 +57,8 @@ export async function GET() {
       ok: allOk,
       status: allOk ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
-      uptime_s: typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
+      uptime_s:
+        typeof process !== 'undefined' ? Math.floor(process.uptime()) : null,
       db: dbStatus,
       checks,
     },

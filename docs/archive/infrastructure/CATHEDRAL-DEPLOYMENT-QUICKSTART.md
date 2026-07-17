@@ -1,4 +1,5 @@
 # Cathedral Deployment Quick-Start
+
 ## When Supabase Credentials Arrive
 
 **Timeline:** 30 minutes total  
@@ -14,6 +15,7 @@ Once you have Supabase credentials, create file:
 **Path:** `/home/user/newspulse-ai/.env.local`
 
 **Contents:**
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
@@ -21,6 +23,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
 ```
 
 **Where to get these values:**
+
 - Log in to https://app.supabase.com
 - Select your project
 - Go to Settings → API
@@ -33,6 +36,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
 Once `.env.local` is in place, I will execute:
 
 ### Phase 1: Schema Deployment (10 min)
+
 ```bash
 # Load schema.sql into Supabase SQL Editor
 # Execute all schema migrations
@@ -42,9 +46,10 @@ Once `.env.local` is in place, I will execute:
 **Expected output:**
 ✅ All tables exist  
 ✅ All indexes created  
-✅ RLS policies active  
+✅ RLS policies active
 
 ### Phase 2: Connectivity Test (5 min)
+
 ```bash
 # Test API connection to Supabase
 # Verify health endpoint responds
@@ -54,9 +59,10 @@ Once `.env.local` is in place, I will execute:
 **Expected output:**
 ✅ `/api/health` returns 200  
 ✅ Database connection working  
-✅ Authentication ready  
+✅ Authentication ready
 
 ### Phase 3: Signup Flow Test (5 min)
+
 ```bash
 # Test complete customer signup
 # Verify email confirmation
@@ -68,9 +74,10 @@ Once `.env.local` is in place, I will execute:
 ✅ New user can sign up  
 ✅ Confirmation email sent  
 ✅ Profile created in database  
-✅ User can access workspace  
+✅ User can access workspace
 
 ### Phase 4: Verification & Documentation (5 min)
+
 ```bash
 # Produce deployment evidence
 # Update deployment status
@@ -80,7 +87,7 @@ Once `.env.local` is in place, I will execute:
 **Expected output:**
 ✅ Deployment evidence attached  
 ✅ Documentation updated  
-✅ Changes committed  
+✅ Changes committed
 
 ---
 
@@ -94,6 +101,7 @@ When Governor reports deployment complete:
 4. Click "Merge"
 
 **What gets deployed to main:**
+
 - DNA-012: Schema Migration Validator
 - DNA-013: Feature Flag Controller
 - DNA-015: Deployment Canary
@@ -104,15 +112,15 @@ When Governor reports deployment complete:
 
 ## Timeline
 
-| Step | Actor | Duration | Status |
-|------|-------|----------|--------|
-| Provide credentials | Founder | 5 min | 🔴 WAITING |
-| Deploy schema | Governor | 10 min | ⏳ READY |
-| Test connectivity | Governor | 5 min | ⏳ READY |
-| Test signup flow | Governor | 5 min | ⏳ READY |
-| Verify & document | Governor | 5 min | ⏳ READY |
-| Merge PR #95 | Founder | 2 min | ⏳ READY |
-| **TOTAL** | — | **30 min** | 🔴 BLOCKED |
+| Step                | Actor    | Duration   | Status     |
+| ------------------- | -------- | ---------- | ---------- |
+| Provide credentials | Founder  | 5 min      | 🔴 WAITING |
+| Deploy schema       | Governor | 10 min     | ⏳ READY   |
+| Test connectivity   | Governor | 5 min      | ⏳ READY   |
+| Test signup flow    | Governor | 5 min      | ⏳ READY   |
+| Verify & document   | Governor | 5 min      | ⏳ READY   |
+| Merge PR #95        | Founder  | 2 min      | ⏳ READY   |
+| **TOTAL**           | —        | **30 min** | 🔴 BLOCKED |
 
 **Total time to production:** ~30 minutes
 
@@ -121,18 +129,20 @@ When Governor reports deployment complete:
 ## What Changes After Deployment
 
 ### Immediately Available
+
 ✅ Customer signup enabled  
 ✅ Email authentication working  
 ✅ Database persistence  
 ✅ Multi-tenant data isolation  
 ✅ Feature flags operational  
-✅ Canary deployment enabled  
+✅ Canary deployment enabled
 
 ### Next Phase (2026-09-01 Launch)
+
 ✅ Accept first customers  
 ✅ Monitor production metrics  
 ✅ Execute gradual rollout strategy  
-✅ Respond to issues via canary deployment  
+✅ Respond to issues via canary deployment
 
 ---
 
@@ -189,4 +199,3 @@ If deployment fails or blockers arise:
 **Document Status:** READY FOR DEPLOYMENT  
 **Last Updated:** 2026-07-12  
 **Maintained By:** Governor Omega
-

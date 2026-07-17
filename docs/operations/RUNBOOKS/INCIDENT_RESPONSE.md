@@ -70,6 +70,7 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 **Technical Lead Actions**:
 
 1. **Check system health**
+
    ```bash
    # Health endpoints
    curl -s https://newspulse-ai.vercel.app/api/health | jq .
@@ -90,6 +91,7 @@ Step-by-step procedure for detecting, responding to, and recovering from product
      - Infinite redirect loop
 
 3. **Check recent deployments**
+
    ```bash
    git log --oneline main -n 10
    ```
@@ -121,7 +123,8 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 
 **If cause is load/performance issue** → See Performance Recovery section below
 
-**If cause is unknown** → 
+**If cause is unknown** →
+
 1. Check if problem is self-healing (traffic reducing, cache clearing)
 2. Wait 5 minutes while monitoring
 3. If still occurring, escalate to database/platform support
@@ -135,6 +138,7 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 **Goal**: Confirm service is restored to normal operation.
 
 1. **Run health checks**
+
    ```bash
    curl -s https://newspulse-ai.vercel.app/api/health | jq .
    ```
@@ -211,6 +215,7 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 **When to use**: If incident is caused by database queries, connections, or data issues
 
 **Symptoms**:
+
 - "Cannot acquire connection" errors
 - Timeouts in all endpoints
 - Specific query returning wrong data
@@ -247,6 +252,7 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 **When to use**: If incident is slow response times or high error rates without obvious cause
 
 **Symptoms**:
+
 - Response time >2 seconds consistently
 - Database query timing out
 - 429 Rate Limited errors
@@ -284,6 +290,7 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 ### If Incident Severity Is Unclear
 
 **Ask**:
+
 - Can customers access main features? (auth, inventory, assessment)
 - Are errors happening for all users or specific users?
 - How long has it been happening?
@@ -294,7 +301,8 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 ### If Root Cause Not Found In 30 Minutes
 
 **Action**:
-1. Is the incident still ongoing? 
+
+1. Is the incident still ongoing?
    - If yes and affecting customers, rollback last deployment
    - If no, monitor for recurrence
 2. Escalate to infrastructure team (Vercel, Supabase support)
@@ -303,6 +311,7 @@ Step-by-step procedure for detecting, responding to, and recovering from product
 ### If Data Integrity Suspected
 
 **Action**:
+
 1. **STOP all recovery attempts** — Do not take further actions
 2. **Pause write operations** — Consider read-only mode if available
 3. **Escalate immediately** to tech lead and Founder

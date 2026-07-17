@@ -11,7 +11,10 @@ const APP_SHELL = '/';
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.add(APP_SHELL)).catch(() => {})
+    caches
+      .open(CACHE)
+      .then((cache) => cache.add(APP_SHELL))
+      .catch(() => {})
   );
 });
 
@@ -20,7 +23,9 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+        Promise.all(
+          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+        )
       )
       .then(() => self.clients.claim())
   );
@@ -40,7 +45,10 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(APP_SHELL, copy)).catch(() => {});
+          caches
+            .open(CACHE)
+            .then((cache) => cache.put(APP_SHELL, copy))
+            .catch(() => {});
           return response;
         })
         .catch(() => caches.match(APP_SHELL).then((r) => r || Response.error()))

@@ -57,8 +57,12 @@ describe('DNA-GOV-007: Knowledge Memory', () => {
       sessionId: 'test-session-001',
       type: 'learning',
       title: 'RLS policies must be deployed manually',
-      description: 'Supabase schema code includes RLS policies but they must be deployed to live project via SQL editor.',
-      evidence: ['Schema deploy failed silently without policy deployment', 'First customer signup failed with 403'],
+      description:
+        'Supabase schema code includes RLS policies but they must be deployed to live project via SQL editor.',
+      evidence: [
+        'Schema deploy failed silently without policy deployment',
+        'First customer signup failed with 403',
+      ],
       impact: 'high',
       tags: ['auth', 'supabase', 'deployment'],
       resolved: false,

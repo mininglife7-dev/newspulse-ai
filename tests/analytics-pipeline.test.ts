@@ -134,9 +134,18 @@ describe('Analytics Pipeline - DNS-GOV-017', () => {
     });
 
     it('calculates bounce rate', () => {
-      trackEvent('pageview', 'page_load', { userId: 'user-1', sessionId: 'session-1' });
-      trackEvent('pageview', 'page_load', { userId: 'user-2', sessionId: 'session-2' });
-      trackEvent('conversion', 'signup', { userId: 'user-2', sessionId: 'session-2' });
+      trackEvent('pageview', 'page_load', {
+        userId: 'user-1',
+        sessionId: 'session-1',
+      });
+      trackEvent('pageview', 'page_load', {
+        userId: 'user-2',
+        sessionId: 'session-2',
+      });
+      trackEvent('conversion', 'signup', {
+        userId: 'user-2',
+        sessionId: 'session-2',
+      });
 
       const metrics = getUsageMetrics();
       expect(metrics?.bounceRate).toBeGreaterThan(0);
@@ -144,15 +153,23 @@ describe('Analytics Pipeline - DNS-GOV-017', () => {
     });
 
     it('calculates average session duration', () => {
-      trackEvent('pageview', 'page_load', { userId: 'user-1', sessionId: 'session-1' });
-      trackEvent('click', 'feature_toggle', { userId: 'user-1', sessionId: 'session-1' });
+      trackEvent('pageview', 'page_load', {
+        userId: 'user-1',
+        sessionId: 'session-1',
+      });
+      trackEvent('click', 'feature_toggle', {
+        userId: 'user-1',
+        sessionId: 'session-1',
+      });
 
       const metrics = getUsageMetrics();
       expect(metrics?.avgSessionDuration).toBeGreaterThanOrEqual(0);
     });
 
     it('returns undefined for empty period', () => {
-      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const futureDate = new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+      ).toISOString();
       const metrics = getUsageMetrics(futureDate);
 
       expect(metrics).toBeUndefined();
@@ -226,8 +243,14 @@ describe('Analytics Pipeline - DNS-GOV-017', () => {
 
   describe('getSessionInfo', () => {
     it('retrieves session details', () => {
-      trackEvent('pageview', 'page_load', { userId: 'user-1', sessionId: 'session-123' });
-      trackEvent('click', 'feature_toggle', { userId: 'user-1', sessionId: 'session-123' });
+      trackEvent('pageview', 'page_load', {
+        userId: 'user-1',
+        sessionId: 'session-123',
+      });
+      trackEvent('click', 'feature_toggle', {
+        userId: 'user-1',
+        sessionId: 'session-123',
+      });
 
       const session = getSessionInfo('session-123');
       expect(session?.sessionId).toBe('session-123');
@@ -310,10 +333,18 @@ describe('Analytics Pipeline - DNS-GOV-017', () => {
       const sessionId = 'session-journey';
 
       // User lands on page
-      trackEvent('pageview', 'page_load', { userId, sessionId, referrer: 'google' });
+      trackEvent('pageview', 'page_load', {
+        userId,
+        sessionId,
+        referrer: 'google',
+      });
 
       // User explores features
-      trackEvent('click', 'feature_toggle', { userId, sessionId, label: 'dark-mode' });
+      trackEvent('click', 'feature_toggle', {
+        userId,
+        sessionId,
+        label: 'dark-mode',
+      });
       trackFeatureAdoption('dark-mode', userId);
 
       // User signs up

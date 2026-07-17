@@ -12,6 +12,7 @@
 These standards establish baseline expectations for code quality, structure, and maintainability across the EURO AI codebase. All code must meet these standards before merging.
 
 **Core Principles**:
+
 1. **TypeScript Strict** — No `any`, no implicit types, full coverage
 2. **Clear Intent** — Code names and structure should be self-documenting
 3. **Error Handling** — All error paths handled explicitly (no silent failures)
@@ -27,6 +28,7 @@ These standards establish baseline expectations for code quality, structure, and
 All functions must have explicit parameter and return types.
 
 **✅ GOOD**:
+
 ```typescript
 async function validateRiskLevel(level: string): Promise<RiskLevel | null> {
   const valid = ['unacceptable', 'high', 'medium', 'low'];
@@ -35,6 +37,7 @@ async function validateRiskLevel(level: string): Promise<RiskLevel | null> {
 ```
 
 **❌ BAD**:
+
 ```typescript
 async function validateRiskLevel(level: any) {
   const valid = ['unacceptable', 'high', 'medium', 'low'];
@@ -47,6 +50,7 @@ async function validateRiskLevel(level: any) {
 Define interfaces at the top of the file, grouped by concern.
 
 **✅ GOOD**:
+
 ```typescript
 // Request/Response types
 interface CreateAssessmentRequest {
@@ -68,17 +72,19 @@ interface RiskAssessmentResult {
 Use descriptive names that express intent.
 
 **✅ GOOD**:
+
 ```typescript
 const workspaceId = await resolveWorkspaceContext(supabase);
 const isCriticalRisk = assessment.riskLevel === 'unacceptable';
-const affectedCategories = result.categories.filter(c => c.isHighRisk);
+const affectedCategories = result.categories.filter((c) => c.isHighRisk);
 ```
 
 **❌ BAD**:
+
 ```typescript
 const wid = await resolveWorkspaceContext(supabase);
 const cr = assessment.riskLevel === 'unacceptable';
-const ac = result.categories.filter(c => c.hr);
+const ac = result.categories.filter((c) => c.hr);
 ```
 
 ### 1.4 Comments
@@ -86,12 +92,14 @@ const ac = result.categories.filter(c => c.hr);
 No comments explaining WHAT — code should be clear. Comments explain WHY.
 
 **✅ GOOD**:
+
 ```typescript
 // Security: only allow same-origin redirects to prevent open-redirect
 const redirect = safeRedirectPath(searchParams.get('redirect'));
 ```
 
 **❌ BAD**:
+
 ```typescript
 // Get the redirect parameter
 const redirect = searchParams.get('redirect');
@@ -112,6 +120,7 @@ All code must pass `npm run lint` and `npm run format`.
 ### 2.1 Route Structure
 
 Each endpoint file (`route.ts`) must:
+
 1. Define request/response types
 2. Export `runtime` and `dynamic` for Next.js
 3. Have JSDoc for each handler
@@ -119,6 +128,7 @@ Each endpoint file (`route.ts`) must:
 5. Handle errors consistently
 
 **✅ GOOD**:
+
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
@@ -139,14 +149,14 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const supabase = await createRouteClient();
   const ctx = await resolveWorkspaceContext(supabase);
-  
+
   if (ctx.status !== 200) {
     return NextResponse.json(
       { ok: false, error: ctx.error },
       { status: ctx.status }
     );
   }
-  
+
   // ... implementation
 }
 ```
@@ -154,11 +164,13 @@ export async function GET(request: NextRequest) {
 ### 2.2 Error Handling
 
 All errors must:
+
 1. Be logged (for ops visibility)
 2. Return appropriate HTTP status codes
 3. Include user-friendly error messages (never leak internals)
 
 **✅ GOOD**:
+
 ```typescript
 try {
   const { data, error } = await supabase.from('ai_systems').select('*');
@@ -178,6 +190,7 @@ try {
 Validate all user input at the route boundary.
 
 **✅ GOOD**:
+
 ```typescript
 export async function POST(request: NextRequest) {
   let body: CreateSystemRequest;
@@ -196,7 +209,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  
+
   // ... proceed with validated input
 }
 ```
@@ -204,12 +217,14 @@ export async function POST(request: NextRequest) {
 ### 2.4 Response Format
 
 All responses must follow a consistent shape:
+
 - `ok: boolean` — success indicator
 - `data?: T` — payload on success
 - `error?: string` — human-readable error on failure
 - HTTP status codes: 200 (success), 400 (bad input), 401 (auth), 403 (permission), 404 (not found), 500 (server error)
 
 **✅ GOOD**:
+
 ```typescript
 // Success
 NextResponse.json({ ok: true, system }, { status: 200 });
@@ -230,6 +245,7 @@ NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
 Domain logic lives in `lib/` organized by concern, not by operation.
 
 **✅ GOOD**:
+
 ```
 lib/
 ├── risk-assessment.ts       # Risk classification engine
@@ -240,6 +256,7 @@ lib/
 ```
 
 **❌ BAD**:
+
 ```
 lib/
 ├── create.ts                # Operations grouped by action
@@ -253,6 +270,7 @@ lib/
 Logic should be pure (no side effects) when possible.
 
 **✅ GOOD**:
+
 ```typescript
 // Pure: no side effects, testable
 export function classifyRisk(answers: Map<string, unknown>): RiskLevel {
@@ -272,6 +290,7 @@ export async function saveAssessment(data: AssessmentResult): Promise<void> {
 Libraries should throw meaningful errors, not return null.
 
 **✅ GOOD**:
+
 ```typescript
 export function getRiskLevel(level: string): RiskLevel {
   const valid = ['unacceptable', 'high', 'medium', 'low'];
@@ -283,6 +302,7 @@ export function getRiskLevel(level: string): RiskLevel {
 ```
 
 **❌ BAD**:
+
 ```typescript
 export function getRiskLevel(level: string): RiskLevel | null {
   const valid = ['unacceptable', 'high', 'medium', 'low'];
@@ -301,6 +321,7 @@ export function getRiskLevel(level: string): RiskLevel | null {
 - Keep client component surface area minimal
 
 **✅ GOOD**:
+
 ```typescript
 // Server component — no 'use client'
 export default async function AssessmentPage({ params }: Props) {
@@ -324,19 +345,21 @@ export function InteractiveForm() {
 ### 4.2 Hook Usage
 
 Use hooks correctly:
+
 - `useState` for component-local state only
 - `useEffect` with dependency array
 - `useCallback` for stable function references in lists
 - No unlimited dependency array
 
 **✅ GOOD**:
+
 ```typescript
 const [formData, setFormData] = useState({ email: '', password: '' });
 const [error, setError] = useState<string | null>(null);
 
 const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
   const { name, value } = e.target;
-  setFormData(prev => ({ ...prev, [name]: value }));
+  setFormData((prev) => ({ ...prev, [name]: value }));
 }, []);
 
 useEffect(() => {
@@ -352,6 +375,7 @@ useEffect(() => {
 Components handling async data must have error boundaries.
 
 **✅ GOOD**:
+
 ```typescript
 'use client';
 
@@ -382,6 +406,7 @@ export function AssessmentList() {
 All queries through Supabase must respect RLS. Never bypass RLS.
 
 **✅ GOOD**:
+
 ```typescript
 // Query respects workspace_id in RLS policy
 const { data } = await supabase
@@ -391,6 +416,7 @@ const { data } = await supabase
 ```
 
 **❌ BAD**:
+
 ```typescript
 // Never use admin client for user queries (bypasses RLS)
 const supabase = createClient(url, serviceKey); // ❌
@@ -401,6 +427,7 @@ const supabase = createClient(url, serviceKey); // ❌
 All schema changes via migrations in `supabase/migrations/`.
 
 **✅ GOOD**:
+
 ```sql
 -- supabase/migrations/20260716_add_assessment_status.sql
 ALTER TABLE risk_assessments ADD COLUMN status text DEFAULT 'draft';
@@ -411,6 +438,7 @@ ALTER TABLE risk_assessments ADD COLUMN status text DEFAULT 'draft';
 Validate that queries include workspace/tenant context.
 
 **✅ GOOD**:
+
 ```typescript
 // Explicit tenant filtering
 const { data } = await supabase
@@ -429,6 +457,7 @@ const { data } = await supabase
 Every pure function should have unit tests.
 
 **✅ GOOD**:
+
 ```typescript
 // risk-assessment.test.ts
 import { classifyRisk } from './risk-assessment';
@@ -457,6 +486,7 @@ describe('classifyRisk', () => {
 Tests co-locate with source files.
 
 **✅ GOOD**:
+
 ```
 lib/
 ├── risk-assessment.ts
@@ -470,22 +500,26 @@ lib/
 Every change must address:
 
 ### 7.1 Input Validation
+
 - [ ] User input validated at route boundary
 - [ ] Type-checked (no `any`)
 - [ ] Length limits enforced
 - [ ] SQL injection impossible (using parameterized queries)
 
 ### 7.2 Authorization
+
 - [ ] RLS policies enforced for all Supabase queries
 - [ ] Workspace/tenant context verified
 - [ ] No admin client used for user queries
 
 ### 7.3 Data Leakage
+
 - [ ] Error messages don't leak internal state
 - [ ] Sensitive data not logged
 - [ ] No credentials in code or comments
 
 ### 7.4 Redirect Safety
+
 - [ ] All redirects use `safeRedirectPath()`
 - [ ] No open redirects to arbitrary URLs
 
@@ -515,10 +549,11 @@ Every change must address:
 All exported functions must have JSDoc.
 
 **✅ GOOD**:
+
 ```typescript
 /**
  * Classify risk level for an AI system based on assessment answers.
- * 
+ *
  * @param answers - Map of question IDs to boolean/string/number responses
  * @returns Risk level: 'unacceptable' | 'high' | 'medium' | 'low'
  * @throws Error if required questions are missing
@@ -531,6 +566,7 @@ export function classifyRisk(answers: Map<string, unknown>): RiskLevel {
 ### 9.2 README for Complex Modules
 
 If a lib module is complex (>300 lines), include a README explaining:
+
 - Purpose
 - Main exports
 - Example usage

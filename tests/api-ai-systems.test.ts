@@ -7,7 +7,13 @@ const state: {
   company: { id: string } | null;
   systems: any[];
   failInsert: boolean;
-} = { user: null, membership: null, company: null, systems: [], failInsert: false };
+} = {
+  user: null,
+  membership: null,
+  company: null,
+  systems: [],
+  failInsert: false,
+};
 
 function chain(result: any) {
   const c: any = {

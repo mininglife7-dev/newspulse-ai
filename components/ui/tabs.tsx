@@ -1,99 +1,100 @@
 'use client';
 
-import * as React from "react"
+import * as React from 'react';
 
 interface TabsContextType {
-  value: string
-  onValueChange: (value: string) => void
+  value: string;
+  onValueChange: (value: string) => void;
 }
 
-const TabsContext = React.createContext<TabsContextType | undefined>(undefined)
+const TabsContext = React.createContext<TabsContextType | undefined>(undefined);
 
 interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
-  defaultValue: string
-  value?: string
-  onValueChange?: (value: string) => void
+  defaultValue: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
 }
 
 const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
   ({ defaultValue, value: controlledValue, onValueChange, ...props }, ref) => {
-    const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue)
-    const isControlled = controlledValue !== undefined
-    const value = isControlled ? controlledValue : uncontrolledValue
+    const [uncontrolledValue, setUncontrolledValue] =
+      React.useState(defaultValue);
+    const isControlled = controlledValue !== undefined;
+    const value = isControlled ? controlledValue : uncontrolledValue;
 
     const handleValueChange = (newValue: string) => {
       if (!isControlled) {
-        setUncontrolledValue(newValue)
+        setUncontrolledValue(newValue);
       }
-      onValueChange?.(newValue)
-    }
+      onValueChange?.(newValue);
+    };
 
     return (
       <TabsContext.Provider value={{ value, onValueChange: handleValueChange }}>
         <div ref={ref} {...props} />
       </TabsContext.Provider>
-    )
+    );
   }
-)
-Tabs.displayName = "Tabs"
+);
+Tabs.displayName = 'Tabs';
 
 interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
-  ({ className = "", ...props }, ref) => (
+  ({ className = '', ...props }, ref) => (
     <div
       ref={ref}
       className={`inline-flex rounded-lg border border-border bg-black/50 ${className}`}
       {...props}
     />
   )
-)
-TabsList.displayName = "TabsList"
+);
+TabsList.displayName = 'TabsList';
 
 interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  value: string
+  value: string;
 }
 
 const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
   ({ value, ...props }, ref) => {
-    const context = React.useContext(TabsContext)
+    const context = React.useContext(TabsContext);
     if (!context) {
-      throw new Error("TabsTrigger must be used within Tabs")
+      throw new Error('TabsTrigger must be used within Tabs');
     }
 
-    const isActive = context.value === value
+    const isActive = context.value === value;
     return (
       <button
         ref={ref}
         onClick={() => context.onValueChange(value)}
         className={`px-4 py-2 rounded-md font-medium transition text-sm whitespace-nowrap ${
           isActive
-            ? "bg-accent-500/20 text-accent-300 border-b-2 border-accent-500"
-            : "text-white/60 hover:text-white/80"
+            ? 'bg-accent-500/20 text-accent-300 border-b-2 border-accent-500'
+            : 'text-white/60 hover:text-white/80'
         }`}
         {...props}
       />
-    )
+    );
   }
-)
-TabsTrigger.displayName = "TabsTrigger"
+);
+TabsTrigger.displayName = 'TabsTrigger';
 
 interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  value: string
+  value: string;
 }
 
 const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
   ({ value, ...props }, ref) => {
-    const context = React.useContext(TabsContext)
+    const context = React.useContext(TabsContext);
     if (!context) {
-      throw new Error("TabsContent must be used within Tabs")
+      throw new Error('TabsContent must be used within Tabs');
     }
 
-    if (context.value !== value) return null
+    if (context.value !== value) return null;
 
-    return <div ref={ref} {...props} />
+    return <div ref={ref} {...props} />;
   }
-)
-TabsContent.displayName = "TabsContent"
+);
+TabsContent.displayName = 'TabsContent';
 
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+export { Tabs, TabsList, TabsTrigger, TabsContent };

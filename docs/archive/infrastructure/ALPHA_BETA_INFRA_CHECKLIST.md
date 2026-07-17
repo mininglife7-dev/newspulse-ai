@@ -27,6 +27,7 @@ Verdict rule: **Alpha may not launch with any P0/P1 box unchecked** (see `HARDWA
 ## Phase 1 — Before Alpha (August), ~1–2 weeks, ≤ €50–60/mo
 
 **Security & access**
+
 - [ ] Supabase **Auth** live (email/password or magic link)
 - [ ] Every mutating API route requires a valid session (`/api/history*` all methods, `POST /api/search`)
 - [ ] Wipe-all `DELETE /api/history` removed or scoped to the caller's own rows
@@ -37,6 +38,7 @@ Verdict rule: **Alpha may not launch with any P0/P1 box unchecked** (see `HARDWA
 - [ ] `npm audit` shows **0 critical / 0 high** in production dependencies
 
 **Reliability & data**
+
 - [ ] Supabase **Pro** ($25/mo): daily backups on, project no longer pauses
 - [ ] Weekly offsite encrypted `pg_dump` to EU object storage (30-day retention)
 - [ ] **One full restore rehearsed** into a scratch project — duration written down (this is your RTO evidence)
@@ -44,11 +46,13 @@ Verdict rule: **Alpha may not launch with any P0/P1 box unchecked** (see `HARDWA
 - [ ] Row-size guard on `saveSearch` (cap stored JSONB size)
 
 **Observability**
+
 - [ ] Sentry (free tier) wired for server + client errors, alert rule to email
 - [ ] Vercel log drain configured (retain ≥30 days)
 - [ ] `/api/health` extended: DB reachability check (not just env presence)
 
 **Compliance (paperwork day)**
+
 - [ ] DPAs signed: Vercel, Supabase, OpenAI (all self-serve, free)
 - [ ] Firecrawl ToS/DPA reviewed — documented that only public news content is sent
 - [ ] Privacy notice published; subprocessor list published
@@ -57,6 +61,7 @@ Verdict rule: **Alpha may not launch with any P0/P1 box unchecked** (see `HARDWA
 - [ ] UI labels summaries as **"AI-generated"** with model name (EU AI Act Art. 50 transparency)
 
 **Pilot onboarding**
+
 - [ ] Pilot tenant created end-to-end via the real flow (signup → search → history → deletion)
 - [ ] Per-tenant data deletion executed once as a test and verified
 
@@ -89,9 +94,9 @@ Verdict rule: **Alpha may not launch with any P0/P1 box unchecked** (see `HARDWA
 
 **Sign-off table**
 
-| Gate | Date | All boxes checked? | Signed (Founder) |
-|---|---|---|---|
-| Phase 0 | | ☐ | |
-| Alpha (Phase 1) | | ☐ | |
-| Beta (Phase 2) | | ☐ | |
-| Paid (Phase 3) | | ☐ | |
+| Gate            | Date | All boxes checked? | Signed (Founder) |
+| --------------- | ---- | ------------------ | ---------------- |
+| Phase 0         |      | ☐                  |                  |
+| Alpha (Phase 1) |      | ☐                  |                  |
+| Beta (Phase 2)  |      | ☐                  |                  |
+| Paid (Phase 3)  |      | ☐                  |                  |

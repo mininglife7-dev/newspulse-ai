@@ -365,7 +365,10 @@ describe('Deployment Canary Controller - DNA-GOV-015', () => {
       ]);
 
       startCanaryDeployment(deployment.id);
-      const aborted = abortCanaryDeployment(deployment.id, 'Customer reports critical bug');
+      const aborted = abortCanaryDeployment(
+        deployment.id,
+        'Customer reports critical bug'
+      );
 
       expect(aborted?.status).toBe('aborted');
       expect(aborted?.abortReason).toBe('Customer reports critical bug');
@@ -432,9 +435,27 @@ describe('Deployment Canary Controller - DNA-GOV-015', () => {
       const deployment = planCanaryDeployment('Test', 'c', 'v1', '', stages);
       startCanaryDeployment(deployment.id);
 
-      recordCanaryMetrics(deployment.id, { error_rate: 1, latency: 1000, availability: 100, memory: 512, cpu: 25 });
-      recordCanaryMetrics(deployment.id, { error_rate: 2, latency: 1100, availability: 99.9, memory: 522, cpu: 26 });
-      recordCanaryMetrics(deployment.id, { error_rate: 3, latency: 1200, availability: 99.8, memory: 532, cpu: 27 });
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 1,
+        latency: 1000,
+        availability: 100,
+        memory: 512,
+        cpu: 25,
+      });
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 2,
+        latency: 1100,
+        availability: 99.9,
+        memory: 522,
+        cpu: 26,
+      });
+      recordCanaryMetrics(deployment.id, {
+        error_rate: 3,
+        latency: 1200,
+        availability: 99.8,
+        memory: 532,
+        cpu: 27,
+      });
 
       const latest = getLatestCanarySnapshot(deployment.id);
       expect(latest?.metrics.error_rate).toBe(3);
@@ -455,7 +476,13 @@ describe('Deployment Canary Controller - DNA-GOV-015', () => {
         { stage: 3, percentage: 100, duration: 15, thresholds: [] },
       ];
 
-      const deployment = planCanaryDeployment('Test Deploy', 'abc123', 'v2.0', 'New feature', stages);
+      const deployment = planCanaryDeployment(
+        'Test Deploy',
+        'abc123',
+        'v2.0',
+        'New feature',
+        stages
+      );
       startCanaryDeployment(deployment.id);
       recordCanaryMetrics(deployment.id, {
         error_rate: 1,
@@ -557,7 +584,13 @@ describe('Deployment Canary Controller - DNA-GOV-015', () => {
         },
       ];
 
-      const deployment = planCanaryDeployment('Checkout v3', 'commit-abc', 'v3.0', 'New checkout flow', stages);
+      const deployment = planCanaryDeployment(
+        'Checkout v3',
+        'commit-abc',
+        'v3.0',
+        'New checkout flow',
+        stages
+      );
 
       // Stage 1: 10%
       startCanaryDeployment(deployment.id);
@@ -614,11 +647,19 @@ describe('Deployment Canary Controller - DNA-GOV-015', () => {
           stage: 1,
           percentage: 25,
           duration: 15,
-          thresholds: [{ metric: 'error_rate', criticalMax: 10, warningMax: 5 }],
+          thresholds: [
+            { metric: 'error_rate', criticalMax: 10, warningMax: 5 },
+          ],
         },
       ];
 
-      const deployment = planCanaryDeployment('Risky Feature', 'c', 'v1', '', stages);
+      const deployment = planCanaryDeployment(
+        'Risky Feature',
+        'c',
+        'v1',
+        '',
+        stages
+      );
       startCanaryDeployment(deployment.id);
 
       recordCanaryMetrics(deployment.id, {

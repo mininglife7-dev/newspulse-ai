@@ -11,6 +11,7 @@
 Consolidate repository documentation and API architecture into clear, maintainable structures.
 
 **Objectives**:
+
 1. Move ~150 old files to `docs/archive/` (checkpoint snapshots, old roadmaps, deprecated runbooks)
 2. Consolidate governance documentation (single source of truth per topic)
 3. Deduplicate API endpoints (assessment/assessments, deployment verification, error tracking)
@@ -23,12 +24,14 @@ Consolidate repository documentation and API architecture into clear, maintainab
 ## Documentation Consolidation Plan
 
 ### Current State
+
 - **Root-level files**: 27 markdown files (snapshots, launch docs, deployment runbooks)
 - **docs/ directory**: 176 markdown files (governance, infrastructure, customer, compliance)
 - **Total**: 203 markdown files
 - **Problem**: Duplication (multiple versions of same docs), sprawl (unclear hierarchy)
 
 ### Target State
+
 - **Root-level**: <5 files (README.md, CONTRIBUTING.md, CLAUDE.md, maybe 1-2 others)
 - **docs/** structure:
   ```
@@ -45,6 +48,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 ### Files to Archive (Move to docs/archive/)
 
 **Category: Checkpoint Snapshots** (~10 files)
+
 - `CHECKPOINT-*.md` (all variants: -2026-07-10-AFTERNOON, -2026-07-12-EVENING, etc.)
 - `SESSION-CHECKPOINT-*.md`
 - `CHECKPOINT-AUDIT-*.md`
@@ -52,6 +56,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - Reason: Snapshots of historical state, not living documents
 
 **Category: Old Roadmaps & Phases** (~15 files)
+
 - `PHASE-*.md` (all variants)
 - `PHASE_*_ROADMAP.md`
 - `EVOLUTION-STATUS-*.md`
@@ -59,6 +64,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - Reason: Superseded by IMPLEMENTATION_ROADMAP.md
 
 **Category: Root-Level Launch/Deployment Docs** (~20 files)
+
 - `LAUNCH-DAY-*.md` (all variants)
 - `LAUNCH-READINESS-*.md`
 - `WEEK-1-*.md`
@@ -70,17 +76,20 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - Reason: Historical launch snapshots, superseded by continuous governance
 
 **Category: Duplicate Governance Docs** (~8 files)
+
 - Duplicate FOUNDER-BRIEF versions
 - Duplicate FOUNDER-DECISION-BRIEF versions
 - Duplicate runbooks (DEPLOYMENT-RUNBOOK-FOR-FOUNDER.md at root duplicate of docs/ versions)
 - Reason: Keep authoritative version in docs/governance/, move duplicates to archive
 
 **Category: Duplicate Customer Docs** (~5 files)
+
 - Duplicate communication templates
 - Old pilot playbooks
 - Reason: Keep active versions in docs/customer/, move old variants
 
 **Category: Old Infrastructure Docs** (~12 files)
+
 - `PREDEPLOYMENT-AUDIT.md`
 - `INDEPENDENT_VV_AUDIT.md`
 - `AUTONOMOUS-*-REPORT-*.md`
@@ -88,12 +97,14 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - Reason: Historical verification snapshots, superseded by continuous monitoring
 
 **Category: Old Product/Integrity Docs** (~10 files)
+
 - `BUTTON-STATUS-REPORT.md`
 - `DASHBOARD-CONSISTENCY-*.md`
 - Old product health snapshots
 - Reason: Historical snapshots, not living documents
 
 **Category: Miscellaneous Old Docs** (~50+ files across docs/governance/, docs/infra/, docs/governor/)
+
 - Dated checkpoint reports (FINAL-24H-CHECKPOINT, SESSION-STATUS, etc.)
 - Old verification reports (PRE-MERGE-VERIFICATION, PRE-LAUNCH-VERIFICATION)
 - Utility docs (MEASUREMENT-WINDOW-*, CLAIM-PROTOCOL, GITHUB-ACTIONS-DIAGNOSTIC)
@@ -104,6 +115,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 ### Authoritative Documents to Keep (~40 files)
 
 **Governance** (8 files):
+
 - ✅ FOUNDER_ADVISOR_CONSTITUTION.md
 - ✅ FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md
 - ✅ FOUNDER_COMMUNICATION_CONSTITUTION.md
@@ -114,6 +126,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - ✅ IMPLEMENTATION_ROADMAP.md (all 10 stages)
 
 **State & Execution** (5 files):
+
 - ✅ PROJECT_STATE.md
 - ✅ NEXT_ACTION.md
 - ✅ STAGE_1_COMPLETION_CHECKLIST.md
@@ -121,6 +134,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - ⬜ STAGE_2_COMPLETION_CHECKLIST.md (to create)
 
 **Infrastructure & Operations** (6 files):
+
 - ✅ DEPLOYMENT_RUNBOOK.md (canonical, in docs/infra/)
 - ✅ DISASTER_RECOVERY_RUNBOOK.md
 - ✅ INCIDENT_RESPONSE_PLAYBOOKS.md
@@ -129,17 +143,20 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - ✅ MONITORING_ALERT_CONFIGURATION.md
 
 **Customer & Onboarding** (4 files):
+
 - ✅ CUSTOMER_ONBOARDING_GUIDE.md
 - ✅ QUICK_START_GUIDE.md (in docs/customer/)
 - ✅ SUPPORT_SLA_AND_ESCALATION.md
 - ✅ COMMUNICATION_TEMPLATES.md
 
 **Compliance** (3 files):
+
 - ✅ DATA_RETENTION_DELETION_POLICY.md
 - ✅ PRODUCTION-CERTIFICATION-POLICY.md
 - ✅ API.md or API_CLIENT_GUIDE.md (API documentation)
 
 **Architecture** (3 files):
+
 - ✅ CEIS.md (data system)
 - ✅ ROADMAP.md (product roadmap)
 - ✅ GETTING_STARTED.md
@@ -153,12 +170,14 @@ Consolidate repository documentation and API architecture into clear, maintainab
 ### Current Duplicates
 
 **Assessment Endpoints**:
+
 - `/api/assessment/` (primary implementation)
 - `/api/assessments/` (duplicate, needs consolidation)
 - Decision: Keep `/api/assessment/` as canonical
 - Action: Consolidate `assessments/` into `assessment/`, update customer references
 
 **Deployment Verification Endpoints** (3 implementations):
+
 - `/api/deployment-verification/` (comprehensive)
 - `/api/deployment-canary/` (canary testing)
 - `/api/verify-deployment/` (verification)
@@ -166,6 +185,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - Action: Move `deployment-canary/` and `verify-deployment/` logic into `deployment-verification/`
 
 **Error Tracking Endpoints** (3 implementations):
+
 - `/api/errors/` (primary)
 - `/api/error-tracking/` (tracking)
 - `/api/error-rate/` (rates/analytics)
@@ -173,6 +193,7 @@ Consolidate repository documentation and API architecture into clear, maintainab
 - Action: Move `error-tracking/` and `error-rate/` logic into `errors/`
 
 **Experimental/Unclear Status**:
+
 - `/api/evolution/` — Clarify: keep, archive, or activate?
 - `/api/hercules/` — Clarify: keep, archive, or activate?
 - `/api/cathedral-readiness/` — Clarify: keep, archive, or activate?
@@ -243,24 +264,26 @@ Consolidate repository documentation and API architecture into clear, maintainab
 
 ## Estimated Timeline
 
-| Phase | Work | Estimated Time |
-|-------|------|-----------------|
-| 1 | Documentation consolidation (move 150 files) | 1 hour |
-| 2 | Documentation cleanup & link verification | 1 hour |
-| 3 | API route consolidation | 1.5 hours |
-| 4 | Verification, testing, reporting | 1 hour |
-| **Total** | **STAGE 2 complete** | **~4.5 hours** |
+| Phase     | Work                                         | Estimated Time |
+| --------- | -------------------------------------------- | -------------- |
+| 1         | Documentation consolidation (move 150 files) | 1 hour         |
+| 2         | Documentation cleanup & link verification    | 1 hour         |
+| 3         | API route consolidation                      | 1.5 hours      |
+| 4         | Verification, testing, reporting             | 1 hour         |
+| **Total** | **STAGE 2 complete**                         | **~4.5 hours** |
 
 ---
 
 ## Risk Assessment
 
 **Risks of Consolidation**:
+
 - 🟡 MEDIUM: Breaking customer API calls if old endpoints are removed without deprecation
 - 🟡 MEDIUM: Broken links in documentation if references not updated
 - 🟢 LOW: Code merge conflicts (documentation only in Phase 1-2, code changes are localized in Phase 3)
 
 **Mitigations**:
+
 - Keep old routes as aliases/redirects during consolidation (don't delete immediately)
 - Run link validation before and after (detect broken references)
 - Test all customer journeys (smoke tests)

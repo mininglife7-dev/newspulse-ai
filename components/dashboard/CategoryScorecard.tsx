@@ -9,7 +9,9 @@ interface Props {
 
 export default function CategoryScorecard({ categories }: Props) {
   // Sort by currentScore descending
-  const sorted = [...categories].sort((a, b) => b.currentScore - a.currentScore);
+  const sorted = [...categories].sort(
+    (a, b) => b.currentScore - a.currentScore
+  );
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -48,7 +50,8 @@ export default function CategoryScorecard({ categories }: Props) {
       categories.reduce((sum, c) => sum + c.targetScore, 0) / categories.length
     ),
     onTarget: categories.filter((c) => c.currentScore >= c.targetScore).length,
-    needsWork: categories.filter((c) => c.currentScore < c.targetScore * 0.7).length,
+    needsWork: categories.filter((c) => c.currentScore < c.targetScore * 0.7)
+      .length,
   };
 
   return (
@@ -56,30 +59,42 @@ export default function CategoryScorecard({ categories }: Props) {
       {/* Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs uppercase text-white/40">Categories On Target</div>
+          <div className="text-xs uppercase text-white/40">
+            Categories On Target
+          </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-green-300">{stats.onTarget}</span>
+            <span className="text-3xl font-bold text-green-300">
+              {stats.onTarget}
+            </span>
             <span className="text-white/40">/ {categories.length}</span>
           </div>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs uppercase text-white/40">Needs Work (&lt;70%)</div>
+          <div className="text-xs uppercase text-white/40">
+            Needs Work (&lt;70%)
+          </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-red-300">{stats.needsWork}</span>
+            <span className="text-3xl font-bold text-red-300">
+              {stats.needsWork}
+            </span>
             <span className="text-white/40">/ {categories.length}</span>
           </div>
         </div>
         <div className="rounded-lg border border-accent-500/30 bg-accent-900/20 p-4">
           <div className="text-xs uppercase text-white/40">Average Current</div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-accent-300">{stats.avgCurrent}</span>
+            <span className="text-3xl font-bold text-accent-300">
+              {stats.avgCurrent}
+            </span>
             <span className="text-white/40">%</span>
           </div>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="text-xs uppercase text-white/40">Average Target</div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-accent-300">{stats.avgTarget}</span>
+            <span className="text-3xl font-bold text-accent-300">
+              {stats.avgTarget}
+            </span>
             <span className="text-white/40">%</span>
           </div>
         </div>
@@ -90,13 +105,27 @@ export default function CategoryScorecard({ categories }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-black/30">
-              <th className="px-4 py-3 text-left font-semibold text-white/70">Category</th>
-              <th className="px-4 py-3 text-center font-semibold text-white/70">Before</th>
-              <th className="px-4 py-3 text-center font-semibold text-white/70">Current</th>
-              <th className="px-4 py-3 text-center font-semibold text-white/70">Target</th>
-              <th className="px-4 py-3 text-center font-semibold text-white/70">Gap</th>
-              <th className="px-4 py-3 text-center font-semibold text-white/70">Owner</th>
-              <th className="px-4 py-3 text-center font-semibold text-white/70">Priority</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/70">
+                Category
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-white/70">
+                Before
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-white/70">
+                Current
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-white/70">
+                Target
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-white/70">
+                Gap
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-white/70">
+                Owner
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-white/70">
+                Priority
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -108,12 +137,20 @@ export default function CategoryScorecard({ categories }: Props) {
               return (
                 <tr key={category.name} className="hover:bg-white/5">
                   <td className="px-4 py-3 font-medium">{category.name}</td>
-                  <td className="px-4 py-3 text-center text-white/60">{category.mainScore}</td>
-                  <td className={`px-4 py-3 text-center font-semibold ${getScoreColor(category.currentScore)}`}>
+                  <td className="px-4 py-3 text-center text-white/60">
+                    {category.mainScore}
+                  </td>
+                  <td
+                    className={`px-4 py-3 text-center font-semibold ${getScoreColor(category.currentScore)}`}
+                  >
                     {category.currentScore}
                   </td>
-                  <td className="px-4 py-3 text-center text-white/60">{category.targetScore}</td>
-                  <td className={`px-4 py-3 text-center font-semibold ${getGapColor(category.currentScore, category.targetScore)}`}>
+                  <td className="px-4 py-3 text-center text-white/60">
+                    {category.targetScore}
+                  </td>
+                  <td
+                    className={`px-4 py-3 text-center font-semibold ${getGapColor(category.currentScore, category.targetScore)}`}
+                  >
                     {onTarget ? (
                       <span className="flex items-center justify-center gap-1">
                         <CheckIcon className="h-4 w-4" /> 0
@@ -124,9 +161,13 @@ export default function CategoryScorecard({ categories }: Props) {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center text-white/60 text-xs">{category.owner}</td>
+                  <td className="px-4 py-3 text-center text-white/60 text-xs">
+                    {category.owner}
+                  </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(category.priority)}`}>
+                    <span
+                      className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(category.priority)}`}
+                    >
                       {category.priority}
                     </span>
                   </td>
@@ -142,7 +183,10 @@ export default function CategoryScorecard({ categories }: Props) {
         <h3 className="text-lg font-semibold">Category Evidence</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {sorted.map((category) => (
-            <div key={category.name} className="rounded-lg border border-border bg-card p-3">
+            <div
+              key={category.name}
+              className="rounded-lg border border-border bg-card p-3"
+            >
               <div className="font-semibold text-sm mb-2">{category.name}</div>
               <div className="text-xs text-white/70">{category.evidence}</div>
             </div>
@@ -155,7 +199,13 @@ export default function CategoryScorecard({ categories }: Props) {
 
 function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      {...props}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );

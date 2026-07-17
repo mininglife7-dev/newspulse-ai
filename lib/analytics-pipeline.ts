@@ -12,7 +12,8 @@
  * retention metrics, cohort analysis.
  */
 
-export type EventCategory = 'pageview' | 'click' | 'conversion' | 'error' | 'performance';
+export type EventCategory =
+  'pageview' | 'click' | 'conversion' | 'error' | 'performance';
 export type EventAction =
   | 'signup'
   | 'login'
@@ -69,7 +70,10 @@ export interface CohortMetrics {
 
 export interface AnalyticsState {
   events: AnalyticsEvent[];
-  sessions: Map<string, { userId?: string; startedAt: string; lastActivity: string }>;
+  sessions: Map<
+    string,
+    { userId?: string; startedAt: string; lastActivity: string }
+  >;
   usageMetrics: UsageMetrics[];
   featureAdoption: Map<string, FeatureAdoption>;
   cohorts: Map<string, CohortMetrics>;
@@ -147,7 +151,10 @@ export function trackEvent(
 /**
  * Track feature adoption
  */
-export function trackFeatureAdoption(feature: string, userId: string): FeatureAdoption {
+export function trackFeatureAdoption(
+  feature: string,
+  userId: string
+): FeatureAdoption {
   const key = `${feature}-adoption`;
 
   if (!analyticsState.featureAdoption.has(key)) {
@@ -186,7 +193,9 @@ export function getUsageMetrics(
   startDate?: string,
   endDate?: string
 ): UsageMetrics | undefined {
-  const start = startDate ? new Date(startDate) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const start = startDate
+    ? new Date(startDate)
+    : new Date(Date.now() - 24 * 60 * 60 * 1000);
   const end = endDate ? new Date(endDate) : new Date();
 
   const filteredEvents = analyticsState.events.filter((e) => {
@@ -196,15 +205,23 @@ export function getUsageMetrics(
 
   if (filteredEvents.length === 0) return undefined;
 
-  const uniqueUsers = new Set(filteredEvents.map((e) => e.userId).filter(Boolean));
+  const uniqueUsers = new Set(
+    filteredEvents.map((e) => e.userId).filter(Boolean)
+  );
   const uniqueSessions = new Set(filteredEvents.map((e) => e.sessionId));
-  const pageViews = filteredEvents.filter((e) => e.category === 'pageview').length;
-  const conversions = filteredEvents.filter((e) => e.category === 'conversion').length;
+  const pageViews = filteredEvents.filter(
+    (e) => e.category === 'pageview'
+  ).length;
+  const conversions = filteredEvents.filter(
+    (e) => e.category === 'conversion'
+  ).length;
 
   // Calculate bounce rate (sessions with only one pageview)
   let bouncedSessions = 0;
   uniqueSessions.forEach((sessionId) => {
-    const sessionEvents = filteredEvents.filter((e) => e.sessionId === sessionId);
+    const sessionEvents = filteredEvents.filter(
+      (e) => e.sessionId === sessionId
+    );
     if (
       sessionEvents.length === 1 &&
       sessionEvents[0].category === 'pageview'
@@ -212,19 +229,25 @@ export function getUsageMetrics(
       bouncedSessions++;
     }
   });
-  const bounceRate = uniqueSessions.size > 0 ? bouncedSessions / uniqueSessions.size : 0;
+  const bounceRate =
+    uniqueSessions.size > 0 ? bouncedSessions / uniqueSessions.size : 0;
 
   // Calculate average session duration
   let totalDuration = 0;
   uniqueSessions.forEach((sessionId) => {
-    const sessionEvents = filteredEvents.filter((e) => e.sessionId === sessionId);
+    const sessionEvents = filteredEvents.filter(
+      (e) => e.sessionId === sessionId
+    );
     if (sessionEvents.length > 0) {
       const firstEvent = new Date(sessionEvents[0].timestamp);
-      const lastEvent = new Date(sessionEvents[sessionEvents.length - 1].timestamp);
+      const lastEvent = new Date(
+        sessionEvents[sessionEvents.length - 1].timestamp
+      );
       totalDuration += (lastEvent.getTime() - firstEvent.getTime()) / 1000; // seconds
     }
   });
-  const avgSessionDuration = uniqueSessions.size > 0 ? totalDuration / uniqueSessions.size : 0;
+  const avgSessionDuration =
+    uniqueSessions.size > 0 ? totalDuration / uniqueSessions.size : 0;
 
   const metrics: UsageMetrics = {
     timestamp: end.toISOString(),
@@ -282,7 +305,9 @@ export function getSessionInfo(sessionId: string) {
   const session = analyticsState.sessions.get(sessionId);
   if (!session) return undefined;
 
-  const sessionEvents = analyticsState.events.filter((e) => e.sessionId === sessionId);
+  const sessionEvents = analyticsState.events.filter(
+    (e) => e.sessionId === sessionId
+  );
   const startTime = new Date(session.startedAt);
   const endTime = new Date(session.lastActivity);
   const duration = (endTime.getTime() - startTime.getTime()) / 1000; // seconds
@@ -301,7 +326,9 @@ export function getSessionInfo(sessionId: string) {
 /**
  * Get retention cohort
  */
-export function getCohortRetention(cohortDate: string): CohortMetrics | undefined {
+export function getCohortRetention(
+  cohortDate: string
+): CohortMetrics | undefined {
   return analyticsState.cohorts.get(cohortDate);
 }
 
@@ -327,7 +354,9 @@ export function calculateCohortMetrics(cohortDate: string): CohortMetrics {
 
   // Calculate retention for each day since cohort
   for (let day = 0; day <= 30; day++) {
-    const checkDate = new Date(cohortStart.getTime() + day * 24 * 60 * 60 * 1000);
+    const checkDate = new Date(
+      cohortStart.getTime() + day * 24 * 60 * 60 * 1000
+    );
     if (checkDate > today) break;
 
     const checkEnd = new Date(checkDate.getTime() + 24 * 60 * 60 * 1000);
@@ -369,7 +398,9 @@ export function getAnalyticsSummary() {
   const recentEvents = analyticsState.events.filter(
     (e) => new Date(e.timestamp) >= last24h
   );
-  const uniqueUsers = new Set(recentEvents.map((e) => e.userId).filter(Boolean));
+  const uniqueUsers = new Set(
+    recentEvents.map((e) => e.userId).filter(Boolean)
+  );
   const uniqueSessions = new Set(recentEvents.map((e) => e.sessionId));
 
   return {
@@ -388,7 +419,8 @@ export function getAnalyticsSummary() {
  */
 export function formatAnalyticsStatus(): string {
   const summary = getAnalyticsSummary();
-  const lastMetrics = analyticsState.usageMetrics[analyticsState.usageMetrics.length - 1];
+  const lastMetrics =
+    analyticsState.usageMetrics[analyticsState.usageMetrics.length - 1];
 
   let status = `📊 Analytics Pipeline | ${summary.totalEvents} events | ${summary.uniqueUsers} users`;
 

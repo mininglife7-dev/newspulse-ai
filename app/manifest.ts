@@ -7,7 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'EURO AI',
     short_name: 'EURO AI',
-    description: 'AI Governance Made Simple — EU AI Act compliance with confidence.',
+    description:
+      'AI Governance Made Simple — EU AI Act compliance with confidence.',
     start_url: '/',
     scope: '/',
     display: 'standalone',

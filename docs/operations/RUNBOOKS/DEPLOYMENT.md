@@ -16,6 +16,7 @@
 Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*` branch to production (`main`). This ensures all code meets quality standards before reaching customers.
 
 **Prerequisites**:
+
 - Code is on a feature branch (`claude/*`)
 - All local tests pass (`npm test`)
 - All static checks pass (`npm run lint`, `npm run type-check`)
@@ -31,6 +32,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 **Goal**: Ensure code is safe to deploy before pushing to production.
 
 1. **Run local verification**
+
    ```bash
    npm run type-check    # TypeScript type safety
    npm run lint          # ESLint code quality
@@ -42,6 +44,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
    - Do not proceed to production if checks fail
 
 2. **Review git status**
+
    ```bash
    git status
    git log --oneline -n 5
@@ -72,6 +75,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
    - If no PR exists, continue to step 2
 
 2. **Create PR if needed**
+
    ```bash
    gh pr create --title "Your Title" --body "Description of changes"
    ```
@@ -103,6 +107,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 **Goal**: Merge approved code to production branch.
 
 1. **Merge PR to main**
+
    ```bash
    gh pr merge <pr-number> --squash --delete-branch
    ```
@@ -129,6 +134,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
    - If deployment fails, see Error Handling section below
 
 2. **Verify production URL responds**
+
    ```bash
    curl -s https://newspulse-ai.vercel.app/api/health | jq .
    ```
@@ -163,6 +169,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 **Problem**: `npm test`, `npm run lint`, or `npm run type-check` fails
 
 **Action**:
+
 1. Read the error message carefully
 2. Fix the issue in your code
 3. Re-run the check to verify it passes
@@ -171,6 +178,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 6. Return to Phase 1, Step 1
 
 **Common Fixes**:
+
 - `npm run format` — Auto-fix formatting issues
 - `npm test -- --watch` — Debug failing tests interactively
 - `npm run type-check` — Check for TypeScript errors
@@ -180,6 +188,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 **Problem**: Reviewer requests changes
 
 **Action**:
+
 1. Address each comment
 2. Reply to comments with explanation or fix link
 3. Make code changes if needed
@@ -192,6 +201,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 **Problem**: Deployment status shows ❌ on GitHub
 
 **Action**:
+
 1. Check Vercel dashboard for error message
 2. Common causes:
    - Build timeout → Could indicate large files or slow dependency install
@@ -207,6 +217,7 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 **Problem**: Smoke tests fail after deployment
 
 **Action**:
+
 1. **Do NOT attempt further testing** — User experience is degraded
 2. **Immediately roll back** (see Rollback section below)
 3. Investigate what broke
@@ -219,25 +230,30 @@ Step-by-step procedure for deploying code from `claude/alpha-cathedral-roadmap-*
 Use this if deployment causes production issues.
 
 **Immediate Action** (< 1 min):
+
 1. Go to Vercel dashboard
 2. Click on the previous deployment (last successful one)
 3. Click "Rollback to this deployment"
 4. Confirm the rollback
 
 **Verification** (2 min):
+
 ```bash
 curl -s https://newspulse-ai.vercel.app/api/health | jq .
 ```
+
 - Should show success
 - Visit app to manually verify core flows work
 
 **Root Cause Analysis**:
+
 1. What broke? (which feature, which API)
 2. Why did tests not catch it?
 3. What should have prevented this?
 4. Update test coverage before re-deploying
 
 **Re-Deploy After Fix**:
+
 1. Fix the issue locally
 2. Add test case to prevent regression
 3. Re-run all tests locally: `npm test`

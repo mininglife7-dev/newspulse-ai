@@ -42,30 +42,43 @@ export default function MissionTracker({ missions, missionProgress }: Props) {
       <div className="grid gap-4 sm:grid-cols-5">
         <div className="rounded-lg border border-border bg-card p-3">
           <div className="text-xs uppercase text-white/40">Total Missions</div>
-          <div className="mt-2 text-2xl font-bold">{missionProgress.completed + missionProgress.inProgress + missionProgress.open + missionProgress.deferred}</div>
+          <div className="mt-2 text-2xl font-bold">
+            {missionProgress.completed +
+              missionProgress.inProgress +
+              missionProgress.open +
+              missionProgress.deferred}
+          </div>
         </div>
         <div className="rounded-lg border border-green-500/30 bg-green-950/20 p-3">
           <div className="text-xs uppercase text-white/40">Completed</div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-green-300">{missionProgress.completed}</span>
+            <span className="text-2xl font-bold text-green-300">
+              {missionProgress.completed}
+            </span>
           </div>
         </div>
         <div className="rounded-lg border border-blue-500/30 bg-blue-950/20 p-3">
           <div className="text-xs uppercase text-white/40">In Progress</div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-blue-300">{missionProgress.inProgress}</span>
+            <span className="text-2xl font-bold text-blue-300">
+              {missionProgress.inProgress}
+            </span>
           </div>
         </div>
         <div className="rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3">
           <div className="text-xs uppercase text-white/40">Open</div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-yellow-300">{missionProgress.open}</span>
+            <span className="text-2xl font-bold text-yellow-300">
+              {missionProgress.open}
+            </span>
           </div>
         </div>
         <div className="rounded-lg border border-border bg-card p-3">
           <div className="text-xs uppercase text-white/40">Progress</div>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-accent-300">{missionProgress.percentComplete}%</span>
+            <span className="text-2xl font-bold text-accent-300">
+              {missionProgress.percentComplete}%
+            </span>
           </div>
         </div>
       </div>
@@ -95,7 +108,9 @@ export default function MissionTracker({ missions, missionProgress }: Props) {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="font-semibold">{mission.id}</div>
-                      <div className="text-sm text-white/70">{mission.title}</div>
+                      <div className="text-sm text-white/70">
+                        {mission.title}
+                      </div>
                     </div>
                     <span className="whitespace-nowrap rounded-full bg-black/50 px-2 py-1 text-xs capitalize text-white/70">
                       {mission.status.replace(/_/g, ' ')}
@@ -105,11 +120,15 @@ export default function MissionTracker({ missions, missionProgress }: Props) {
               </div>
               <div className="flex flex-col items-end gap-1">
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-accent-300">{mission.impactScore}/10</div>
+                  <div className="text-sm font-semibold text-accent-300">
+                    {mission.impactScore}/10
+                  </div>
                   <div className="text-xs text-white/40">Impact</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-white/50">{mission.effortEstimate}</div>
+                  <div className="text-xs text-white/50">
+                    {mission.effortEstimate}
+                  </div>
                   <div className="text-xs text-white/40">Effort</div>
                 </div>
               </div>

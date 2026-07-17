@@ -3,7 +3,7 @@
 **Purpose:** Final verification before first customer launch  
 **Timeline:** 1-2 hours total  
 **Status:** Ready to verify  
-**Owner:** Founder  
+**Owner:** Founder
 
 ---
 
@@ -12,6 +12,7 @@
 This checklist consolidates everything needed to verify the system is production-ready. Work through each section sequentially. Green checkmarks = ready to launch.
 
 **Estimated time breakdown:**
+
 - Prerequisites: 20-35 min (blocked Founder actions)
 - Code verification: 7 min (scripts)
 - Deployment verification: 10 min (manual checks)
@@ -52,6 +53,7 @@ bash scripts/pre-customer-verification.sh --verbose
 ```
 
 **Expected output:**
+
 ```
 ✅ Node.js available: v20.x
 ✅ npm available: v10.x
@@ -68,6 +70,7 @@ bash scripts/pre-customer-verification.sh --verbose
 ```
 
 **If any ❌ fails:** Fix before proceeding
+
 - Tests failing? Run `npm test` to debug
 - Build errors? Run `npm run type-check` to fix
 - Lint issues? Run `npm run lint -- --fix` to fix
@@ -88,11 +91,13 @@ Verify Vercel deployment is ready and working:
    - [ ] Deployment timestamp is recent (< 1 hour)
 
 2. **Run Runtime Health Check**
+
    ```bash
    bash scripts/runtime-health-check.sh --quick
    ```
-   
+
    **Expected output:**
+
    ```
    ✅ Deployment accessible
    ✅ API health endpoint: 200 OK
@@ -102,17 +107,17 @@ Verify Vercel deployment is ready and working:
    ```
 
 3. **Manual Endpoint Verification**
-   
+
    Test in your browser or curl:
-   
+
    ```bash
    # Should return 200 with {"ok": true, "db": "ok", ...}
    curl https://newspulse-ai.vercel.app/api/health
-   
+
    # Should return 200 with alert data
    curl https://newspulse-ai.vercel.app/api/alerts
    ```
-   
+
    - [ ] `/api/health` returns 200 with `"db": "ok"`
    - [ ] `/api/alerts` returns 200 with `"alerts": []` or alert list
    - [ ] Both endpoints respond in <1 second
@@ -144,6 +149,7 @@ Follow `docs/infra/MONITORING_SETUP_GUIDE.md` to configure monitoring:
 - [ ] (Optional) Add secret: `SLACK_WEBHOOK_URL` = [paste Slack webhook if you have one]
 
 **Verify secrets added:**
+
 ```bash
 # (Can't view values, just check they exist in GitHub UI)
 # Settings → Secrets → should see 2-3 secrets listed
@@ -165,6 +171,7 @@ Follow `docs/infra/MONITORING_SETUP_GUIDE.md` to configure monitoring:
   5. Check logs show all health checks passed
 
 **Expected log output:**
+
 ```
 ✅ Deployment ready: https://newspulse-ai.vercel.app
 ✅ API health: OK, Database: OK
@@ -211,30 +218,35 @@ Verify you have the key docs ready:
 Final systems check before inviting first customer:
 
 ### Infrastructure
+
 - [ ] Vercel deployment: Ready
 - [ ] Supabase database: Schema deployed, accessible
 - [ ] GitHub Actions: Spending limit increased, workflows enabled
 - [ ] Monitoring: Secrets configured, health check passes
 
 ### Monitoring
+
 - [ ] 5-minute health checks: Enabled
 - [ ] Hourly performance tracking: Enabled
 - [ ] 12-hourly error aggregation: Enabled
 - [ ] Slack alerts: (Optional, can enable later)
 
 ### Documentation
+
 - [ ] Customer playbook: Read and understood
 - [ ] Monitoring dashboard: Bookmarked
 - [ ] Support SLAs: Documented and ready
 - [ ] Email templates: Customized and ready
 
 ### APIs & Endpoints
+
 - [ ] `/api/health` → 200, `"db": "ok"`
 - [ ] `/api/alerts` → 200
 - [ ] Response time < 1 second
 - [ ] No errors in deployment logs
 
 ### Customer Readiness
+
 - [ ] First customer email address ready
 - [ ] Welcome email template customized
 - [ ] Support contact info documented
@@ -247,14 +259,17 @@ Final systems check before inviting first customer:
 After completing all checks above, answer these questions:
 
 ### All systems operational?
+
 - [ ] Yes, all checks passed (GREEN) → **Ready to launch**
 - [ ] No, some checks failed (RED) → Fix issues and re-run
 
 ### Monitoring working?
+
 - [ ] Yes, health checks pass (GREEN) → **Ready to launch**
 - [ ] No, monitoring issues (RED) → Review MONITORING_SETUP_GUIDE.md troubleshooting
 
 ### Team ready?
+
 - [ ] Yes, Founder understands procedures (GREEN) → **Ready to launch**
 - [ ] No, need more practice (RED) → Review FIRST_CUSTOMER_PLAYBOOK.md again
 
@@ -265,12 +280,14 @@ After completing all checks above, answer these questions:
 Once all checks pass, you're ready for first customer.
 
 ### Before Customer Joins
+
 1. Verify health endpoint one last time (should be instant)
 2. Review welcome email one final time
 3. Ensure you're monitoring the alerts dashboard
 4. Have INCIDENT_RESPONSE_RUNBOOKS.md open (just in case)
 
 ### When Customer Signs Up
+
 1. Send welcome email using template
 2. Monitor `/api/alerts` dashboard
 3. Track signup funnel metrics (METRICS_TRACKING_SPECIFICATION.md)
@@ -278,6 +295,7 @@ Once all checks pass, you're ready for first customer.
 5. Follow 7-step journey in FIRST_CUSTOMER_PLAYBOOK.md
 
 ### Week 1 Operations
+
 - [ ] Daily: Check health dashboard (FOUNDER_MONITORING_DASHBOARD.md)
 - [ ] Daily: Track metrics using daily checklist
 - [ ] Within SLA: Respond to any customer support requests
@@ -338,6 +356,7 @@ If something goes wrong before first customer:
 ## Reference
 
 **Documents to have on hand:**
+
 - `FOUNDER_ACTION_BOARD.md` — Daily checklist
 - `FIRST_CUSTOMER_PLAYBOOK.md` — Customer journey procedures
 - `FOUNDER_MONITORING_DASHBOARD.md` — Daily monitoring routine
@@ -346,11 +365,12 @@ If something goes wrong before first customer:
 - `COMMUNICATION_TEMPLATES.md` — Email templates
 
 **Scripts to run:**
+
 - `scripts/pre-customer-verification.sh --verbose` — Code/build ready
 - `scripts/runtime-health-check.sh --quick` — Deployment ready
 
 **External links:**
+
 - Vercel: https://vercel.com/lalit-kumar-d-s-projects/newspulse-ai
 - Supabase: https://app.supabase.com
 - GitHub: https://github.com/mininglife7-dev/newspulse-ai
-

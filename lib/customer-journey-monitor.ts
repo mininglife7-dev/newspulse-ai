@@ -109,7 +109,10 @@ export async function testJourney(
       const url = `${baseUrl}${step.endpoint}`;
       const response = await fetch(url, {
         method: step.method,
-        headers: step.method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+        headers:
+          step.method === 'POST'
+            ? { 'Content-Type': 'application/json' }
+            : undefined,
         body: step.method === 'POST' ? JSON.stringify(step.payload) : undefined,
         signal: AbortSignal.timeout(5000),
       });
@@ -167,7 +170,9 @@ export async function monitorCustomerJourneys(
   journeyNames?: string[]
 ): Promise<CustomerJourneyReport> {
   const journeyTests = journeyNames
-    ? Object.entries(CUSTOMER_JOURNEYS).filter(([name]) => journeyNames.includes(name))
+    ? Object.entries(CUSTOMER_JOURNEYS).filter(([name]) =>
+        journeyNames.includes(name)
+      )
     : Object.entries(CUSTOMER_JOURNEYS);
 
   const results = await Promise.all(
@@ -187,9 +192,12 @@ export async function monitorCustomerJourneys(
     });
   }
 
-  const avgLatency = results.reduce((sum, r) => sum + r.totalLatencyMs, 0) / results.length;
+  const avgLatency =
+    results.reduce((sum, r) => sum + r.totalLatencyMs, 0) / results.length;
   if (avgLatency > 3000) {
-    alerts.push(`[PERFORMANCE] Customer journeys averaging ${Math.round(avgLatency)}ms (SLA: <2000ms)`);
+    alerts.push(
+      `[PERFORMANCE] Customer journeys averaging ${Math.round(avgLatency)}ms (SLA: <2000ms)`
+    );
   }
 
   return {
@@ -208,7 +216,9 @@ export async function monitorCustomerJourneys(
 /**
  * Format customer journey report for Founder
  */
-export function formatCustomerJourneyAlert(report: CustomerJourneyReport): string {
+export function formatCustomerJourneyAlert(
+  report: CustomerJourneyReport
+): string {
   if (report.ok) {
     return `✅ Customer journeys operational: ${report.summary.successfulJourneys}/${report.summary.totalJourneys} passing`;
   }

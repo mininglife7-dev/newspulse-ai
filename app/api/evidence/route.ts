@@ -38,7 +38,11 @@ async function resolveContext(
     .maybeSingle();
 
   if (memberError) {
-    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    logger.error(
+      'Workspace membership lookup failed',
+      'MEMBERSHIP_LOOKUP_ERROR',
+      memberError
+    );
     return { status: 500, error: 'Membership lookup failed' };
   }
 

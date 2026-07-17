@@ -28,12 +28,14 @@
 ### During Migration (Governor Executing)
 
 **Phase 3 — Configure** (5 min)
+
 - [ ] Governor updates GitHub Secrets with EU DB URL
 - [ ] Governor updates GitHub Variables with EU project ref/URL
 - [ ] Governor updates Vercel environment variables
 - [ ] Governor verifies all required secrets present
 
 **Phase 4 — Deploy** (10 min)
+
 - [ ] Deployment workflow triggered against EU project
 - [ ] Base schema (supabase/schema.sql) deployed
 - [ ] CEIS schema (supabase/ceis-schema.sql) deployed
@@ -41,6 +43,7 @@
 - [ ] Security tests execute
 
 **Phase 5 — Validate** (5 min)
+
 - [ ] 22 tables verified present
 - [ ] 62 indexes verified present
 - [ ] 43 RLS policies verified active
@@ -50,6 +53,7 @@
 - [ ] Security tests 100% passing
 
 **Phase 6 — Application Test** (10 min)
+
 - [ ] Application loads without errors
 - [ ] Registration page accessible
 - [ ] Login flow works
@@ -57,6 +61,7 @@
 - [ ] CEIS functionality responsive
 
 **Phase 7 — Final Report** (5 min)
+
 - [ ] Governor generates SUPABASE-EU-PRODUCTION-MIGRATION-REPORT.md
 - [ ] All 15 production-readiness gates GREEN
 - [ ] GO recommendation issued for Customer #1
@@ -223,6 +228,7 @@ curl https://newspulse-ai.vercel.app/api/health
 ### Daily Checklist (Monday-Friday, 5 min)
 
 Each morning:
+
 - [ ] Check /api/health endpoint (should be 200, "db": "ok")
 - [ ] Review /api/alerts for critical issues
 - [ ] Check Vercel deployment status
@@ -245,6 +251,7 @@ Each morning:
 ### Escalation Procedures
 
 If at any point:
+
 - [ ] Customer reports 403 error → Check RLS policies (LAUNCH-DAY-TROUBLESHOOTING.md #1)
 - [ ] Customer reports 500 error → Check /api/alerts for critical errors
 - [ ] Customer says platform is slow → Check database query performance
@@ -259,6 +266,7 @@ If at any point:
 ### 🟢 GO — Launch customer immediately
 
 **Conditions:** At least one of these must be true:
+
 - [ ] All verification phases (1-5) passed with no critical blockers
 - [ ] Any issues found were resolved
 - [ ] Customer confirmed ready (email verified, workspace created)
@@ -270,11 +278,13 @@ If at any point:
 ### 🟡 GO WITH CAUTION — Launch with mitigations
 
 **Conditions:** Minor issues found but contained:
+
 - [ ] Issue is not a critical blocker (e.g., optional feature disabled)
 - [ ] Workaround exists or issue can be fixed post-launch
 - [ ] Customer has been notified of limitation
 
 **Required:**
+
 - [ ] Document the issue in RISK-REGISTER.md
 - [ ] Document the workaround in customer onboarding
 - [ ] Plan fix for Phase 2
@@ -287,12 +297,14 @@ If at any point:
 ### 🔴 NO-GO — Delay customer launch
 
 **Conditions:** Critical blocker that would harm customer:
+
 - [ ] Infrastructure issue (EU database not reachable)
 - [ ] Security issue (RLS not enforcing)
 - [ ] Core feature broken (signup/login/assessment failing)
 - [ ] Data integrity issue
 
 **Required:**
+
 - [ ] Investigate root cause
 - [ ] Document issue in RISK-REGISTER.md
 - [ ] Estimate time to fix
@@ -334,16 +346,16 @@ If at any point:
 
 ## SUPPORT RESOURCES
 
-| Document | Use Case |
-|----------|----------|
-| LAUNCH-DAY-PROCEDURES.md | Step-by-step launch day timeline |
-| LAUNCH-DAY-TROUBLESHOOTING.md | Diagnosis and fixes for common issues |
-| SUPPORT_TICKET_SYSTEM.md | How to log, prioritize, and track customer issues |
-| FOUNDER_QUICK_REFERENCE.md | Print this! Daily operations guide |
-| METRICS_TRACKING_SPECIFICATION.md | What to measure and how to track |
-| COMMUNICATION_TEMPLATES.md | Email templates for customer communications |
-| INCIDENT_RESPONSE_RUNBOOKS.md | Procedures if something goes wrong |
-| POST-DEPLOY-ENVIRONMENT-SETUP.md | How to configure optional features |
+| Document                          | Use Case                                          |
+| --------------------------------- | ------------------------------------------------- |
+| LAUNCH-DAY-PROCEDURES.md          | Step-by-step launch day timeline                  |
+| LAUNCH-DAY-TROUBLESHOOTING.md     | Diagnosis and fixes for common issues             |
+| SUPPORT_TICKET_SYSTEM.md          | How to log, prioritize, and track customer issues |
+| FOUNDER_QUICK_REFERENCE.md        | Print this! Daily operations guide                |
+| METRICS_TRACKING_SPECIFICATION.md | What to measure and how to track                  |
+| COMMUNICATION_TEMPLATES.md        | Email templates for customer communications       |
+| INCIDENT_RESPONSE_RUNBOOKS.md     | Procedures if something goes wrong                |
+| POST-DEPLOY-ENVIRONMENT-SETUP.md  | How to configure optional features                |
 
 ---
 
@@ -360,4 +372,3 @@ If at any point:
 **Date:** 2026-07-16  
 **Valid through:** First customer launch  
 **Review:** Update after each customer onboarding (lessons learned)
-

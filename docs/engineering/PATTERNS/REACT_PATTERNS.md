@@ -84,6 +84,7 @@ export default function WorkspaceCard({
 ### Server Components (Default)
 
 Use server components for:
+
 - Fetching data from databases
 - Accessing environment variables
 - Working with sensitive API keys
@@ -116,6 +117,7 @@ export default async function WorkspacePage() {
 ### Client Components
 
 Use client components for:
+
 - Interactivity (clicks, form inputs, state changes)
 - Browser APIs (localStorage, window, DOM events)
 - React hooks (useState, useEffect, useCallback)
@@ -257,14 +259,14 @@ Avoid useState for values derived from props:
 ```typescript
 // ❌ DON'T: Derived state
 export default function List({ items }) {
-  const [count, setCount] = useState(items.length)
-  useEffect(() => setCount(items.length), [items])
+  const [count, setCount] = useState(items.length);
+  useEffect(() => setCount(items.length), [items]);
   // ...
 }
 
 // ✅ DO: Compute directly
 export default function List({ items }) {
-  const count = items.length
+  const count = items.length;
   // ...
 }
 ```

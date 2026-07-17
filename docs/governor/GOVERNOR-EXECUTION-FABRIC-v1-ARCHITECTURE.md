@@ -1,4 +1,5 @@
 # GOVERNOR EXECUTION FABRIC v1 — Architecture Specification
+
 **Version:** 1.0 (Production Design)  
 **Authority:** Chief Systems Architect  
 **Status:** Reference Architecture  
@@ -144,7 +145,7 @@ Authority:
   required_permissions: string[]
   requires_approval: bool
   approval_path: string
-  
+
 Policy:
   id: string
   name: string
@@ -157,6 +158,7 @@ Policy:
 ### Algorithms
 
 **Task Decomposition**
+
 ```
 Input: High-level objective
 Process:
@@ -169,6 +171,7 @@ Output: Ordered task list with dependencies
 ```
 
 **Authority Evaluation**
+
 ```
 Input: Proposed action
 Process:
@@ -193,27 +196,27 @@ Governor supports multiple reasoning engines:
 ```python
 class ReasoningEngine(ABC):
     """Interface all reasoning models must implement"""
-    
+
     def analyze(self, context: Context) -> Analysis:
         """Analyze situation, return structured analysis"""
         pass
-    
+
     def plan(self, objective: str, tools: Tool[]) -> Plan:
         """Create execution plan given objective and available tools"""
         pass
-    
+
     def decide(self, options: Option[]) -> Decision:
         """Choose best path forward"""
         pass
-    
+
     def verify(self, claim: str, evidence: Evidence[]) -> Verdict:
         """Verify if claim is supported by evidence"""
         pass
-    
+
     def estimate(self, task: Task) -> Estimate:
         """Estimate complexity, duration, risk"""
         pass
-    
+
     def optimize(self, plan: Plan) -> Plan:
         """Optimize plan for speed, cost, risk"""
         pass
@@ -221,14 +224,14 @@ class ReasoningEngine(ABC):
 
 ### Supported Models
 
-| Model | Provider | Use Cases | Trade-offs |
-|-------|----------|-----------|------------|
-| Claude Opus | Anthropic | Complex reasoning, planning, verification | Higher cost, longer latency |
-| Claude Sonnet | Anthropic | Balanced reasoning, general tasks | Good balance |
-| Claude Haiku | Anthropic | Fast classification, summaries | Limited context |
-| GPT-4 | OpenAI | Complex analysis, coding | API dependency |
-| Gemini | Google | Multimodal analysis, scale | API dependency |
-| Local LLaMA | On-prem | Fast, private, cost-effective | Limited capability |
+| Model         | Provider  | Use Cases                                 | Trade-offs                  |
+| ------------- | --------- | ----------------------------------------- | --------------------------- |
+| Claude Opus   | Anthropic | Complex reasoning, planning, verification | Higher cost, longer latency |
+| Claude Sonnet | Anthropic | Balanced reasoning, general tasks         | Good balance                |
+| Claude Haiku  | Anthropic | Fast classification, summaries            | Limited context             |
+| GPT-4         | OpenAI    | Complex analysis, coding                  | API dependency              |
+| Gemini        | Google    | Multimodal analysis, scale                | API dependency              |
+| Local LLaMA   | On-prem   | Fast, private, cost-effective             | Limited capability          |
 
 ### Model Selection Algorithm
 
@@ -247,6 +250,7 @@ Output: Selected model with configuration
 ### Context Management
 
 Governor maintains rich context for reasoning:
+
 - Current objective and task
 - Available tools and capabilities
 - Historical decisions and outcomes
@@ -267,7 +271,7 @@ At startup and periodically, Governor automatically discovers:
 ```python
 class CapabilityDiscovery:
     """Automatic tool and capability detection"""
-    
+
     def scan_environment(self) -> Environment:
         # Detect installed tools
         - git version
@@ -277,7 +281,7 @@ class CapabilityDiscovery:
         - kubernetes version
         - cloud CLI versions (aws, gcloud, azure)
         - browser (Chrome, Firefox)
-        
+
     def scan_authentications(self) -> Auth[]:
         # Detect authenticated sessions
         - GitHub token
@@ -286,14 +290,14 @@ class CapabilityDiscovery:
         - Vercel token
         - SSH keys
         - API keys
-        
+
     def scan_local_services(self) -> Service[]:
         # Detect running services
         - databases
         - web servers
         - monitoring systems
         - cache systems
-        
+
     def scan_mcp_servers(self) -> MCPServer[]:
         # Detect MCP server availability
         - GitHub
@@ -302,7 +306,7 @@ class CapabilityDiscovery:
         - Google Workspace
         - Notion
         - Asana
-        
+
     def build_capability_map(self) -> CapabilityMap:
         # Create consolidated tool registry
         - Each tool's capabilities
@@ -319,25 +323,25 @@ Each tool gets a standardized adapter:
 ```python
 class ToolAdapter(ABC):
     """Standard interface all tools implement"""
-    
+
     name: str
     category: "terminal" | "vcs" | "cloud" | "monitoring" | "communication"
     authenticated: bool
     permissions: Permission[]
     capabilities: Capability[]
-    
+
     def health_check(self) -> bool:
         """Is this tool available and healthy?"""
         pass
-    
+
     def execute(self, command: str) -> Result:
         """Execute a command using this tool"""
         pass
-    
+
     def capabilities(self) -> Capability[]:
         """What can this tool do?"""
         pass
-    
+
     def requires_approval(self, action: str) -> bool:
         """Does this action need escalation?"""
         pass
@@ -346,12 +350,14 @@ class ToolAdapter(ABC):
 ### Available Tool Categories
 
 **Version Control**
+
 - git
 - GitHub API
 - GitLab API
 - Bitbucket
 
 **Infrastructure & Cloud**
+
 - AWS CLI
 - Google Cloud CLI
 - Azure CLI
@@ -360,34 +366,40 @@ class ToolAdapter(ABC):
 - Terraform
 
 **Platforms**
+
 - Supabase CLI/API
 - Vercel CLI/API
 - Heroku CLI
 
 **Automation & Monitoring**
+
 - GitHub Actions
 - CI/CD pipelines
 - Monitoring systems
 - Alert systems
 
 **Communication**
+
 - Slack
 - Email
 - SMS
 
 **Development**
+
 - Terminal/Bash
 - Node.js/npm
 - Python/pip
 - Docker
 
 **Browser/UI Automation**
+
 - Playwright
 - Puppeteer
 - Chrome DevTools
 - Computer use API
 
 **MCP Servers**
+
 - GitHub integration
 - Slack integration
 - Gmail integration
@@ -461,26 +473,26 @@ Principle 5: ROLE-BASED PERMISSIONS
 ```python
 class CredentialVault:
     """Secure credential storage and retrieval"""
-    
+
     def store(self, name: str, secret: str, metadata: {}):
         # Store encrypted, never in memory
         # Log access with reason
         # Set expiration if needed
         pass
-    
+
     def retrieve(self, name: str, reason: str) -> str:
         # Decrypt only when needed
         # Log access with who/when/why
         # Verify authorization
         # Mask in output
         pass
-    
+
     def revoke(self, name: str):
         # Invalidate credential
         # Force re-authentication
         # Log revocation
         pass
-    
+
     def rotate(self, name: str) -> str:
         # Generate new credential
         # Update system
@@ -583,6 +595,7 @@ Level 6: EVIDENCE CERTIFICATION
 For each action type:
 
 **Deployment**
+
 ```
 1. Pre-deploy check
    - Build passes
@@ -608,6 +621,7 @@ For each action type:
 ```
 
 **Database Migration**
+
 ```
 1. Pre-migration
    - Backup current state
@@ -636,7 +650,7 @@ For each action type:
 ```python
 class EvidenceCollector:
     """Collect objective proof for every action"""
-    
+
     def collect(self, action: str, result: Result) -> Evidence[]:
         """
         Collect proof that action succeeded
@@ -649,7 +663,7 @@ class EvidenceCollector:
         - Git commit hashes
         """
         pass
-    
+
     def verify_claim(self, claim: str, evidence: Evidence[]) -> bool:
         """
         Is this claim supported by evidence?
@@ -823,33 +837,33 @@ Each capability is a hot-swappable module:
 ```python
 class Module(ABC):
     """Standard interface for all Governor modules"""
-    
+
     # Static metadata
     name: str
     version: str
     dependencies: str[]
     permissions: Permission[]
     capabilities: Capability[]
-    
+
     # Lifecycle
     async def init(self) -> bool:
         """Initialize module, verify dependencies"""
         pass
-    
+
     async def health_check(self) -> HealthStatus:
         """Is module healthy and ready?"""
         pass
-    
+
     # Operations
     async def execute(self, task: Task) -> Result:
         """Execute task using this module"""
         pass
-    
+
     # Observability
     async def get_metrics(self) -> Metrics:
         """Return performance metrics"""
         pass
-    
+
     async def get_logs(self) -> Log[]:
         """Return recent logs"""
         pass
@@ -858,6 +872,7 @@ class Module(ABC):
 ### Module Types
 
 **GitHub Module**
+
 ```
 Capabilities:
   - Push code
@@ -876,6 +891,7 @@ Permissions:
 ```
 
 **Supabase Module**
+
 ```
 Capabilities:
   - Deploy schema
@@ -892,6 +908,7 @@ Permissions:
 ```
 
 **Vercel Module**
+
 ```
 Capabilities:
   - Deploy site
@@ -906,6 +923,7 @@ Permissions:
 ```
 
 **Playwright Module**
+
 ```
 Capabilities:
   - Browser automation
@@ -919,6 +937,7 @@ Permissions:
 ```
 
 **Monitoring Module**
+
 ```
 Capabilities:
   - Health checks
@@ -977,17 +996,20 @@ POLICY DECIDES (Automatic)
 ## SUCCESS METRICS
 
 **Founder Involvement**
+
 - Decreases monthly: target <10 interruptions/month
 - Escalations are strategic, not tactical
 - Average resolution time: <5 min (just approval, no explanation needed)
 
 **Governor Performance**
+
 - Uptime: 99.9%+
 - Autonomous success rate: >95%
 - MTTR (mean time to repair): <15 min
 - Evidence collection: 100% of claims
 
 **Business Impact**
+
 - Deployment frequency increases
 - Incident resolution time decreases
 - Development velocity increases
@@ -999,6 +1021,7 @@ POLICY DECIDES (Automatic)
 ## ROADMAP
 
 ### v1 (Current)
+
 - ✅ Six-layer architecture
 - ✅ Core execution engine
 - ✅ GitHub integration
@@ -1008,6 +1031,7 @@ POLICY DECIDES (Automatic)
 - ✅ Evidence collection
 
 ### v2
+
 - Playwright automation
 - Multi-model reasoning (Claude + GPT-4)
 - Advanced scheduling (cron, event-based)
@@ -1016,6 +1040,7 @@ POLICY DECIDES (Automatic)
 - Advanced security policies
 
 ### v3
+
 - Computer use for complex automation
 - Full Kubernetes orchestration
 - Customer-facing dashboard
@@ -1028,6 +1053,7 @@ POLICY DECIDES (Automatic)
 ## REFERENCE IMPLEMENTATIONS
 
 See companion documents:
+
 1. `GOVERNOR-MODULE-GITHUB.md` — GitHub module spec
 2. `GOVERNOR-MODULE-SUPABASE.md` — Supabase module spec
 3. `GOVERNOR-MODULE-VERCEL.md` — Vercel module spec
@@ -1043,7 +1069,7 @@ See companion documents:
 
 **Architecture approved by:** Chief Systems Architect  
 **Implementation authority:** Executive Governor Ω  
-**Strategic oversight:** Founder  
+**Strategic oversight:** Founder
 
 This specification is the reference architecture for all Governor implementations.
 

@@ -5,6 +5,7 @@
 NewsPulse AI provides REST APIs for news search, history management, governance monitoring, and system health checks.
 
 All APIs:
+
 - Require `POST` body as JSON (except `GET` endpoints)
 - Return JSON responses with `ok` boolean and `error` string on failure
 - Support demo mode via `DEMO_MODE=true` for testing without external API keys
@@ -16,6 +17,7 @@ All APIs:
 Check system configuration status.
 
 **Response (200 — Healthy):**
+
 ```json
 {
   "ok": true,
@@ -32,6 +34,7 @@ Check system configuration status.
 ```
 
 **Response (503 — Degraded):**
+
 ```json
 {
   "ok": false,
@@ -54,6 +57,7 @@ Check system configuration status.
 Search the web for news articles and get AI summaries.
 
 **Request:**
+
 ```json
 {
   "keyword": "artificial intelligence"
@@ -61,6 +65,7 @@ Search the web for news articles and get AI summaries.
 ```
 
 **Response (200 — Success):**
+
 ```json
 {
   "ok": true,
@@ -82,6 +87,7 @@ Search the web for news articles and get AI summaries.
 ```
 
 **Response (400 — Missing Keyword):**
+
 ```json
 {
   "ok": false,
@@ -90,6 +96,7 @@ Search the web for news articles and get AI summaries.
 ```
 
 **Response (500 — Misconfigured):**
+
 ```json
 {
   "ok": false,
@@ -107,9 +114,11 @@ When `DEMO_MODE=true`, returns sample articles without requiring external API ke
 Retrieve saved search history.
 
 **Query Parameters:**
+
 - `limit` (optional): Max results to return (default: 50, max: 200)
 
 **Response (200 — Success):**
+
 ```json
 {
   "ok": true,
@@ -136,6 +145,7 @@ Retrieve saved search history.
 ```
 
 **Response (500 — Misconfigured):**
+
 ```json
 {
   "ok": false,
@@ -153,10 +163,12 @@ When `DEMO_MODE=true`, returns empty history (searches are not persisted in demo
 Clear all saved searches.
 
 **Authentication:**
+
 - Optional: `Authorization: Bearer <admin_token>` header
 - If configured with `ADMIN_TOKEN` environment variable, requests without valid token receive 401
 
 **Response (200 — Success):**
+
 ```json
 {
   "ok": true,
@@ -165,6 +177,7 @@ Clear all saved searches.
 ```
 
 **Response (401 — Unauthorized):**
+
 ```json
 {
   "ok": false,
@@ -179,6 +192,7 @@ Clear all saved searches.
 Retrieve canonical governance and launch readiness state.
 
 **Response (200 — Success):**
+
 ```json
 {
   "lastUpdated": "2026-07-10T04:10:00.000Z",
@@ -251,6 +265,7 @@ Retrieve canonical governance and launch readiness state.
 ## Environment Variables
 
 ### Required for Real Search
+
 - `FIRECRAWL_API_KEY` — Web search and scraping. Get at https://firecrawl.dev
 - `OPENAI_API_KEY` — Article summarization. Get at https://platform.openai.com/api-keys
 - `NEXT_PUBLIC_SUPABASE_URL` — Database URL from Supabase project
@@ -258,9 +273,11 @@ Retrieve canonical governance and launch readiness state.
 - `SUPABASE_SERVICE_ROLE_KEY` — Secret service role key (server-side only)
 
 ### Optional for Demo Mode
+
 - `DEMO_MODE` — Set to `true` to use mock data instead of real APIs
 
 ### Optional for Security
+
 - `ADMIN_TOKEN` — Protect DELETE /api/history with bearer token authentication
 
 ---
@@ -277,6 +294,7 @@ All endpoints return standardized error responses:
 ```
 
 **Common HTTP Status Codes:**
+
 - `200` — Success
 - `400` — Bad request (missing required field, invalid JSON)
 - `401` — Unauthorized (missing/invalid auth token)
@@ -290,12 +308,14 @@ All endpoints return standardized error responses:
 ## Demo Mode
 
 When `DEMO_MODE=true`:
+
 - `/api/search` returns 3 sample articles for any keyword
 - `/api/history` returns empty array (no persistence)
 - `/api/health` still reports actual configuration status
 - No external API keys required
 
 This is useful for:
+
 - Local development without Firecrawl/OpenAI/Supabase credentials
 - CI/CD testing
 - Previewing the UI without real API calls
@@ -306,6 +326,7 @@ This is useful for:
 ## Rate Limiting
 
 Currently not implemented. Consider adding in production:
+
 ```
 POST /api/search: 10 requests per minute per IP
 GET /api/history: 60 requests per minute per IP

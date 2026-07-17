@@ -12,7 +12,10 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import type { AssessmentQuestion, RiskAssessmentResult } from '@/lib/risk-assessment';
+import type {
+  AssessmentQuestion,
+  RiskAssessmentResult,
+} from '@/lib/risk-assessment';
 import { getRiskLevelColor, getRiskLevelLabel } from '@/lib/risk-assessment';
 
 interface AISystem {
@@ -58,7 +61,9 @@ export default function AssessmentPage() {
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [updatingObligation, setUpdatingObligation] = useState<string | null>(null);
+  const [updatingObligation, setUpdatingObligation] = useState<string | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RiskAssessmentResult | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -99,7 +104,9 @@ export default function AssessmentPage() {
 
           // Load auto-generated obligations for this assessment
           try {
-            const obRes = await fetch(`/api/obligations?assessmentId=${aData.assessment.id}`);
+            const obRes = await fetch(
+              `/api/obligations?assessmentId=${aData.assessment.id}`
+            );
             if (obRes.ok) {
               const obData = await obRes.json();
               if (obData.ok && obData.obligations) {
@@ -132,7 +139,8 @@ export default function AssessmentPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to update');
+      if (!res.ok || !data.ok)
+        throw new Error(data.error || 'Failed to update');
 
       // Update local state
       setObligations((prev) =>
@@ -196,7 +204,8 @@ export default function AssessmentPage() {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to finalize');
+      if (!res.ok || !data.ok)
+        throw new Error(data.error || 'Failed to finalize');
 
       setAssessment(data.assessment);
       // Redirect to inventory after finalization
@@ -282,15 +291,20 @@ export default function AssessmentPage() {
       {assessment?.status !== 'finalized' && questions.length > 0 && (
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-white">Assessment Progress</h3>
+            <h3 className="text-sm font-semibold text-white">
+              Assessment Progress
+            </h3>
             <span className="text-xs text-slate-400">
-              {Object.keys(answers).length} / {questions.length} questions answered
+              {Object.keys(answers).length} / {questions.length} questions
+              answered
             </span>
           </div>
           <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
-              style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+              style={{
+                width: `${(Object.keys(answers).length / questions.length) * 100}%`,
+              }}
             ></div>
           </div>
         </div>
@@ -378,21 +392,44 @@ export default function AssessmentPage() {
         <div className="rounded-lg border border-blue-800/60 bg-blue-950/30 p-6">
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-semibold text-white">Generated Compliance Obligations</h2>
+              <h2 className="text-xl font-semibold text-white">
+                Generated Compliance Obligations
+              </h2>
               <p className="text-sm text-slate-400 mt-1">
-                Based on this assessment, the following compliance obligations were automatically identified
+                Based on this assessment, the following compliance obligations
+                were automatically identified
               </p>
             </div>
 
             <div className="space-y-3">
               {obligations.map((ob) => {
-                const priorityColors: Record<string, { bg: string; text: string; border: string }> = {
-                  critical: { bg: 'bg-red-900/40', text: 'text-red-300', border: 'border-red-800/60' },
-                  high: { bg: 'bg-orange-900/40', text: 'text-orange-300', border: 'border-orange-800/60' },
-                  medium: { bg: 'bg-amber-900/40', text: 'text-amber-300', border: 'border-amber-800/60' },
-                  low: { bg: 'bg-green-900/40', text: 'text-green-300', border: 'border-green-800/60' },
+                const priorityColors: Record<
+                  string,
+                  { bg: string; text: string; border: string }
+                > = {
+                  critical: {
+                    bg: 'bg-red-900/40',
+                    text: 'text-red-300',
+                    border: 'border-red-800/60',
+                  },
+                  high: {
+                    bg: 'bg-orange-900/40',
+                    text: 'text-orange-300',
+                    border: 'border-orange-800/60',
+                  },
+                  medium: {
+                    bg: 'bg-amber-900/40',
+                    text: 'text-amber-300',
+                    border: 'border-amber-800/60',
+                  },
+                  low: {
+                    bg: 'bg-green-900/40',
+                    text: 'text-green-300',
+                    border: 'border-green-800/60',
+                  },
                 };
-                const colors = priorityColors[ob.priority] || priorityColors.medium;
+                const colors =
+                  priorityColors[ob.priority] || priorityColors.medium;
 
                 const statusColors: Record<string, string> = {
                   identified: 'bg-slate-700/50 text-slate-300',
@@ -409,15 +446,23 @@ export default function AssessmentPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`${colors.text} text-xs font-semibold uppercase`}>
+                          <span
+                            className={`${colors.text} text-xs font-semibold uppercase`}
+                          >
                             {ob.priority} Priority
                           </span>
-                          <span className={`text-xs font-medium px-2 py-1 rounded ${statusColors[ob.status] || statusColors.identified}`}>
+                          <span
+                            className={`text-xs font-medium px-2 py-1 rounded ${statusColors[ob.status] || statusColors.identified}`}
+                          >
                             {ob.status.replace(/_/g, ' ')}
                           </span>
                         </div>
-                        <h3 className={`${colors.text} font-medium mb-1`}>{ob.title}</h3>
-                        <p className="text-sm text-slate-300">{ob.description}</p>
+                        <h3 className={`${colors.text} font-medium mb-1`}>
+                          {ob.title}
+                        </h3>
+                        <p className="text-sm text-slate-300">
+                          {ob.description}
+                        </p>
                         {ob.due_date && (
                           <p className="text-xs text-slate-400 mt-2">
                             Due: {new Date(ob.due_date).toLocaleDateString()}
@@ -425,46 +470,60 @@ export default function AssessmentPage() {
                         )}
                       </div>
                       <div className="flex-shrink-0">
-                        {ob.status !== 'completed' && ob.status !== 'not_applicable' && (
-                          <div className="flex flex-col gap-1.5">
-                            {ob.status === 'identified' && (
-                              <button
-                                onClick={() =>
-                                  handleUpdateObligationStatus(ob.id, 'in_progress')
-                                }
-                                disabled={updatingObligation === ob.id}
-                                className="px-2.5 py-1 text-xs font-medium rounded border border-blue-700/50 bg-blue-950/40 text-blue-300 hover:bg-blue-950/60 disabled:opacity-60 transition"
-                                title="Mark as in progress"
-                              >
-                                {updatingObligation === ob.id ? 'Updating…' : 'Start'}
-                              </button>
-                            )}
-                            {ob.status === 'in_progress' && (
-                              <>
+                        {ob.status !== 'completed' &&
+                          ob.status !== 'not_applicable' && (
+                            <div className="flex flex-col gap-1.5">
+                              {ob.status === 'identified' && (
                                 <button
                                   onClick={() =>
-                                    handleUpdateObligationStatus(ob.id, 'completed')
+                                    handleUpdateObligationStatus(
+                                      ob.id,
+                                      'in_progress'
+                                    )
                                   }
                                   disabled={updatingObligation === ob.id}
-                                  className="px-2.5 py-1 text-xs font-medium rounded border border-green-700/50 bg-green-950/40 text-green-300 hover:bg-green-950/60 disabled:opacity-60 transition"
-                                  title="Mark as completed"
+                                  className="px-2.5 py-1 text-xs font-medium rounded border border-blue-700/50 bg-blue-950/40 text-blue-300 hover:bg-blue-950/60 disabled:opacity-60 transition"
+                                  title="Mark as in progress"
                                 >
-                                  {updatingObligation === ob.id ? 'Updating…' : 'Complete'}
+                                  {updatingObligation === ob.id
+                                    ? 'Updating…'
+                                    : 'Start'}
                                 </button>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateObligationStatus(ob.id, 'identified')
-                                  }
-                                  disabled={updatingObligation === ob.id}
-                                  className="px-2.5 py-1 text-xs font-medium rounded border border-slate-700/50 bg-slate-950/40 text-slate-400 hover:bg-slate-950/60 disabled:opacity-60 transition"
-                                  title="Revert to identified"
-                                >
-                                  Revert
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
+                              )}
+                              {ob.status === 'in_progress' && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      handleUpdateObligationStatus(
+                                        ob.id,
+                                        'completed'
+                                      )
+                                    }
+                                    disabled={updatingObligation === ob.id}
+                                    className="px-2.5 py-1 text-xs font-medium rounded border border-green-700/50 bg-green-950/40 text-green-300 hover:bg-green-950/60 disabled:opacity-60 transition"
+                                    title="Mark as completed"
+                                  >
+                                    {updatingObligation === ob.id
+                                      ? 'Updating…'
+                                      : 'Complete'}
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleUpdateObligationStatus(
+                                        ob.id,
+                                        'identified'
+                                      )
+                                    }
+                                    disabled={updatingObligation === ob.id}
+                                    className="px-2.5 py-1 text-xs font-medium rounded border border-slate-700/50 bg-slate-950/40 text-slate-400 hover:bg-slate-950/60 disabled:opacity-60 transition"
+                                    title="Revert to identified"
+                                  >
+                                    Revert
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -516,7 +575,9 @@ export default function AssessmentPage() {
                           )}
                         </label>
                         {q.description && (
-                          <p className="mt-1 text-xs text-slate-400">{q.description}</p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            {q.description}
+                          </p>
                         )}
                       </div>
 
@@ -562,7 +623,12 @@ export default function AssessmentPage() {
                       {q.type === 'select' && q.options && (
                         <select
                           value={answers[q.id] || ''}
-                          onChange={(e) => handleAnswerChange(q.id, e.target.value || undefined)}
+                          onChange={(e) =>
+                            handleAnswerChange(
+                              q.id,
+                              e.target.value || undefined
+                            )
+                          }
                           className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-sm"
                         >
                           <option value="">Select an option…</option>

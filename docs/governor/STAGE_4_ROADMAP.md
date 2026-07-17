@@ -12,6 +12,7 @@
 Build a sustainable knowledge architecture that supports institutional growth. Transform scattered documentation into organized, interconnected knowledge systems with clear ownership, versioning, and audience targeting.
 
 **Objectives**:
+
 1. Create knowledge base structure for different audiences (Founder, Engineers, Operations)
 2. Establish decision documentation and institutional memory systems
 3. Build reusable templates for common operations
@@ -19,6 +20,7 @@ Build a sustainable knowledge architecture that supports institutional growth. T
 5. Implement knowledge discovery and navigation
 
 **Success Criteria**:
+
 - Knowledge organized by audience and use case
 - All decisions documented with clear rationale
 - Lessons from each stage captured and accessible
@@ -112,9 +114,11 @@ docs/
 ## STAGE 4 Phases
 
 ### Phase 4.1: Knowledge Structure Setup (1-2 sessions)
+
 **Goal**: Establish directory structure and templates
 
 **Deliverables**:
+
 - Create `docs/operations/` with subdirectories
 - Create `docs/engineering/` with subdirectories
 - Create `docs/lessons/` with subdirectories
@@ -123,6 +127,7 @@ docs/
 - Document knowledge ownership and update responsibilities
 
 **Tasks**:
+
 - [ ] Create directory structure
 - [ ] Write knowledge taxonomy and audience guide
 - [ ] Create reusable templates for runbooks, checklists, references
@@ -130,15 +135,18 @@ docs/
 - [ ] Establish versioning strategy for knowledge documents
 
 ### Phase 4.2: Operational Knowledge (2-3 sessions)
+
 **Goal**: Document all critical operational procedures
 
 **Deliverables**:
+
 - `docs/operations/RUNBOOKS/*.md` - Step-by-step procedures
 - `docs/operations/CHECKLISTS/*.md` - Pre/post-action verification
 - `docs/operations/PROCEDURES/*.md` - Detailed how-tos
 - `docs/operations/INDEX.md` - Navigation and quick reference
 
 **Runbooks to Create**:
+
 - [ ] Deployment procedure (pre-push through post-verification)
 - [ ] Incident response workflow (detection through postmortem)
 - [ ] Database operations (migrations, backups, recovery)
@@ -146,6 +154,7 @@ docs/
 - [ ] Customer onboarding (workspace setup, initial config)
 
 **Checklists to Create**:
+
 - [ ] Pre-deployment checklist
 - [ ] Post-deployment verification
 - [ ] Incident postmortem template
@@ -153,15 +162,18 @@ docs/
 - [ ] Monthly compliance audit
 
 ### Phase 4.3: Engineering Knowledge (2-3 sessions)
+
 **Goal**: Document architecture, patterns, and API contracts
 
 **Deliverables**:
+
 - `docs/engineering/ARCHITECTURE.md` - System overview and data flow
 - `docs/engineering/API_REFERENCE.md` - All endpoints, status codes, examples
 - `docs/engineering/DATABASE_SCHEMA.md` - Tables, relationships, RLS policies
 - `docs/engineering/PATTERNS/*.md` - Reusable code patterns with examples
 
 **Content to Document**:
+
 - [ ] System architecture with component interactions
 - [ ] Data flow diagrams (text-based)
 - [ ] API endpoint reference (auto-generated from code)
@@ -172,9 +184,11 @@ docs/
 - [ ] Security checklist integration
 
 ### Phase 4.4: Learning & Lessons (1-2 sessions)
+
 **Goal**: Capture institutional learning from STAGE 0-3
 
 **Deliverables**:
+
 - `docs/lessons/STAGE_1_LESSONS.md` - Governance learnings
 - `docs/lessons/STAGE_2_LESSONS.md` - Organization learnings
 - `docs/lessons/STAGE_3_LESSONS.md` - Standards enforcement learnings
@@ -182,6 +196,7 @@ docs/
 - `docs/lessons/DECISION_RETROSPECTIVES.md` - Why decisions worked/failed
 
 **Learning Categories**:
+
 - [ ] What worked well and should be repeated
 - [ ] What was harder than expected
 - [ ] What we'd do differently
@@ -190,15 +205,18 @@ docs/
 - [ ] Future improvements identified
 
 ### Phase 4.5: Knowledge Navigation & Discovery (1 session)
+
 **Goal**: Make knowledge findable and usable
 
 **Deliverables**:
+
 - `docs/INDEX.md` - Master knowledge index
 - `docs/AUDIENCE_GUIDE.md` - What each role should know
 - `docs/GLOSSARY.md` - Terminology reference
 - Navigation structure with cross-references
 
 **Discovery Systems**:
+
 - [ ] Master index organized by audience
 - [ ] Searchable glossary of key terms
 - [ ] Decision trace (decision → rationale → impact → related docs)
@@ -216,6 +234,7 @@ docs/
 **Phase 4.5**: ✅ Knowledge fully discoverable by audience
 
 **Completion Verification**:
+
 - New engineer can onboard using docs
 - Any decision can be traced to rationale
 - All critical procedures have runbooks
@@ -240,7 +259,7 @@ docs/
 ## Timeline
 
 - **Phase 4.1**: 1-2 sessions
-- **Phase 4.2**: 2-3 sessions  
+- **Phase 4.2**: 2-3 sessions
 - **Phase 4.3**: 2-3 sessions
 - **Phase 4.4**: 1-2 sessions
 - **Phase 4.5**: 1 session
@@ -252,11 +271,13 @@ docs/
 ## Authority & Ownership
 
 **Governor Ω**: Autonomous execution of STAGE 4
+
 - Create knowledge structure
 - Document decisions and learning
 - Establish discovery systems
 
 **Future Responsibilities**:
+
 - Founder: Validate knowledge accuracy and completeness
 - Engineers: Contribute operational and engineering knowledge
 - Team members: Keep knowledge current

@@ -41,7 +41,11 @@ function isRetryableError(error: any, statusCode?: number): boolean {
   // Timeout errors
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
-    if (message.includes('timeout') || message.includes('econnreset') || message.includes('enotfound')) {
+    if (
+      message.includes('timeout') ||
+      message.includes('econnreset') ||
+      message.includes('enotfound')
+    ) {
       return true;
     }
   }
@@ -71,7 +75,8 @@ function getStatusCode(error: any): number | undefined {
  */
 function getRetryAfter(error: any): number | undefined {
   const retryAfter =
-    error?.response?.headers?.['retry-after'] || error?.headers?.['retry-after'];
+    error?.response?.headers?.['retry-after'] ||
+    error?.headers?.['retry-after'];
 
   if (retryAfter) {
     const seconds = parseInt(retryAfter, 10);
@@ -95,7 +100,8 @@ function calculateDelay(
   }
 
   // Exponential backoff: initialDelay * (multiplier ^ attempt)
-  const exponentialDelay = config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt);
+  const exponentialDelay =
+    config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt);
   const delay = Math.min(exponentialDelay, config.maxDelayMs);
 
   // Add jitter (±10%) to prevent thundering herd
@@ -132,7 +138,10 @@ export async function retryGitHubCall<T>(
     try {
       // Wrap in timeout promise
       const timeoutPromise = new Promise<T>((_, reject) => {
-        setTimeout(() => reject(new Error('GitHub API call timeout')), finalConfig.timeoutMs);
+        setTimeout(
+          () => reject(new Error('GitHub API call timeout')),
+          finalConfig.timeoutMs
+        );
       });
 
       const result = await Promise.race([fn(), timeoutPromise]);

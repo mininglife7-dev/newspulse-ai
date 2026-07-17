@@ -8,7 +8,8 @@
 
 ### What to check
 
-**Step 1: Navigate to Supabase** 
+**Step 1: Navigate to Supabase**
+
 - Open https://app.supabase.com
 - Select your project (newspulse-ai or EURO AI)
 
@@ -25,13 +26,15 @@ In **SQL Editor** or **Table Editor**, check these tables exist:
 
 **Step 3: Verify RLS policies**
 In **Authentication** > **Policies**, check these exist:
+
 - [ ] Workspace isolation (users can only see their own workspace)
 - [ ] Member access control (only workspace members can read)
 - [ ] Owner-only admin operations (only workspace owner can modify)
 
 **If all checked:** ✅ **Decision 1 Complete**
 
-**If any missing:** 
+**If any missing:**
+
 - Copy entire `supabase/schema.sql` from the repository root
 - Paste into Supabase SQL Editor
 - Click "Run" button
@@ -44,9 +47,11 @@ In **Authentication** > **Policies**, check these exist:
 ### What to check
 
 **Step 1: Navigate to Supabase**
+
 - https://app.supabase.com → Your Project
 
 **Step 2: Check Auth Providers**
+
 - Go to **Authentication** > **Providers**
 - Look for "Email" provider
 
@@ -55,6 +60,7 @@ In **Authentication** > **Policies**, check these exist:
 - [ ] Confirmation OTP validity set (e.g., 24 hours)
 
 **Step 3: Verify email sending is configured**
+
 - Go to **Authentication** > **Email Templates**
 - Check that "Confirm signup" template exists
 - [ ] Template has a confirmation link or code
@@ -62,12 +68,14 @@ In **Authentication** > **Policies**, check these exist:
 **If all checked:** ✅ **Decision 2 Complete**
 
 **If Email provider is disabled:**
+
 - Click the Email provider row
 - Toggle it ON
 - Save
 - Check again
 
 **If you don't see Email provider:**
+
 - Contact Supabase support (this is usually pre-enabled)
 - Verify your Supabase project type (should be "Free" or "Pro")
 
@@ -78,17 +86,21 @@ In **Authentication** > **Policies**, check these exist:
 ### What to check
 
 **Step 1: Navigate to GitHub**
+
 - https://github.com/mininglife7-dev/newspulse-ai
 - Click **Settings** > **Billing and plans**
 
 **Step 2: Check Actions usage**
+
 - Go to **Billing** > **Actions**
 
 Look for:
+
 - [ ] Your organization's Actions minute usage (e.g., "1,247 / 3,000 minutes this month")
 - [ ] Spending cap status (should show "Spending limit" if you have one)
 
 **Step 3: Verify no recent failures**
+
 - Go back to repository
 - Click **Actions** tab
 - Look at recent workflow runs
@@ -100,6 +112,7 @@ Look for:
 **If all checked:** ✅ **Decision 3 Complete**
 
 **If Actions are disabled or spending cap exceeded:**
+
 1. Click "Billing" in GitHub Settings
 2. Scroll to "Actions"
 3. If "Spending limit" is set to $0, change it to at least $10 (or remove limit)
@@ -146,6 +159,7 @@ Once all 3 decisions are verified, test the actual customer flow:
 **If all verified:** ✅ **CUSTOMER LAUNCH READY**
 
 **If any step failed:**
+
 1. Note which step failed
 2. Go to https://github.com/mininglife7-dev/newspulse-ai/issues/new
 3. Report the failure with the step number
@@ -156,24 +170,29 @@ Once all 3 decisions are verified, test the actual customer flow:
 ## Success Criteria
 
 ### Decision 1 ✅
+
 - [ ] Schema tables exist in Supabase
 - [ ] RLS policies installed
 
 ### Decision 2 ✅
+
 - [ ] Email auth provider enabled
 - [ ] Email templates configured
 
 ### Decision 3 ✅
+
 - [ ] GitHub Actions workflows running (not disabled)
 - [ ] No spending cap blocking runs
 
 ### Customer Signup Flow ✅
+
 - [ ] Signup form accessible
 - [ ] Verification email received and works
 - [ ] Customer can create workspace
 - [ ] Workspace persists in database
 
 ### Full Launch ✅
+
 - All 4 sections above verified
 - Customer can sign up, verify email, create workspace
 - No errors or 500s in the flow

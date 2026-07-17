@@ -1,4 +1,5 @@
 # Deployment Evidence Tracking Sheet
+
 ## Cathedral/EURO AI Supabase Schema Production Deployment
 
 **Founder:** ________________  
@@ -68,7 +69,7 @@ If BLOCKED, describe issue: ________________________________________
 
 **If NO-GO, describe issue and recovery plan:**
 
-________________________________________________________
+---
 
 ---
 
@@ -142,13 +143,13 @@ object_type     | count
 
 ### Expected vs. Actual Counts
 
-| Object Type | Expected | Actual | Status |
-|---|---|---|---|
-| Tables | 15 | ____ | ✅ / ❌ |
-| Indexes | 26 | ____ | ✅ / ❌ |
-| RLS Policies | 37 | ____ | ✅ / ❌ |
-| Triggers | 1 | ____ | ✅ / ❌ |
-| Functions | 1 | ____ | ✅ / ❌ |
+| Object Type  | Expected | Actual | Status  |
+| ------------ | -------- | ------ | ------- |
+| Tables       | 15       | ____   | ✅ / ❌ |
+| Indexes      | 26       | ____   | ✅ / ❌ |
+| RLS Policies | 37       | ____   | ✅ / ❌ |
+| Triggers     | 1        | ____   | ✅ / ❌ |
+| Functions    | 1        | ____   | ✅ / ❌ |
 
 ### Count Verification
 
@@ -158,7 +159,7 @@ object_type     | count
 
 **If counts don't match, describe which objects are missing:**
 
-________________________________________________________
+---
 
 ---
 
@@ -183,6 +184,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
 **PHASE 3 STATUS:** ✅ VERIFIED / ❌ FAILED
 
 If FAILED, recovery steps:
+
 - [ ] Re-run schema.sql (idempotent)
 - [ ] Investigate missing objects
 - [ ] Proceed to troubleshooting
@@ -230,7 +232,7 @@ Count of FAIL results: ______ (Should be 0)
 
 **If any test FAILED, this is a CRITICAL SECURITY ISSUE:**
 
-________________________________________________________
+---
 
 **ACTION:** Do NOT proceed to Phase 5 if any test fails. Contact support immediately.
 
@@ -317,15 +319,15 @@ ________________________________________________________
 
 **Deployment Status:** PRODUCTION GO / GO WITH CAVEATS / BLOCKED
 
-**Founder Sign-Off:** ___________________  (signature)
+**Founder Sign-Off:** ___________________ (signature)
 
 **Date/Time:** ______ UTC
 
 **Notes/Observations:**
 
-________________________________________________________
+---
 
-________________________________________________________
+---
 
 **Next Steps:**
 
@@ -380,6 +382,7 @@ Outcome: SUCCESS / PARTIAL / FAILED
 ## QUALITY ASSURANCE
 
 This document serves as an auditable record of the deployment. Keep this sheet for:
+
 - Compliance audit trail
 - Incident investigation (if issues arise later)
 - Knowledge base (deployment learnings)
@@ -394,4 +397,4 @@ This document serves as an auditable record of the deployment. Keep this sheet f
 
 ---
 
-*This tracking sheet documents ACTUAL runtime evidence. It is the source of truth for deployment verification.*
+_This tracking sheet documents ACTUAL runtime evidence. It is the source of truth for deployment verification._

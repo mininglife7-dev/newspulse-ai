@@ -1,4 +1,5 @@
 # Independent Verification & Validation Audit
+
 ## Supabase Schema Production Deployment Certification
 
 **Audit Date:** 2026-07-12  
@@ -24,6 +25,7 @@
 ## Audit Methodology
 
 ### Phase 1: Fresh Independent Audit ✓
+
 - Read schema.sql with zero assumptions
 - Ignored previous safety review conclusions
 - Performed structural analysis
@@ -31,6 +33,7 @@
 - Cross-referenced against enterprise standards (Microsoft, Google, AWS, Stripe, GitHub, Cloudflare, PostgreSQL)
 
 ### Testing Standards Applied
+
 - Enterprise-grade rigor (comparable to Google, AWS, Stripe)
 - Assumption: Every previous claim is false until verified
 - Favor evidence over optimism
@@ -45,6 +48,7 @@
 **Location:** Lines 733-738 (original) vs 741-815
 
 **Original Code:**
+
 ```sql
 alter table public.hercules_checkpoints enable row level security;
 alter table public.hercules_enterprise_missions enable row level security;
@@ -56,12 +60,14 @@ create table if not exists public.hercules_enterprise_missions (...)
 ```
 
 **PostgreSQL Behavior:** Attempts ALTER on non-existent tables
+
 ```
 ERROR: relation "hercules_checkpoints" does not exist
 ERROR: syntax error
 ```
 
-**Impact:** 
+**Impact:**
+
 - Schema deployment **FAILS IMMEDIATELY**
 - Rollback required
 - Deployment cannot proceed
@@ -69,11 +75,13 @@ ERROR: syntax error
 **Severity:** 🔴 CRITICAL — Blocks Production
 
 **Repair Applied:**
+
 - Moved `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` statements AFTER each `CREATE TABLE`
 - Now: CREATE TABLE → ALTER TABLE → CREATE INDEX (correct order)
 - Verified: Schema now idempotent
 
 **Evidence:**
+
 ```sql
 -- FIXED ORDER:
 create table if not exists public.hercules_checkpoints (...)
@@ -88,6 +96,7 @@ create index if not exists hercules_checkpoints_status_idx ...
 **Location:** Lines 57-60 (original)
 
 **Original Code:**
+
 ```sql
 exception when others then
   -- Log error but don't fail signup (defensive pattern)
@@ -98,12 +107,14 @@ exception when others then
 **Problem:** If profile insert fails (constraint violation, disk full, network error), signup succeeds anyway.
 
 **Result State:**
+
 - User exists in `auth.users` ✓
 - No profile row in `public.profiles` ✗
 - RLS policy checks fail for profile-based access
 - Downstream app errors: "permission denied", NULL pointer exceptions
 
 **Failure Cascade:**
+
 1. Signup succeeds (misleading success)
 2. User logs in (succeeds, profile doesn't exist)
 3. App queries `SELECT * FROM profiles WHERE id = user_id` (gets NULL)
@@ -113,11 +124,13 @@ exception when others then
 **Severity:** 🔴 CRITICAL — Creates corrupted database state
 
 **Repair Applied:**
+
 - Changed to `INSERT ... ON CONFLICT DO UPDATE` pattern (idempotent)
 - Changed exception handler to RE-RAISE error (fail signup properly)
 - Now: Profile creation failure = Signup failure (correct)
 
 **Evidence:**
+
 ```sql
 -- FIXED:
 insert into public.profiles (id, email, ...)
@@ -137,6 +150,7 @@ exception when others then
 **Location:** All RLS policies (lines 263-724)
 
 **Pattern in All Policies:**
+
 ```sql
 where workspace_id = companies.workspace_id
 and user_id = auth.uid()
@@ -144,13 +158,15 @@ and status = 'active'
 ```
 
 **Missing Index:**
+
 ```sql
 -- NOT PRESENT (required):
-create index workspace_members_workspace_user_status_idx 
+create index workspace_members_workspace_user_status_idx
   on workspace_members(workspace_id, user_id, status);
 ```
 
 **Performance Impact:**
+
 - Every query checks RLS policy
 - Each policy runs `EXISTS (SELECT 1 FROM workspace_members WHERE ...)`
 - Without composite index, scans full workspace_members table
@@ -158,11 +174,13 @@ create index workspace_members_workspace_user_status_idx
 - Large workspaces (100+ members): severe degradation
 
 **Query Plan (Without Index):**
+
 ```
 Seq Scan on workspace_members  ← Full table scan per row
 ```
 
 **Query Plan (With Index):**
+
 ```
 Index Scan on workspace_members_workspace_user_status_idx  ← Direct lookup
 ```
@@ -170,14 +188,16 @@ Index Scan on workspace_members_workspace_user_status_idx  ← Direct lookup
 **Severity:** 🔴 CRITICAL — Production performance blocker
 
 **Repair Applied:**
+
 - Added composite index: `(workspace_id, user_id, status)`
 - Enables efficient 3-column lookup
 - Reduces O(N*M) to O(log N) per row
 
 **Evidence:**
+
 ```sql
 -- ADDED:
-create index if not exists workspace_members_workspace_user_status_idx 
+create index if not exists workspace_members_workspace_user_status_idx
   on public.workspace_members (workspace_id, user_id, status);
 ```
 
@@ -190,6 +210,7 @@ create index if not exists workspace_members_workspace_user_status_idx
 **Location:** Line 82 (original)
 
 **Original:**
+
 ```sql
 slug text not null unique,
 ```
@@ -197,6 +218,7 @@ slug text not null unique,
 **Issue:** Slug must be unique across ALL workspaces and ALL owners.
 
 **Scenario:**
+
 - Owner A creates workspace "acme-corp"
 - Owner B cannot create workspace "acme-corp" (globally unique violation)
 - Even though different organizations
@@ -206,6 +228,7 @@ slug text not null unique,
 **Severity:** 🟠 HIGH — Limits application capability
 
 **Repair Applied:**
+
 ```sql
 slug text not null,
 unique(slug, owner_id)  -- ← Unique per owner, not global
@@ -218,12 +241,14 @@ unique(slug, owner_id)  -- ← Unique per owner, not global
 **Location:** Line 213 (original)
 
 **Original:**
+
 ```sql
 uploaded_by uuid references auth.users(id),
 -- Default: RESTRICT (cannot delete user if evidence exists)
 ```
 
-**Issue:** 
+**Issue:**
+
 - User deleted → Evidence still references user_id
 - Foreign key constraint prevents deletion
 - Cannot satisfy GDPR "right to be forgotten"
@@ -231,6 +256,7 @@ uploaded_by uuid references auth.users(id),
 **Severity:** 🟠 HIGH — GDPR compliance issue, user deletion blocked
 
 **Repair Applied:**
+
 ```sql
 uploaded_by uuid references auth.users(id) on delete set null,
 -- ↑ User deletion now allowed, sets field to NULL
@@ -243,6 +269,7 @@ uploaded_by uuid references auth.users(id) on delete set null,
 **Location:** Line 32 (original)
 
 **Original:**
+
 ```sql
 current_workspace_id uuid,
 -- No FK constraint
@@ -253,6 +280,7 @@ current_workspace_id uuid,
 **Severity:** 🟠 HIGH — Data integrity issue
 
 **Repair Applied:**
+
 ```sql
 current_workspace_id uuid references public.workspaces(id) on delete set null,
 ```
@@ -268,12 +296,14 @@ current_workspace_id uuid references public.workspaces(id) on delete set null,
 **Issue:** Invalid status values can be inserted (no validation)
 
 **Examples:**
+
 ```sql
 status text not null default 'active',  -- No constraint, 'invalid' accepted
 priority text,  -- No constraint, any string accepted
 ```
 
 **Repairs Applied:**
+
 ```sql
 -- Profiles (inherited from workspaces)
 status text check (status in ('active', 'suspended', 'deleted'))
@@ -310,6 +340,7 @@ status text check (status in ('active', 'pilot', 'deprecated'))
 **Scope:** Entire application
 
 **Issue:** No audit trail for sensitive operations:
+
 - Profile modifications
 - Workspace ownership changes
 - Member addition/removal
@@ -319,6 +350,7 @@ status text check (status in ('active', 'pilot', 'deprecated'))
 **Compliance Gap:** Enterprise customers (especially regulated industries) require audit logs.
 
 **Repair Applied:** Created new `audit_log` table:
+
 ```sql
 create table if not exists public.audit_log (
     id uuid primary key,
@@ -343,6 +375,7 @@ create table if not exists public.audit_log (
 **Issue:** HERCULES tables use `enterprise_id text` instead of UUID FK to workspaces
 
 **Problems:**
+
 1. No FK constraint to workspaces
 2. When workspace deleted, HERCULES data orphaned (stale accumulation)
 3. Data type inconsistency (text vs UUID)
@@ -351,6 +384,7 @@ create table if not exists public.audit_log (
 **Note:** Full fix requires migration. For now, this is documented as known limitation with recommendation to migrate `enterprise_id` to UUID FK in next release.
 
 **Documented Constraint:**
+
 ```sql
 -- HERCULES tables use text enterprise_id for backward compatibility
 -- Future: Migrate to UUID foreign key referencing workspaces.id
@@ -361,17 +395,17 @@ create table if not exists public.audit_log (
 
 ## SUMMARY OF REPAIRS
 
-| Defect | Type | Issue | Fix | Status |
-|--------|------|-------|-----|--------|
-| ALTER Before CREATE | CRITICAL | Schema deploy fails | Reordered statements | ✅ FIXED |
-| Trigger Error Handling | CRITICAL | Inconsistent state | Added ON CONFLICT, re-raise | ✅ FIXED |
-| RLS Index | CRITICAL | Performance blocker | Added composite index | ✅ FIXED |
-| Slug Uniqueness | HIGH | Multi-tenant limit | Changed to per-owner unique | ✅ FIXED |
-| Evidence.uploaded_by FK | HIGH | GDPR blocker | Added ON DELETE SET NULL | ✅ FIXED |
-| Profile.current_workspace FK | HIGH | Data integrity | Added FK constraint | ✅ FIXED |
-| Status CHECK Constraints | MEDIUM | Invalid data allowed | Added CHECK constraints | ✅ FIXED |
-| Audit Logging | MEDIUM | Compliance gap | Created audit_log table | ✅ FIXED |
-| HERCULES Workspace FK | MEDIUM | Stale data | Documented limitation | ⚠️ KNOWN |
+| Defect                       | Type     | Issue                | Fix                         | Status   |
+| ---------------------------- | -------- | -------------------- | --------------------------- | -------- |
+| ALTER Before CREATE          | CRITICAL | Schema deploy fails  | Reordered statements        | ✅ FIXED |
+| Trigger Error Handling       | CRITICAL | Inconsistent state   | Added ON CONFLICT, re-raise | ✅ FIXED |
+| RLS Index                    | CRITICAL | Performance blocker  | Added composite index       | ✅ FIXED |
+| Slug Uniqueness              | HIGH     | Multi-tenant limit   | Changed to per-owner unique | ✅ FIXED |
+| Evidence.uploaded_by FK      | HIGH     | GDPR blocker         | Added ON DELETE SET NULL    | ✅ FIXED |
+| Profile.current_workspace FK | HIGH     | Data integrity       | Added FK constraint         | ✅ FIXED |
+| Status CHECK Constraints     | MEDIUM   | Invalid data allowed | Added CHECK constraints     | ✅ FIXED |
+| Audit Logging                | MEDIUM   | Compliance gap       | Created audit_log table     | ✅ FIXED |
+| HERCULES Workspace FK        | MEDIUM   | Stale data           | Documented limitation       | ⚠️ KNOWN |
 
 ---
 
@@ -380,6 +414,7 @@ create table if not exists public.audit_log (
 ### Object Count Verification
 
 **Application Tables:** 9
+
 1. profiles
 2. workspaces
 3. workspace_members
@@ -391,21 +426,17 @@ create table if not exists public.audit_log (
 9. remediation_plans
 10. audit_log (NEW)
 
-**HERCULES Tables:** 6
-11. hercules_checkpoints
-12. hercules_enterprise_missions
-13. hercules_enterprise_tasks
-14. hercules_enterprise_events
-15. hercules_enterprise_audit
-16. hercules_recovery_log
+**HERCULES Tables:** 6 11. hercules_checkpoints 12. hercules_enterprise_missions 13. hercules_enterprise_tasks 14. hercules_enterprise_events 15. hercules_enterprise_audit 16. hercules_recovery_log
 
 **Total Tables:** 16 (was 15, added audit_log)
 
 **Indexes:** 26 (was 25, added workspace_members_workspace_user_status_idx)
+
 - 17 application indexes (was 16)
 - 9 HERCULES indexes
 
 **RLS Policies:** 37
+
 - Workspaces: 5 policies (multi-select for owner + members)
 - Other app tables: 4 policies each × 8 = 32 policies
 - HERCULES: 0 policies (service-role-only)
@@ -419,23 +450,27 @@ create table if not exists public.audit_log (
 ### Remaining Residual Risks
 
 **🟡 MEDIUM: HERCULES Workspace Migration**
+
 - `enterprise_id` should be UUID FK to workspaces
 - Current: Text field with no constraints
 - Mitigation: Application responsible for cleanup; document in runbook
 - Timeline: Migrate in v1.1 (next release)
 
 **🟡 MEDIUM: Trigger-Based Audit**
+
 - `audit_log` table created but triggers not yet implemented
 - Mitigation: Application logs events manually for now
 - Timeline: Add trigger-based audit in v1.1
 
 **🟡 MEDIUM: RLS Policy Race Condition**
+
 - If workspace membership status changes mid-query, query may fail
 - Scenario: User's status changed from 'active' to 'removed' during SELECT
 - Impact: Rare, user sees partial results or error
 - Mitigation: Retry on RLS violation; document in API error handling
 
 **🟢 LOW: Distributed Transaction Consistency**
+
 - No distributed transaction coordination for multi-table operations
 - Mitigation: Enforce application-level transaction boundaries
 
@@ -443,14 +478,14 @@ create table if not exists public.audit_log (
 
 ## CONFIDENCE SCORING
 
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Schema Idempotency | 9/10 | All statements checked; ALTER/CREATE ordering verified; ON CONFLICT added |
-| Data Integrity | 9/10 | All FKs present; CHECK constraints added; CASCADE rules verified |
-| Security | 8/10 | RLS coverage complete; policies use workspace membership; HERCULES service-role-only |
-| Performance | 8/10 | Composite index added; query plans optimized; known limitation documented |
-| Compliance | 7/10 | Audit table added; status constraints; GDPR-ready (user deletion now works) |
-| **Overall Confidence** | **8.2/10** | Production-ready with known limitations documented |
+| Dimension              | Score      | Evidence                                                                             |
+| ---------------------- | ---------- | ------------------------------------------------------------------------------------ |
+| Schema Idempotency     | 9/10       | All statements checked; ALTER/CREATE ordering verified; ON CONFLICT added            |
+| Data Integrity         | 9/10       | All FKs present; CHECK constraints added; CASCADE rules verified                     |
+| Security               | 8/10       | RLS coverage complete; policies use workspace membership; HERCULES service-role-only |
+| Performance            | 8/10       | Composite index added; query plans optimized; known limitation documented            |
+| Compliance             | 7/10       | Audit table added; status constraints; GDPR-ready (user deletion now works)          |
+| **Overall Confidence** | **8.2/10** | Production-ready with known limitations documented                                   |
 
 ---
 
@@ -497,6 +532,7 @@ create table if not exists public.audit_log (
 **Status:** APPROVED FOR PRODUCTION DEPLOYMENT
 
 **Conditions:**
+
 1. Deploy corrected schema.sql (all defects repaired)
 2. Run POST_DEPLOYMENT_VERIFICATION.sql to confirm
 3. Execute SECURITY_TESTS.sql to validate multi-tenant isolation
@@ -508,11 +544,13 @@ create table if not exists public.audit_log (
 **Go-Live Confidence:** 8.2/10
 
 **Not Recommended For:** This schema is NOT recommended for:
+
 - Scenarios requiring perfect audit immutability (requires blockchain/append-only log)
 - Extreme scale (100M+ rows) without index tuning
 - Distributed databases (requires distributed transaction protocol)
 
 **Recommended For:** This schema IS production-ready for:
+
 - Enterprise SaaS multi-tenant applications (primary use case)
 - EU AI Act compliance platforms (GDPR-compliant, audit-capable)
 - Teams <1000, workspaces <100, users <10M
@@ -528,7 +566,7 @@ create table if not exists public.audit_log (
 **Standard Applied:** Enterprise standards (Microsoft, Google, AWS, Stripe)  
 **Defects Found:** 9  
 **Defects Repaired:** 8 (fully fixed), 1 (documented for v1.1)  
-**Residual Risks:** LOW-MEDIUM (documented)  
+**Residual Risks:** LOW-MEDIUM (documented)
 
 ### Final Recommendation
 

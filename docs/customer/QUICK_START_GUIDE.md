@@ -1,4 +1,5 @@
 # EURO AI Quick Start Guide
+
 ## Get Productive in 15 Minutes
 
 Welcome to EURO AI! This guide gets you started with your first AI governance workflow.
@@ -15,6 +16,7 @@ Welcome to EURO AI! This guide gets you started with your first AI governance wo
 4. You'll land on your **Dashboard**
 
 **What you see:**
+
 - Your workspace name (top left)
 - Quick stats (AI Systems, Assessments, Evidence)
 - Recent activity feed
@@ -25,12 +27,14 @@ Welcome to EURO AI! This guide gets you started with your first AI governance wo
 ### Step 2: Meet Your Workspace (2 minutes)
 
 Your workspace is your **isolated environment** where:
+
 - Only your team can see data
 - All your AI systems and assessments live
 - Audit trail records every action
 - Role-based access controls RLS policies enforce data isolation
 
 **Menu Overview:**
+
 ```
 Dashboard          ← You are here (overview)
 AI Systems         ← Add and catalog AI systems
@@ -96,12 +100,14 @@ Settings           ← Manage team and workspace
 ## You're Ready! 🎉
 
 **What you've done:**
+
 - ✅ Logged in and explored the workspace
 - ✅ Added an AI system to your inventory
 - ✅ Created a risk assessment
 - ✅ Uploaded compliance evidence
 
 **What's next:**
+
 1. **Add 2-3 more AI systems** to your inventory
 2. **Complete risk assessments** for each system
 3. **Organize evidence** by system (link documents to assessments)
@@ -128,25 +134,25 @@ A: Click the **"Help"** button (?) in the top right, or email us at [support ema
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+S` / `Cmd+S` | Save form |
+| Shortcut           | Action         |
+| ------------------ | -------------- |
+| `Ctrl+S` / `Cmd+S` | Save form      |
 | `Ctrl+K` / `Cmd+K` | Search systems |
-| `?` | Show help menu |
-| `Esc` | Close dialog |
+| `?`                | Show help menu |
+| `Esc`              | Close dialog   |
 
 ---
 
 ## Glossary
 
-| Term | Meaning |
-|------|---------|
-| **Workspace** | Your isolated environment where your team works together |
-| **AI System** | An AI tool or application your organization uses |
-| **Risk Assessment** | Evaluation of compliance risks for each AI system |
-| **Evidence** | Documentation supporting your compliance (policies, audits, etc.) |
-| **Audit Trail** | Record of every action taken in the workspace (who, what, when) |
-| **RLS** | Row-Level Security — database feature ensuring data isolation |
+| Term                | Meaning                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| **Workspace**       | Your isolated environment where your team works together          |
+| **AI System**       | An AI tool or application your organization uses                  |
+| **Risk Assessment** | Evaluation of compliance risks for each AI system                 |
+| **Evidence**        | Documentation supporting your compliance (policies, audits, etc.) |
+| **Audit Trail**     | Record of every action taken in the workspace (who, what, when)   |
+| **RLS**             | Row-Level Security — database feature ensuring data isolation     |
 
 ---
 
@@ -161,12 +167,12 @@ A: Click the **"Help"** button (?) in the top right, or email us at [support ema
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Can't log in | Check email inbox for password reset link. If missing, check spam folder. |
-| Form won't submit | Ensure all required fields are filled (marked with *). Check browser console. |
-| Data not appearing | Refresh the page (Ctrl+R / Cmd+R). Clear browser cache if persistent. |
-| Slow performance | Are you in a large workspace (1000+ records)? Try using date filters to load specific period. |
+| Issue              | Solution                                                                                      |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| Can't log in       | Check email inbox for password reset link. If missing, check spam folder.                     |
+| Form won't submit  | Ensure all required fields are filled (marked with *). Check browser console.                 |
+| Data not appearing | Refresh the page (Ctrl+R / Cmd+R). Clear browser cache if persistent.                         |
+| Slow performance   | Are you in a large workspace (1000+ records)? Try using date filters to load specific period. |
 
 ---
 
@@ -190,5 +196,5 @@ Status page: [status.euro-ai.com]
 
 ---
 
-*Last updated: 2026-07-12*  
-*Version: 1.0*
+_Last updated: 2026-07-12_  
+_Version: 1.0_

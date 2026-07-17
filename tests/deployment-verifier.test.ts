@@ -286,12 +286,10 @@ describe('Deployment Verifier (DNA-GOV-003)', () => {
     });
 
     it('returns critical when latest commit cannot be fetched', async () => {
-      global.fetch = vi
-        .fn()
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 404,
-        });
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
 
       const result = await verifyDeployment(testOwner, testRepo, testToken);
 

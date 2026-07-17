@@ -26,6 +26,7 @@ Step-by-step procedure for onboarding a new customer to EURO AI platform. Covers
 ### Receive Customer Details
 
 From sales or customer signup:
+
 - [ ] Customer name: `[name]`
 - [ ] Customer email: `[email]`
 - [ ] Organization: `[org name]`
@@ -59,10 +60,11 @@ If not healthy: Pause onboarding until fixed.
 **Subject**: "Welcome to EURO AI — Getting Started"
 
 **Content**:
+
 ```
 Hi [Customer Name],
 
-Welcome to EURO AI! We're excited to help you manage AI governance 
+Welcome to EURO AI! We're excited to help you manage AI governance
 and EU AI Act compliance.
 
 Your next steps:
@@ -93,6 +95,7 @@ Let us know if you have questions!
 ### Walk Customer Through Signup (If New User)
 
 **Guide them to:**
+
 1. Go to: https://newspulse-ai.vercel.app
 2. Click "Sign Up"
 3. Enter email and password
@@ -111,6 +114,7 @@ Let us know if you have questions!
 ### Review Workspace Settings
 
 Walk customer through:
+
 1. **Workspace settings page**
    - Workspace name (can change)
    - Workspace ID (cannot change)
@@ -203,6 +207,7 @@ Guide customer to add their first AI system:
 Repeat above for 3-5 of customer's most important AI systems.
 
 **Quick entry**: If many systems to add:
+
 - Create a spreadsheet with system names and details
 - Bulk import (if available) or manually enter
 - Quality check that all appear correctly
@@ -266,6 +271,7 @@ If assessment shows High or Critical risk:
 ### Provide Support Resources
 
 Give customer:
+
 - [ ] Link to getting started guide: [docs]
 - [ ] Link to API reference: [docs]
 - [ ] Support email: support@euroai.com
@@ -283,6 +289,7 @@ Give customer:
 **Subject**: "You're all set on EURO AI!"
 
 **Content**:
+
 ```
 Hi [Customer Name],
 
@@ -347,6 +354,7 @@ Onboarding is complete when:
 **Cause**: Email already used, browser issue, service unavailable
 
 **Fix**:
+
 - Try different browser
 - Clear cookies and try again
 - Verify service is running (health check)
@@ -357,6 +365,7 @@ Onboarding is complete when:
 **Cause**: Email spam filter, invite not sent, wrong email
 
 **Fix**:
+
 - Check spam/junk folder
 - Verify email address is correct
 - Resend invitation from team page
@@ -367,6 +376,7 @@ Onboarding is complete when:
 **Cause**: Terminology not clear, system category unclear
 
 **Fix**:
+
 - Provide examples: "If your system uses customer purchase history, that's personal data"
 - Explain reasoning: "We ask about data types because they affect compliance requirements"
 - Offer guidance: "If you're not sure, answer 'Yes' on the side of caution"
@@ -376,6 +386,7 @@ Onboarding is complete when:
 **Cause**: Time constraint, too many systems to manually enter
 
 **Fix**:
+
 - Focus on 3-5 highest-priority systems first
 - Schedule follow-up session to add remaining systems
 - Offer spreadsheet import (if available)
@@ -386,6 +397,7 @@ Onboarding is complete when:
 ## Success Metrics
 
 **30 days after onboarding**:
+
 - [ ] Customer has active workspace
 - [ ] At least 3 AI systems in inventory
 - [ ] At least 2 risk assessments completed
@@ -394,6 +406,7 @@ Onboarding is complete when:
 - [ ] Customer reports confidence in platform
 
 **90 days after onboarding**:
+
 - [ ] Complete AI system inventory documented
 - [ ] All critical systems assessed for risk
 - [ ] Remediation plan developed for high-risk systems

@@ -62,7 +62,9 @@ const COST_BASELINES = {
 async function fetchVercelCosts(): Promise<number | null> {
   const token = process.env.VERCEL_TOKEN;
   if (!token) {
-    console.warn('[cost-anomaly] VERCEL_TOKEN not set, skipping Vercel cost check');
+    console.warn(
+      '[cost-anomaly] VERCEL_TOKEN not set, skipping Vercel cost check'
+    );
     return null;
   }
 
@@ -103,11 +105,14 @@ async function fetchSupabaseCosts(): Promise<number | null> {
   }
 
   try {
-    const response = await fetch(`${SUPABASE_API}/projects/${projectId}/billing/overview`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(
+      `${SUPABASE_API}/projects/${projectId}/billing/overview`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!response.ok) {
       console.warn(`[cost-anomaly] Supabase API returned ${response.status}`);
@@ -140,7 +145,10 @@ function loadCostHistory(provider: 'vercel' | 'supabase'): CostDataPoint[] {
     const data = fs.readFileSync(file, 'utf-8');
     return JSON.parse(data) as CostDataPoint[];
   } catch (error) {
-    console.error(`[cost-anomaly] Failed to load ${provider} cost history:`, error);
+    console.error(
+      `[cost-anomaly] Failed to load ${provider} cost history:`,
+      error
+    );
     return [];
   }
 }
@@ -148,7 +156,10 @@ function loadCostHistory(provider: 'vercel' | 'supabase'): CostDataPoint[] {
 /**
  * Save cost history to filesystem
  */
-function saveCostHistory(provider: 'vercel' | 'supabase', history: CostDataPoint[]): void {
+function saveCostHistory(
+  provider: 'vercel' | 'supabase',
+  history: CostDataPoint[]
+): void {
   try {
     if (!fs.existsSync(HISTORY_DIR)) {
       fs.mkdirSync(HISTORY_DIR, { recursive: true });
@@ -159,14 +170,20 @@ function saveCostHistory(provider: 'vercel' | 'supabase', history: CostDataPoint
     const recentHistory = history.slice(-90);
     fs.writeFileSync(file, JSON.stringify(recentHistory, null, 2));
   } catch (error) {
-    console.error(`[cost-anomaly] Failed to save ${provider} cost history:`, error);
+    console.error(
+      `[cost-anomaly] Failed to save ${provider} cost history:`,
+      error
+    );
   }
 }
 
 /**
  * Calculate average cost over a rolling window
  */
-function calculateRollingAverage(dataPoints: CostDataPoint[], windowDays: number = 30): number {
+function calculateRollingAverage(
+  dataPoints: CostDataPoint[],
+  windowDays: number = 30
+): number {
   if (dataPoints.length === 0) {
     return 0;
   }
@@ -237,16 +254,32 @@ export async function detectCostAnomalies(): Promise<CostAnomalyReport> {
 
   // Detect anomalies BEFORE updating history (so we compare against baseline, not today's cost)
   const vercelAnomalies = detectAnomalies('vercel', vercelCost, vercelHistory);
-  const supabaseAnomalies = detectAnomalies('supabase', supabaseCost, supabaseHistory);
+  const supabaseAnomalies = detectAnomalies(
+    'supabase',
+    supabaseCost,
+    supabaseHistory
+  );
 
   // Update history if we have new data
-  if (vercelCost !== null && (!vercelHistory.length || vercelHistory[vercelHistory.length - 1].date !== today)) {
+  if (
+    vercelCost !== null &&
+    (!vercelHistory.length ||
+      vercelHistory[vercelHistory.length - 1].date !== today)
+  ) {
     vercelHistory.push({ provider: 'vercel', date: today, amount: vercelCost });
     saveCostHistory('vercel', vercelHistory);
   }
 
-  if (supabaseCost !== null && (!supabaseHistory.length || supabaseHistory[supabaseHistory.length - 1].date !== today)) {
-    supabaseHistory.push({ provider: 'supabase', date: today, amount: supabaseCost });
+  if (
+    supabaseCost !== null &&
+    (!supabaseHistory.length ||
+      supabaseHistory[supabaseHistory.length - 1].date !== today)
+  ) {
+    supabaseHistory.push({
+      provider: 'supabase',
+      date: today,
+      amount: supabaseCost,
+    });
     saveCostHistory('supabase', supabaseHistory);
   }
   const allAnomalies = [...vercelAnomalies, ...supabaseAnomalies];
@@ -280,9 +313,7 @@ export async function detectCostAnomalies(): Promise<CostAnomalyReport> {
 /**
  * Convert cost anomalies to alert format (for DNA-005 integration)
  */
-export function anomaliesToAlerts(
-  report: CostAnomalyReport
-): Array<{
+export function anomaliesToAlerts(report: CostAnomalyReport): Array<{
   id: string;
   severity: 'critical' | 'warning' | 'info';
   category: string;

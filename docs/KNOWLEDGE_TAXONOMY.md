@@ -13,6 +13,7 @@
 **Location**: `docs/governance/`
 
 **What it covers**:
+
 - Authority and decision-making protocols
 - Institutional constitutions
 - Decision log with rationale and impact
@@ -20,12 +21,14 @@
 - Standards and frameworks (engineering, testing, documentation)
 
 **Who should read it**:
+
 - **Founder**: Complete reading required (weekly review of new decisions, decision log)
 - **Governor Ω**: Daily reference (decision protocol, boundaries, reporting requirements)
 - **Engineering leads**: Standards section (ENGINEERING_STANDARDS.md, INTEGRATION_TEST_STANDARD.md)
 - **Team members**: Only relevant standards for their domain
 
 **Key documents**:
+
 - `FOUNDER_ADVISOR_CONSTITUTION.md` — Governor Ω mandate and authority
 - `FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md` — Autonomous decision framework
 - `AGENTS.md` — Governor Ω identity, capabilities, boundaries
@@ -41,11 +44,13 @@
 **Location**: `docs/operations/`
 
 **What it covers**:
+
 - Runbooks: Step-by-step procedures for critical operations (deployment, incident response, database ops)
 - Checklists: Pre/post-action verification and quality gates
 - Procedures: Detailed how-tos for common tasks (git workflow, testing, release verification)
 
 **Who should read it**:
+
 - **On-call engineer**: Before touching production (runbooks + checklists)
 - **Deployer**: Deployment runbook + pre-deployment checklist
 - **New team members**: Complete reading during onboarding
@@ -53,12 +58,14 @@
 - **Operations team**: Database operations, monitoring procedures
 
 **Subdirectories**:
+
 - `RUNBOOKS/` — End-to-end procedures (deployment, incident response, database ops, release verification, customer onboarding)
 - `CHECKLISTS/` — Verification and quality gates (pre-deployment, post-deployment, incident postmortem, weekly ops review, monthly compliance audit)
 - `PROCEDURES/` — Detailed how-tos (git workflow, testing procedures, verification steps)
 - `INDEX.md` — Navigation and quick reference
 
 **Document Format**:
+
 ```
 # [Operation Name] Runbook/Checklist
 
@@ -95,6 +102,7 @@
 **Location**: `docs/engineering/`
 
 **What it covers**:
+
 - System architecture and design decisions
 - API endpoint reference (contracts, status codes, examples)
 - Database schema with access patterns
@@ -102,6 +110,7 @@
 - Infrastructure and deployment pipeline
 
 **Who should read it**:
+
 - **New engineer**: Complete reading during onboarding (architecture.md first, then patterns)
 - **Code reviewer**: API_REFERENCE.md, patterns for review guidelines
 - **Backend engineer**: API_REFERENCE.md, DATABASE_SCHEMA.md, patterns/library patterns
@@ -109,6 +118,7 @@
 - **DevOps/Infrastructure**: Infrastructure section (deployment, CI/CD)
 
 **Subdirectories**:
+
 - `ARCHITECTURE.md` — System overview, component interactions, data flow
 - `API_REFERENCE.md` — All endpoints, status codes, request/response examples
 - `DATABASE_SCHEMA.md` — Tables, relationships, RLS policies, access patterns
@@ -120,6 +130,7 @@
   - `SECURITY_PATTERNS.md` — RLS enforcement, input validation, auth patterns
 
 **Document Format**:
+
 ```
 # [Pattern/Reference Name]
 
@@ -153,18 +164,21 @@
 **Location**: `docs/lessons/`
 
 **What it covers**:
+
 - Lessons from each institutional stage (STAGE 0-3, then ongoing)
 - Decision retrospectives: why decisions worked or failed
 - What worked well and what was harder than expected
 - Patterns observed and future improvements identified
 
 **Who should read it**:
+
 - **Governor Ω**: Before starting new phases (learn from what happened before)
 - **Founder**: Periodic review of institutional learning
 - **New team members**: Understand how the team learns and improves
 - **Project reviewers**: Evidence of continuous improvement
 
 **Documents**:
+
 - `STAGE_1_LESSONS.md` — Governance kernel learnings
 - `STAGE_2_LESSONS.md` — Repository organization learnings
 - `STAGE_3_LESSONS.md` — Engineering standards enforcement learnings
@@ -173,6 +187,7 @@
 - `DECISION_RETROSPECTIVES.md` — Why major decisions succeeded or failed
 
 **Document Format**:
+
 ```
 # [Stage] Lessons Learned
 
@@ -211,18 +226,21 @@
 **Location**: `docs/customer/`
 
 **What it covers**:
+
 - Customer onboarding procedures
 - Support playbooks and escalation paths
 - Feature documentation and usage guides
 - Success metrics and health indicators
 
 **Who should read it**:
+
 - **Customer success team**: Onboarding, support procedures
 - **Support engineer**: Playbooks, troubleshooting guides
 - **Founder**: Customer success metrics, feature requests
 - **New team members**: Understanding what customers need
 
 **Documents**:
+
 - `ONBOARDING.md` — Step-by-step customer setup
 - `SUPPORT_PROCEDURES.md` — How to help customers
 - `SUCCESS_METRICS.md` — How to measure customer health
@@ -254,16 +272,20 @@
 ## Versioning Strategy
 
 ### Version Control
+
 - All documents live in git; history shows evolution over time
 - No manual versioning needed — git is the version control
 
 ### Deprecation
+
 - When a procedure changes, update the document in place (don't create v1, v2)
 - If a procedure is completely replaced, move it to `docs/archive/deprecated/` with a note pointing to the replacement
 - Never delete — always archive with pointer to successor
 
 ### Status Labels
+
 Each document header should include:
+
 - **Status**: Active / Deprecated / Draft / Archived
 - **Last Updated**: YYYY-MM-DD
 - **Owner**: Name/email of person maintaining it
@@ -276,22 +298,26 @@ Each document header should include:
 ### Entry Points by Role
 
 **I'm a new engineer**:
+
 1. Start with `docs/engineering/ARCHITECTURE.md`
 2. Read `docs/engineering/PATTERNS/` for your domain
 3. Read `docs/governance/ENGINEERING_STANDARDS.md`
 4. Skim `docs/operations/INDEX.md` to know what's available
 
 **I'm deploying to production**:
+
 1. Read `docs/operations/RUNBOOKS/DEPLOYMENT.md`
 2. Complete `docs/operations/CHECKLISTS/PRE_DEPLOYMENT.md`
 3. After deployment, complete `docs/operations/CHECKLISTS/POST_DEPLOYMENT_VERIFICATION.md`
 
 **I'm responding to an incident**:
+
 1. Read `docs/operations/RUNBOOKS/INCIDENT_RESPONSE.md`
 2. After resolution, complete `docs/operations/CHECKLISTS/INCIDENT_POSTMORTEM.md`
 3. Record lessons in `docs/lessons/LEARNING_LOG.md`
 
 **I'm a Founder reviewing institutional health**:
+
 1. Read latest entry in `docs/governor/PROJECT_STATE.md`
 2. Review new decisions in `docs/governance/DECISION_LOG.md`
 3. Check lessons in `docs/lessons/LEARNING_LOG.md`
@@ -299,6 +325,7 @@ Each document header should include:
 ### Cross-References
 
 All documents should link to related knowledge:
+
 - Standards documents → examples in PATTERNS/
 - Runbooks → related procedures
 - API_REFERENCE.md → database schema, patterns
@@ -326,6 +353,7 @@ When implementing a new feature or fixing a bug:
 **Team** contributes to their domain knowledge (operations, engineering, customer).
 
 **Update frequency**:
+
 - Governance: After each decision (Governor Ω)
 - Operational: After each major change or quarterly review
 - Engineering: After each pattern change or quarterly review

@@ -34,8 +34,8 @@ export default function TermsPage() {
       <h2>2. The Service</h2>
       <p>
         EURO AI provides tooling that helps organizations inventory AI systems,
-        assess risk, and track compliance obligations, including those under
-        the EU AI Act. The Platform supports your compliance work; it does not
+        assess risk, and track compliance obligations, including those under the
+        EU AI Act. The Platform supports your compliance work; it does not
         replace it.
       </p>
 
@@ -63,10 +63,10 @@ export default function TermsPage() {
 
       <h2>5. Disclaimer of Warranties</h2>
       <p>
-        THE PLATFORM IS PROVIDED ON AN &apos;AS IS&apos; BASIS. EURO AI MAKES
-        NO WARRANTIES, EXPRESSED OR IMPLIED, AND HEREBY DISCLAIMS AND NEGATES
-        ALL OTHER WARRANTIES INCLUDING, WITHOUT LIMITATION, IMPLIED WARRANTIES
-        OR CONDITIONS OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
+        THE PLATFORM IS PROVIDED ON AN &apos;AS IS&apos; BASIS. EURO AI MAKES NO
+        WARRANTIES, EXPRESSED OR IMPLIED, AND HEREBY DISCLAIMS AND NEGATES ALL
+        OTHER WARRANTIES INCLUDING, WITHOUT LIMITATION, IMPLIED WARRANTIES OR
+        CONDITIONS OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
         NON-INFRINGEMENT.
       </p>
 
@@ -74,23 +74,23 @@ export default function TermsPage() {
       <p>
         In no event shall EURO AI or its suppliers be liable for any damages
         (including, without limitation, damages for loss of data or profit, or
-        due to business interruption) arising out of the use or inability to
-        use the Platform, even if we have been notified of the possibility of
-        such damage.
+        due to business interruption) arising out of the use or inability to use
+        the Platform, even if we have been notified of the possibility of such
+        damage.
       </p>
 
       <h2>7. Your Data</h2>
       <p>
         You retain ownership of the data you enter into your workspace. See the{' '}
-        <a href="/privacy">Privacy Policy</a> for how it is processed and how
-        to exercise your rights.
+        <a href="/privacy">Privacy Policy</a> for how it is processed and how to
+        exercise your rights.
       </p>
 
       <h2>8. Changes</h2>
       <p>
         We may revise these terms periodically. Significant changes will be
-        announced via the Platform; continued use after changes are posted
-        means you accept the revised terms.
+        announced via the Platform; continued use after changes are posted means
+        you accept the revised terms.
       </p>
     </div>
   );

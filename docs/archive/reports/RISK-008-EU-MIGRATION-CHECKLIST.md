@@ -11,25 +11,25 @@
 
 ### Production Project Details
 
-| Attribute | Value |
-|-----------|-------|
-| **Project Reference** | `yrroytwfdrafvajdfkog` |
-| **Region** | AWS ap-northeast-1 (Tokyo) |
-| **Project URL** | `https://yrroytwfdrafvajdfkog.supabase.co` |
-| **Session Pooler** | `aws-0-ap-northeast-1.pooler.supabase.co:5432` |
-| **Status** | ✅ PRODUCTION LIVE |
-| **Deployment Runs** | 29479537494 (07:20 UTC), 29479962355 (07:28 UTC) |
+| Attribute             | Value                                            |
+| --------------------- | ------------------------------------------------ |
+| **Project Reference** | `yrroytwfdrafvajdfkog`                           |
+| **Region**            | AWS ap-northeast-1 (Tokyo)                       |
+| **Project URL**       | `https://yrroytwfdrafvajdfkog.supabase.co`       |
+| **Session Pooler**    | `aws-0-ap-northeast-1.pooler.supabase.co:5432`   |
+| **Status**            | ✅ PRODUCTION LIVE                               |
+| **Deployment Runs**   | 29479537494 (07:20 UTC), 29479962355 (07:28 UTC) |
 
 ### Schema Inventory (Tokyo)
 
-| Component | Count | Status |
-|-----------|-------|--------|
-| Base Tables | 22 | ✅ Deployed |
-| Indexes | 62 | ✅ Deployed |
-| RLS Policies | 43 | ✅ Active |
-| Functions | 3 | ✅ Deployed |
-| Triggers | 1 (`on_auth_user_created`) | ✅ Deployed |
-| CEIS Tables | 5 (`ceis_*`) | ✅ Deployed |
+| Component    | Count                      | Status      |
+| ------------ | -------------------------- | ----------- |
+| Base Tables  | 22                         | ✅ Deployed |
+| Indexes      | 62                         | ✅ Deployed |
+| RLS Policies | 43                         | ✅ Active   |
+| Functions    | 3                          | ✅ Deployed |
+| Triggers     | 1 (`on_auth_user_created`) | ✅ Deployed |
+| CEIS Tables  | 5 (`ceis_*`)               | ✅ Deployed |
 
 ### Schema Files (to be migrated)
 
@@ -47,6 +47,7 @@ supabase/PREFLIGHT_CHECK.sql
 **File:** `.github/workflows/supabase-schema-deploy.yml`  
 **Trigger:** Manual (`workflow_dispatch`)  
 **Jobs:**
+
 1. Pre-deployment validation
 2. Schema deployment (base + CEIS)
 3. Post-deployment verification
@@ -54,6 +55,7 @@ supabase/PREFLIGHT_CHECK.sql
 5. CEIS hard verification (ON_ERROR_STOP=1)
 
 **Connection Methods Supported:**
+
 - SUPABASE_DB_URL (Session Pooler URI — preferred)
 - SUPABASE_DB_PASSWORD (Direct connection — fallback)
 
@@ -92,27 +94,27 @@ After EU Supabase project is created in Supabase dashboard, provide ONLY:
 
 ### GitHub Secrets to Update (CI Deployment)
 
-| Secret Name | Source | Notes |
-|-------------|--------|-------|
-| `SUPABASE_DB_URL` | New EU Session Pooler connection string | Primary connection method |
-| `SUPABASE_DB_PASSWORD` | Keep from Tokyo (fallback only) | Will not be used if DB_URL present |
-| `SUPABASE_PROJECT_ID` | New EU project reference | Optional (defaults to public ref) |
+| Secret Name            | Source                                  | Notes                              |
+| ---------------------- | --------------------------------------- | ---------------------------------- |
+| `SUPABASE_DB_URL`      | New EU Session Pooler connection string | Primary connection method          |
+| `SUPABASE_DB_PASSWORD` | Keep from Tokyo (fallback only)         | Will not be used if DB_URL present |
+| `SUPABASE_PROJECT_ID`  | New EU project reference                | Optional (defaults to public ref)  |
 
 ### GitHub Variables to Update (Application)
 
-| Variable Name | Source | Notes |
-|---------------|--------|-------|
-| `NEXT_PUBLIC_SUPABASE_URL` | New project URL (`https://euprojectref.supabase.co`) | Public — shipped in client |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | New anonymous key | Public — shipped in client |
+| Variable Name                   | Source                                               | Notes                      |
+| ------------------------------- | ---------------------------------------------------- | -------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | New project URL (`https://euprojectref.supabase.co`) | Public — shipped in client |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | New anonymous key                                    | Public — shipped in client |
 
 ### Vercel Environment Variables to Update (Application Runtime)
 
-| Variable Name | Source | Notes |
-|---------------|--------|-------|
-| `SUPABASE_SERVICE_ROLE_KEY` | New service role key | Server-only — bypasses RLS |
-| `NEXT_PUBLIC_SUPABASE_URL` | New project URL | Public |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | New anonymous key | Public |
-| `SUPABASE_DB_URL` (optional) | EU Session Pooler string | For direct schema migrations (rare) |
+| Variable Name                   | Source                   | Notes                               |
+| ------------------------------- | ------------------------ | ----------------------------------- |
+| `SUPABASE_SERVICE_ROLE_KEY`     | New service role key     | Server-only — bypasses RLS          |
+| `NEXT_PUBLIC_SUPABASE_URL`      | New project URL          | Public                              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | New anonymous key        | Public                              |
+| `SUPABASE_DB_URL` (optional)    | EU Session Pooler string | For direct schema migrations (rare) |
 
 ### .env.local Template (if local testing needed)
 
@@ -141,6 +143,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
 **Expected Workflow Steps:**
+
 1. ✅ Preflight validation (schema files present)
 2. ✅ Extract & verify EU project ID from vars/secrets
 3. ✅ Verify SUPABASE_DB_URL credential
@@ -203,11 +206,11 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
 ### Test Accounts Created
 
-| Email | Status | Purpose |
-|-------|--------|---------|
-| test-user-1@example.com | [ ] Created | Basic workflow |
+| Email                   | Status      | Purpose                   |
+| ----------------------- | ----------- | ------------------------- |
+| test-user-1@example.com | [ ] Created | Basic workflow            |
 | test-user-2@example.com | [ ] Created | Multi-tenant verification |
-| test-admin@example.com | [ ] Created | Admin operations |
+| test-admin@example.com  | [ ] Created | Admin operations          |
 
 ---
 
@@ -264,20 +267,21 @@ If EU deployment fails and we need to rollback to Tokyo:
 
 ## RISKS & MITIGATIONS
 
-| Risk | Mitigation |
-|------|------------|
-| **New project ref breaks CI** | Workflow defaults to public ref if secret missing; override with var |
-| **RLS policies don't copy** | Deployment uses idempotent schema.sql — will recreate correctly |
-| **Auth trigger doesn't fire** | Workflow verifies trigger present (pg_trigger.tgname detection) |
-| **CEIS tables missing** | Hard verification with ON_ERROR_STOP=1 prevents partial deploys |
-| **Security tests fail** | If fail, investigation required before production declaration |
-| **Network timeout** | Workflow has 15-min timeout; Session Pooler more reliable than direct |
+| Risk                          | Mitigation                                                            |
+| ----------------------------- | --------------------------------------------------------------------- |
+| **New project ref breaks CI** | Workflow defaults to public ref if secret missing; override with var  |
+| **RLS policies don't copy**   | Deployment uses idempotent schema.sql — will recreate correctly       |
+| **Auth trigger doesn't fire** | Workflow verifies trigger present (pg_trigger.tgname detection)       |
+| **CEIS tables missing**       | Hard verification with ON_ERROR_STOP=1 prevents partial deploys       |
+| **Security tests fail**       | If fail, investigation required before production declaration         |
+| **Network timeout**           | Workflow has 15-min timeout; Session Pooler more reliable than direct |
 
 ---
 
 ## SIGN-OFF CHECKLIST
 
 **Preparation Complete:**
+
 - [x] Current state documented (Tokyo project yrroytwfdrafvajdfkog)
 - [x] Schema inventory recorded (22 tables, 62 indexes, 43 policies)
 - [x] Deployment workflow verified (supabase-schema-deploy.yml)
@@ -286,6 +290,7 @@ If EU deployment fails and we need to rollback to Tokyo:
 - [x] Founder credentials requested
 
 **Awaiting:**
+
 - [ ] Founder provides EU project credentials (Phase 2)
 - [ ] Governor updates GitHub Secrets + Variables (Phase 3)
 - [ ] Workflow execution against EU project (Phase 4)
@@ -298,4 +303,3 @@ If EU deployment fails and we need to rollback to Tokyo:
 **Mission Leader:** Governor Ω  
 **Mission Objective:** Migrate to EU Supabase by 2026-07-16 end of day  
 **Confidence Level:** HIGH (workflow proven, schema stable, rollback simple)
-

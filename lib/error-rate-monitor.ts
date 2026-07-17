@@ -47,7 +47,12 @@ const errorStore = new Map<
   { totalRequests: number; errorRequests: number; errors: ErrorRecord[] }
 >();
 
-const CRITICAL_ENDPOINTS = ['/api/workspace', '/api/auth', '/api/dashboard', '/api/health'];
+const CRITICAL_ENDPOINTS = [
+  '/api/workspace',
+  '/api/auth',
+  '/api/dashboard',
+  '/api/health',
+];
 const ERROR_RATE_THRESHOLD = 0.05; // 5%
 const ERROR_VOLUME_THRESHOLD = 10; // 10 errors in window
 const WINDOW_MINUTES = 5;
@@ -61,18 +66,24 @@ export function recordEndpointError(
   error?: string
 ): void {
   if (!errorStore.has(endpoint)) {
-    errorStore.set(endpoint, { totalRequests: 0, errorRequests: 0, errors: [] });
+    errorStore.set(endpoint, {
+      totalRequests: 0,
+      errorRequests: 0,
+      errors: [],
+    });
   }
 
   const stats = errorStore.get(endpoint)!;
-  const isCritical = statusCode >= 500 || statusCode === 401 || statusCode === 403;
+  const isCritical =
+    statusCode >= 500 || statusCode === 401 || statusCode === 403;
 
   const errorRecord: ErrorRecord = {
     timestamp: new Date().toISOString(),
     endpoint,
     statusCode,
     errorMessage: error,
-    severity: statusCode >= 500 ? 'critical' : statusCode >= 400 ? 'high' : 'medium',
+    severity:
+      statusCode >= 500 ? 'critical' : statusCode >= 400 ? 'high' : 'medium',
   };
 
   stats.totalRequests++; // Count error as a request
@@ -81,7 +92,9 @@ export function recordEndpointError(
 
   // Keep only recent errors (last WINDOW_MINUTES)
   const windowStart = Date.now() - WINDOW_MINUTES * 60 * 1000;
-  stats.errors = stats.errors.filter((e) => new Date(e.timestamp).getTime() > windowStart);
+  stats.errors = stats.errors.filter(
+    (e) => new Date(e.timestamp).getTime() > windowStart
+  );
 }
 
 /**
@@ -89,7 +102,11 @@ export function recordEndpointError(
  */
 export function recordEndpointSuccess(endpoint: string): void {
   if (!errorStore.has(endpoint)) {
-    errorStore.set(endpoint, { totalRequests: 0, errorRequests: 0, errors: [] });
+    errorStore.set(endpoint, {
+      totalRequests: 0,
+      errorRequests: 0,
+      errors: [],
+    });
   }
 
   const stats = errorStore.get(endpoint)!;
@@ -97,15 +114,22 @@ export function recordEndpointSuccess(endpoint: string): void {
 
   // Clean up old errors
   const windowStart = Date.now() - WINDOW_MINUTES * 60 * 1000;
-  stats.errors = stats.errors.filter((e) => new Date(e.timestamp).getTime() > windowStart);
+  stats.errors = stats.errors.filter(
+    (e) => new Date(e.timestamp).getTime() > windowStart
+  );
 }
 
 /**
  * Get error stats for a specific endpoint
  */
 export function getEndpointStats(endpoint: string): EndpointErrorStats {
-  const stats = errorStore.get(endpoint) || { totalRequests: 0, errorRequests: 0, errors: [] };
-  const errorRate = stats.totalRequests > 0 ? stats.errorRequests / stats.totalRequests : 0;
+  const stats = errorStore.get(endpoint) || {
+    totalRequests: 0,
+    errorRequests: 0,
+    errors: [],
+  };
+  const errorRate =
+    stats.totalRequests > 0 ? stats.errorRequests / stats.totalRequests : 0;
 
   return {
     endpoint,
@@ -141,7 +165,10 @@ export function getErrorRateReport(): ErrorRateReport {
   });
 
   // Check for high error volume
-  const totalRecentErrors = endpointStats.reduce((sum, s) => sum + s.recentErrors.length, 0);
+  const totalRecentErrors = endpointStats.reduce(
+    (sum, s) => sum + s.recentErrors.length,
+    0
+  );
   if (totalRecentErrors > ERROR_VOLUME_THRESHOLD) {
     alerts.push(
       `[VOLUME] ${totalRecentErrors} errors in last ${WINDOW_MINUTES} minutes (threshold: ${ERROR_VOLUME_THRESHOLD})`

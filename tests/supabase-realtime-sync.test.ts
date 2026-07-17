@@ -120,12 +120,10 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
       initializeRealtimeSync();
       subscribeToTable('workspace');
 
-      const event = broadcastRealtimeEvent(
-        'workspace',
-        'INSERT',
-        undefined,
-        { id: '1', name: 'Engineering' }
-      );
+      const event = broadcastRealtimeEvent('workspace', 'INSERT', undefined, {
+        id: '1',
+        name: 'Engineering',
+      });
 
       expect(event.table).toBe('workspace');
       expect(event.operation).toBe('INSERT');
@@ -152,7 +150,10 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
       initializeRealtimeSync();
       subscribeToTable('workspace');
 
-      const event = broadcastRealtimeEvent('workspace', 'DELETE', { id: '1', name: 'Engineering' });
+      const event = broadcastRealtimeEvent('workspace', 'DELETE', {
+        id: '1',
+        name: 'Engineering',
+      });
 
       expect(event.operation).toBe('DELETE');
       expect(event.before).toEqual({ id: '1', name: 'Engineering' });
@@ -207,7 +208,9 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
 
       // Add 1100 events
       for (let i = 0; i < 1100; i++) {
-        broadcastRealtimeEvent('workspace', 'INSERT', undefined, { id: `${i}` });
+        broadcastRealtimeEvent('workspace', 'INSERT', undefined, {
+          id: `${i}`,
+        });
       }
 
       const events = getRecentEvents();
@@ -286,7 +289,13 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
     });
 
     it('stores conflict for retrieval', () => {
-      detectConflict('workspace', 'ws-1', { name: 'Local' }, { name: 'Remote' }, 'UPDATE');
+      detectConflict(
+        'workspace',
+        'ws-1',
+        { name: 'Local' },
+        { name: 'Remote' },
+        'UPDATE'
+      );
 
       const conflicts = getActiveConflicts();
       expect(conflicts.length).toBe(1);
@@ -310,7 +319,7 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
         'workspace',
         'ws-1',
         { id: 'ws-1', name: 'Delete Me' },
-        { id: 'ws-1', name: 'Don\'t Delete' },
+        { id: 'ws-1', name: "Don't Delete" },
         'DELETE'
       );
 
@@ -320,7 +329,13 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
 
   describe('resolveConflict', () => {
     it('resolves conflict with local strategy', () => {
-      detectConflict('workspace', 'ws-1', { name: 'Local' }, { name: 'Remote' }, 'UPDATE');
+      detectConflict(
+        'workspace',
+        'ws-1',
+        { name: 'Local' },
+        { name: 'Remote' },
+        'UPDATE'
+      );
 
       const resolved = resolveConflict('workspace', 'ws-1', 'local');
 
@@ -329,7 +344,13 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
     });
 
     it('resolves conflict with remote strategy', () => {
-      detectConflict('workspace', 'ws-1', { name: 'Local' }, { name: 'Remote' }, 'UPDATE');
+      detectConflict(
+        'workspace',
+        'ws-1',
+        { name: 'Local' },
+        { name: 'Remote' },
+        'UPDATE'
+      );
 
       const resolved = resolveConflict('workspace', 'ws-1', 'remote');
 
@@ -353,7 +374,13 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
     });
 
     it('removes conflict from active list after resolution', () => {
-      detectConflict('workspace', 'ws-1', { name: 'Local' }, { name: 'Remote' }, 'UPDATE');
+      detectConflict(
+        'workspace',
+        'ws-1',
+        { name: 'Local' },
+        { name: 'Remote' },
+        'UPDATE'
+      );
       expect(getActiveConflicts().length).toBe(1);
 
       resolveConflict('workspace', 'ws-1', 'local');
@@ -428,7 +455,9 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
       subscribeToTable('workspace');
 
       for (let i = 1; i <= 5; i++) {
-        broadcastRealtimeEvent('workspace', 'INSERT', undefined, { id: `${i}` });
+        broadcastRealtimeEvent('workspace', 'INSERT', undefined, {
+          id: `${i}`,
+        });
       }
 
       const recent = getRecentEvents();
@@ -454,7 +483,9 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
       subscribeToTable('workspace');
 
       for (let i = 0; i < 100; i++) {
-        broadcastRealtimeEvent('workspace', 'INSERT', undefined, { id: `${i}` });
+        broadcastRealtimeEvent('workspace', 'INSERT', undefined, {
+          id: `${i}`,
+        });
       }
 
       const recent = getRecentEvents(undefined, 10);
@@ -491,7 +522,13 @@ describe('Supabase Realtime Sync - DNS-GOV-016', () => {
 
     it('indicates conflicts', () => {
       initializeRealtimeSync();
-      detectConflict('workspace', 'ws-1', { name: 'Local' }, { name: 'Remote' }, 'UPDATE');
+      detectConflict(
+        'workspace',
+        'ws-1',
+        { name: 'Local' },
+        { name: 'Remote' },
+        'UPDATE'
+      );
 
       const status = formatSyncStatus();
       expect(status).toContain('conflict');

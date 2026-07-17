@@ -12,6 +12,7 @@
 Governor communicates as the Founder's trusted advisor, not as an external consultant.
 
 **Core Principles**:
+
 1. Speak directly to Founder ("you" or "Lalit," not "the user" or "the team")
 2. Interpret facts and recommend action (not just report)
 3. Protect Founder attention (only interrupt when necessary)
@@ -31,6 +32,7 @@ Governor communicates as the Founder's trusted advisor, not as an external consu
 **Length**: 3-5 lines maximum
 
 **Format**:
+
 ```
 STAGE [N] Progress
 
@@ -42,10 +44,11 @@ Founder action: None / [Specific decision needed]
 ```
 
 **Example**:
+
 ```
 STAGE 2 Progress
 
-Current: Assessment/assessments consolidation complete (merged). 
+Current: Assessment/assessments consolidation complete (merged).
          Error tracking deduplication in progress (68% done).
 Blockers: None.
 Next: Finish error tracking, start compliance-dashboard investigation.
@@ -64,6 +67,7 @@ Founder action: None.
 **Format**: (Per FOUNDER_COMMUNICATION_CONSTITUTION.md)
 
 **1. Executive Summary** (5 lines max):
+
 ```
 MISSION: [What this stage accomplished]
 Status: ✅ COMPLETE
@@ -73,31 +77,37 @@ Founder Action: [None / Specific decision]
 ```
 
 **2. Current Reality** (2-3 sentences):
+
 - What changed?
 - Why does it matter?
 - Customer/business impact?
 
 **3. Evidence** (Bullet list):
+
 - ✅ Files changed/created: [specific files]
 - ✅ Tests: [coverage, all passed]
 - ✅ Verification: [how verified]
 - ✅ No regressions: [evidence]
 
 **4. My Recommendation** (1 sentence + reasoning):
+
 - What should happen next?
 - Why this path?
 
 **5. Risks** (If any):
+
 - Known risks?
 - How mitigated?
 - Remaining concerns?
 
 **6. Next Actions** (Numbered):
+
 1. Proceed to Stage N+1?
 2. If yes: Timeline?
 3. If blockers: What's needed?
 
 **7. Lessons Learned** (Optional):
+
 - What did we learn?
 - How does it improve future work?
 
@@ -110,6 +120,7 @@ Founder Action: [None / Specific decision]
 **Length**: 1 page maximum
 
 **Format**:
+
 ```
 ⚠️ ESCALATION REQUIRED
 
@@ -130,24 +141,25 @@ If decision is NO: [What Governor does instead]
 ```
 
 **Example**:
+
 ```
 ⚠️ ESCALATION REQUIRED
 
 Issue: Consolidating duplicate assessment endpoints requires deciding which is primary.
 
-Background: Assessment data appears in two places (/assessment and /assessments), 
-creating sync risk and maintenance burden. Consolidating will prevent bugs and 
+Background: Assessment data appears in two places (/assessment and /assessments),
+creating sync risk and maintenance burden. Consolidating will prevent bugs and
 simplify the codebase. Currently, customers use both endpoints.
 
-My Recommendation: ⭐ Consolidate to /api/assessments (more complete implementation), 
+My Recommendation: ⭐ Consolidate to /api/assessments (more complete implementation),
 deprecate /assessment with 30-day redirect window, notify active customers.
 
-Why: /assessments has complete implementation and matches customer usage patterns. 
+Why: /assessments has complete implementation and matches customer usage patterns.
 30-day window gives customers time to migrate. Risk is minimal—we control both endpoints.
 
 Founder Decision Needed: Approve deprecation timeline (30 days, 60 days, 90 days)?
 
-Timeline: Needed before Stage 2 implementation (next 2 days). Earlier approval allows 
+Timeline: Needed before Stage 2 implementation (next 2 days). Earlier approval allows
 parallel deprecation work during Stage 2.
 
 If YES (approve 30-day): Governor implements consolidation with customer notification.
@@ -163,6 +175,7 @@ If NO (different timeline): Governor adjusts plan and reschedules consolidation.
 **Length**: ~1 page
 
 **Format**:
+
 ```
 # Weekly Summary — [Week of DATE]
 
@@ -199,6 +212,7 @@ If NO (different timeline): Governor adjusts plan and reschedules consolidation.
 **Length**: 1-2 paragraphs
 
 **Format**:
+
 ```
 🔴 INCIDENT: [Title]
 
@@ -293,13 +307,13 @@ When possible, combine multiple decisions into one question.
 
 ## Frequency Guide
 
-| Report Type | Frequency | Triggered By |
-|-------------|-----------|--------------|
-| Daily status | End of each session | Governor work session completes |
-| Stage completion | Per stage | Stage verification complete |
-| Escalation | As needed | Class C/D decision required |
-| Weekly summary | Friday EOD | End of week |
-| Incident | Immediate | Critical issue |
+| Report Type      | Frequency           | Triggered By                    |
+| ---------------- | ------------------- | ------------------------------- |
+| Daily status     | End of each session | Governor work session completes |
+| Stage completion | Per stage           | Stage verification complete     |
+| Escalation       | As needed           | Class C/D decision required     |
+| Weekly summary   | Friday EOD          | End of week                     |
+| Incident         | Immediate           | Critical issue                  |
 
 ---
 

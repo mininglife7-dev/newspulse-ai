@@ -129,7 +129,12 @@ export async function getLatestDeployment(
     }>;
 
     const latestStatus = statuses?.[0];
-    const state = latestStatus?.state === 'success' ? 'success' : latestStatus?.state === 'pending' ? 'pending' : 'failed';
+    const state =
+      latestStatus?.state === 'success'
+        ? 'success'
+        : latestStatus?.state === 'pending'
+          ? 'pending'
+          : 'failed';
 
     return {
       commitSha: deployment.sha,
@@ -211,7 +216,9 @@ export async function verifyDeployment(
 /**
  * Format deployment verification result for Founder alert
  */
-export function formatDeploymentAlert(result: DeploymentVerificationResult): string {
+export function formatDeploymentAlert(
+  result: DeploymentVerificationResult
+): string {
   if (result.status === 'healthy') {
     return `✅ Deployment verified: ${result.latestCommit?.sha.slice(0, 7)} is live (${result.currentDeployment?.deployedAt?.slice(0, 10)})`;
   }

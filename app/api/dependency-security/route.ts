@@ -8,22 +8,28 @@
  * Never rate-limited (exempt endpoint, like /api/health)
  */
 
-import { scanDependencies, formatSecurityAlert, getSecuritySummary } from '@/lib/dependency-security-scanner'
+import {
+  scanDependencies,
+  formatSecurityAlert,
+  getSecuritySummary,
+} from '@/lib/dependency-security-scanner';
 
-export const maxDuration = 60
+export const maxDuration = 60;
 
 export async function GET() {
   try {
-    const report = await scanDependencies()
-    const alert = formatSecurityAlert(report)
-    const summary = getSecuritySummary(report)
-    const isCritical = report.critical > 0
+    const report = await scanDependencies();
+    const alert = formatSecurityAlert(report);
+    const summary = getSecuritySummary(report);
+    const isCritical = report.critical > 0;
 
     // Log alert to console for Founder visibility
     if (isCritical || report.scanStatus !== 'clean') {
-      console.error('[dependency-security] Vulnerabilities detected:\n' + summary)
+      console.error(
+        '[dependency-security] Vulnerabilities detected:\n' + summary
+      );
     } else {
-      console.log('[dependency-security] ✅ All clear')
+      console.log('[dependency-security] ✅ All clear');
     }
 
     return Response.json(
@@ -49,10 +55,10 @@ export async function GET() {
           'x-scan-severity': isCritical ? 'critical' : 'healthy',
         },
       }
-    )
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[dependency-security] Scan failed:', message)
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[dependency-security] Scan failed:', message);
 
     return Response.json(
       {
@@ -61,6 +67,6 @@ export async function GET() {
         timestamp: new Date().toISOString(),
       },
       { status: 500 }
-    )
+    );
   }
 }

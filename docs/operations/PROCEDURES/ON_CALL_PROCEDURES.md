@@ -24,12 +24,14 @@ Standard procedures for managing on-call engineer rotation, incident response, e
 ### Schedule Management
 
 **On-call schedule**:
+
 - Rotates weekly (Monday-Sunday)
 - One primary on-call engineer
 - One backup (escalation)
 - Published: [Link to shared calendar]
 
 **Team members in rotation**:
+
 - [ ] Engineer 1 (experienced)
 - [ ] Engineer 2 (intermediate)
 - [ ] Engineer 3 (intermediate)
@@ -37,6 +39,7 @@ Standard procedures for managing on-call engineer rotation, incident response, e
 - [ ] Engineer 5 (intermediate)
 
 **Scheduling principle**:
+
 - Balance experienced and intermediate engineers
 - Avoid same person more than 1 week per month
 - Notify team 1 week before shift
@@ -50,6 +53,7 @@ Standard procedures for managing on-call engineer rotation, incident response, e
    - Reply: "✓ Ready for on-call week of [date]"
 
 2. **Verify setup** (by Sunday)
+
    ```
    - [ ] Pager configured (PagerDuty or equivalent)
    - [ ] Phone notifications enabled
@@ -78,17 +82,20 @@ Standard procedures for managing on-call engineer rotation, incident response, e
 ### During Your Shift
 
 **Availability**:
+
 - Check phone/Slack at least every 30 minutes
 - If outside home: Keep phone charged and on
 - Check Slack even if no alert received (might be missed)
 
 **Response commitment**:
+
 - CRITICAL: Respond within 5 minutes
 - HIGH: Respond within 30 minutes
 - MEDIUM: Respond within 2 hours
 - LOW: Respond by next business day
 
 **Acknowledging alerts**:
+
 ```
 When you receive alert:
 1. Read alert details
@@ -105,6 +112,7 @@ When you receive alert:
 ### Incident Detected
 
 **Alert arrives** via:
+
 - Slack notification
 - Email notification
 - SMS (critical only)
@@ -133,24 +141,26 @@ When you receive alert:
 ### Investigation Phase (10-30 min)
 
 **Use runbooks**:
+
 - INCIDENT_RESPONSE.md → Incident triage & investigation
 - DATABASE_OPERATIONS.md → Database-related issues
 - DEPLOYMENT.md → Deployment issues
 - MONITORING_AND_ALERTING.md → Alert interpretation
 
 **Gather information**:
+
 ```
 1. When did it start?
    - Check logs/alerts timeline
-   
+
 2. How many customers affected?
    - Check which workspaces having issues
-   
+
 3. What changed recently?
    - Recent deployments?
    - Database migrations?
    - Infrastructure changes?
-   
+
 4. Is it growing?
    - Error rate increasing?
    - More users affected?
@@ -158,6 +168,7 @@ When you receive alert:
 ```
 
 **Communicate findings**:
+
 - Slack update every 15 minutes: "Found [issue], working on [fix]"
 - Example: "Database query slow on evidence table, adding index now"
 
@@ -165,15 +176,16 @@ When you receive alert:
 
 **Choose action**: Fix forward or rollback?
 
-| Situation | Action |
-|-----------|--------|
-| Recent deployment, service down | Rollback immediately |
-| Known bug in recent code, quick fix | Fix forward |
-| Database migration failed | Investigate + rollback if needed |
-| Third-party service down | Wait or workaround |
-| Performance issue, no errors | Optimize or scale |
+| Situation                           | Action                           |
+| ----------------------------------- | -------------------------------- |
+| Recent deployment, service down     | Rollback immediately             |
+| Known bug in recent code, quick fix | Fix forward                      |
+| Database migration failed           | Investigate + rollback if needed |
+| Third-party service down            | Wait or workaround               |
+| Performance issue, no errors        | Optimize or scale                |
 
 **Fix forward example**:
+
 1. Identify problem in code
 2. Write fix
 3. Test locally (if quick)
@@ -181,6 +193,7 @@ When you receive alert:
 5. Verify fix works in production
 
 **Rollback example**:
+
 1. Use ROLLBACK.md procedures
 2. Identify last working commit
 3. Revert to that commit
@@ -191,17 +204,20 @@ When you receive alert:
 ### Execution Phase (5-60 min)
 
 **Implement fix or rollback**:
+
 - Follow relevant runbook (ROLLBACK.md, FIX_FORWARD.md, DATABASE_OPERATIONS.md)
 - Focus on speed and safety
 - Communicate progress
 
 **Verification**:
+
 - Service responding? `curl health endpoint`
 - Error rate normal? Check logs
 - Users reporting fixed? Monitor Slack
 - All components healthy? Check each system
 
 **Sign off**:
+
 - Alert acknowledged and resolved
 - Slack update: "✓ Incident resolved [timestamp]"
 - Document: What broke, why, how fixed
@@ -209,16 +225,19 @@ When you receive alert:
 ### Postmortem Phase (24-48 hours)
 
 **Schedule postmortem** (if P1 or P2):
+
 - When: Within 24 hours of resolution
 - Who: On-call engineer, team lead, relevant engineers
 - Duration: 60-90 minutes
 
 **Postmortem process**:
+
 - Use template: CHECKLISTS/INCIDENT_POSTMORTEM.md
 - Objective: Learn, not blame
 - Document: Root cause, action items, improvements
 
 **Track action items**:
+
 - Add to issue tracker
 - Assign owners
 - Set due dates
@@ -231,12 +250,14 @@ When you receive alert:
 ### When to Escalate
 
 **Escalate to backup on-call** when:
+
 - You cannot respond in required time
 - Issue is beyond your expertise
 - You need help (pair troubleshooting)
 - You're unsure what to do
 
 **How to escalate**:
+
 ```
 1. On Slack, ping: @[backup-on-call]
 2. Message: "Need backup! [Brief issue description]"
@@ -245,12 +266,14 @@ When you receive alert:
 ```
 
 **Escalate to team lead** when:
+
 - Issue unresolved after 1 hour
 - Requires architectural decision
 - Impacts customers significantly
 - Business decision needed (rollback? Customer notification?)
 
 **How to escalate to team lead**:
+
 ```
 1. Message team lead on Slack
 2. Include: What's broken, what tried, why blocked
@@ -259,12 +282,14 @@ When you receive alert:
 ```
 
 **Escalate to founder** (Governor Ω) when:
+
 - Service outage >5 minutes with no known fix
 - Customer data loss or security breach
 - Requires business decision
 - Incident severity forces communication with customers
 
 **How to escalate to founder**:
+
 ```
 1. Slack @Governor (or designated contact)
 2. Include: Status, impact, current action, ETA
@@ -307,11 +332,13 @@ Next day - Postmortem at 2pm
 **Do NOT contact customers directly** (unless team lead/founder says to)
 
 **Who communicates**:
+
 - Team lead or founder communicates with customers
 - On-call engineer provides: "What's wrong, ETA for fix, impact"
 - Team lead composes message and sends
 
 **What to communicate**:
+
 - Simple explanation of issue (avoid jargon)
 - How it affects them (feature down? data safe?)
 - ETA for fix
@@ -319,11 +346,12 @@ Next day - Postmortem at 2pm
 - When they'll be updated again
 
 **Example message** (team lead sends, based on your info):
+
 ```
 Hi customers,
 
-We're experiencing elevated error rates on assessments 
-(started at 8:10 PM UTC). We've identified the issue 
+We're experiencing elevated error rates on assessments
+(started at 8:10 PM UTC). We've identified the issue
 and estimate 15 minutes to resolution. Your data is safe.
 
 We'll update you in 15 minutes.
@@ -335,11 +363,13 @@ The EURO AI Team
 ### Internal Communication
 
 **On Slack** (for your team):
+
 - Update every 15 minutes on P1/P2 incidents
 - Format: "🔧 Status: [what you're doing]. ETA: [time]"
 - When resolved: "✓ RESOLVED at [time]. [2-sentence summary]"
 
 **Example thread**:
+
 ```
 8:15: 🔧 Alert: Error rate spike. Investigating database.
 8:20: 🔧 Found: Slow query on evidence table. Adding index.
@@ -348,6 +378,7 @@ The EURO AI Team
 ```
 
 **In postmortem**:
+
 - Focus on facts, not blame
 - Example: "PR #123 deployed at 8:05 PM, changed evidence query"
 - Not: "Engineer X broke the database"
@@ -359,11 +390,13 @@ The EURO AI Team
 ### End of Shift Handoff
 
 **Before end of shift**:
+
 1. Check for open incidents
    - Any still being investigated?
    - Any just resolved?
 
 2. Brief the incoming on-call engineer:
+
    ```
    Quick handoff (5 minutes):
    - "Any incidents this week? What happened?"
@@ -384,6 +417,7 @@ The EURO AI Team
 ### Mid-Shift Handoff (if covering for someone)
 
 **If you need to cover someone's on-call time**:
+
 1. Notify team: "Covering [person]'s on-call for [date]"
 2. Ask coverage person: "Anything I should know?"
 3. Check recent incidents/issues
@@ -411,6 +445,7 @@ The EURO AI Team
 ### Reference Materials
 
 Always have accessible:
+
 - `INCIDENT_RESPONSE.md` — Main incident playbook
 - `ROLLBACK.md` — How to rollback
 - `DATABASE_OPERATIONS.md` — Database troubleshooting
@@ -422,6 +457,7 @@ Always have accessible:
 ### Development Environment
 
 Before on-call shift, verify:
+
 ```bash
 # Can you build?
 npm run build
@@ -448,6 +484,7 @@ ssh -i [key] [server]
 **Alert**: Vercel build failed
 
 **Action**:
+
 1. Check build logs in Vercel dashboard
 2. Is it a real error or transient?
 3. If real error: Identify (missing dependency? type error?)
@@ -462,6 +499,7 @@ ssh -i [key] [server]
 **Alert**: Query performance degraded
 
 **Action**:
+
 1. Identify slow query (see DATABASE_OPERATIONS.md)
 2. Check if missing index
 3. Add index and monitor
@@ -476,6 +514,7 @@ ssh -i [key] [server]
 **Alert**: Health check failing
 
 **Action**:
+
 1. Check health endpoint manually
 2. Check database connectivity
 3. Check recent deployments
@@ -490,6 +529,7 @@ ssh -i [key] [server]
 **Alert**: >5% of requests returning 5XX
 
 **Action**:
+
 1. Identify which endpoint has errors
 2. Check logs for error message
 3. Is it code issue (deploy) or infrastructure issue (database)?
@@ -520,6 +560,7 @@ ssh -i [key] [server]
 ### Burnout Prevention
 
 If you're burning out:
+
 - Tell team lead immediately
 - Take a break from on-call rotation
 - Automate routine tasks
@@ -533,6 +574,7 @@ If you're burning out:
 ### Track These Metrics
 
 Track **per on-call week**:
+
 - [ ] Number of incidents
 - [ ] Incidents by severity (P1, P2, P3)
 - [ ] Mean time to respond
@@ -542,6 +584,7 @@ Track **per on-call week**:
 ### Monthly Review
 
 In WEEKLY_OPS_REVIEW.md, note:
+
 - Incidents that week
 - Whether on-call procedures helped or hindered
 - Ideas for improvement
@@ -549,6 +592,7 @@ In WEEKLY_OPS_REVIEW.md, note:
 ### Quarterly Review
 
 Review on-call procedures:
+
 - [ ] Are runbooks up-to-date?
 - [ ] Are response times good?
 - [ ] Is on-call rotation fair?

@@ -12,12 +12,14 @@
 Automate production monitoring to catch issues before customers notice them.
 
 ### Current State
+
 - ✅ Manual monitoring dashboard (FOUNDER_MONITORING_DASHBOARD.md)
 - ✅ Verification scripts (pre-customer-verification.sh, runtime-health-check.sh)
 - ✅ Incident response runbooks (INCIDENT_RESPONSE_RUNBOOKS.md)
 - ❌ Automated monitoring workflows (BLOCKED: GitHub Actions spending limit)
 
 ### Desired State
+
 - ✅ Automated health checks every 5 minutes
 - ✅ Real-time alerts on failures
 - ✅ Historical trending for performance
@@ -38,8 +40,8 @@ Automate production monitoring to catch issues before customers notice them.
 name: Monitor Production Health
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
-  workflow_dispatch:  # Manual trigger
+    - cron: '*/5 * * * *' # Every 5 minutes
+  workflow_dispatch: # Manual trigger
 
 jobs:
   health-check:
@@ -124,6 +126,7 @@ jobs:
 ```
 
 **Monitoring Endpoints Checked:**
+
 - `/api/health` — Database connectivity, deployment version
 - Vercel API — Deployment status, build logs, error rates
 - Supabase status API — Database service health
@@ -143,7 +146,7 @@ jobs:
 name: Track Performance Baseline
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour
+    - cron: '0 * * * *' # Every hour
 
 jobs:
   performance-check:
@@ -156,16 +159,16 @@ jobs:
             curl -w '%{time_total}\n' -o /dev/null -s \
               https://newspulse-ai.vercel.app/api/health
           done > /tmp/times.txt
-          
+
           AVG=$(awk '{s+=$1} END {print s/NR}' /tmp/times.txt)
           echo "Average response time: ${AVG}s"
-          
+
           # Alert if >1 second (2x baseline)
           if (( $(echo "$AVG > 1.0" | bc -l) )); then
             echo "⚠️ Slow response: ${AVG}s"
             exit 1
           fi
-          
+
           # Log baseline
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           echo "$TIMESTAMP,$AVG" >> performance-log.csv
@@ -192,7 +195,7 @@ jobs:
 name: Aggregate Errors
 on:
   schedule:
-    - cron: '0 0,12 * * *'  # 00:00 and 12:00 UTC
+    - cron: '0 0,12 * * *' # 00:00 and 12:00 UTC
 
 jobs:
   aggregate-errors:
@@ -204,7 +207,7 @@ jobs:
           ERRORS=$(curl -s "https://api.vercel.com/..." \
             -H "Authorization: Bearer ${{ secrets.VERCEL_API_TOKEN }}" \
             | jq '.logs[] | select(.level=="error")')
-          
+
           # Group by error type
           echo "$ERRORS" | jq -r '.message' | sort | uniq -c | sort -rn > error-summary.txt
 
@@ -241,17 +244,17 @@ jobs:
 For known recoverable issues:
 
 ```yaml
-      - name: Recover from Connection Pool Exhaustion
-        if: failure() && contains(github.event.pull_request.body, 'connection pool')
-        run: |
-          # Restart Vercel deployment
-          curl -X POST https://api.vercel.com/v13/deployments \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_API_TOKEN }}" \
-            -d '{"action": "redeploy", "deploymentId": "${{ secrets.LAST_DEPLOYMENT_ID }}"}'
-          
-          # Wait 2 minutes, re-check
-          sleep 120
-          curl -f https://newspulse-ai.vercel.app/api/health || exit 1
+- name: Recover from Connection Pool Exhaustion
+  if: failure() && contains(github.event.pull_request.body, 'connection pool')
+  run: |
+    # Restart Vercel deployment
+    curl -X POST https://api.vercel.com/v13/deployments \
+      -H "Authorization: Bearer ${{ secrets.VERCEL_API_TOKEN }}" \
+      -d '{"action": "redeploy", "deploymentId": "${{ secrets.LAST_DEPLOYMENT_ID }}"}'
+
+    # Wait 2 minutes, re-check
+    sleep 120
+    curl -f https://newspulse-ai.vercel.app/api/health || exit 1
 ```
 
 ---
@@ -259,6 +262,7 @@ For known recoverable issues:
 ## Implementation Checklist
 
 ### Prerequisites
+
 - [ ] GitHub Actions spending limit ≥$50/month (FOUNDER ACTION)
 - [ ] Vercel API token in GitHub Secrets (FOUNDER ACTION)
 - [ ] Supabase API credentials configured
@@ -268,27 +272,30 @@ For known recoverable issues:
 ### Workflows to Create
 
 #### Tier 1 (Critical, implement first)
+
 - [ ] `monitor-production-health.yml` — 5-min cadence health checks
 - [ ] `verify-deployment.yml` — Verify live code matches main branch
 
 #### Tier 2 (Important, implement second)
+
 - [ ] `track-performance-baseline.yml` — Hourly performance monitoring
 - [ ] `aggregate-errors.yml` — 12-hourly error pattern detection
 
 #### Tier 3 (Nice-to-have, implement later)
+
 - [ ] `auto-recovery.yml` — Automated self-healing
 - [ ] `cost-anomaly-detection.yml` — Alert on spending spikes
 - [ ] `security-scan.yml` — Daily dependency vulnerability checks
 
 ### Secrets Needed
 
-| Secret | Source | Required For |
-|---|---|---|
-| `VERCEL_API_TOKEN` | Vercel dashboard → Tokens | Deployment monitoring |
-| `VERCEL_PROJECT_ID` | Vercel dashboard → Project settings | Deployment API calls |
-| `SLACK_WEBHOOK_URL` | Slack workspace → Apps → Custom Integrations | Slack alerts |
-| `SENDGRID_API_KEY` | SendGrid → API Keys | Email digests |
-| `SUPABASE_API_KEY` | Supabase → API | Database monitoring |
+| Secret              | Source                                       | Required For          |
+| ------------------- | -------------------------------------------- | --------------------- |
+| `VERCEL_API_TOKEN`  | Vercel dashboard → Tokens                    | Deployment monitoring |
+| `VERCEL_PROJECT_ID` | Vercel dashboard → Project settings          | Deployment API calls  |
+| `SLACK_WEBHOOK_URL` | Slack workspace → Apps → Custom Integrations | Slack alerts          |
+| `SENDGRID_API_KEY`  | SendGrid → API Keys                          | Email digests         |
+| `SUPABASE_API_KEY`  | Supabase → API                               | Database monitoring   |
 
 ---
 
@@ -297,6 +304,7 @@ For known recoverable issues:
 Once workflows are running, create public dashboards:
 
 ### Real-Time Dashboard
+
 - Current deployment status (Ready / Building / Failed)
 - API response time (last 1h, last 24h)
 - Error rate (last 1h)
@@ -304,12 +312,14 @@ Once workflows are running, create public dashboards:
 - Recent incidents (last 7 days)
 
 ### Historical Trends
+
 - Performance baseline graph (30-day trend)
 - Error rate trend (7-day)
 - Uptime calendar (7-day, 30-day)
 - Cost trend (weekly spending)
 
 ### Customer Impact
+
 - Affected customers during outages
 - Customer reported issues (last 24h)
 - Customer satisfaction trend
@@ -319,18 +329,21 @@ Once workflows are running, create public dashboards:
 ## Alert Thresholds
 
 ### 🔴 CRITICAL (Immediate notification)
+
 - Deployment status: FAILED
 - API down: 3 consecutive health check failures
 - Error rate: >15% in last 5 min
 - Database connection: Failed
 
 ### 🟠 HIGH (30-minute digest)
+
 - Response time: >2 sec (3x baseline)
 - Error rate: 5-15% in last hour
 - Memory usage: >80%
 - Database query latency: >1 sec (p95)
 
 ### 🟡 MEDIUM (Hourly digest)
+
 - Response time: >1 sec (2x baseline)
 - Error rate: 1-5% in last hour
 - Build warning: Tests pass but lint issues
@@ -341,6 +354,7 @@ Once workflows are running, create public dashboards:
 ## Current Blockers
 
 🔴 **GitHub Actions Spending Limit**
+
 - Current: $0 (limit exhausted)
 - Required: ≥$50/month
 - Action: Founder increases limit (FOUNDER_ACTION_BOARD.md #2)
@@ -348,6 +362,7 @@ Once workflows are running, create public dashboards:
 - Blocking: All automated monitoring workflows
 
 Once Founder increases limit:
+
 1. Workflows will execute immediately
 2. Health checks run every 5 minutes
 3. Alerts begin firing
@@ -363,7 +378,7 @@ After implementing automated monitoring:
 ✅ Alert accuracy: <5% false positives  
 ✅ MTTR (Mean Time To Recovery): <30 min for critical issues  
 ✅ Performance trending: Detects 2x response time regressions  
-✅ Error pattern detection: Identifies recurring issues within 24h  
+✅ Error pattern detection: Identifies recurring issues within 24h
 
 ---
 
@@ -384,4 +399,3 @@ After implementing automated monitoring:
 - DNS-GOV-004: Error Rate Monitoring (real-time error detection)
 - INCIDENT_RESPONSE_RUNBOOKS.md: Procedures for responding to alerts
 - OPERATIONAL_READINESS.md: Manual procedures during workflow downtime
-

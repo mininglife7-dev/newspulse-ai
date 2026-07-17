@@ -24,18 +24,19 @@ Security operations for production platform. Covers vulnerability management, in
 
 ### Security Incident Types
 
-| Type | Examples | Severity | Response Time |
-|------|----------|----------|----------------|
-| Unauthorized access | Account compromise, data breach | P1 | <5 min |
-| Data exposure | Sensitive data in logs, misconfigured S3 | P1 | <30 min |
-| Vulnerability discovered | SQL injection, XSS, auth bypass | P2 | <1 hour |
-| Credential leak | API key exposed, password in code | P2 | <30 min |
-| Suspicious activity | Brute force, unusual API usage | P2 | <1 hour |
-| Malware/intrusion | Compromised system, backdoor | P1 | <5 min |
+| Type                     | Examples                                 | Severity | Response Time |
+| ------------------------ | ---------------------------------------- | -------- | ------------- |
+| Unauthorized access      | Account compromise, data breach          | P1       | <5 min        |
+| Data exposure            | Sensitive data in logs, misconfigured S3 | P1       | <30 min       |
+| Vulnerability discovered | SQL injection, XSS, auth bypass          | P2       | <1 hour       |
+| Credential leak          | API key exposed, password in code        | P2       | <30 min       |
+| Suspicious activity      | Brute force, unusual API usage           | P2       | <1 hour       |
+| Malware/intrusion        | Compromised system, backdoor             | P1       | <5 min        |
 
 ### Incident Declaration
 
 **When to declare security incident**:
+
 - Data breach (customer or company data)
 - Unauthorized access to systems
 - Malware detected
@@ -73,11 +74,12 @@ Security operations for production platform. Covers vulnerability management, in
    - Customer data or internal?
 
    Investigation:
+
    ```sql
    -- For unauthorized access:
    SELECT * FROM audit_logs WHERE action = 'unauthorized_access'
      AND created_at > NOW() - INTERVAL '24 hours';
-   
+
    -- For data exposure:
    SELECT * FROM [table] WHERE accessed_by = 'unauthorized_user'
      OR accessed_from = 'unknown_ip';
@@ -108,6 +110,7 @@ Security operations for production platform. Covers vulnerability management, in
 **Immediate actions** (within 30 minutes):
 
 For **unauthorized account access**:
+
 ```
 1. Reset password immediately
 2. Revoke all sessions/tokens
@@ -118,6 +121,7 @@ For **unauthorized account access**:
 ```
 
 For **exposed API key/credential**:
+
 ```
 1. Revoke the key immediately
 2. Check usage logs (what did attacker use it for?)
@@ -128,6 +132,7 @@ For **exposed API key/credential**:
 ```
 
 For **data breach**:
+
 ```
 1. Identify scope: Which data? How many records?
 2. Isolate affected workspace/customers
@@ -138,6 +143,7 @@ For **data breach**:
 ```
 
 For **malware/intrusion**:
+
 ```
 1. Take affected system offline
 2. Do NOT restart (preserve forensics)
@@ -150,18 +156,21 @@ For **malware/intrusion**:
 ### Recovery Actions
 
 **Fix the vulnerability**:
+
 - Code: Patch and deploy
 - Configuration: Update settings and redeploy
 - Access: Revoke and rotate credentials
 - System: Rebuild or restore
 
 **Verify recovery**:
+
 - Patch deployed successfully
 - Vulnerability no longer present
 - No data loss
 - System functioning normally
 
 **Clear evidence**:
+
 - Attacker accounts removed
 - Malware cleaned
 - Logs preserved for investigation
@@ -174,6 +183,7 @@ For **malware/intrusion**:
 ### Vulnerability Discovery
 
 **Sources**:
+
 - Dependency scanning (npm audit, Snyk)
 - Code review
 - Penetration testing
@@ -185,16 +195,17 @@ For **malware/intrusion**:
 
 For each vulnerability, determine:
 
-| Factor | Assessment |
-|--------|----------|
-| **Severity** | Critical / High / Medium / Low |
-| **CVSS Score** | 0-10 |
-| **Exploitability** | Easy to exploit? Requires specific conditions? |
-| **Impact** | What's worst case? Data breach? Service down? |
-| **Affected component** | Which library? Which code? |
-| **Exposure** | How many users affected? |
+| Factor                 | Assessment                                     |
+| ---------------------- | ---------------------------------------------- |
+| **Severity**           | Critical / High / Medium / Low                 |
+| **CVSS Score**         | 0-10                                           |
+| **Exploitability**     | Easy to exploit? Requires specific conditions? |
+| **Impact**             | What's worst case? Data breach? Service down?  |
+| **Affected component** | Which library? Which code?                     |
+| **Exposure**           | How many users affected?                       |
 
 **Severity scale**:
+
 - **CRITICAL**: Exploitable immediately, data breach, RCE → Fix within 24 hours
 - **HIGH**: Exploitable but requires conditions, significant impact → Fix within 1 week
 - **MEDIUM**: Limited impact, harder to exploit → Fix within 1 month
@@ -242,10 +253,10 @@ git push origin main
 
 Maintain vulnerability tracking spreadsheet:
 
-| Vulnerability | Severity | Date Found | Status | Patch Date | Notes |
-|---------------|----------|-----------|--------|-----------|-------|
-| jsonwebtoken signature bypass | HIGH | 2026-07-10 | Fixed | 2026-07-11 | npm audit |
-| XSS in search | MEDIUM | 2026-07-12 | In progress | TBD | Code review found |
+| Vulnerability                 | Severity | Date Found | Status      | Patch Date | Notes             |
+| ----------------------------- | -------- | ---------- | ----------- | ---------- | ----------------- |
+| jsonwebtoken signature bypass | HIGH     | 2026-07-10 | Fixed       | 2026-07-11 | npm audit         |
+| XSS in search                 | MEDIUM   | 2026-07-12 | In progress | TBD        | Code review found |
 
 ---
 
@@ -285,12 +296,14 @@ AND deleted_at IS NULL;
 **Monthly**: Verify roles match responsibilities
 
 For each workspace:
+
 - Owner count (should be 1-2)
 - Admin count (should match team structure)
 - Analysts (match compliance team)
 - Viewers (executives, auditors)
 
 **If mismatch**:
+
 - Update role assignments
 - Notify affected users
 - Document change
@@ -298,6 +311,7 @@ For each workspace:
 ### Credential Rotation
 
 **API Keys**:
+
 - Rotate every 90 days
 - Check logs first (is key still used?)
 - Generate new key
@@ -305,11 +319,13 @@ For each workspace:
 - Delete old key after 30 days of verification
 
 **Database passwords**:
+
 - Rotate quarterly (or after employee departure)
 - Change in Supabase dashboard
 - Update all connection strings
 
 **SSH keys**:
+
 - Rotate annually
 - Check: Which keys are still used?
 - Add new key before removing old
@@ -321,23 +337,27 @@ For each workspace:
 ### Encryption Verification
 
 **Data at rest**:
+
 - [ ] Database encrypted (Supabase default: ✓)
 - [ ] Backups encrypted
 - [ ] Logs encrypted (if containing sensitive data)
 - [ ] Secrets not stored in code
 
 **Data in transit**:
+
 - [ ] All traffic: HTTPS/TLS
 - [ ] No plaintext passwords sent
 - [ ] API tokens over HTTPS only
 - [ ] Database connections encrypted
 
 **Encryption strength**:
+
 - [ ] TLS 1.2 or higher
 - [ ] Cipher suites modern (not deprecated)
 - [ ] Certificate valid and trusted
 
 Check:
+
 ```bash
 # Test TLS strength
 curl -I https://newspulse-ai.vercel.app
@@ -350,6 +370,7 @@ openssl s_client -connect newspulse-ai.vercel.app:443
 ### Sensitive Data Handling
 
 **What counts as sensitive**:
+
 - User passwords
 - API keys / authentication tokens
 - Database credentials
@@ -358,6 +379,7 @@ openssl s_client -connect newspulse-ai.vercel.app:443
 - Health information (if applicable)
 
 **Where it should NOT appear**:
+
 - ❌ Git repository
 - ❌ Logs (console or application logs)
 - ❌ Error messages shown to users
@@ -365,6 +387,7 @@ openssl s_client -connect newspulse-ai.vercel.app:443
 - ❌ Backups unless encrypted
 
 **Where it IS safe**:
+
 - ✓ Database (with RLS enforcement)
 - ✓ Secrets manager (environment variables)
 - ✓ Encrypted files
@@ -405,6 +428,7 @@ Test input: '; DROP TABLE users; --
 ```
 
 **Prevention checklist**:
+
 - [ ] All database queries use parameterized queries
 - [ ] No string concatenation in SQL
 - [ ] Input validated on server (not just client)
@@ -426,6 +450,7 @@ Test input: <img src=x onerror="alert('xss')">
 ```
 
 **Prevention checklist**:
+
 - [ ] All user input escaped when displayed
 - [ ] No innerHTML used with user input
 - [ ] React/Vue auto-escaping used correctly
@@ -447,6 +472,7 @@ Test input: <img src=x onerror="alert('xss')">
 ```
 
 **Prevention checklist**:
+
 - [ ] All forms include CSRF token
 - [ ] Token verified on server
 - [ ] Token invalidated after use
@@ -460,6 +486,7 @@ Test input: <img src=x onerror="alert('xss')">
 ### Dependency Security
 
 **Process**:
+
 1. On every push: `npm audit` runs automatically
 2. If vulnerabilities found: CI/CD blocks merge
 3. Fix vulnerabilities before merging
@@ -477,6 +504,7 @@ npm audit --production
 ```
 
 **Supply chain security**:
+
 - [ ] Only install from npm registry
 - [ ] Verify package signatures (npm v8+)
 - [ ] Review package source code before adding
@@ -488,12 +516,14 @@ npm audit --production
 **Review quarterly**:
 
 For each third-party service (Supabase, Vercel, etc.):
+
 - [ ] Access control: Who has admin access?
 - [ ] Secrets: Are credentials secure?
 - [ ] Audit logs: Can we see who did what?
 - [ ] Compliance: Does it meet our standards?
 
 **Example**: Supabase
+
 - [ ] Team members reviewed
 - [ ] Database passwords rotated
 - [ ] Database credentials in CI/CD checked
@@ -522,16 +552,19 @@ For each third-party service (Supabase, Vercel, etc.):
 ### Security Scanning
 
 **Automated**:
+
 - `npm audit` (dependency vulnerabilities)
 - Linter rules for common issues
 - Type checking for type confusion
 
 **Manual**:
+
 - Code review (peer, security-focused)
 - Penetration testing (quarterly)
 - Security audit (annual)
 
 **OWASP Top 10 Checklist**:
+
 - [ ] 1. Injection (SQL, command, etc.)
 - [ ] 2. Broken Authentication
 - [ ] 3. Sensitive Data Exposure
@@ -578,14 +611,14 @@ For each third-party service (Supabase, Vercel, etc.):
 
 ### Key Metrics to Track
 
-| Metric | Current | Target | Status |
-|--------|---------|--------|--------|
-| Unpatched vulnerabilities | __ | 0 | |
-| Critical vulnerabilities | __ | 0 | |
-| Unauthorized access attempts blocked | __ per day | <10 | |
-| Security incidents | __ per quarter | 0 | |
-| Credentials leaked | __ | 0 | |
-| Failed login attempts | __ per day | <50 | |
+| Metric                               | Current        | Target | Status |
+| ------------------------------------ | -------------- | ------ | ------ |
+| Unpatched vulnerabilities            | __             | 0      |        |
+| Critical vulnerabilities             | __             | 0      |        |
+| Unauthorized access attempts blocked | __ per day     | <10    |        |
+| Security incidents                   | __ per quarter | 0      |        |
+| Credentials leaked                   | __             | 0      |        |
+| Failed login attempts                | __ per day     | <50    |        |
 
 ### Monthly Security Review
 
@@ -608,10 +641,12 @@ For each third-party service (Supabase, Vercel, etc.):
 ### Reporting Security Issues
 
 **Internal**:
+
 - Slack: @security-team
 - Email: security@euroai.com
 
 **External** (from security researchers):
+
 - Email: security@euroai.com
 - PGP key: [If applicable]
 - Bug bounty program: [Link, if applicable]
@@ -641,12 +676,14 @@ For each third-party service (Supabase, Vercel, etc.):
 ### For All Engineers
 
 **Onboarding**: 1-hour security training
+
 - Common vulnerabilities
 - How to avoid them
 - How to test for them
 - Who to ask for help
 
 **Quarterly**: 30-minute refresher
+
 - New threat trends
 - Recent incidents (learnings)
 - Tool updates
@@ -654,6 +691,7 @@ For each third-party service (Supabase, Vercel, etc.):
 ### For On-Call
 
 **Extra training**:
+
 - Security incident response
 - Rapid credential rotation
 - Data breach containment

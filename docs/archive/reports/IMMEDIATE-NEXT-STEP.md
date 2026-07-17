@@ -26,11 +26,11 @@ That's it. Everything else is automated from there.
 
 Fill in the form:
 
-| Field | Value |
-|-------|-------|
-| **Name** | `euro-ai-eu-prod` (or whatever you prefer) |
-| **Database Password** | Create a strong password (you won't need it after this) |
-| **Region** | Select **Frankfurt (eu-central-1)** — or the closest EU region Supabase offers |
+| Field                 | Value                                                                          |
+| --------------------- | ------------------------------------------------------------------------------ |
+| **Name**              | `euro-ai-eu-prod` (or whatever you prefer)                                     |
+| **Database Password** | Create a strong password (you won't need it after this)                        |
+| **Region**            | Select **Frankfurt (eu-central-1)** — or the closest EU region Supabase offers |
 
 Click: **Create new project**
 
@@ -41,9 +41,11 @@ Click: **Create new project**
 Once the project is ready, go to **Settings → Database**:
 
 #### Value 1: Database Password
+
 - Copy the password you created in Step 2 (you'll paste it below)
 
 #### Value 2: Session Pooler Connection String
+
 - Click on the **Connection Pooler** tab (not "Direct connection")
 - Click: **Copy** to copy the full connection string
 - It looks like: `postgresql://postgres.abcd12345:password@eu-central-1.pooler.supabase.co:5432/postgres`
@@ -52,21 +54,25 @@ Once the project is ready, go to **Settings → Database**:
 Now go to **Settings → API**:
 
 #### Value 3: Project URL
+
 - Find the line: **Project URL**
 - It looks like: `https://abcd12345.supabase.co`
 - Paste into section below as `PROJECT_URL`
 
 #### Value 4: Project Reference
+
 - Find the line at the top: **Project Reference** (20-character ID)
 - Looks like: `abcd12345xyzabc`
 - Paste into section below as `SUPABASE_PROJECT_REF`
 
 #### Value 5: Service Role Key
+
 - Find the section: **Project API keys**
 - Under **Service role key**, click: **Copy**
 - Paste into section below as `SUPABASE_SERVICE_ROLE_KEY`
 
 #### Value 6: Publishable Key (new format)
+
 - Under **Publishable key (new format)**, click: **Copy**
 - Should start with `sb_publishable_`
 - Paste into section below as `SUPABASE_PUBLISHABLE_KEY`
@@ -135,6 +141,7 @@ Governor will automatically:
 ### What if I can't find the connection string?
 
 **In Supabase Dashboard:**
+
 1. Go to your new project
 2. Click: **Settings** (bottom-left)
 3. Click: **Database**
@@ -144,6 +151,7 @@ Governor will automatically:
 ### What if there's no "Frankfurt" region?
 
 Supabase EU regions include:
+
 - Frankfurt (eu-central-1) — preferred
 - Ireland (eu-west-1) — alternative
 - Netherlands (eu-west-3) — alternative
@@ -184,4 +192,3 @@ You just need to create the project and share the credentials.
 ---
 
 **Go create that project. We're waiting. 🚀**
-

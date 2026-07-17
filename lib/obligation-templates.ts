@@ -166,7 +166,8 @@ export const OBLIGATION_TEMPLATES: Record<RiskLevel, ObligationTemplate[]> = {
   low: [
     {
       title: 'Document system overview',
-      description: 'Maintain basic documentation of the AI system, including its purpose and primary use cases.',
+      description:
+        'Maintain basic documentation of the AI system, including its purpose and primary use cases.',
       source: 'EU_AI_ACT',
       priority: 'low',
     },
@@ -190,7 +191,9 @@ export const OBLIGATION_TEMPLATES: Record<RiskLevel, ObligationTemplate[]> = {
 /**
  * Get templates for a specific risk level
  */
-export function getTemplatesForRiskLevel(riskLevel: RiskLevel): ObligationTemplate[] {
+export function getTemplatesForRiskLevel(
+  riskLevel: RiskLevel
+): ObligationTemplate[] {
   return OBLIGATION_TEMPLATES[riskLevel] || [];
 }
 

@@ -23,7 +23,9 @@ describe('Rollback Decision Engine (DNA-GOV-012)', () => {
         checks: Array(10)
           .fill(null)
           .map((_, i) => ({
-            type: ['build-success', 'health-endpoint', 'api-availability'][i % 3],
+            type: ['build-success', 'health-endpoint', 'api-availability'][
+              i % 3
+            ],
             name: `Check ${i}`,
             description: 'Test',
             result: 'pass' as const,
@@ -90,7 +92,9 @@ describe('Rollback Decision Engine (DNA-GOV-012)', () => {
       };
 
       const decision = await engine.makeDecision(context);
-      expect(['rollback-now', 'escalate-to-founder']).toContain(decision.decision);
+      expect(['rollback-now', 'escalate-to-founder']).toContain(
+        decision.decision
+      );
       expect(decision.riskLevel).toBe('critical');
     });
 
@@ -165,7 +169,9 @@ describe('Rollback Decision Engine (DNA-GOV-012)', () => {
       };
 
       const decision = await engine.makeDecision(context);
-      expect(['retry-verification', 'hold-for-review']).toContain(decision.decision);
+      expect(['retry-verification', 'hold-for-review']).toContain(
+        decision.decision
+      );
     });
 
     it('should allow retry success after initial failure', async () => {
@@ -209,7 +215,11 @@ describe('Rollback Decision Engine (DNA-GOV-012)', () => {
       };
 
       const decision = await engine.makeDecision(context);
-      expect(['hold-for-review', 'retry-verification', 'rollback-now']).toContain(decision.decision);
+      expect([
+        'hold-for-review',
+        'retry-verification',
+        'rollback-now',
+      ]).toContain(decision.decision);
     });
   });
 
@@ -394,7 +404,9 @@ describe('Rollback Decision Engine (DNA-GOV-012)', () => {
       };
 
       const decision = await engine2.makeDecision(context);
-      expect(['rollback-now', 'escalate-to-founder']).toContain(decision.decision);
+      expect(['rollback-now', 'escalate-to-founder']).toContain(
+        decision.decision
+      );
     });
   });
 
@@ -566,7 +578,9 @@ describe('Rollback Decision Engine (DNA-GOV-012)', () => {
       };
 
       const decision = await engine2.makeDecision(context);
-      expect(['hold-for-review', 'proceed', 'rollback-now']).toContain(decision.decision);
+      expect(['hold-for-review', 'proceed', 'rollback-now']).toContain(
+        decision.decision
+      );
     });
   });
 
@@ -684,7 +698,9 @@ describe('Rollback Execution (DNA-GOV-012)', () => {
       expect(result.beforeState.deploymentId).toBe('deploy-state-before');
       if (result.success) {
         expect(result.afterState.deploymentId).toBe('deploy-state-after');
-        expect(result.afterState.errorRate).toBeLessThanOrEqual(result.beforeState.errorRate);
+        expect(result.afterState.errorRate).toBeLessThanOrEqual(
+          result.beforeState.errorRate
+        );
       }
     });
   });

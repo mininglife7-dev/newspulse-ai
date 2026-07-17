@@ -47,6 +47,7 @@ Verify production deployment succeeded and service is operating normally. Use th
 ## Service Health Verification
 
 - [ ] **Health endpoint responds**
+
   ```bash
   curl -s https://newspulse-ai.vercel.app/api/health | jq .
   ```
@@ -55,6 +56,7 @@ Verify production deployment succeeded and service is operating normally. Use th
   - If error: Check health endpoint logs
 
 - [ ] **Detailed health check passes**
+
   ```bash
   curl -s https://newspulse-ai.vercel.app/api/health/detailed | jq .
   ```
@@ -83,6 +85,7 @@ Verify production deployment succeeded and service is operating normally. Use th
 Depending on what was deployed, verify specific features:
 
 ### If Authentication Modified
+
 - [ ] **Test login flow**
   - Go to: https://newspulse-ai.vercel.app
   - Click: Login button
@@ -91,6 +94,7 @@ Depending on what was deployed, verify specific features:
   - Verify: No error messages in browser console
 
 ### If Workspace/Inventory Modified
+
 - [ ] **Test workspace operations**
   - Create a new workspace (if feature exists)
   - Verify: Workspace appears in list
@@ -104,6 +108,7 @@ Depending on what was deployed, verify specific features:
   - Verify: Can delete system
 
 ### If Assessment Modified
+
 - [ ] **Test assessment workflow**
   - Create new assessment
   - Verify: Assessment appears with correct status (draft)
@@ -113,6 +118,7 @@ Depending on what was deployed, verify specific features:
   - Verify: Status changes to finalized
 
 ### If Evidence/Obligations Modified
+
 - [ ] **Test evidence operations**
   - Create evidence item
   - Verify: Links to correct obligation
@@ -122,6 +128,7 @@ Depending on what was deployed, verify specific features:
   - Verify: Removed from list
 
 ### If API Endpoints Modified
+
 - [ ] **Test affected endpoints**
   - Use curl or Postman
   - Test: GET endpoints return correct data
@@ -132,6 +139,7 @@ Depending on what was deployed, verify specific features:
   - Test: Error responses use correct status codes
 
 ### If Database Schema Changed
+
 - [ ] **Verify migration applied**
   - Supabase dashboard → Migrations tab
   - Check: Latest migration shows as applied
@@ -248,6 +256,7 @@ Critical for multi-tenant system: Verify workspaces are properly isolated.
 ## If Any Check Fails
 
 **Severity Assessment**:
+
 - **Critical**: Customers cannot use core features → Rollback immediately
 - **High**: Features broken or unusable → Rollback or quick fix
 - **Medium**: Specific feature has issue → Plan fix but don't block rollback decision

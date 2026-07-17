@@ -12,12 +12,14 @@
 Integration tests verify that components work together correctly across service boundaries (API routes, database, auth, external services). These tests are essential for catching issues that unit tests cannot.
 
 **When to Write Integration Tests**:
+
 - Customer workflows (signup → assessment → obligations → evidence)
 - API routes that interact with database
 - Auth flows (signup, signin, email verification)
 - Multi-step operations (create assessment → generate obligations → link evidence)
 
 **When NOT to Write Integration Tests**:
+
 - Pure function logic (covered by unit tests)
 - Single-operation API routes with no side effects
 - UI interactions without data persistence
@@ -29,11 +31,13 @@ Integration tests verify that components work together correctly across service 
 ### 1.1 Test Database
 
 All integration tests run against a Supabase test instance:
+
 - Separate database from production
 - Migrations applied fresh for each test run
 - Automatic cleanup between tests
 
 **Configuration** (`vitest.config.ts`):
+
 ```typescript
 export default defineConfig({
   test: {
@@ -49,6 +53,7 @@ export default defineConfig({
 ```
 
 **Setup** (`tests/setup.ts`):
+
 ```typescript
 import { createClient } from '@supabase/supabase-js';
 import { beforeAll, afterEach } from 'vitest';
@@ -179,6 +184,7 @@ describe('Assessment Journey', () => {
 **Path**: Signup → Email Verification → Workspace Creation → Team Invite
 
 **Test Checklist**:
+
 - [ ] User can sign up with email
 - [ ] Verification email sent
 - [ ] Verification link works
@@ -189,6 +195,7 @@ describe('Assessment Journey', () => {
 - [ ] Invited user can accept invitation
 
 **Example**:
+
 ```typescript
 describe('Auth & Workspace Setup Journey', () => {
   it('completes signup through workspace creation', async () => {
@@ -220,6 +227,7 @@ describe('Auth & Workspace Setup Journey', () => {
 **Path**: Create System → Add Details → Assign Category → Verify
 
 **Test Checklist**:
+
 - [ ] User can create AI system
 - [ ] System fields validated (name, vendor, type)
 - [ ] System appears in inventory list
@@ -228,6 +236,7 @@ describe('Auth & Workspace Setup Journey', () => {
 - [ ] Deletion cascades to assessments
 
 **Example**:
+
 ```typescript
 describe('AI System Inventory Journey', () => {
   it('manages system lifecycle', async () => {
@@ -241,7 +250,7 @@ describe('AI System Inventory Journey', () => {
 
     // Verify in list
     const systems = await listAISystems(workspaceId);
-    expect(systems.map(s => s.id)).toContain(system.id);
+    expect(systems.map((s) => s.id)).toContain(system.id);
 
     // Update
     const updated = await updateAISystem(system.id, { name: 'Payment Fraud' });
@@ -250,7 +259,7 @@ describe('AI System Inventory Journey', () => {
     // Delete
     await deleteAISystem(system.id);
     const remaining = await listAISystems(workspaceId);
-    expect(remaining.map(s => s.id)).not.toContain(system.id);
+    expect(remaining.map((s) => s.id)).not.toContain(system.id);
   });
 });
 ```
@@ -260,6 +269,7 @@ describe('AI System Inventory Journey', () => {
 **Path**: Start Assessment → Answer Questions → Auto-Generate Obligations → Review
 
 **Test Checklist**:
+
 - [ ] Assessment created with draft status
 - [ ] User can answer questions
 - [ ] Questions conditional on prior answers
@@ -269,6 +279,7 @@ describe('AI System Inventory Journey', () => {
 - [ ] Finalized assessment cannot be edited
 
 **Example**:
+
 ```typescript
 describe('Risk Assessment Journey', () => {
   it('creates assessment and generates obligations', async () => {
@@ -307,6 +318,7 @@ describe('Risk Assessment Journey', () => {
 **Path**: Create Evidence → Link to Obligation → Track Remediation → Mark Complete
 
 **Test Checklist**:
+
 - [ ] User can upload evidence
 - [ ] Evidence links to obligation
 - [ ] Remediation plan created
@@ -315,6 +327,7 @@ describe('Risk Assessment Journey', () => {
 - [ ] Evidence expiry tracked
 
 **Example**:
+
 ```typescript
 describe('Evidence & Compliance Journey', () => {
   it('tracks evidence through compliance cycle', async () => {
@@ -331,7 +344,7 @@ describe('Evidence & Compliance Journey', () => {
 
     // Verify linked
     const linked = await getEvidenceForObligation(obligation.id);
-    expect(linked.map(e => e.id)).toContain(evidence.id);
+    expect(linked.map((e) => e.id)).toContain(evidence.id);
 
     // Create remediation plan
     const plan = await createRemediationPlan({
@@ -342,7 +355,7 @@ describe('Evidence & Compliance Journey', () => {
 
     // Mark progress
     await updateRemediationStatus(plan.id, 'in_progress');
-    
+
     // Mark complete
     const completed = await completeRemediation(plan.id);
     expect(completed.status).toBe('complete');
@@ -373,17 +386,17 @@ describe('Assessment API - Error Cases', () => {
     const response = await fetch('/api/assessments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ /* ... */ }),
+      body: JSON.stringify({/* ... */}),
     });
     expect(response.status).toBe(401);
   });
 
   it('prevents cross-workspace access', async () => {
     const assessment = await createAssessmentInWorkspace(ws1.id);
-    
-    await expect(
-      getAssessmentAs(assessment.id, ws2.user)
-    ).rejects.toThrow('Not found'); // User cannot see other workspace
+
+    await expect(getAssessmentAs(assessment.id, ws2.user)).rejects.toThrow(
+      'Not found'
+    ); // User cannot see other workspace
   });
 });
 ```
@@ -418,6 +431,7 @@ npm test -- --watch
 ### 5.3 Coverage Report Format
 
 Coverage output must include:
+
 - Line coverage percentage
 - Branch coverage percentage
 - Uncovered lines/branches
@@ -432,10 +446,10 @@ Integration tests should be <5 seconds each:
 ```typescript
 it('should complete within 5 seconds', async () => {
   const start = performance.now();
-  
+
   // Test workflow
   const result = await journeyStep();
-  
+
   const duration = performance.now() - start;
   expect(duration).toBeLessThan(5000); // 5 seconds
 });
@@ -448,6 +462,7 @@ it('should complete within 5 seconds', async () => {
 ### 7.1 Pre-Push Enforcement
 
 `.husky/pre-push`:
+
 ```bash
 #!/bin/sh
 echo "Running integration tests before push..."
@@ -457,6 +472,7 @@ npm run test:integration || exit 1
 ### 7.2 CI Pipeline
 
 GitHub Actions (`.github/workflows/ci.yml`):
+
 ```yaml
 - name: Run integration tests
   run: npm run test:integration
@@ -470,6 +486,7 @@ GitHub Actions (`.github/workflows/ci.yml`):
 ### 8.1 Fixtures vs. Factories
 
 **Fixtures**: Immutable test data
+
 ```typescript
 export const FIXTURE_ASSESSMENT = {
   ai_system_id: 'sys-fixture-001',
@@ -479,6 +496,7 @@ export const FIXTURE_ASSESSMENT = {
 ```
 
 **Factories**: Create fresh data for each test
+
 ```typescript
 export async function createTestAssessment(overrides = {}) {
   const system = await createTestSystem();
@@ -510,6 +528,7 @@ afterEach(async () => {
 ### 9.1 Verbose Logging
 
 Enable detailed logs:
+
 ```bash
 DEBUG=* npm run test:integration
 ```
@@ -517,6 +536,7 @@ DEBUG=* npm run test:integration
 ### 9.2 Inspect Test Database
 
 Connect to test DB manually:
+
 ```bash
 npx supabase db push --remote-is-live
 supabase db connect --local
@@ -542,6 +562,7 @@ npm test -- tests/api/assessments.integration.ts -t "creates assessment"
 ## Evolution
 
 Integration test patterns will evolve as the codebase grows. Key milestones:
+
 - STAGE 3 (current): Customer journey verification
 - STAGE 6: Full E2E automation (Playwright)
 - STAGE 8: Performance benchmarking

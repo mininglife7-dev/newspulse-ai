@@ -22,7 +22,7 @@ These MUST be done before first customer can sign up.
 
 **Owner:** You (Founder)  
 **Blocking:** Every customer signup fails with 403 error  
-**Effort:** 15-30 minutes  
+**Effort:** 15-30 minutes
 
 **Steps:**
 
@@ -35,11 +35,13 @@ These MUST be done before first customer can sign up.
 7. Verify success: tables appear in SQL Editor left sidebar
 
 **Verification:**
+
 ```bash
 curl -X POST https://newspulse-ai.vercel.app/api/workspace \
   -H "Content-Type: application/json" \
   -d '{"company_name":"Test","country":"DE","industry":"tech","employee_count":10}'
 ```
+
 Should return 200, not 403.
 
 **Why:** Database schema defines tables (workspaces, companies, profiles) and row-level security (RLS) policies that protect multi-tenant data. Without schema, customer writes fail.
@@ -81,6 +83,7 @@ Should return 200, not 403.
 **Effort:** 2-3 weeks implementation (if approved)
 
 **What It Is:** Three-tier pricing model:
+
 - **Free:** Core features, unlimited workspaces (current)
 - **Pro:** $49/month, advanced analytics, priority support
 - **Enterprise:** Custom pricing, dedicated support
@@ -94,27 +97,32 @@ Should return 200, not 403.
 **Decision Options:**
 
 A) **Launch free-only** (Recommended for Phase 1)
+
 - Faster to market (no billing complexity)
 - Gather customer feedback before monetizing
 - Reduces launch risk
 - Can add billing in Phase 2 (2-3 weeks)
 
 B) **Launch with Pro tier**
+
 - Enables revenue from day 1
 - Requires Stripe integration (DNS-GOV-019 implementation)
 - Adds 2-3 weeks to launch
 - More complex customer management
 
 **If Option A (Free-Only):**
+
 - No action needed now, proceed to Priority 2
 - DNS-GOV-019 becomes Phase 2 Phase 2 backlog task
 
 **If Option B (Launch with Billing):**
+
 - Approve DNS-GOV-019 spec
 - Governor builds billing integration (60-80 hours, 2-3 weeks)
 - Delay launch by 2-3 weeks
 
 **Recommendation:** Launch free-only (Option A). Reasons:
+
 1. Get first customer feedback before monetizing
 2. Reduce launch complexity and risk
 3. Build billing properly in Phase 2 with product-market fit data
@@ -135,6 +143,7 @@ These are best practices to establish before launch, but don't block it.
 **What:** Automated script that verifies all systems ready
 
 **Steps:**
+
 ```bash
 bash scripts/pre-customer-verification.sh --verbose
 ```
@@ -254,29 +263,33 @@ These improve operations but don't block launch. Queue for Phase 2.
 ✅ Metrics tracking defined (funnel, engagement, retention)  
 ✅ Incident response runbooks (5 common scenarios)  
 ✅ Monitoring dashboard quick reference  
-✅ Pre-customer verification script  
+✅ Pre-customer verification script
 
 ---
 
 ## 🗺️ EXECUTION ROADMAP
 
 ### Today (Launch Prep, 20-35 min)
+
 - [ ] Deploy Supabase schema (15-30 min)
 - [ ] Increase GitHub Actions limit (5 min)
 - [ ] Decide on DNS-GOV-019 (billing) — recommend Option A: defer to Phase 2
 
 ### Tomorrow (First Customer Onboarding)
+
 - [ ] Run verification script (5 min)
 - [ ] Send welcome email
 - [ ] Follow FIRST_CUSTOMER_PLAYBOOK.md
 - [ ] Monitor /api/alerts for issues
 
 ### Week 1
+
 - [ ] Track metrics (signup funnel, engagement)
 - [ ] Respond to customer questions
 - [ ] Document any friction points
 
 ### Week 2+
+
 - [ ] Monitor customer health score
 - [ ] Track feature adoption
 - [ ] Plan Phase 2 improvements
@@ -292,27 +305,31 @@ You're ready when:
 ✅ Verification script passes green  
 ✅ You've read FIRST_CUSTOMER_PLAYBOOK.md  
 ✅ You understand incident response procedures  
-✅ You can access /api/alerts dashboard  
+✅ You can access /api/alerts dashboard
 
 ---
 
 ## 📞 NEED HELP?
 
 **If verification script fails:**
+
 - Check /tmp/build.log or /tmp/test.log
 - Refer to OPERATIONAL_READINESS.md troubleshooting section
 
 **If Supabase schema deploy fails:**
+
 - Check Supabase dashboard → Status
 - Verify credentials in .env.local
 - Refer to SUPABASE-PRODUCTION-SETUP.md
 
 **If customer reports issue:**
+
 - Check INCIDENT_RESPONSE_RUNBOOKS.md
 - Follow support SLA in SUPPORT_TICKET_SYSTEM.md
 - Email customer within response time window
 
 **If something unexpected:**
+
 - Check /api/alerts for system status
 - Review Vercel logs
 - Check Supabase logs

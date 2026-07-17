@@ -6,7 +6,12 @@ import { validators, validate } from '@/lib/input-validation';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const OBLIGATION_STATUS = ['identified', 'in_progress', 'completed', 'not_applicable'] as const;
+const OBLIGATION_STATUS = [
+  'identified',
+  'in_progress',
+  'completed',
+  'not_applicable',
+] as const;
 const PRIORITY_ORDER: Record<string, number> = {
   critical: 0,
   high: 1,
@@ -50,7 +55,11 @@ async function resolveContext(
     .maybeSingle();
 
   if (memberError) {
-    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    logger.error(
+      'Workspace membership lookup failed',
+      'MEMBERSHIP_LOOKUP_ERROR',
+      memberError
+    );
     return { status: 500, error: 'Membership lookup failed' };
   }
 
@@ -116,7 +125,11 @@ export async function GET(request: NextRequest) {
         .eq('assessment_id', assessmentId);
 
       if (error) {
-        logger.error('Assessment obligations query failed', 'OBLIGATION_QUERY_ERROR', error);
+        logger.error(
+          'Assessment obligations query failed',
+          'OBLIGATION_QUERY_ERROR',
+          error
+        );
         return NextResponse.json(
           { ok: false, error: 'Could not load obligations' },
           { status: 500 }
@@ -127,7 +140,10 @@ export async function GET(request: NextRequest) {
         .map((item: Record<string, unknown>) => item.obligations as Obligation)
         .filter((o): o is Obligation => o != null);
 
-      return NextResponse.json({ ok: true, obligations: sortObligationsByPriority(obligations) });
+      return NextResponse.json({
+        ok: true,
+        obligations: sortObligationsByPriority(obligations),
+      });
     } else if (systemId) {
       const { data: assessments, error: assessmentError } = await supabase
         .from('risk_assessments')
@@ -137,7 +153,11 @@ export async function GET(request: NextRequest) {
         .limit(1);
 
       if (assessmentError) {
-        logger.error('System assessment lookup failed', 'ASSESSMENT_LOOKUP_ERROR', assessmentError);
+        logger.error(
+          'System assessment lookup failed',
+          'ASSESSMENT_LOOKUP_ERROR',
+          assessmentError
+        );
         return NextResponse.json(
           { ok: false, error: 'Failed to load system assessments' },
           { status: 500 }
@@ -168,7 +188,11 @@ export async function GET(request: NextRequest) {
         .eq('assessment_id', assessments[0].id);
 
       if (error) {
-        logger.error('System obligations query failed', 'OBLIGATION_QUERY_ERROR', error);
+        logger.error(
+          'System obligations query failed',
+          'OBLIGATION_QUERY_ERROR',
+          error
+        );
         return NextResponse.json(
           { ok: false, error: 'Could not load obligations' },
           { status: 500 }
@@ -179,14 +203,22 @@ export async function GET(request: NextRequest) {
         .map((item: Record<string, unknown>) => item.obligations as Obligation)
         .filter((o): o is Obligation => o != null);
 
-      return NextResponse.json({ ok: true, obligations: sortObligationsByPriority(obligations) });
+      return NextResponse.json({
+        ok: true,
+        obligations: sortObligationsByPriority(obligations),
+      });
     } else {
       let query = supabase
         .from('obligations')
         .select('*')
         .eq('workspace_id', ctx.workspaceId);
 
-      if (statusParam && OBLIGATION_STATUS.includes(statusParam as typeof OBLIGATION_STATUS[number])) {
+      if (
+        statusParam &&
+        OBLIGATION_STATUS.includes(
+          statusParam as (typeof OBLIGATION_STATUS)[number]
+        )
+      ) {
         query = query.eq('status', statusParam);
       }
 
@@ -195,7 +227,11 @@ export async function GET(request: NextRequest) {
       });
 
       if (error) {
-        logger.error('Workspace obligations query failed', 'OBLIGATION_QUERY_ERROR', error);
+        logger.error(
+          'Workspace obligations query failed',
+          'OBLIGATION_QUERY_ERROR',
+          error
+        );
         return NextResponse.json(
           { ok: false, error: 'Could not load obligations' },
           { status: 500 }

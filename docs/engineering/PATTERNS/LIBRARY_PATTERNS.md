@@ -69,15 +69,22 @@ Each domain module exports a public API via `index.ts`:
 
 ```typescript
 // lib/workspace/index.ts
-export { createWorkspace, readWorkspace, listWorkspaces, updateWorkspace, deleteWorkspace } from './service'
-export { WorkspaceError, WorkspaceNotFoundError } from './errors'
-export type { CreateWorkspaceInput, WorkspaceOutput } from './service'
+export {
+  createWorkspace,
+  readWorkspace,
+  listWorkspaces,
+  updateWorkspace,
+  deleteWorkspace,
+} from './service';
+export { WorkspaceError, WorkspaceNotFoundError } from './errors';
+export type { CreateWorkspaceInput, WorkspaceOutput } from './service';
 ```
 
 This allows clean imports:
+
 ```typescript
 // In routes or other modules
-import { createWorkspace, WorkspaceNotFoundError } from '@/lib/workspace'
+import { createWorkspace, WorkspaceNotFoundError } from '@/lib/workspace';
 ```
 
 ### Service Module Pattern
@@ -86,22 +93,22 @@ Each domain's `service.ts` contains business logic and orchestrates between data
 
 ```typescript
 // lib/workspace/service.ts
-import { createClient } from '@/lib/supabase/server'
-import * as queries from './queries'
-import { validateWorkspaceInput } from './validation'
-import { WorkspaceError } from './errors'
+import { createClient } from '@/lib/supabase/server';
+import * as queries from './queries';
+import { validateWorkspaceInput } from './validation';
+import { WorkspaceError } from './errors';
 
 export interface CreateWorkspaceInput {
-  name: string
-  description?: string
+  name: string;
+  description?: string;
 }
 
 export interface WorkspaceOutput {
-  id: string
-  name: string
-  description: string | null
-  created_at: string
-  updated_at: string
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export async function createWorkspace(
@@ -109,34 +116,34 @@ export async function createWorkspace(
   input: CreateWorkspaceInput
 ): Promise<WorkspaceOutput> {
   // Validate input
-  const validation = validateWorkspaceInput(input)
+  const validation = validateWorkspaceInput(input);
   if (!validation.valid) {
-    throw new WorkspaceError('Validation failed', validation.errors)
+    throw new WorkspaceError('Validation failed', validation.errors);
   }
 
   // Execute business logic
-  const supabase = await createClient()
-  const workspace = await queries.insert(supabase, userId, input)
-  
+  const supabase = await createClient();
+  const workspace = await queries.insert(supabase, userId, input);
+
   if (!workspace) {
-    throw new WorkspaceError('Failed to create workspace')
+    throw new WorkspaceError('Failed to create workspace');
   }
 
-  return workspace
+  return workspace;
 }
 
 export async function readWorkspace(
   userId: string,
   workspaceId: string
 ): Promise<WorkspaceOutput> {
-  const supabase = await createClient()
-  const workspace = await queries.selectById(supabase, userId, workspaceId)
-  
+  const supabase = await createClient();
+  const workspace = await queries.selectById(supabase, userId, workspaceId);
+
   if (!workspace) {
-    throw new WorkspaceError(`Workspace not found: ${workspaceId}`)
+    throw new WorkspaceError(`Workspace not found: ${workspaceId}`);
   }
 
-  return workspace
+  return workspace;
 }
 
 export async function listWorkspaces(
@@ -144,9 +151,9 @@ export async function listWorkspaces(
   limit: number = 10,
   offset: number = 0
 ): Promise<{ items: WorkspaceOutput[]; total: number }> {
-  const supabase = await createClient()
-  const result = await queries.selectByUserId(supabase, userId, limit, offset)
-  return result
+  const supabase = await createClient();
+  const result = await queries.selectByUserId(supabase, userId, limit, offset);
+  return result;
 }
 
 export async function updateWorkspace(
@@ -154,30 +161,30 @@ export async function updateWorkspace(
   workspaceId: string,
   updates: Partial<CreateWorkspaceInput>
 ): Promise<WorkspaceOutput> {
-  const validation = validateWorkspaceInput(updates)
+  const validation = validateWorkspaceInput(updates);
   if (!validation.valid) {
-    throw new WorkspaceError('Validation failed', validation.errors)
+    throw new WorkspaceError('Validation failed', validation.errors);
   }
 
-  const supabase = await createClient()
-  const updated = await queries.update(supabase, userId, workspaceId, updates)
-  
+  const supabase = await createClient();
+  const updated = await queries.update(supabase, userId, workspaceId, updates);
+
   if (!updated) {
-    throw new WorkspaceError(`Failed to update workspace: ${workspaceId}`)
+    throw new WorkspaceError(`Failed to update workspace: ${workspaceId}`);
   }
 
-  return updated
+  return updated;
 }
 
 export async function deleteWorkspace(
   userId: string,
   workspaceId: string
 ): Promise<void> {
-  const supabase = await createClient()
-  const success = await queries.delete(supabase, userId, workspaceId)
-  
+  const supabase = await createClient();
+  const success = await queries.delete(supabase, userId, workspaceId);
+
   if (!success) {
-    throw new WorkspaceError(`Failed to delete workspace: ${workspaceId}`)
+    throw new WorkspaceError(`Failed to delete workspace: ${workspaceId}`);
   }
 }
 ```
@@ -305,11 +312,15 @@ Two separate client instances for different contexts:
 
 ```typescript
 // lib/supabase/server.ts - Server-side Supabase client
-import { createServerClient, serializeCookieHeader, parseCookieHeader } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import {
+  createServerClient,
+  serializeCookieHeader,
+  parseCookieHeader,
+} from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function createClient() {
-  const cookieStore = await cookies()
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -317,34 +328,34 @@ export async function createClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return cookieStore.getAll();
         },
         setAll(cookies) {
           cookies.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
-        }
-      }
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
     }
-  )
+  );
 }
 ```
 
 ```typescript
 // lib/supabase/client.ts - Client-side Supabase client
-import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr';
 
-let browserClient: SupabaseClient | null = null
+let browserClient: SupabaseClient | null = null;
 
 export function createClient() {
-  if (browserClient) return browserClient
+  if (browserClient) return browserClient;
 
   browserClient = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  );
 
-  return browserClient
+  return browserClient;
 }
 ```
 
@@ -354,13 +365,10 @@ All database operations use parameterized queries. No string concatenation:
 
 ```typescript
 // ✅ CORRECT: Parameterized
-const { data } = await client
-  .from('users')
-  .select()
-  .eq('id', userId)
+const { data } = await client.from('users').select().eq('id', userId);
 
 // ❌ WRONG: Never concatenate
-const query = `SELECT * FROM users WHERE id = '${userId}'`
+const query = `SELECT * FROM users WHERE id = '${userId}'`;
 ```
 
 ## Domain Logic
@@ -377,15 +385,17 @@ export async function updateAssessmentStatus(
   newStatus: AssessmentStatus
 ): Promise<void> {
   // Validate state transition
-  const current = await readAssessment(userId, assessmentId)
+  const current = await readAssessment(userId, assessmentId);
   if (!canTransition(current.status, newStatus)) {
-    throw new AssessmentError(`Cannot transition from ${current.status} to ${newStatus}`)
+    throw new AssessmentError(
+      `Cannot transition from ${current.status} to ${newStatus}`
+    );
   }
 
   // Update via query layer
-  const success = await queries.updateStatus(supabase, assessmentId, newStatus)
+  const success = await queries.updateStatus(supabase, assessmentId, newStatus);
   if (!success) {
-    throw new AssessmentError('Failed to update assessment')
+    throw new AssessmentError('Failed to update assessment');
   }
 }
 
@@ -400,30 +410,33 @@ Each domain defines its own error class:
 ```typescript
 // lib/workspace/errors.ts
 export class WorkspaceError extends Error {
-  constructor(message: string, public details?: Record<string, any>) {
-    super(message)
-    this.name = 'WorkspaceError'
+  constructor(
+    message: string,
+    public details?: Record<string, any>
+  ) {
+    super(message);
+    this.name = 'WorkspaceError';
   }
 }
 
 export class WorkspaceNotFoundError extends WorkspaceError {
   constructor(id: string) {
-    super(`Workspace not found: ${id}`)
-    this.name = 'WorkspaceNotFoundError'
+    super(`Workspace not found: ${id}`);
+    this.name = 'WorkspaceNotFoundError';
   }
 }
 
 // In service.ts, throw specific errors
 if (!workspace) {
-  throw new WorkspaceNotFoundError(workspaceId)
+  throw new WorkspaceNotFoundError(workspaceId);
 }
 
 // In routes, catch and handle
 try {
-  const workspace = await readWorkspace(userId, workspaceId)
+  const workspace = await readWorkspace(userId, workspaceId);
 } catch (e) {
   if (e instanceof WorkspaceNotFoundError) {
-    return Response.json({ error: 'Workspace not found' }, { status: 404 })
+    return Response.json({ error: 'Workspace not found' }, { status: 404 });
   }
   // Handle generic WorkspaceError or unexpected errors
 }
@@ -436,44 +449,45 @@ try {
 ```typescript
 // lib/utils/validation.ts
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 export function isValidUUID(id: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  return uuidRegex.test(id)
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
 }
 
 export function isValidUrl(url: string): boolean {
   try {
-    new URL(url)
-    return true
+    new URL(url);
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
 // Domain-specific validation in domain modules
 // lib/workspace/validation.ts
-import { isValidEmail } from '@/lib/utils/validation'
+import { isValidEmail } from '@/lib/utils/validation';
 
 export function validateWorkspaceInput(input: unknown) {
   if (typeof input !== 'object' || input === null) {
-    return { valid: false, errors: ['Input must be an object'] }
+    return { valid: false, errors: ['Input must be an object'] };
   }
 
-  const { name, description } = input as Record<string, unknown>
+  const { name, description } = input as Record<string, unknown>;
 
   if (typeof name !== 'string' || name.trim().length === 0) {
-    return { valid: false, errors: ['Name is required and must be non-empty'] }
+    return { valid: false, errors: ['Name is required and must be non-empty'] };
   }
 
   if (name.length > 100) {
-    return { valid: false, errors: ['Name must be 100 characters or less'] }
+    return { valid: false, errors: ['Name must be 100 characters or less'] };
   }
 
-  return { valid: true, errors: [] }
+  return { valid: true, errors: [] };
 }
 ```
 
@@ -482,17 +496,24 @@ export function validateWorkspaceInput(input: unknown) {
 ```typescript
 // lib/utils/logger.ts
 export function logInfo(message: string, context?: Record<string, any>) {
-  console.log(`[INFO] ${new Date().toISOString()} - ${message}`, context)
+  console.log(`[INFO] ${new Date().toISOString()} - ${message}`, context);
 }
 
-export function logError(message: string, error: unknown, context?: Record<string, any>) {
-  const errorMessage = error instanceof Error ? error.message : String(error)
-  console.error(`[ERROR] ${new Date().toISOString()} - ${message}: ${errorMessage}`, context)
+export function logError(
+  message: string,
+  error: unknown,
+  context?: Record<string, any>
+) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  console.error(
+    `[ERROR] ${new Date().toISOString()} - ${message}: ${errorMessage}`,
+    context
+  );
 }
 
 export function logDebug(message: string, context?: Record<string, any>) {
   if (process.env.NODE_ENV === 'development') {
-    console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, context)
+    console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, context);
   }
 }
 ```
@@ -503,12 +524,12 @@ export function logDebug(message: string, context?: Record<string, any>) {
 
 ```typescript
 // lib/types/index.ts
-export type * from './domain'
-export type * from './api'
-export type * from './database'
+export type * from './domain';
+export type * from './api';
+export type * from './database';
 
 // Usage in routes
-import type { AssessmentInput, AssessmentOutput } from '@/lib/types'
+import type { AssessmentInput, AssessmentOutput } from '@/lib/types';
 ```
 
 ### Domain Types
@@ -516,30 +537,30 @@ import type { AssessmentInput, AssessmentOutput } from '@/lib/types'
 ```typescript
 // lib/types/domain.ts
 export interface Assessment {
-  id: string
-  workspace_id: string
-  ai_system_id: string
-  status: 'draft' | 'in_progress' | 'completed' | 'archived'
-  risk_score: number
-  findings: AssessmentFinding[]
-  created_at: string
-  updated_at: string
+  id: string;
+  workspace_id: string;
+  ai_system_id: string;
+  status: 'draft' | 'in_progress' | 'completed' | 'archived';
+  risk_score: number;
+  findings: AssessmentFinding[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AssessmentFinding {
-  id: string
-  category: 'regulatory' | 'technical' | 'organizational'
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  description: string
-  remediation: string
+  id: string;
+  category: 'regulatory' | 'technical' | 'organizational';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  remediation: string;
 }
 
 export interface AssessmentInput {
-  ai_system_id: string
-  description?: string
+  ai_system_id: string;
+  description?: string;
 }
 
-export type AssessmentOutput = Assessment
+export type AssessmentOutput = Assessment;
 ```
 
 ## Constants & Configuration
@@ -549,8 +570,8 @@ export type AssessmentOutput = Assessment
 export const PAGINATION = {
   DEFAULT_LIMIT: 10,
   MAX_LIMIT: 100,
-  DEFAULT_OFFSET: 0
-}
+  DEFAULT_OFFSET: 0,
+};
 
 export const ASSESSMENT = {
   MIN_SCORE: 0,
@@ -558,16 +579,16 @@ export const ASSESSMENT = {
   RISK_THRESHOLDS: {
     LOW: 25,
     MEDIUM: 50,
-    HIGH: 75
+    HIGH: 75,
   },
-  STATUS: ['draft', 'in_progress', 'completed', 'archived'] as const
-}
+  STATUS: ['draft', 'in_progress', 'completed', 'archived'] as const,
+};
 
 export const AUTH = {
   PASSWORD_MIN_LENGTH: 12,
   SESSION_TIMEOUT_MINUTES: 60,
-  MAX_LOGIN_ATTEMPTS: 5
-}
+  MAX_LOGIN_ATTEMPTS: 5,
+};
 ```
 
 ### Usage Pattern
@@ -576,9 +597,12 @@ Import from utils only when needed:
 
 ```typescript
 // In routes
-import { PAGINATION } from '@/lib/utils/constants'
+import { PAGINATION } from '@/lib/utils/constants';
 
-const limit = Math.min(parseInt(searchParams.get('limit') ?? '10'), PAGINATION.MAX_LIMIT)
+const limit = Math.min(
+  parseInt(searchParams.get('limit') ?? '10'),
+  PAGINATION.MAX_LIMIT
+);
 ```
 
 ## Module Dependencies
@@ -594,6 +618,7 @@ Routes → Services → Queries → Supabase
 ```
 
 Never have:
+
 - Queries depending on Services
 - Utils depending on domain modules
 - Circular imports between domains

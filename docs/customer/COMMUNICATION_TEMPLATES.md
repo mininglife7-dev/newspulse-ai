@@ -362,18 +362,18 @@ P.S. — Full incident report: [LINK]
 
 **When to send each email:**
 
-| Email | Trigger | Timing |
-|---|---|---|
-| Welcome | Signup confirmed | Immediately |
-| Feature Education | First login completed | Day 3 |
-| Upgrade Incentive | High activity + free tier | Day 14 |
-| Support Response | Customer inquiry | Within 2 hours |
-| Bug Report | Customer reports issue | Within 1 hour |
-| Feature Launch | New feature released | On release |
-| Churn Recovery | 14+ days inactive | Day 15 of inactivity |
-| Renewal Reminder | 7 days before renewal | Automatic |
-| Feedback Request | Monthly check-in | Monthly |
-| Outage Notification | Incident occurs | Real-time + updates |
+| Email               | Trigger                   | Timing               |
+| ------------------- | ------------------------- | -------------------- |
+| Welcome             | Signup confirmed          | Immediately          |
+| Feature Education   | First login completed     | Day 3                |
+| Upgrade Incentive   | High activity + free tier | Day 14               |
+| Support Response    | Customer inquiry          | Within 2 hours       |
+| Bug Report          | Customer reports issue    | Within 1 hour        |
+| Feature Launch      | New feature released      | On release           |
+| Churn Recovery      | 14+ days inactive         | Day 15 of inactivity |
+| Renewal Reminder    | 7 days before renewal     | Automatic            |
+| Feedback Request    | Monthly check-in          | Monthly              |
+| Outage Notification | Incident occurs           | Real-time + updates  |
 
 **Customization Tips:**
 

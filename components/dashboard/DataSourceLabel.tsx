@@ -8,10 +8,18 @@ interface Props {
   lastFetch?: string;
 }
 
-export default function DataSourceLabel({ source, lastUpdated, lastFetch }: Props) {
+export default function DataSourceLabel({
+  source,
+  lastUpdated,
+  lastFetch,
+}: Props) {
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   };
 
   const formatDate = (isoString: string) => {
@@ -28,11 +36,13 @@ export default function DataSourceLabel({ source, lastUpdated, lastFetch }: Prop
             <strong className="text-white/70">Data Source:</strong> {source}
           </div>
           <div>
-            <strong className="text-white/70">Last Updated:</strong> {formatDate(lastUpdated)} at {formatTime(lastUpdated)}
+            <strong className="text-white/70">Last Updated:</strong>{' '}
+            {formatDate(lastUpdated)} at {formatTime(lastUpdated)}
           </div>
           {lastFetch && (
             <div>
-              <strong className="text-white/70">Last Synced:</strong> {formatTime(lastFetch)}
+              <strong className="text-white/70">Last Synced:</strong>{' '}
+              {formatTime(lastFetch)}
             </div>
           )}
         </div>

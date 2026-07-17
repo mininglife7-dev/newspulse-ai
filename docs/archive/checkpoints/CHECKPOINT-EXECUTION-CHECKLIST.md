@@ -1,4 +1,5 @@
 # Checkpoint Execution Checklist (2026-07-17)
+
 **Date:** 2026-07-17  
 **Time Window:** 08:00-12:30 UTC  
 **Owner:** Governor (autonomous execution)  
@@ -41,6 +42,7 @@
   - [ ] Result: Should show 0 critical errors
 
 **Go/No-Go Decision:**
+
 - All items ✅ GREEN: **GO → Proceed to Phase 2**
 - Any item 🔴 RED: **NO-GO → Fix issue and re-run Phase 1**
 
@@ -54,8 +56,9 @@
 ### Adoption Metrics
 
 - [ ] 📊 **Run Adoption Query**
+
   ```sql
-  SELECT 
+  SELECT
     COUNT(DISTINCT workspace_id) as teams_signed_up,
     COUNT(*) as total_obligations_tracked,
     COUNT(DISTINCT user_id) as unique_users,
@@ -67,8 +70,9 @@
   - [ ] Record results: Teams: ___ | Obligations: ___ | Users: ___ | Latest: ___
 
 - [ ] 📊 **Run Engagement Query**
+
   ```sql
-  SELECT 
+  SELECT
     status,
     COUNT(*) as count,
     ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) as percentage
@@ -82,7 +86,7 @@
 
 - [ ] 📊 **Run Priority Distribution Query**
   ```sql
-  SELECT 
+  SELECT
     priority,
     COUNT(*) as count,
     COUNT(DISTINCT workspace_id) as workspace_count
@@ -98,7 +102,7 @@
 
 - [ ] 📊 **Run Assessment Query**
   ```sql
-  SELECT 
+  SELECT
     COUNT(*) as total_assessments,
     COUNT(DISTINCT workspace_id) as workspaces_with_assessment,
     COUNT(CASE WHEN risk_level = 'high' THEN 1 END) as high_risk,
@@ -113,8 +117,9 @@
 ### Technical Health
 
 - [ ] 📊 **Check Database Performance**
+
   ```sql
-  SELECT 
+  SELECT
     COUNT(*) as total_queries,
     ROUND(AVG(mean_time), 1) as avg_time_ms,
     MAX(mean_time) as max_time_ms
@@ -133,15 +138,17 @@
 ### Data Integrity Checks
 
 - [ ] ✅ **Verify No Orphaned Records**
+
   ```sql
-  SELECT COUNT(*) FROM obligations 
+  SELECT COUNT(*) FROM obligations
   WHERE workspace_id NOT IN (SELECT id FROM workspaces);
   ```
   - [ ] Result should be: 0
 
 - [ ] ✅ **Verify No Duplicate Obligations**
+
   ```sql
-  SELECT title, COUNT(*) FROM obligations 
+  SELECT title, COUNT(*) FROM obligations
   GROUP BY title HAVING COUNT(*) > 1 LIMIT 5;
   ```
   - [ ] Result should be: Empty (0 rows)
@@ -210,6 +217,7 @@
 ### Phase 3 Decision Framework
 
 **IF Strong Adoption (15+ teams, 70%+ engagement):**
+
 - [ ] ✅ Phase 3 is justified
 - [ ] [ ] Select Feature: **Evidence Linking** (1 day effort)
   - Why: Teams need to track proof documents
@@ -225,17 +233,20 @@
   - [ ] Document: Full schema changes, API contracts, UI mockups
 
 **IF Moderate Adoption (5-14 teams, 50%+ engagement):**
+
 - [ ] ⚠️ Phase 3 needs validation
 - [ ] [ ] Select feature, BUT add validation checkpoint after 3 days
 - [ ] [ ] Prepare contingency: If adoption still weak, pivot to messaging/distribution
 
 **IF Weak Adoption (3-4 teams, <50% engagement):**
+
 - [ ] 🔴 Phase 3 should wait
 - [ ] [ ] Recommendation: Investigate low adoption causes
 - [ ] [ ] Recommendation: Improve onboarding, distribution, messaging
 - [ ] [ ] Timeline: 1 week improvements → 1 week re-measurement → new checkpoint
 
 **IF Baseline (0 teams):**
+
 - [ ] ⚫ No adoption yet
 - [ ] [ ] Recommendation: System works (code is correct); adoption strategy needs work
 - [ ] [ ] Timeline: Deploy marketing/distribution → re-measure in 2 weeks
@@ -245,6 +256,7 @@
 - [ ] 📋 **Create Proposal Document** (if strong/moderate adoption)
 
 **PHASE 3 PROPOSAL TEMPLATE:**
+
 ```
 ## Audit Summary
 - Measurement Window: 2026-07-10 to 2026-07-17
@@ -286,6 +298,7 @@
 - [ ] 📧 **Prepare Summary Message**
 
 **MESSAGE FORMAT:**
+
 ```
 Subject: Checkpoint Audit Complete — Phase 3 Ready for Decision
 
@@ -396,6 +409,7 @@ Respond with approval or requested changes
 ## Success Criteria (Checkpoint Complete)
 
 **Audit is successful if:**
+
 - ✅ All SQL queries ran without errors
 - ✅ Data shows clear adoption patterns
 - ✅ No data corruption detected
@@ -403,6 +417,7 @@ Respond with approval or requested changes
 - ✅ Implementation begins (if approved) or decision is documented (if not)
 
 **Measurement window is validated if:**
+
 - ✅ No critical errors occurred during 2026-07-10 to 2026-07-17
 - ✅ Data collection worked reliably
 - ✅ Audit metrics are clean and trustworthy
@@ -412,18 +427,21 @@ Respond with approval or requested changes
 ## Troubleshooting During Execution
 
 **If Something Goes Wrong:**
+
 1. Refer to: `/docs/governance/CHECKPOINT-CONTINGENCY-PROCEDURES.md`
 2. Find your scenario (Vercel down, Supabase slow, etc.)
 3. Follow the response procedure for that scenario
 4. Escalate to Lalit if autonomou fix doesn't work
 
 **If Audit Queries Fail:**
+
 - Check Supabase connection
 - Verify schema is deployed (SELECT COUNT(*) FROM obligations;)
 - Check if data exists (may be 0 if no teams signed up yet)
 - If error persists: Escalate to Lalit with error message
 
 **If Phase 3 Selection Is Unclear:**
+
 - Re-read the adoption metrics
 - Match to the 4 scenarios in "Phase 3 Decision Framework"
 - If still unclear: Recommend the safest option (most likely to succeed)
@@ -434,6 +452,7 @@ Respond with approval or requested changes
 ## Time Tracking
 
 **Expected Timeline (Best Case):**
+
 - 08:00-08:15: Pre-audit verification (15 min) ✅
 - 08:15-10:30: Data collection (2 hrs 15 min) ✅
 - 10:30-11:30: Analysis (60 min) ✅

@@ -11,10 +11,17 @@ export default function ConsistencyCheck({ inconsistencies }: Props) {
   return (
     <div className="space-y-6">
       {/* Overall Status */}
-      <div className="rounded-lg border-2 p-6" style={{
-        borderColor: inconsistencies.found ? 'rgb(239, 68, 68, 0.3)' : 'rgb(34, 197, 94, 0.3)',
-        backgroundColor: inconsistencies.found ? 'rgb(127, 29, 29, 0.2)' : 'rgb(6, 78, 59, 0.2)',
-      }}>
+      <div
+        className="rounded-lg border-2 p-6"
+        style={{
+          borderColor: inconsistencies.found
+            ? 'rgb(239, 68, 68, 0.3)'
+            : 'rgb(34, 197, 94, 0.3)',
+          backgroundColor: inconsistencies.found
+            ? 'rgb(127, 29, 29, 0.2)'
+            : 'rgb(6, 78, 59, 0.2)',
+        }}
+      >
         <div className="flex items-start gap-3">
           {inconsistencies.found ? (
             <AlertTriangle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
@@ -23,7 +30,9 @@ export default function ConsistencyCheck({ inconsistencies }: Props) {
           )}
           <div>
             <h2 className="text-xl font-bold">
-              {inconsistencies.found ? 'Data Integrity Issues Detected' : 'Data Integrity Verified'}
+              {inconsistencies.found
+                ? 'Data Integrity Issues Detected'
+                : 'Data Integrity Verified'}
             </h2>
             <p className="mt-2 text-white/70">
               {inconsistencies.found
@@ -40,7 +49,10 @@ export default function ConsistencyCheck({ inconsistencies }: Props) {
           <h3 className="font-semibold">Issues:</h3>
           <div className="space-y-2">
             {inconsistencies.issues.map((issue, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-950/20 p-3">
+              <div
+                key={i}
+                className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-950/20 p-3"
+              >
                 <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-red-200">{issue}</p>
               </div>
@@ -55,11 +67,15 @@ export default function ConsistencyCheck({ inconsistencies }: Props) {
         <ul className="space-y-2 text-sm">
           <li className="flex items-start gap-3">
             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span>All blockers referenced in documentation exist in canonical state</span>
+            <span>
+              All blockers referenced in documentation exist in canonical state
+            </span>
           </li>
           <li className="flex items-start gap-3">
             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-            <span>All missions referenced in documentation exist in canonical state</span>
+            <span>
+              All missions referenced in documentation exist in canonical state
+            </span>
           </li>
           <li className="flex items-start gap-3">
             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
@@ -80,7 +96,9 @@ export default function ConsistencyCheck({ inconsistencies }: Props) {
       <div className="rounded-lg border border-border bg-card p-4 text-sm text-white/60">
         <div className="flex items-center justify-between">
           <span>Last consistency check:</span>
-          <span className="font-mono">{new Date(inconsistencies.lastCheckedAt).toLocaleString()}</span>
+          <span className="font-mono">
+            {new Date(inconsistencies.lastCheckedAt).toLocaleString()}
+          </span>
         </div>
       </div>
 
@@ -89,13 +107,27 @@ export default function ConsistencyCheck({ inconsistencies }: Props) {
         <h3 className="mb-4 font-semibold">Canonical State Architecture</h3>
         <div className="space-y-3 text-sm">
           <p className="text-white/80">
-            The dashboard state is built from a single authoritative source (<code className="text-accent-300 bg-black/30 px-1 rounded">lib/governance-state.ts</code>). All UI components read from <code className="text-accent-300 bg-black/30 px-1 rounded">/api/dashboard</code>.
+            The dashboard state is built from a single authoritative source (
+            <code className="text-accent-300 bg-black/30 px-1 rounded">
+              lib/governance-state.ts
+            </code>
+            ). All UI components read from{' '}
+            <code className="text-accent-300 bg-black/30 px-1 rounded">
+              /api/dashboard
+            </code>
+            .
           </p>
           <p className="text-white/80">
-            No hardcoded values exist in the UI layer. All metrics, statuses, and calculations are deterministic functions of the canonical backend state.
+            No hardcoded values exist in the UI layer. All metrics, statuses,
+            and calculations are deterministic functions of the canonical
+            backend state.
           </p>
           <p className="text-white/80">
-            If a metric changes, it is updated in exactly one place: <code className="text-accent-300 bg-black/30 px-1 rounded">lib/governance-state.ts</code>. The change propagates to all dashboard screens automatically.
+            If a metric changes, it is updated in exactly one place:{' '}
+            <code className="text-accent-300 bg-black/30 px-1 rounded">
+              lib/governance-state.ts
+            </code>
+            . The change propagates to all dashboard screens automatically.
           </p>
         </div>
       </div>

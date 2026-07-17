@@ -44,6 +44,7 @@ Done. Continue to "Verification" section below.
 Before rolling back, confirm this is necessary:
 
 **Ask**:
+
 - Is production broken or severely degraded?
 - Are customers unable to use core features?
 - Is there data loss or security exposure?
@@ -54,6 +55,7 @@ Before rolling back, confirm this is necessary:
 ### Step 2: Identify Previous Deployment (1 min)
 
 **In Vercel Dashboard**:
+
 1. Go to: https://vercel.com/lalit-kumar-d-s-projects/newspulse-ai
 2. Click "Deployments" tab
 3. Look at deployment list (most recent first)
@@ -61,6 +63,7 @@ Before rolling back, confirm this is necessary:
 5. Note the deployment ID (e.g., `dpl_3tMYHQP1zMZDmkK1q7qwv63UhR1X`)
 
 **Verify previous deployment**:
+
 - [ ] Status: ✅ (green check, successful)
 - [ ] No error messages in logs
 - [ ] Timestamp: Shortly before current broken deployment
@@ -70,6 +73,7 @@ Before rolling back, confirm this is necessary:
 Notify the team immediately:
 
 **Slack** (`#incidents` or appropriate channel):
+
 ```
 @channel 🔄 ROLLING BACK to [deployment date/time]
 Reason: [Brief reason — e.g., "Auth endpoints returning 500 errors"]
@@ -91,6 +95,7 @@ IC: [Your name]
    - Restart infrastructure with old code
 
 **Wait for completion**:
+
 - Vercel shows deployment status
 - Typically completes within 2-3 minutes
 - Status changes to ✅ when done
@@ -98,21 +103,26 @@ IC: [Your name]
 ### Step 5: Verify Rollback Succeeded (2 min)
 
 **Health Check** (immediate):
+
 ```bash
 curl -s https://newspulse-ai.vercel.app/api/health | jq .
 ```
+
 - Should return: `{"status":"healthy",...}`
 - Response time: <100ms
 - If error: See Error Handling below
 
 **Detailed Health** (verify components):
+
 ```bash
 curl -s https://newspulse-ai.vercel.app/api/health/detailed | jq .
 ```
+
 - All components should show `status: "ok"`
 - Check: database, auth, api
 
 **Manual Smoke Tests** (verify key features):
+
 1. Visit: https://newspulse-ai.vercel.app
 2. Log in with test account
 3. Navigate to main features:
@@ -123,6 +133,7 @@ curl -s https://newspulse-ai.vercel.app/api/health/detailed | jq .
 4. Check browser console: No major errors (some warnings ok)
 
 **Verify error rate**:
+
 - Supabase dashboard → Logs
 - Filter: Last 5 minutes
 - Should show near-zero errors
@@ -131,6 +142,7 @@ curl -s https://newspulse-ai.vercel.app/api/health/detailed | jq .
 ### Step 6: Announce Resolution (1 min)
 
 **Slack** (same channel):
+
 ```
 ✅ ROLLBACK COMPLETE
 Service restored to [previous deployment date]
@@ -163,6 +175,7 @@ Before considering rollback complete:
 **Symptom**: Vercel shows deployment status but is stuck or showing error
 
 **Action**:
+
 1. Wait 5 minutes (sometimes Vercel takes longer)
 2. Refresh Vercel page (F5)
 3. Check health endpoint again
@@ -173,6 +186,7 @@ Before considering rollback complete:
 **Problem**: Rollback completed but service still broken
 
 **Action**:
+
 1. Previous deployment may also be broken
 2. Roll back to the one before (third in list)
 3. Verify that one works
@@ -186,6 +200,7 @@ Before considering rollback complete:
 **Scenario**: If database migration was deployed with current code, rolling back code but not database causes mismatch
 
 **Decision**:
+
 - **Option A**: Keep current code, fix the bug and redeploy
 - **Option B**: Revert database migration to match rolled-back code (risky — may lose data)
 - **Action**: Escalate to tech lead or DBA immediately
@@ -193,6 +208,7 @@ Before considering rollback complete:
 ### If You Cannot Access Vercel Dashboard
 
 **Action**:
+
 1. Have someone else with access execute rollback
 2. Or contact Vercel support for manual rollback
 3. Provide: Deployment ID you want to rollback to
@@ -222,6 +238,7 @@ After rollback succeeds and service is restored:
 ### Example Follow-Up
 
 If authentication broke in recent deployment:
+
 1. Review the auth code change
 2. What test is missing? → Add test case
 3. What check is missing? → Add pre-deployment check
@@ -232,6 +249,7 @@ If authentication broke in recent deployment:
 ## Comparison: Rollback vs. Fix Forward
 
 **Use Rollback if**:
+
 - Incident is critical (customers blocked)
 - Root cause is unclear
 - Fix would take >30 minutes
@@ -239,6 +257,7 @@ If authentication broke in recent deployment:
 - Easier to roll back than fix
 
 **Use Fix Forward if**:
+
 - Incident is not customer-blocking
 - Root cause is obvious
 - Fix is quick (<10 minutes) and low-risk
@@ -254,6 +273,7 @@ If authentication broke in recent deployment:
 **Important**: Rollback only reverts application code, NOT database schema changes.
 
 **Scenario A**: Deployment includes database migration
+
 - Code requires new schema
 - Rolling back code leaves new schema in place
 - ❌ Old code + new schema = mismatch
@@ -263,6 +283,7 @@ If authentication broke in recent deployment:
   3. Contact DBA/Founder for guidance
 
 **Scenario B**: Deployment is code-only (no migration)
+
 - Code is optional-compatible with previous schema
 - ✅ Can safely rollback
 - **Action**: Safe to rollback

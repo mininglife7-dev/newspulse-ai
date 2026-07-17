@@ -28,7 +28,10 @@ describe('DNA-GOV-014: Incident Commander', () => {
         },
       ];
 
-      const { shouldRollback, reason } = evaluateAutoRollback(trigger, candidates);
+      const { shouldRollback, reason } = evaluateAutoRollback(
+        trigger,
+        candidates
+      );
 
       expect(shouldRollback).toBe(false);
       expect(reason).toContain('warning');
@@ -62,7 +65,10 @@ describe('DNA-GOV-014: Incident Commander', () => {
         },
       ];
 
-      const { shouldRollback, reason } = evaluateAutoRollback(trigger, candidates);
+      const { shouldRollback, reason } = evaluateAutoRollback(
+        trigger,
+        candidates
+      );
 
       expect(shouldRollback).toBe(false);
       expect(reason).toContain('No low-impact');
@@ -75,7 +81,7 @@ describe('DNA-GOV-014: Incident Commander', () => {
         severity: 'critical',
         metric: 'Error rate (%)',
         threshold: 0.05, // 5%
-        current: 0.20, // 20%
+        current: 0.2, // 20%
         message: 'Error rate spiked to 20%',
       };
 
@@ -89,7 +95,10 @@ describe('DNA-GOV-014: Incident Commander', () => {
         },
       ];
 
-      const { shouldRollback, target, reason } = evaluateAutoRollback(trigger, candidates);
+      const { shouldRollback, target, reason } = evaluateAutoRollback(
+        trigger,
+        candidates
+      );
 
       expect(shouldRollback).toBe(true);
       expect(target).toBeDefined();
@@ -118,7 +127,10 @@ describe('DNA-GOV-014: Incident Commander', () => {
         },
       ];
 
-      const { shouldRollback, reason } = evaluateAutoRollback(trigger, candidates);
+      const { shouldRollback, reason } = evaluateAutoRollback(
+        trigger,
+        candidates
+      );
 
       expect(shouldRollback).toBe(false);
       expect(reason).toContain('No low-impact');
@@ -130,7 +142,7 @@ describe('DNA-GOV-014: Incident Commander', () => {
         severity: 'critical',
         metric: 'Uptime (%)',
         threshold: 0.95,
-        current: 0.90,
+        current: 0.9,
         message: 'Availability dropped to 90%',
       };
 
@@ -151,7 +163,10 @@ describe('DNA-GOV-014: Incident Commander', () => {
         },
       ];
 
-      const { shouldRollback, target } = evaluateAutoRollback(trigger, candidates);
+      const { shouldRollback, target } = evaluateAutoRollback(
+        trigger,
+        candidates
+      );
 
       expect(shouldRollback).toBe(true);
       expect(target?.commit).toBe('low1');
@@ -166,7 +181,7 @@ describe('DNA-GOV-014: Incident Commander', () => {
         severity: 'critical',
         metric: 'Error rate (%)',
         threshold: 0.05,
-        current: 0.10, // Below 0.15 critical threshold
+        current: 0.1, // Below 0.15 critical threshold
         message: 'Error rate at 10%',
       };
 
@@ -180,7 +195,10 @@ describe('DNA-GOV-014: Incident Commander', () => {
         },
       ];
 
-      const { shouldRollback, reason } = evaluateAutoRollback(trigger, candidates);
+      const { shouldRollback, reason } = evaluateAutoRollback(
+        trigger,
+        candidates
+      );
 
       expect(shouldRollback).toBe(false);
       expect(reason).toContain('not critical enough');
@@ -255,7 +273,7 @@ describe('DNA-GOV-014: Incident Commander', () => {
           severity: 'warning' as const,
           metric: 'Error rate',
           threshold: 0.05,
-          current: 0.10,
+          current: 0.1,
           message: 'Error rate elevated',
         },
         decision: 'manual_review' as const,
@@ -326,7 +344,10 @@ describe('DNA-GOV-014: Incident Commander', () => {
         },
       ];
 
-      const { shouldRollback, target, reason } = evaluateAutoRollback(trigger, candidates);
+      const { shouldRollback, target, reason } = evaluateAutoRollback(
+        trigger,
+        candidates
+      );
 
       expect({
         shouldRollback,

@@ -53,7 +53,9 @@ const AUTOROLLBACK_THRESHOLDS = {
  * Fetch git history to identify safe rollback targets
  * Returns last N commits that are at least 30 minutes old (to avoid rolling back too recent changes)
  */
-async function findRollbackCandidates(limit: number = 5): Promise<RollbackCandidate[]> {
+async function findRollbackCandidates(
+  limit: number = 5
+): Promise<RollbackCandidate[]> {
   try {
     const { stdout } = await execAsync(
       `git log --oneline --decorate -${limit} --format='%H|%s|%ai|%ar'`
@@ -84,7 +86,10 @@ async function findRollbackCandidates(limit: number = 5): Promise<RollbackCandid
 
     return candidates;
   } catch (error) {
-    console.error('[incident-commander] Failed to find rollback candidates:', error);
+    console.error(
+      '[incident-commander] Failed to find rollback candidates:',
+      error
+    );
     return [];
   }
 }
@@ -95,7 +100,10 @@ async function findRollbackCandidates(limit: number = 5): Promise<RollbackCandid
  * - Older commits are higher impact (more affected code)
  * - Schema/migration changes are high impact
  */
-function calculateImpact(minutesAgo: number, message: string): 'low' | 'medium' | 'high' {
+function calculateImpact(
+  minutesAgo: number,
+  message: string
+): 'low' | 'medium' | 'high' {
   const schemaKeywords = ['schema', 'migration', 'database', 'breaking'];
   const isSchemaChange = schemaKeywords.some((kw) =>
     message.toLowerCase().includes(kw)
@@ -114,7 +122,11 @@ function calculateImpact(minutesAgo: number, message: string): 'low' | 'medium' 
 export function evaluateAutoRollback(
   trigger: IncidentTrigger,
   candidates: RollbackCandidate[]
-): { shouldRollback: boolean; target: RollbackCandidate | null; reason: string } {
+): {
+  shouldRollback: boolean;
+  target: RollbackCandidate | null;
+  reason: string;
+} {
   // Only auto-rollback on critical severity
   if (trigger.severity !== 'critical') {
     return {
@@ -125,7 +137,9 @@ export function evaluateAutoRollback(
   }
 
   // Find best low-impact candidate
-  const lowImpactCandidate = candidates.find((c) => c.estimatedImpact === 'low');
+  const lowImpactCandidate = candidates.find(
+    (c) => c.estimatedImpact === 'low'
+  );
   if (!lowImpactCandidate) {
     return {
       shouldRollback: false,
@@ -183,9 +197,7 @@ async function executeRollback(target: RollbackCandidate): Promise<{
     }
 
     // Create rollback commit
-    await execAsync(
-      `git revert --no-edit ${target.commit} -m 1`,
-    );
+    await execAsync(`git revert --no-edit ${target.commit} -m 1`);
 
     // Push to production (triggers Vercel deployment)
     await execAsync('git push origin main');
@@ -222,18 +234,27 @@ export async function commandIncident(
   const id = `incident-${Date.now()}`;
   const timestamp = new Date().toISOString();
 
-  console.log(`[incident-commander] 🚨 Incident detected: ${trigger.type} (${trigger.severity})`);
+  console.log(
+    `[incident-commander] 🚨 Incident detected: ${trigger.type} (${trigger.severity})`
+  );
   console.log(`  Metric: ${trigger.metric}`);
-  console.log(`  Current: ${trigger.current} | Threshold: ${trigger.threshold}`);
+  console.log(
+    `  Current: ${trigger.current} | Threshold: ${trigger.threshold}`
+  );
   console.log(`  Message: ${trigger.message}`);
 
   try {
     // Find rollback candidates
     const candidates = await findRollbackCandidates(5);
-    console.log(`[incident-commander] Found ${candidates.length} rollback candidates`);
+    console.log(
+      `[incident-commander] Found ${candidates.length} rollback candidates`
+    );
 
     // Evaluate if auto-rollback is safe
-    const { shouldRollback, target, reason } = evaluateAutoRollback(trigger, candidates);
+    const { shouldRollback, target, reason } = evaluateAutoRollback(
+      trigger,
+      candidates
+    );
 
     if (!shouldRollback) {
       console.log(`[incident-commander] ⚠️ No auto-rollback: ${reason}`);

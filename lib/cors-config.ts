@@ -66,7 +66,14 @@ export function isCorsAllowed(request: Request): boolean {
 /**
  * Allowed HTTP methods for CORS
  */
-export const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'];
+export const ALLOWED_METHODS = [
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'OPTIONS',
+  'PATCH',
+];
 
 /**
  * Allowed request headers

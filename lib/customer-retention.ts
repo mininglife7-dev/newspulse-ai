@@ -121,7 +121,11 @@ interface CustomerDataStore {
   riskScores: Map<string, RiskScore>;
   segments: Map<string, CustomerSegment>;
   triggers: Map<string, TriggerRecommendation[]>;
-  triggerHistory: Array<{ userId: string; type: TriggerType; triggeredAt: string }>;
+  triggerHistory: Array<{
+    userId: string;
+    type: TriggerType;
+    triggeredAt: string;
+  }>;
   retentionMetrics: RetentionMetrics[];
 }
 
@@ -139,7 +143,10 @@ const customerStore: CustomerDataStore = {
 /**
  * Update customer metrics
  */
-export function updateCustomerMetrics(userId: string, metrics: Partial<CustomerMetrics>): CustomerMetrics {
+export function updateCustomerMetrics(
+  userId: string,
+  metrics: Partial<CustomerMetrics>
+): CustomerMetrics {
   const existing = customerStore.metrics.get(userId) || {
     userId,
     lastActivityAt: new Date().toISOString(),
@@ -175,25 +182,48 @@ export function calculateHealthScore(userId: string): HealthScore {
       accountAgeInDays: 30,
       category: 'at-critical-risk',
       lastUpdated: new Date().toISOString(),
-      trends: { engagement: 'declining', usage: 'decreasing', activity: 'decreasing' },
+      trends: {
+        engagement: 'declining',
+        usage: 'decreasing',
+        activity: 'decreasing',
+      },
     };
   }
 
   // Engagement score: based on login frequency and session count
-  const engagementScore = Math.min(100, Math.max(0, metrics.loginFrequency * 20 + (metrics.totalSessions > 5 ? 20 : 0)));
+  const engagementScore = Math.min(
+    100,
+    Math.max(
+      0,
+      metrics.loginFrequency * 20 + (metrics.totalSessions > 5 ? 20 : 0)
+    )
+  );
 
   // Usage score: based on feature adoption and event volume
-  const usageScore = Math.min(100, Math.max(0, metrics.uniqueFeaturesUsed * 15 + (metrics.totalEvents > 20 ? 20 : 0)));
+  const usageScore = Math.min(
+    100,
+    Math.max(
+      0,
+      metrics.uniqueFeaturesUsed * 15 + (metrics.totalEvents > 20 ? 20 : 0)
+    )
+  );
 
   // Conversion score: based on conversion history and account maturity
-  const conversionScore = metrics.conversionsCount > 0 ? 70 : (metrics.accountAgeInDays > 60 ? 20 : 45);
+  const conversionScore =
+    metrics.conversionsCount > 0 ? 70 : metrics.accountAgeInDays > 60 ? 20 : 45;
 
   // Activity score: based on recency (0 days recent = 100, 100+ days = 0)
-  const activityScore = Math.min(100, Math.max(0, 100 - metrics.daysSinceLastActivity));
+  const activityScore = Math.min(
+    100,
+    Math.max(0, 100 - metrics.daysSinceLastActivity)
+  );
 
   // Overall health score (weighted average) - activity weighted more heavily
   const score = Math.round(
-    engagementScore * 0.15 + usageScore * 0.15 + conversionScore * 0.2 + activityScore * 0.5
+    engagementScore * 0.15 +
+      usageScore * 0.15 +
+      conversionScore * 0.2 +
+      activityScore * 0.5
   );
 
   // Determine trends
@@ -203,14 +233,18 @@ export function calculateHealthScore(userId: string): HealthScore {
   let activityTrend: 'increasing' | 'stable' | 'decreasing' = 'stable';
 
   if (previousHealth) {
-    if (engagementScore > previousHealth.engagementScore) engagementTrend = 'improving';
-    else if (engagementScore < previousHealth.engagementScore) engagementTrend = 'declining';
+    if (engagementScore > previousHealth.engagementScore)
+      engagementTrend = 'improving';
+    else if (engagementScore < previousHealth.engagementScore)
+      engagementTrend = 'declining';
 
     if (usageScore > previousHealth.usageScore) usageTrend = 'increasing';
     else if (usageScore < previousHealth.usageScore) usageTrend = 'decreasing';
 
-    if (activityScore > previousHealth.activityScore) activityTrend = 'increasing';
-    else if (activityScore < previousHealth.activityScore) activityTrend = 'decreasing';
+    if (activityScore > previousHealth.activityScore)
+      activityTrend = 'increasing';
+    else if (activityScore < previousHealth.activityScore)
+      activityTrend = 'decreasing';
   }
 
   const category: 'healthy' | 'at-risk' | 'at-critical-risk' =
@@ -356,7 +390,12 @@ export function segmentCustomer(userId: string): CustomerSegment {
   } else if (health.score >= 35 && risk.score >= 40 && risk.score < 70) {
     segment = 'at-risk';
     reason = 'Declining engagement or usage patterns';
-  } else if (health.usageScore >= 80 && health.score >= 75 && metrics && metrics.conversionsCount < 3) {
+  } else if (
+    health.usageScore >= 80 &&
+    health.score >= 75 &&
+    metrics &&
+    metrics.conversionsCount < 3
+  ) {
     segment = 'power-users';
     reason = 'High feature adoption and consistent usage';
   } else if (health.score >= 85 && risk.score < 20) {
@@ -393,7 +432,9 @@ export function generateTriggers(userId: string): TriggerRecommendation[] {
   const metrics = customerStore.metrics.get(userId);
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+  const expiresAt = new Date(
+    now.getTime() + 7 * 24 * 60 * 60 * 1000
+  ).toISOString(); // 7 days
 
   // New user welcome workflow
   if (segment.segment === 'new-users') {
@@ -409,26 +450,36 @@ export function generateTriggers(userId: string): TriggerRecommendation[] {
   }
 
   // Feature education for low adoption
-  if (risk.featureAdoptionRisk === 'high' && metrics && metrics.uniqueFeaturesUsed < 3) {
+  if (
+    risk.featureAdoptionRisk === 'high' &&
+    metrics &&
+    metrics.uniqueFeaturesUsed < 3
+  ) {
     triggers.push({
       userId,
       type: 'feature-education',
       priority: 'high',
       reason: `Low feature adoption: only ${metrics.uniqueFeaturesUsed} features used`,
-      suggestedAction: 'Send feature education email highlighting top 3 unused features',
+      suggestedAction:
+        'Send feature education email highlighting top 3 unused features',
       estimatedImpact: 'Increases feature adoption by 40%',
       expiresAt,
     });
   }
 
   // Re-engagement for inactive users
-  if (risk.inactivityRisk === 'high' && metrics && metrics.daysSinceLastActivity > 30) {
+  if (
+    risk.inactivityRisk === 'high' &&
+    metrics &&
+    metrics.daysSinceLastActivity > 30
+  ) {
     triggers.push({
       userId,
       type: 're-engagement',
       priority: 'high',
       reason: `No activity for ${metrics.daysSinceLastActivity} days`,
-      suggestedAction: 'Send re-engagement email with value props and incentives',
+      suggestedAction:
+        'Send re-engagement email with value props and incentives',
       estimatedImpact: 'Brings back 20-30% of inactive users',
       expiresAt,
     });
@@ -444,12 +495,18 @@ export function generateTriggers(userId: string): TriggerRecommendation[] {
       suggestedAction: 'Customer success team should reach out immediately',
       estimatedImpact: 'Prevents 30-40% of predicted churners',
       expiresAt,
-      cooldownUntil: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days
+      cooldownUntil: new Date(
+        now.getTime() + 3 * 24 * 60 * 60 * 1000
+      ).toISOString(), // 3 days
     });
   }
 
   // Upgrade opportunity
-  if (segment.segment === 'power-users' && metrics && metrics.conversionsCount > 0) {
+  if (
+    segment.segment === 'power-users' &&
+    metrics &&
+    metrics.conversionsCount > 0
+  ) {
     triggers.push({
       userId,
       type: 'upgrade-opportunity',
@@ -532,27 +589,52 @@ export function calculateRetentionMetrics(): RetentionMetrics {
 
   const metrics: RetentionMetrics = {
     timestamp: new Date().toISOString(),
-    totalCustomers: Math.max(healthScores.length, riskScores.length, segments.length),
-    healthyCustomers: healthScores.filter((h) => h.category === 'healthy').length,
-    atRiskCustomers: healthScores.filter((h) => h.category === 'at-risk').length,
-    criticalRiskCustomers: healthScores.filter((h) => h.category === 'at-critical-risk').length,
-    avgHealthScore: healthScores.length > 0 ? Math.round(healthScores.reduce((a, h) => a + h.score, 0) / healthScores.length) : 0,
-    avgRiskScore: riskScores.length > 0 ? Math.round(riskScores.reduce((a, r) => a + r.score, 0) / riskScores.length) : 0,
+    totalCustomers: Math.max(
+      healthScores.length,
+      riskScores.length,
+      segments.length
+    ),
+    healthyCustomers: healthScores.filter((h) => h.category === 'healthy')
+      .length,
+    atRiskCustomers: healthScores.filter((h) => h.category === 'at-risk')
+      .length,
+    criticalRiskCustomers: healthScores.filter(
+      (h) => h.category === 'at-critical-risk'
+    ).length,
+    avgHealthScore:
+      healthScores.length > 0
+        ? Math.round(
+            healthScores.reduce((a, h) => a + h.score, 0) / healthScores.length
+          )
+        : 0,
+    avgRiskScore:
+      riskScores.length > 0
+        ? Math.round(
+            riskScores.reduce((a, r) => a + r.score, 0) / riskScores.length
+          )
+        : 0,
     churnRisk: {
       low: riskScores.filter((r) => r.churnProbability < 0.25).length,
-      medium: riskScores.filter((r) => r.churnProbability >= 0.25 && r.churnProbability < 0.6).length,
-      high: riskScores.filter((r) => r.churnProbability >= 0.6 && r.churnProbability < 0.8).length,
+      medium: riskScores.filter(
+        (r) => r.churnProbability >= 0.25 && r.churnProbability < 0.6
+      ).length,
+      high: riskScores.filter(
+        (r) => r.churnProbability >= 0.6 && r.churnProbability < 0.8
+      ).length,
       critical: riskScores.filter((r) => r.churnProbability >= 0.8).length,
     },
     segmentCounts: {
       champions: segments.filter((s) => s.segment === 'champions').length,
-      'loyal-customers': segments.filter((s) => s.segment === 'loyal-customers').length,
+      'loyal-customers': segments.filter((s) => s.segment === 'loyal-customers')
+        .length,
       'at-risk': segments.filter((s) => s.segment === 'at-risk').length,
-      'churn-warning': segments.filter((s) => s.segment === 'churn-warning').length,
+      'churn-warning': segments.filter((s) => s.segment === 'churn-warning')
+        .length,
       dormant: segments.filter((s) => s.segment === 'dormant').length,
       'new-users': segments.filter((s) => s.segment === 'new-users').length,
       'power-users': segments.filter((s) => s.segment === 'power-users').length,
-      'casual-users': segments.filter((s) => s.segment === 'casual-users').length,
+      'casual-users': segments.filter((s) => s.segment === 'casual-users')
+        .length,
     },
   };
 
@@ -570,13 +652,19 @@ export function calculateRetentionMetrics(): RetentionMetrics {
  * Get customers by segment
  */
 export function getCustomersBySegment(segment: SegmentName): CustomerSegment[] {
-  return Array.from(customerStore.segments.values()).filter((s) => s.segment === segment);
+  return Array.from(customerStore.segments.values()).filter(
+    (s) => s.segment === segment
+  );
 }
 
 /**
  * Get high-risk customers needing attention
  */
-export function getHighRiskCustomers(limit = 50): Array<{ userId: string; risk: RiskScore; triggers: TriggerRecommendation[] }> {
+export function getHighRiskCustomers(limit = 50): Array<{
+  userId: string;
+  risk: RiskScore;
+  triggers: TriggerRecommendation[];
+}> {
   const riskScores = Array.from(customerStore.riskScores.values())
     .filter((r) => r.score >= 70)
     .sort((a, b) => b.score - a.score)

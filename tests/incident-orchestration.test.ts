@@ -20,7 +20,11 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
     it('should escalate critical data loss risk to founder', async () => {
       const incidents = await detector.detectIncidents('deploy-critical-data', {
         recentErrors: [
-          { message: 'Database connection timeout', category: 'database', count: 200 },
+          {
+            message: 'Database connection timeout',
+            category: 'database',
+            count: 200,
+          },
           { message: 'Transaction failed', category: 'database', count: 180 },
         ],
       });
@@ -55,9 +59,12 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
       }
 
       if (report.decision === 'ROLLBACK' || report.decision === 'ESCALATE') {
-        const incidents = await detector.detectIncidents('deploy-crit-rollback', {
-          verificationReport: report,
-        });
+        const incidents = await detector.detectIncidents(
+          'deploy-crit-rollback',
+          {
+            verificationReport: report,
+          }
+        );
 
         if (incidents.length > 0) {
           const decision = await orchestrator.orchestrateIncident({
@@ -120,7 +127,9 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
         ],
       });
 
-      const cascade = incidents.find((inc) => inc.category === 'cascading-failure');
+      const cascade = incidents.find(
+        (inc) => inc.category === 'cascading-failure'
+      );
       if (cascade) {
         const decision = await orchestrator.orchestrateIncident({
           incident: cascade,
@@ -243,7 +252,11 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
     it('should execute founder notification without operator action', async () => {
       const incidents = await detector.detectIncidents('deploy-exec-notify', {
         recentErrors: [
-          { message: 'Database connection timeout', category: 'database', count: 200 },
+          {
+            message: 'Database connection timeout',
+            category: 'database',
+            count: 200,
+          },
         ],
       });
 
@@ -256,10 +269,13 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
           previousAttempts: [],
         });
 
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident: dataIncident,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident: dataIncident,
+            previousAttempts: [],
+          }
+        );
 
         expect(result.finalState).toBe('escalated-to-founder');
       }
@@ -279,9 +295,12 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
       }
 
       if (report.canRollback) {
-        const incidents = await detector.detectIncidents('deploy-exec-rollback', {
-          verificationReport: report,
-        });
+        const incidents = await detector.detectIncidents(
+          'deploy-exec-rollback',
+          {
+            verificationReport: report,
+          }
+        );
 
         if (incidents.length > 0 && incidents[0].canAutoRemediate) {
           const decision = await orchestrator.orchestrateIncident({
@@ -300,9 +319,10 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
               }
             );
 
-            expect(['auto-remediation-initiated', 'remediation-in-progress']).toContain(
-              result.finalState
-            );
+            expect([
+              'auto-remediation-initiated',
+              'remediation-in-progress',
+            ]).toContain(result.finalState);
           }
         }
       }
@@ -316,20 +336,20 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
       const perfIncident = incidents.find(
         (inc) => inc.category === 'performance-degradation'
       );
-      if (
-        perfIncident &&
-        perfIncident.severity === 'high'
-      ) {
+      if (perfIncident && perfIncident.severity === 'high') {
         const decision = await orchestrator.orchestrateIncident({
           incident: perfIncident,
           previousAttempts: [],
         });
 
         if (decision.recommendedAction === 'throttle-traffic') {
-          const result = await orchestrator.executeOrchestrationDecision(decision, {
-            incident: perfIncident,
-            previousAttempts: [],
-          });
+          const result = await orchestrator.executeOrchestrationDecision(
+            decision,
+            {
+              incident: perfIncident,
+              previousAttempts: [],
+            }
+          );
 
           expect(result.success).toBe(true);
           expect(result.finalState).toBe('remediation-in-progress');
@@ -433,16 +453,20 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
             previousAttempts: [],
           });
 
-          const result = await orchestrator.executeOrchestrationDecision(decision, {
-            incident: incidents[0],
-            verificationReport: report,
-            previousAttempts: [],
-          });
+          const result = await orchestrator.executeOrchestrationDecision(
+            decision,
+            {
+              incident: incidents[0],
+              verificationReport: report,
+              previousAttempts: [],
+            }
+          );
 
           if (decision.recommendedAction === 'initiate-rollback') {
-            expect(['auto-remediation-initiated', 'remediation-in-progress']).toContain(
-              result.finalState
-            );
+            expect([
+              'auto-remediation-initiated',
+              'remediation-in-progress',
+            ]).toContain(result.finalState);
           }
         }
       }
@@ -451,7 +475,11 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
     it('should transition to escalated-to-founder for critical incidents', async () => {
       const incidents = await detector.detectIncidents('deploy-state-founder', {
         recentErrors: [
-          { message: 'Database connection timeout', category: 'database', count: 300 },
+          {
+            message: 'Database connection timeout',
+            category: 'database',
+            count: 300,
+          },
         ],
       });
 
@@ -462,19 +490,25 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
           previousAttempts: [],
         });
 
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident: critical,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident: critical,
+            previousAttempts: [],
+          }
+        );
 
         expect(result.finalState).toBe('escalated-to-founder');
       }
     });
 
     it('should transition to incident-resolved when monitoring only', async () => {
-      const incidents = await detector.detectIncidents('deploy-state-resolved', {
-        errorRate: 0.01,
-      });
+      const incidents = await detector.detectIncidents(
+        'deploy-state-resolved',
+        {
+          errorRate: 0.01,
+        }
+      );
 
       if (incidents.length === 0 || incidents[0].severity === 'low') {
         const testIncident: DetectedIncident = incidents[0] || {
@@ -496,10 +530,13 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
           previousAttempts: [],
         });
 
-        const result = await orchestrator.executeOrchestrationDecision(decision, {
-          incident: testIncident,
-          previousAttempts: [],
-        });
+        const result = await orchestrator.executeOrchestrationDecision(
+          decision,
+          {
+            incident: testIncident,
+            previousAttempts: [],
+          }
+        );
 
         expect(result.finalState).toBe('incident-resolved');
       }
@@ -517,9 +554,12 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
       }
 
       if (report.failedChecks > 0) {
-        const incidents = await detector.detectIncidents('deploy-evidence-orch', {
-          verificationReport: report,
-        });
+        const incidents = await detector.detectIncidents(
+          'deploy-evidence-orch',
+          {
+            verificationReport: report,
+          }
+        );
 
         if (incidents.length > 0) {
           const decision = await orchestrator.orchestrateIncident({
@@ -545,7 +585,9 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
         }
       );
 
-      const critical = criticalIncidents.find((inc) => inc.severity === 'critical');
+      const critical = criticalIncidents.find(
+        (inc) => inc.severity === 'critical'
+      );
       if (critical) {
         const decision = await orchestrator.orchestrateIncident({
           incident: critical,
@@ -560,11 +602,17 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
         expect(decision.estimatedRecoveryTime).toBeGreaterThan(300);
       }
 
-      const mediumIncidents = await detector.detectIncidents('deploy-recovery-medium', {
-        latency: 7000,
-      });
+      const mediumIncidents = await detector.detectIncidents(
+        'deploy-recovery-medium',
+        {
+          latency: 7000,
+        }
+      );
 
-      if (mediumIncidents.length > 0 && mediumIncidents[0].severity === 'medium') {
+      if (
+        mediumIncidents.length > 0 &&
+        mediumIncidents[0].severity === 'medium'
+      ) {
         const decision = await orchestrator.orchestrateIncident({
           incident: mediumIncidents[0],
           previousAttempts: [],
@@ -669,7 +717,10 @@ describe('Incident Orchestration (DNA-GOV-013)', () => {
 
   describe('Concurrent incident orchestration', () => {
     it('should handle multiple concurrent incidents', async () => {
-      const deployIds = Array.from({ length: 3 }, (_, i) => `deploy-concurrent-inc-${i}`);
+      const deployIds = Array.from(
+        { length: 3 },
+        (_, i) => `deploy-concurrent-inc-${i}`
+      );
 
       const results = await Promise.all(
         deployIds.map(async (id) => {

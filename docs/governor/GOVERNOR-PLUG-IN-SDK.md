@@ -1,4 +1,5 @@
 # GOVERNOR PLUG-IN SDK
+
 **Version:** 1.0  
 **Part of:** GOVERNOR EXECUTION FABRIC v1  
 **Date:** 2026-07-16
@@ -24,98 +25,98 @@ from datetime import datetime
 
 class Module(ABC):
     """Standard interface all Governor modules must implement"""
-    
+
     # ========== MODULE METADATA ==========
-    
+
     name: str
     """Unique module identifier (lowercase, no spaces)"""
-    
+
     version: str
     """Semantic version (e.g., "1.0.0")"""
-    
+
     description: str
     """One-line description of what this module does"""
-    
+
     author: str
     """Developer name"""
-    
+
     dependencies: List[str]
     """External tools/packages required"""
-    
+
     permissions: List[str]
     """Permissions this module needs (e.g., "repo:write", "db:modify")"""
-    
+
     capabilities: List[Capability]
     """List of actions this module can perform"""
-    
+
     # ========== LIFECYCLE METHODS ==========
-    
+
     async def init(self) -> bool:
         """
         Initialize module, verify dependencies, check credentials.
-        
+
         Return:
             True if ready to operate, False if initialization failed
         """
         pass
-    
+
     async def health_check(self) -> HealthStatus:
         """
         Verify module is healthy and ready to execute.
-        
+
         Return:
             HealthStatus with status ("healthy", "degraded", "down")
             and details (dict with diagnostic info)
         """
         pass
-    
+
     async def shutdown(self) -> None:
         """Clean up resources, close connections, etc."""
         pass
-    
+
     # ========== EXECUTION ==========
-    
+
     async def execute(self, task: Task) -> Result:
         """
         Execute a task using this module.
-        
+
         Args:
             task: Task object with action, parameters, context
-        
+
         Return:
             Result object with status, output, errors, evidence
         """
         pass
-    
+
     # ========== CAPABILITIES ==========
-    
+
     async def list_capabilities(self) -> List[Capability]:
         """List all capabilities this module provides"""
         return self.capabilities
-    
+
     async def get_capability(self, name: str) -> Optional[Capability]:
         """Get details of a specific capability"""
         for cap in self.capabilities:
             if cap.name == name:
                 return cap
         return None
-    
+
     # ========== OBSERVABILITY ==========
-    
+
     async def get_metrics(self) -> Dict:
         """
         Return performance metrics.
-        
+
         Return:
             Dict with keys: operations_completed, operations_failed,
                             avg_duration_ms, error_rate
         """
         pass
-    
+
     async def get_logs(self, limit: int = 100) -> List[Dict]:
         """Get recent operation logs"""
         pass
-    
+
     async def get_status(self) -> Dict:
         """Get current module status"""
         return {
@@ -125,17 +126,17 @@ class Module(ABC):
             "health": await self.health_check(),
             "metrics": await self.get_metrics()
         }
-    
+
     # ========== CONFIGURATION ==========
-    
+
     async def set_config(self, key: str, value: any) -> None:
         """Update module configuration"""
         pass
-    
+
     async def get_config(self) -> Dict:
         """Get current configuration"""
         pass
-    
+
     async def validate_config(self) -> (bool, str):
         """Validate configuration is correct"""
         pass
@@ -238,43 +239,43 @@ class MyModule(Module):
     version = "1.0.0"
     description = "Integrate with MyService API"
     author = "Your Name"
-    
+
     dependencies = ["requests>=2.28.0"]
     permissions = ["external_api:read", "logging:write"]
-    
+
     def __init__(self):
         self.initialized = False
         self.api_client = None
         self.config = {}
-    
+
     async def init(self) -> bool:
         """Initialize module"""
         try:
             # Load configuration
             self.config = await self.load_config()
-            
+
             # Verify API token available
             api_token = await self.get_secret("api_token")
             if not api_token:
                 logger.error("API token not configured")
                 return False
-            
+
             # Initialize API client
             self.api_client = MyServiceClient(api_token)
-            
+
             # Test connectivity
             if not await self.api_client.test_connection():
                 logger.error("Cannot connect to MyService")
                 return False
-            
+
             self.initialized = True
             logger.info(f"{self.name} initialized successfully")
             return True
-        
+
         except Exception as e:
             logger.error(f"Failed to initialize: {e}")
             return False
-    
+
     async def health_check(self) -> HealthStatus:
         """Check module health"""
         if not self.initialized or not self.api_client:
@@ -283,11 +284,11 @@ class MyModule(Module):
                 message="Module not initialized",
                 details={}
             )
-        
+
         try:
             is_healthy = await self.api_client.test_connection()
             status = "healthy" if is_healthy else "degraded"
-            
+
             return HealthStatus(
                 status=status,
                 message=f"API connection {status}",
@@ -299,7 +300,7 @@ class MyModule(Module):
                 message=f"Error during health check: {e}",
                 details={"error": str(e)}
             )
-    
+
     async def execute(self, task: Task) -> Result:
         """Execute task"""
         try:
@@ -310,32 +311,32 @@ class MyModule(Module):
                     status="failure",
                     error=f"Unknown action: {task.action}"
                 )
-            
+
             # Verify permissions
             if not await self.check_permissions(capability.permissions_required):
                 return Result(
                     status="failure",
                     error="Insufficient permissions"
                 )
-            
+
             # Execute with timeout
             import asyncio
             start = time.time()
-            
+
             result_data = await asyncio.wait_for(
                 self._execute_action(task),
                 timeout=capability.timeout_seconds
             )
-            
+
             duration_ms = (time.time() - start) * 1000
-            
+
             return Result(
                 status="success",
                 output=result_data,
                 duration_ms=int(duration_ms),
                 evidence=await self.collect_evidence(task, result_data)
             )
-        
+
         except asyncio.TimeoutError:
             return Result(
                 status="failure",
@@ -346,12 +347,12 @@ class MyModule(Module):
                 status="failure",
                 error=f"Execution error: {e}"
             )
-    
+
     async def _execute_action(self, task: Task):
         """Implementation of specific actions"""
         action = task.action
         params = task.parameters
-        
+
         if action == "fetch_data":
             return await self.api_client.fetch(params["resource_id"])
         elif action == "create_resource":
@@ -416,14 +417,14 @@ from governor import Task, Result
 async def module():
     """Fixture: initialized module"""
     mod = MyModule()
-    
+
     with patch.object(mod, 'load_config', return_value={}):
         with patch.object(mod, 'get_secret', return_value='test-token'):
             with patch.object(mod, 'api_client'):
                 mod.api_client.test_connection = AsyncMock(return_value=True)
                 initialized = await mod.init()
                 assert initialized
-    
+
     yield mod
     await mod.shutdown()
 
@@ -439,13 +440,13 @@ async def test_fetch_data(module):
         retry_count=1,
         created_at=datetime.now()
     )
-    
+
     # Mock API response
     module.api_client.fetch = AsyncMock(return_value={"data": "test"})
-    
+
     # Execute
     result = await module.execute(task)
-    
+
     # Verify
     assert result.status == "success"
     assert result.output["data"] == "test"
@@ -457,7 +458,7 @@ async def test_health_check(module):
     """Test: health_check"""
     module.api_client.test_connection = AsyncMock(return_value=True)
     health = await module.health_check()
-    
+
     assert health.status == "healthy"
     assert health.details["api_reachable"] is True
 
@@ -526,12 +527,14 @@ logger.debug(f"Response: {response}")     # May contain secrets
 **Minimum Coverage:** 80% code coverage
 
 **Test Categories:**
+
 1. Unit tests (module isolation)
 2. Integration tests (with real or mocked services)
 3. Security tests (no secrets leaked, permissions enforced)
 4. Performance tests (timeout handling, resource usage)
 
 **Running Tests:**
+
 ```bash
 cd modules/my_module
 pytest --cov=. tests/
@@ -555,6 +558,7 @@ git push origin modules/my_module
 ### Step 2: Automated Checks
 
 Governor runs:
+
 - ✅ Linting (no style issues)
 - ✅ Security scanning (no hardcoded secrets)
 - ✅ Test coverage (>80%)
@@ -570,6 +574,7 @@ Governor runs:
 ### Step 4: Approval & Merge
 
 Once approved:
+
 1. Module merged to main
 2. Automatically packaged
 3. Deployed to production
@@ -586,17 +591,17 @@ class HttpModule(Module):
     name = "http"
     version = "1.0.0"
     description = "HTTP request execution"
-    
+
     async def init(self) -> bool:
         import aiohttp
         self.session = aiohttp.ClientSession()
         return True
-    
+
     async def execute(self, task: Task) -> Result:
         method = task.parameters.get("method", "GET")
         url = task.parameters["url"]
         headers = task.parameters.get("headers", {})
-        
+
         try:
             async with self.session.request(method, url, headers=headers) as resp:
                 data = await resp.text()
@@ -606,7 +611,7 @@ class HttpModule(Module):
                 )
         except Exception as e:
             return Result(status="failure", error=str(e))
-    
+
     async def shutdown(self):
         await self.session.close()
 ```
@@ -616,6 +621,7 @@ class HttpModule(Module):
 ## REFERENCE
 
 **See Also:**
+
 - GOVERNOR-EXECUTION-FABRIC-v1-ARCHITECTURE.md (Plug-in Model)
 - GOVERNOR-SECURITY-MODEL.md (Security requirements)
 - GOVERNOR-DEPLOYMENT-GUIDE.md (How to deploy modules)

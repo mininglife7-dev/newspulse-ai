@@ -1,4 +1,5 @@
 # GOVERNOR SECURITY MODEL
+
 **Version:** 1.0  
 **Part of:** GOVERNOR EXECUTION FABRIC v1  
 **Date:** 2026-07-16
@@ -20,33 +21,33 @@ Governor security is built on five principles: least privilege (zero trust), sec
 ```python
 class PermissionModel:
     """Least privilege implementation"""
-    
+
     DEFAULT_PERMISSIONS = []  # Governor starts with nothing
-    
+
     def require_permission(self, action: str, resource: str) -> bool:
         """Check if Governor has permission for this action"""
         # 1. Look up action in policy database
         policy = policy_db.get(action)
         if not policy:
             return False  # Deny by default
-        
+
         # 2. Check if Governor's role has this permission
         governor_role = "governor_engineer"
         if governor_role not in policy.allowed_roles:
             return False
-        
+
         # 3. Check if resource has special restrictions
         restrictions = resource_db.get_restrictions(resource)
         if governor_role in restrictions.denied_roles:
             return False
-        
+
         # 4. Check if action has escalation requirement
         if policy.requires_escalation:
             if not founder_approval_received(action, resource):
                 return False
-        
+
         return True
-    
+
     def get_effective_permissions(self) -> Permission[]:
         """Return current effective permissions"""
         return permission_cache.get(governor_role)
@@ -81,12 +82,12 @@ Rollback               | Deny    | Escalate to Founder
 ```python
 class CredentialVault:
     """Secure credential storage"""
-    
+
     def store(self, name: str, secret: str, metadata: dict):
         """Store encrypted credential"""
         # 1. Encrypt secret
         encrypted = encrypt(secret)
-        
+
         # 2. Store with metadata
         vault_entry = {
             "name": name,
@@ -96,10 +97,10 @@ class CredentialVault:
             "rotation_due": False,
             "metadata": metadata
         }
-        
+
         # 3. Store in vault (not in file/code)
         vault.store(vault_entry)
-        
+
         # 4. Log access (not the value)
         audit_log.append({
             "action": "credential_stored",
@@ -108,25 +109,25 @@ class CredentialVault:
             "timestamp": now(),
             "actor": "governor_setup"
         })
-    
+
     def retrieve(self, name: str, reason: str) -> str:
         """Retrieve encrypted credential only when needed"""
         # 1. Check authorization
         if not verify_operation_auth(f"retrieve_{name}"):
             raise UnauthorizedAccess(f"Not authorized to retrieve {name}")
-        
+
         # 2. Check if credential exists
         vault_entry = vault.get(name)
         if not vault_entry:
             raise CredentialNotFound(f"Credential {name} not found")
-        
+
         # 3. Check expiration
         if vault_entry.expires_at < now():
             raise CredentialExpired(f"Credential {name} expired")
-        
+
         # 4. Decrypt only when returning
         decrypted = decrypt(vault_entry.encrypted_value)
-        
+
         # 5. Log access (not the value)
         audit_log.append({
             "action": "credential_retrieved",
@@ -135,47 +136,47 @@ class CredentialVault:
             "timestamp": now(),
             "actor": "governor"
         })
-        
+
         return decrypted
-    
+
     def rotate(self, name: str) -> str:
         """Generate new credential, invalidate old"""
         # 1. Generate new credential
         new_secret = generate_secure_random(32)
-        
+
         # 2. Store new
         self.store(f"{name}_new", new_secret, {"rotation": True})
-        
+
         # 3. Mark old as rotated
         vault_entry = vault.get(name)
         vault_entry.rotated_at = now()
         vault_entry.rotation_reason = "scheduled"
-        
+
         # 4. Update all references
         update_all_references(name, new_secret)
-        
+
         # 5. Mark old as invalidated
         vault_entry.invalidated_at = now()
-        
+
         # 6. Log rotation
         audit_log.append({
             "action": "credential_rotated",
             "credential": name,
             "timestamp": now()
         })
-        
+
         return new_secret
 ```
 
 **Credential Categories:**
 
-| Category | Storage | Retrieval | Rotation | Audit |
-|----------|---------|-----------|----------|-------|
-| DB passwords | Vault | On-demand | Quarterly | Every access |
-| API tokens | Vault | On-demand | Quarterly | Every access |
-| SSH keys | Vault | On-demand | Annual | Every access |
-| Encryption keys | Vault | On-demand | Never | Every access |
-| OAuth tokens | Vault | On-demand | Refresh | Every access |
+| Category        | Storage | Retrieval | Rotation  | Audit        |
+| --------------- | ------- | --------- | --------- | ------------ |
+| DB passwords    | Vault   | On-demand | Quarterly | Every access |
+| API tokens      | Vault   | On-demand | Quarterly | Every access |
+| SSH keys        | Vault   | On-demand | Annual    | Every access |
+| Encryption keys | Vault   | On-demand | Never     | Every access |
+| OAuth tokens    | Vault   | On-demand | Refresh   | Every access |
 
 ### 3. Approval Policies
 
@@ -184,7 +185,7 @@ class CredentialVault:
 ```python
 class ApprovalPolicy:
     """Define which operations require approval"""
-    
+
     AUTONOMOUS_ACTIONS = {
         "push_code_to_branch": {"require_tests": True},
         "create_pr": {"require_description": True},
@@ -192,7 +193,7 @@ class ApprovalPolicy:
         "read_logs": {},
         "query_db_select": {},
     }
-    
+
     ESCALATION_REQUIRED = {
         "push_code_to_main": {"require_approval": "founder"},
         "merge_pr": {"require_approval": "code_reviewer"},
@@ -203,7 +204,7 @@ class ApprovalPolicy:
         "drop_database": {"require_approval": "founder"},
         "export_customer_data": {"require_approval": "founder"},
     }
-    
+
     def check_approval_needed(self, action: str, context: dict) -> bool:
         """Does this action need approval?"""
         # 1. Check if autonomous
@@ -211,14 +212,14 @@ class ApprovalPolicy:
             requirements = self.AUTONOMOUS_ACTIONS[action]
             # Verify all requirements met
             return False
-        
+
         # 2. Check if escalation required
         if action in self.ESCALATION_REQUIRED:
             return True
-        
+
         # 3. Default to safe: require escalation
         return True
-    
+
     def request_approval(self, action: str, context: dict) -> ApprovalRequest:
         """Request Founder approval"""
         request = ApprovalRequest(
@@ -229,10 +230,10 @@ class ApprovalPolicy:
             expires_at=now() + timedelta(hours=24),
             status="pending"
         )
-        
+
         # Store request
         approval_db.store(request)
-        
+
         # Notify Founder
         notify_founder({
             "type": "approval_request",
@@ -240,15 +241,15 @@ class ApprovalPolicy:
             "context": format_context(context),
             "request_id": request.id
         })
-        
+
         return request
-    
+
     def await_approval(self, request_id: str, timeout_seconds: int = 3600) -> bool:
         """Wait for approval (with timeout)"""
         start = time.time()
         while time.time() - start < timeout_seconds:
             request = approval_db.get(request_id)
-            
+
             if request.status == "approved":
                 audit_log.append({
                     "action": "approval_granted",
@@ -257,7 +258,7 @@ class ApprovalPolicy:
                     "timestamp": now()
                 })
                 return True
-            
+
             if request.status == "denied":
                 audit_log.append({
                     "action": "approval_denied",
@@ -267,9 +268,9 @@ class ApprovalPolicy:
                     "timestamp": now()
                 })
                 raise ApprovalDenied(request.approval_notes)
-            
+
             time.sleep(5)
-        
+
         raise ApprovalTimeout(f"Waiting >{{timeout_seconds}}s")
 ```
 
@@ -280,7 +281,7 @@ class ApprovalPolicy:
 ```python
 class AuditLog:
     """Comprehensive action logging"""
-    
+
     def log_action(self, entry: AuditEntry):
         """Log an action with full context"""
         # Validate entry
@@ -288,22 +289,22 @@ class AuditLog:
         for field in required_fields:
             if not getattr(entry, field):
                 raise MissingAuditField(field)
-        
+
         # Sanitize: ensure no secrets logged
         entry.details = sanitize_secrets(entry.details)
-        
+
         # Add computed fields
         entry.log_id = generate_id()
         entry.timestamp = now()
         entry.actor_role = get_actor_role(entry.actor)
-        
+
         # Store in append-only log
         audit_store.append(entry)
-        
+
         # Also write to external SIEM if available
         if siem_endpoint:
             siem.send(convert_to_siem_format(entry))
-        
+
         # Alert if critical
         if entry.action in ["drop_database", "export_secrets", "force_merge"]:
             alert_founder(f"Critical action logged: {entry.action}")
@@ -374,7 +375,7 @@ details:
 ```python
 class RoleModel:
     """Define what each role can do"""
-    
+
     ROLES = {
         "governor": {
             "description": "Autonomous execution engine",
@@ -416,7 +417,7 @@ class RoleModel:
             ]
         }
     }
-    
+
     def check_permission(self, role: str, permission: str) -> bool:
         """Check if role has permission"""
         if role not in self.ROLES:
@@ -433,11 +434,11 @@ class RoleModel:
 ```python
 async def set_secret_safely(name: str, value: str):
     """Set secret with full audit and approval"""
-    
+
     # 1. Verify authorization
     if not await check_permission("secret:manage"):
         raise Unauthorized("No secret:manage permission")
-    
+
     # 2. Request approval
     approval = await request_approval(
         action="set_secret",
@@ -446,11 +447,11 @@ async def set_secret_safely(name: str, value: str):
             "environment": "production"
         }
     )
-    
+
     # 3. Wait for approval
     if not await await_approval(approval.id, timeout=3600):
         raise ApprovalDenied("Founder did not approve")
-    
+
     # 4. Verify again (things may have changed)
     if vault.secret_exists(name):
         audit_log.append({
@@ -459,7 +460,7 @@ async def set_secret_safely(name: str, value: str):
             "secret_name": name
         })
         raise SecretAlreadyExists(name)
-    
+
     # 5. Store encrypted secret
     vault.store(
         name=name,
@@ -471,10 +472,10 @@ async def set_secret_safely(name: str, value: str):
             "expires_at": now() + timedelta(days=90)
         }
     )
-    
+
     # 6. Update dependent systems
     await update_all_systems_using_secret(name)
-    
+
     # 7. Log final action
     audit_log.append({
         "action": "secret_set",
@@ -489,16 +490,16 @@ async def set_secret_safely(name: str, value: str):
 ```python
 async def deploy_to_production_safely(branch: str, environment: str):
     """Production deployment with safety checks"""
-    
+
     # 1. Verify authorization
     if not await check_permission("deploy:execute"):
         raise Unauthorized("No deploy:execute permission")
-    
+
     # 2. Verify branch has CI approval
     ci_status = await get_ci_status(branch)
     if ci_status != "success":
         raise CIChecksFailed(f"CI status: {ci_status}")
-    
+
     # 3. Request approval
     approval = await request_approval(
         action="deploy_production",
@@ -508,28 +509,28 @@ async def deploy_to_production_safely(branch: str, environment: str):
             "ci_status": ci_status
         }
     )
-    
+
     # 4. Wait for approval
     if not await await_approval(approval.id, timeout=3600):
         raise ApprovalDenied("Founder did not approve deployment")
-    
+
     # 5. Create backup
     backup = await create_backup(environment)
-    
+
     # 6. Execute deployment
     deployment = await deploy(
         branch=branch,
         environment=environment,
         backup_id=backup.id
     )
-    
+
     # 7. Verify deployment
     verified = await verify_deployment(deployment.id)
     if not verified.passed:
         # Automatic rollback
         await restore_backup(backup.id)
         raise DeploymentVerificationFailed(verified.details)
-    
+
     # 8. Log final action
     audit_log.append({
         "action": "deploy_production",
@@ -549,6 +550,7 @@ async def deploy_to_production_safely(branch: str, environment: str):
 **Attack:** Attacker obtains credentials and uses them to access production systems.
 
 **Mitigation:**
+
 - Credentials stored encrypted in vault (not code/logs)
 - Automatic rotation quarterly
 - Each operation requires re-retrieval (prevents long-term theft)
@@ -560,6 +562,7 @@ async def deploy_to_production_safely(branch: str, environment: str):
 **Attack:** Governor executes action it shouldn't have permission for.
 
 **Mitigation:**
+
 - Least privilege: zero permissions by default
 - Explicit approval required for sensitive actions
 - All actions logged with full context
@@ -571,6 +574,7 @@ async def deploy_to_production_safely(branch: str, environment: str):
 **Attack:** Malicious code injected into system through PR/push.
 
 **Mitigation:**
+
 - All code changes require code review
 - Push-to-main requires approval + passing tests
 - Untested code blocked from production
@@ -582,6 +586,7 @@ async def deploy_to_production_safely(branch: str, environment: str):
 **Attack:** Governor somehow gains permissions it shouldn't have.
 
 **Mitigation:**
+
 - Role-based access control with hard boundaries
 - Permission check before every action
 - No way to self-approve actions
@@ -593,6 +598,7 @@ async def deploy_to_production_safely(branch: str, environment: str):
 **Attack:** Sensitive data exported and transmitted to attacker.
 
 **Mitigation:**
+
 - Data export requires explicit approval
 - Export operations logged and audited
 - Data exports rate-limited and monitored
@@ -604,6 +610,7 @@ async def deploy_to_production_safely(branch: str, environment: str):
 ## COMPLIANCE & CERTIFICATION
 
 **Standards Met:**
+
 - SOC 2 Type II (audit logging, access control, encryption)
 - GDPR (data protection, audit trail, retention)
 - ISO 27001 (information security)
@@ -646,6 +653,7 @@ Quarterly Review:
 ## REFERENCE
 
 **See Also:**
+
 - GOVERNOR-EXECUTION-FABRIC-v1-ARCHITECTURE.md (Layer 4: Security)
 - GOVERNOR-VERIFICATION-PROCEDURES.md (Verification with security)
 - GOVERNOR-PLUG-IN-SDK.md (Security requirements for modules)

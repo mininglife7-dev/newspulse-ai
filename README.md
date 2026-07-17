@@ -106,8 +106,8 @@ Connect the repository to the Vercel project (Vercel Dashboard → Project → S
 
 ## 🔑 Where to get credentials
 
-| Service | Link | What you need |
-|---|---|---|
+| Service  | Link                 | What you need                                            |
+| -------- | -------------------- | -------------------------------------------------------- |
 | Supabase | https://supabase.com | Project URL + publishable + secret keys (Settings → API) |
 
 ---
@@ -225,6 +225,7 @@ POST /auth/confirm
 ## 🧠 What's next
 
 ### Completed (EURO AI integration)
+
 - ✅ Multi-tenant authentication and workspace setup
 - ✅ Authorization via Row-Level Security
 - ✅ Email confirmation flow
@@ -234,11 +235,13 @@ POST /auth/confirm
 - ✅ 165 tests passing (unit + E2E)
 
 ### In Progress (Founder Actions)
+
 - ⏳ Deploy Supabase schema via console (idempotent SQL)
 - ⏳ Enable Email auth in Supabase settings
 - ⏳ Verify Supabase project region (should be EU)
 
 ### Planned (Next Missions)
+
 - **German localization** — Full i18n for DE customers
 - **Accessibility audit** — WCAG 2.1 AA compliance
 - **AI system inventory interface** — Add/edit/delete AI systems in workspace

@@ -108,7 +108,12 @@ export const logger = {
   /**
    * Request lifecycle logging
    */
-  request(method: string, path: string, statusCode: number, durationMs: number) {
+  request(
+    method: string,
+    path: string,
+    statusCode: number,
+    durationMs: number
+  ) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: 'info',
@@ -135,7 +140,10 @@ export const logger = {
     };
 
     if (isDev) {
-      console.log(`${category}: ${status} - ${summary}`, count ? `(${count})` : '');
+      console.log(
+        `${category}: ${status} - ${summary}`,
+        count ? `(${count})` : ''
+      );
     } else {
       console.log(formatLogEntry(entry));
     }
@@ -151,7 +159,10 @@ export function sanitizeError(error: unknown): string {
     let msg = error.message;
 
     // Remove common sensitive patterns
-    msg = msg.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[email]');
+    msg = msg.replace(
+      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+      '[email]'
+    );
     msg = msg.replace(/\d{10,}/g, '[id]');
     msg = msg.replace(/sk-[A-Za-z0-9]{40,}/g, '[key]');
 

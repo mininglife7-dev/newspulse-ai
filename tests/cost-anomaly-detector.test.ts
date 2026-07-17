@@ -174,7 +174,8 @@ describe('DNA-GOV-011: Cost Anomaly Detection', () => {
             baselineCost: 15.0,
             ratio: 4.0,
             severity: 'critical',
-            message: 'Vercel costs are 400% of baseline ($60.00/mo vs $15.00/mo baseline)',
+            message:
+              'Vercel costs are 400% of baseline ($60.00/mo vs $15.00/mo baseline)',
           },
         ],
         summary: '1 cost anomaly(ies) detected',

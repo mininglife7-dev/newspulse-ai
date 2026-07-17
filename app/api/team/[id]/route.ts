@@ -37,7 +37,11 @@ async function resolveContext(
     .maybeSingle();
 
   if (memberError) {
-    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    logger.error(
+      'Workspace membership lookup failed',
+      'MEMBERSHIP_LOOKUP_ERROR',
+      memberError
+    );
     return { status: 500, error: 'Membership lookup failed' };
   }
 
@@ -82,7 +86,9 @@ export async function PUT(
 
   const validationResult = validate(body, {
     role: validators.optional(validators.enum(['admin', 'member', 'viewer'])),
-    status: validators.optional(validators.enum(['active', 'pending', 'removed'])),
+    status: validators.optional(
+      validators.enum(['active', 'pending', 'removed'])
+    ),
   });
 
   if (!validationResult.ok) {

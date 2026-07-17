@@ -162,7 +162,11 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Feature flag retrieval failed', 'FEATURE_FLAG_RETRIEVAL_ERROR', error);
+    logger.error(
+      'Feature flag retrieval failed',
+      'FEATURE_FLAG_RETRIEVAL_ERROR',
+      error
+    );
 
     return NextResponse.json(
       {
@@ -445,7 +449,11 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Feature flag operation failed', 'FEATURE_FLAG_OPERATION_ERROR', error);
+    logger.error(
+      'Feature flag operation failed',
+      'FEATURE_FLAG_OPERATION_ERROR',
+      error
+    );
 
     return NextResponse.json(
       {

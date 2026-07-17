@@ -5,7 +5,9 @@ import { PDFDocument, rgb } from 'pdf-lib';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
+async function resolveContext(
+  supabase: Awaited<ReturnType<typeof createRouteClient>>
+) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -114,8 +116,18 @@ export async function GET(
     ];
 
     systemInfo.forEach(([label, value]) => {
-      page.drawText(label, { x: 50, y, size: smallFontSize, color: rgb(0.4, 0.4, 0.4) });
-      page.drawText(String(value), { x: 200, y, size: smallFontSize, color: rgb(0, 0, 0) });
+      page.drawText(label, {
+        x: 50,
+        y,
+        size: smallFontSize,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+      page.drawText(String(value), {
+        x: 200,
+        y,
+        size: smallFontSize,
+        color: rgb(0, 0, 0),
+      });
       y -= 15;
     });
 
@@ -163,12 +175,15 @@ export async function GET(
     });
     y -= 18;
 
-    page.drawText(`Generated: ${new Date(assessment.created_at).toLocaleDateString()}`, {
-      x: 50,
-      y,
-      size: smallFontSize,
-      color: rgb(0.6, 0.6, 0.6),
-    });
+    page.drawText(
+      `Generated: ${new Date(assessment.created_at).toLocaleDateString()}`,
+      {
+        x: 50,
+        y,
+        size: smallFontSize,
+        color: rgb(0.6, 0.6, 0.6),
+      }
+    );
     y -= 25;
 
     // Assessment Details
@@ -197,7 +212,12 @@ export async function GET(
         let line = '';
         for (const word of words) {
           if ((line + word).length > 70) {
-            page.drawText(line, { x: 60, y, size: smallFontSize, color: rgb(0, 0, 0) });
+            page.drawText(line, {
+              x: 60,
+              y,
+              size: smallFontSize,
+              color: rgb(0, 0, 0),
+            });
             y -= 12;
             line = word + ' ';
           } else {
@@ -205,13 +225,22 @@ export async function GET(
           }
         }
         if (line) {
-          page.drawText(line, { x: 60, y, size: smallFontSize, color: rgb(0, 0, 0) });
+          page.drawText(line, {
+            x: 60,
+            y,
+            size: smallFontSize,
+            color: rgb(0, 0, 0),
+          });
           y -= 12;
         }
         y -= 10;
       }
 
-      if (data.obligations && Array.isArray(data.obligations) && data.obligations.length > 0) {
+      if (
+        data.obligations &&
+        Array.isArray(data.obligations) &&
+        data.obligations.length > 0
+      ) {
         page.drawText('Applicable Obligations:', {
           x: 50,
           y,

@@ -190,9 +190,7 @@ describe('Production Monitoring (DNA-GOV-002)', () => {
     });
 
     it('returns alerts when critical checks fail', async () => {
-      global.fetch = vi
-        .fn()
-        .mockRejectedValue(new Error('Network error'));
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
       const report = await runProductionHealthChecks(testBaseUrl);
 
@@ -205,16 +203,13 @@ describe('Production Monitoring (DNA-GOV-002)', () => {
     it('generates performance alert when latency is high', async () => {
       global.fetch = vi.fn().mockImplementation(() => {
         return new Promise((resolve) => {
-          setTimeout(
-            () => {
-              resolve({
-                ok: true,
-                status: 200,
-                json: async () => ({ ok: true }),
-              });
-            },
-            3100
-          );
+          setTimeout(() => {
+            resolve({
+              ok: true,
+              status: 200,
+              json: async () => ({ ok: true }),
+            });
+          }, 3100);
         });
       });
 

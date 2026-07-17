@@ -22,18 +22,18 @@ no code ever used). **All 10 were fixed and verified in this audit** — see
 
 ## Verification performed
 
-| Gate | Result |
-|---|---|
-| `tsc --noEmit` | PASS |
-| `next lint` | PASS (0 warnings) |
-| `next build` with CI stub env | PASS |
-| `next build` with **no** env vars | PASS (failed before fixes) |
-| Smoke suite (16 end-to-end checks) | 16/16 PASS |
+| Gate                               | Result                     |
+| ---------------------------------- | -------------------------- |
+| `tsc --noEmit`                     | PASS                       |
+| `next lint`                        | PASS (0 warnings)          |
+| `next build` with CI stub env      | PASS                       |
+| `next build` with **no** env vars  | PASS (failed before fixes) |
+| Smoke suite (16 end-to-end checks) | 16/16 PASS                 |
 
 ## Truthfulness (Founder Trust Rule)
 
-The governing rule — *if a metric cannot be verified, show an error/UNKNOWN, never
-an incorrect number* — is now enforced and regression-tested:
+The governing rule — _if a metric cannot be verified, show an error/UNKNOWN, never
+an incorrect number_ — is now enforced and regression-tested:
 
 - `GET /api/history` with an unreachable database now returns **500 + error**,
   where it previously returned a fabricated empty list (the UI showed

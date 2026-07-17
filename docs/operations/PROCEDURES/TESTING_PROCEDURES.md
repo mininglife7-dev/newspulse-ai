@@ -30,6 +30,7 @@ Standard procedures for running tests locally and in CI/CD pipeline. Ensures cod
 **Coverage target**: >80% for lib/ modules
 
 **Running**:
+
 ```bash
 # Run all tests once
 npm test
@@ -45,18 +46,19 @@ npm test -- --coverage
 ```
 
 **Example test structure**:
+
 ```typescript
 describe('calculateRiskLevel', () => {
   it('should return HIGH for critical findings', () => {
-    const risk = calculateRiskLevel([{ severity: 'critical' }])
-    expect(risk).toBe('HIGH')
-  })
+    const risk = calculateRiskLevel([{ severity: 'critical' }]);
+    expect(risk).toBe('HIGH');
+  });
 
   it('should return LOW when no findings', () => {
-    const risk = calculateRiskLevel([])
-    expect(risk).toBe('LOW')
-  })
-})
+    const risk = calculateRiskLevel([]);
+    expect(risk).toBe('LOW');
+  });
+});
 ```
 
 ### Integration Tests (Slower)
@@ -69,6 +71,7 @@ describe('calculateRiskLevel', () => {
 **Coverage target**: 4 core journeys (Auth, Inventory, Assessment, Evidence)
 
 **Running**:
+
 ```bash
 # Run all integration tests
 npm test:integration
@@ -92,6 +95,7 @@ npm test:integration -- --watch
 **Coverage target**: Happy path for critical flows
 
 **Running**:
+
 ```bash
 # Run all E2E tests
 npm run test:e2e
@@ -107,14 +111,15 @@ npm run test:e2e -- --debug
 ```
 
 **Example E2E test**:
+
 ```typescript
 test('should log in and navigate to inventory', async ({ page }) => {
-  await page.goto('/')
-  await page.fill('[name="email"]', 'test@example.com')
-  await page.fill('[name="password"]', 'password')
-  await page.click('button:has-text("Log in")')
-  await expect(page).toHaveURL('/workspace/inventory')
-})
+  await page.goto('/');
+  await page.fill('[name="email"]', 'test@example.com');
+  await page.fill('[name="password"]', 'password');
+  await page.click('button:has-text("Log in")');
+  await expect(page).toHaveURL('/workspace/inventory');
+});
 ```
 
 ### Smoke Tests
@@ -152,6 +157,7 @@ npm run format
 **If any fails**: Don't push. Fix locally and re-run that test.
 
 **Expected output**:
+
 ```
 ✓ npm run type-check (0 errors)
 ✓ npm run lint (0 errors)
@@ -172,17 +178,18 @@ Optional but recommended approach:
 4. **Repeat** for next feature
 
 **Example**:
+
 ```typescript
 // STEP 1: Write failing test
 it('should link evidence to obligation', () => {
-  const evidence = createEvidence({ obligation_id: '123' })
-  const obligation = getObligation('123')
-  expect(obligation.evidence).toContain(evidence.id)
-})
+  const evidence = createEvidence({ obligation_id: '123' });
+  const obligation = getObligation('123');
+  expect(obligation.evidence).toContain(evidence.id);
+});
 
 // STEP 2: Write minimal code to pass test
-const evidence = db.insert('evidence', { obligation_id: '123' })
-const obligation = db.select('obligations').where('id', '123')
+const evidence = db.insert('evidence', { obligation_id: '123' });
+const obligation = db.select('obligations').where('id', '123');
 // Add linking logic...
 
 // STEP 3: Refactor to clean code
@@ -202,11 +209,13 @@ const obligation = db.select('obligations').where('id', '123')
 **UI components** (`app/`): >70% (some UI testing is expensive)
 
 **Check coverage**:
+
 ```bash
 npm test -- --coverage
 ```
 
 Output shows:
+
 - Statements: What % of code executed by tests
 - Branches: What % of if/else paths tested
 - Functions: What % of functions called by tests
@@ -219,63 +228,65 @@ Output shows:
 ### Testing API Routes
 
 ```typescript
-import { POST } from '@/app/api/evidence/route'
+import { POST } from '@/app/api/evidence/route';
 
 it('should create evidence', async () => {
   const request = new Request('...', {
     method: 'POST',
     body: JSON.stringify({
       obligation_id: '123',
-      title: 'Evidence 1'
-    })
-  })
-  
-  const response = await POST(request)
-  expect(response.status).toBe(201)
-})
+      title: 'Evidence 1',
+    }),
+  });
+
+  const response = await POST(request);
+  expect(response.status).toBe(201);
+});
 ```
 
 ### Testing Database Queries
 
 ```typescript
 it('should fetch evidence by obligation', async () => {
-  const obligation = await createTestObligation(workspaceId)
-  const evidence = await createTestEvidence(workspaceId, obligation.id)
-  
-  const fetched = await listEvidenceForObligation(obligation.id)
-  expect(fetched.map(e => e.id)).toContain(evidence.id)
-})
+  const obligation = await createTestObligation(workspaceId);
+  const evidence = await createTestEvidence(workspaceId, obligation.id);
+
+  const fetched = await listEvidenceForObligation(obligation.id);
+  expect(fetched.map((e) => e.id)).toContain(evidence.id);
+});
 ```
 
 ### Testing with Fixtures
 
 ```typescript
 it('should update evidence status', async () => {
-  const obligation = await createTestObligation(workspaceId)
-  const evidence = await createTestEvidence(workspaceId, obligation.id)
-  
+  const obligation = await createTestObligation(workspaceId);
+  const evidence = await createTestEvidence(workspaceId, obligation.id);
+
   // Use fixture factory to create test data
-  const updated = await updateEvidence(evidence.id, { status: 'approved' })
-  
-  expect(updated.status).toBe('approved')
-})
+  const updated = await updateEvidence(evidence.id, { status: 'approved' });
+
+  expect(updated.status).toBe('approved');
+});
 ```
 
 ### Testing Error Cases
 
 ```typescript
 it('should reject invalid obligation_id', async () => {
-  const response = await POST(new Request('...', {
-    body: JSON.stringify({
-      obligation_id: null,  // Invalid
-      title: 'Evidence'
+  const response = await POST(
+    new Request('...', {
+      body: JSON.stringify({
+        obligation_id: null, // Invalid
+        title: 'Evidence',
+      }),
     })
-  }))
-  
-  expect(response.status).toBe(400)
-  const error = await response.json()
-  expect(error.error).toBe('obligation_id required')
-})
+  );
+
+  expect(response.status).toBe(400);
+  const error = await response.json();
+  expect(error.error).toBe('obligation_id required');
+});
 ```
 
 ---
@@ -285,27 +296,34 @@ it('should reject invalid obligation_id', async () => {
 ### Reading Error Messages
 
 **Type mismatch**:
+
 ```
 Expected: string
 Received: undefined
 ```
+
 → Check: Return value, null checks, optional fields
 
 **Assertion failed**:
+
 ```
 expect(5).toBe(6)
 ```
+
 → Check: Logic in code, test expectations, data setup
 
 **Timeout**:
+
 ```
 error: timeout of 5000 ms exceeded
 ```
+
 → Check: Async operations, database connections, network
 
 ### Debug Strategies
 
 **Add console.log**:
+
 ```typescript
 it('should calculate risk', () => {
   const risk = calculateRiskLevel([...])
@@ -315,16 +333,19 @@ it('should calculate risk', () => {
 ```
 
 **Run single test**:
+
 ```bash
 npm test -- --t "should calculate risk"  # Only run this test
 ```
 
 **Watch mode**:
+
 ```bash
 npm test -- --watch  # Re-run on file change, good for iterating
 ```
 
 **Add breakpoint** (VS Code):
+
 ```bash
 # Run with debugger
 node --inspect-brk ./node_modules/.bin/vitest run
@@ -338,6 +359,7 @@ node --inspect-brk ./node_modules/.bin/vitest run
 **Location**: `tests/fixtures.ts`
 
 **Available factories**:
+
 - `createTestWorkspace()` — Create test workspace
 - `createTestAISystem()` — Create test AI system
 - `createTestAssessment()` — Create test assessment
@@ -347,15 +369,16 @@ node --inspect-brk ./node_modules/.bin/vitest run
 **Cleanup**: Tests automatically cleanup test data after running
 
 **Example**:
+
 ```typescript
 it('should work', async () => {
-  const workspace = await createTestWorkspace(userId)
-  const system = await createTestAISystem(workspace.id)
-  
+  const workspace = await createTestWorkspace(userId);
+  const system = await createTestAISystem(workspace.id);
+
   // Test your code
-  
+
   // Cleanup happens automatically in afterEach
-})
+});
 ```
 
 ---
@@ -369,6 +392,7 @@ GitHub Actions automatically runs tests on every push:
 3. **On main push**: Runs full test suite + builds
 
 **Locally simulate CI**:
+
 ```bash
 npm run lint && npm run type-check && npm test
 ```
@@ -388,6 +412,7 @@ npm run lint && npm run type-check && npm test
 ### Improve Test Coverage
 
 If test coverage drops:
+
 1. Identify untested code: `npm test -- --coverage`
 2. Write tests for important functions
 3. Verify tests actually test (not just "touching" code)
@@ -395,6 +420,7 @@ If test coverage drops:
 ### Test Review
 
 During code review:
+
 - Do tests match the feature?
 - Are edge cases tested?
 - Is error handling tested?
@@ -404,15 +430,15 @@ During code review:
 
 ## Quick Reference
 
-| Command | What It Does | Time |
-|---------|-------------|------|
-| `npm test` | Run unit tests | <30s |
-| `npm test -- --watch` | Watch mode | Continuous |
-| `npm test:integration` | Integration tests | 1-2m |
-| `npm run test:e2e` | End-to-end tests | 2-5m |
-| `npm run test:smoke` | Smoke tests | <1m |
-| `npm run type-check` | TypeScript check | <30s |
-| `npm run lint` | ESLint check | <30s |
+| Command                | What It Does      | Time       |
+| ---------------------- | ----------------- | ---------- |
+| `npm test`             | Run unit tests    | <30s       |
+| `npm test -- --watch`  | Watch mode        | Continuous |
+| `npm test:integration` | Integration tests | 1-2m       |
+| `npm run test:e2e`     | End-to-end tests  | 2-5m       |
+| `npm run test:smoke`   | Smoke tests       | <1m        |
+| `npm run type-check`   | TypeScript check  | <30s       |
+| `npm run lint`         | ESLint check      | <30s       |
 
 ---
 

@@ -15,7 +15,7 @@ Supabase PostgreSQL schema for EURO AI multi-tenant platform. All workspace-scop
 
 **Database**: Supabase (EU-hosted PostgreSQL 14+)  
 **Multi-tenancy**: RLS-based (workspace isolation)  
-**Migrations**: Managed by Supabase CLI in `/supabase/migrations/`  
+**Migrations**: Managed by Supabase CLI in `/supabase/migrations/`
 
 ---
 
@@ -28,23 +28,23 @@ Supabase PostgreSQL schema for EURO AI multi-tenant platform. All workspace-scop
 ```sql
 CREATE TABLE workspaces (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  
+
   -- Workspace identification
   name TEXT NOT NULL,
   description TEXT,
-  
+
   -- Workspace configuration
   industry TEXT,  -- e.g., "finance", "healthcare", "tech"
   country TEXT,   -- e.g., "DE", "FR", "NL"
-  
+
   -- Ownership
   owner_id UUID NOT NULL,  -- FK to auth.users
-  
+
   -- Compliance & audit
   data_residency TEXT DEFAULT 'EU',  -- EU-only (required)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   FOREIGN KEY (owner_id) REFERENCES auth.users(id)
 );
 
@@ -54,12 +54,13 @@ CREATE UNIQUE INDEX idx_workspaces_owner_id ON workspaces(owner_id);
 **RLS Policies**: None needed (owned by Supabase Auth)
 
 **Access Pattern**:
+
 ```typescript
 // List user's workspaces
 const { data } = await supabase
   .from('workspaces')
   .select('*')
-  .eq('owner_id', user.id)
+  .eq('owner_id', user.id);
 ```
 
 ### users (via Supabase Auth)
@@ -86,19 +87,20 @@ CREATE TABLE user_workspace_roles (
   user_id UUID NOT NULL,
   workspace_id UUID NOT NULL,
   role TEXT NOT NULL,  -- owner | admin | analyst | viewer
-  
+
   PRIMARY KEY (user_id, workspace_id),
   FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
   FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_user_workspace_roles_workspace_id 
+CREATE INDEX idx_user_workspace_roles_workspace_id
   ON user_workspace_roles(workspace_id);
 ```
 
 **RLS Policies**: None (team management is admin-only)
 
 **Role Definitions**:
+
 - **Owner**: Full access, can invite/remove users, manage workspace
 - **Admin**: Can manage systems, run assessments, create obligations
 - **Analyst**: Can view and comment on assessments
@@ -112,21 +114,21 @@ CREATE INDEX idx_user_workspace_roles_workspace_id
 CREATE TABLE ai_systems (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id UUID NOT NULL,
-  
+
   -- System identification
   name TEXT NOT NULL,
   description TEXT,
   use_case TEXT,  -- e.g., "Recommendation engine", "Risk scoring"
-  
+
   -- System metadata
   status TEXT DEFAULT 'active',  -- active | inactive | development
   data_types JSONB,  -- ["customer_data", "behavioral", "financial"]
   deployment_environment TEXT,  -- "cloud", "on-premise", "hybrid"
-  
+
   -- Audit
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
 );
 
@@ -135,6 +137,7 @@ CREATE INDEX idx_ai_systems_status ON ai_systems(workspace_id, status);
 ```
 
 **RLS Policy**:
+
 ```sql
 ALTER TABLE ai_systems ENABLE ROW LEVEL SECURITY;
 
@@ -164,19 +167,19 @@ CREATE TABLE assessments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id UUID NOT NULL,
   system_id UUID NOT NULL,
-  
+
   -- Assessment state
   status TEXT DEFAULT 'draft',  -- draft | in_progress | completed
   risk_level TEXT,  -- low | medium | high | critical
-  
+
   -- Assessment data
   answers JSONB DEFAULT '{}',  -- Assessment responses
-  
+
   -- Audit
   created_at TIMESTAMPTZ DEFAULT NOW(),
   completed_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
   FOREIGN KEY (system_id) REFERENCES ai_systems(id) ON DELETE CASCADE
 );
@@ -187,6 +190,7 @@ CREATE INDEX idx_assessments_status ON assessments(workspace_id, status);
 ```
 
 **RLS Policy**:
+
 ```sql
 ALTER TABLE assessments ENABLE ROW LEVEL SECURITY;
 
@@ -212,23 +216,23 @@ CREATE TABLE obligations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id UUID NOT NULL,
   assessment_id UUID NOT NULL,
-  
+
   -- Obligation identification
   title TEXT NOT NULL,
   description TEXT,
-  
+
   -- Obligation state
   status TEXT DEFAULT 'open',  -- open | in_progress | completed
   due_date DATE,
-  
+
   -- EU AI Act reference
   category TEXT,  -- e.g., "risk_management", "transparency", "human_oversight"
   requirement_type TEXT,  -- e.g., "documentation", "process", "technical"
-  
+
   -- Audit
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
   FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE
 );
@@ -239,6 +243,7 @@ CREATE INDEX idx_obligations_status ON obligations(workspace_id, status);
 ```
 
 **RLS Policy**:
+
 ```sql
 ALTER TABLE obligations ENABLE ROW LEVEL SECURITY;
 
@@ -264,23 +269,23 @@ CREATE TABLE evidence (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id UUID NOT NULL,
   obligation_id UUID NOT NULL,
-  
+
   -- Evidence identification
   title TEXT NOT NULL,
   description TEXT,
-  
+
   -- Evidence content
   file_url TEXT,  -- URL to evidence file (if stored)
   content TEXT,   -- Evidence content (if text)
   content_type TEXT,  -- "document", "procedure", "screenshot", "measurement"
-  
+
   -- Evidence state
   status TEXT DEFAULT 'submitted',  -- submitted | approved | completed
-  
+
   -- Audit
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
   FOREIGN KEY (obligation_id) REFERENCES obligations(id) ON DELETE CASCADE
 );
@@ -291,6 +296,7 @@ CREATE INDEX idx_evidence_status ON evidence(workspace_id, status);
 ```
 
 **RLS Policy**:
+
 ```sql
 ALTER TABLE evidence ENABLE ROW LEVEL SECURITY;
 
@@ -341,7 +347,7 @@ const { data: systems } = await supabase
   .from('ai_systems')
   .select('*')
   .eq('workspace_id', workspaceId)
-  .eq('status', 'active')
+  .eq('status', 'active');
 ```
 
 ### Get assessments for a system
@@ -351,7 +357,7 @@ const { data: assessments } = await supabase
   .from('assessments')
   .select('*, obligations(*), evidence(*)')
   .eq('system_id', systemId)
-  .order('created_at', { ascending: false })
+  .order('created_at', { ascending: false });
 ```
 
 ### Get obligations with evidence
@@ -362,7 +368,7 @@ const { data: obligations } = await supabase
   .select('*, evidence(*)')
   .eq('workspace_id', workspaceId)
   .eq('status', 'open')
-  .order('due_date')
+  .order('due_date');
 ```
 
 ### Get evidence for obligation
@@ -372,7 +378,7 @@ const { data: evidence } = await supabase
   .from('evidence')
   .select('*')
   .eq('obligation_id', obligationId)
-  .order('created_at', { ascending: false })
+  .order('created_at', { ascending: false });
 ```
 
 ---
@@ -398,14 +404,14 @@ User in Workspace A tries to query Workspace B data:
 ALTER TABLE ai_systems ENABLE ROW LEVEL SECURITY;
 
 -- Verify RLS is enabled
-SELECT relname, relrowsecurity 
-FROM pg_class 
+SELECT relname, relrowsecurity
+FROM pg_class
 WHERE relname = 'ai_systems';
 -- Output: ai_systems | true
 
 -- View all RLS policies
-SELECT tablename, policyname, qual 
-FROM pg_policies 
+SELECT tablename, policyname, qual
+FROM pg_policies
 WHERE tablename = 'ai_systems';
 ```
 
@@ -430,25 +436,25 @@ SELECT * FROM ai_systems WHERE workspace_id = 'ws-a';
 
 **Critical Indexes** (for RLS enforcement and common queries):
 
-| Table | Index | Purpose |
-|-------|-------|---------|
-| ai_systems | workspace_id | RLS filtering |
-| assessments | workspace_id | RLS filtering |
-| assessments | system_id | Find assessments for system |
-| obligations | workspace_id | RLS filtering |
-| obligations | assessment_id | Find obligations from assessment |
-| evidence | workspace_id | RLS filtering |
-| evidence | obligation_id | Find evidence for obligation |
-| user_workspace_roles | workspace_id | Find users in workspace |
+| Table                | Index         | Purpose                          |
+| -------------------- | ------------- | -------------------------------- |
+| ai_systems           | workspace_id  | RLS filtering                    |
+| assessments          | workspace_id  | RLS filtering                    |
+| assessments          | system_id     | Find assessments for system      |
+| obligations          | workspace_id  | RLS filtering                    |
+| obligations          | assessment_id | Find obligations from assessment |
+| evidence             | workspace_id  | RLS filtering                    |
+| evidence             | obligation_id | Find evidence for obligation     |
+| user_workspace_roles | workspace_id  | Find users in workspace          |
 
 **Performance Indexes** (for common filters):
 
-| Table | Index | Purpose |
-|-------|-------|---------|
-| ai_systems | (workspace_id, status) | List active systems |
+| Table       | Index                  | Purpose                      |
+| ----------- | ---------------------- | ---------------------------- |
+| ai_systems  | (workspace_id, status) | List active systems          |
 | assessments | (workspace_id, status) | List in-progress assessments |
-| obligations | (workspace_id, status) | List open obligations |
-| evidence | (workspace_id, status) | List submitted evidence |
+| obligations | (workspace_id, status) | List open obligations        |
+| evidence    | (workspace_id, status) | List submitted evidence      |
 
 ---
 
@@ -457,6 +463,7 @@ SELECT * FROM ai_systems WHERE workspace_id = 'ws-a';
 All schema changes are managed via migrations in `/supabase/migrations/`
 
 **Creating a migration**:
+
 ```bash
 npx supabase migration new add_column_to_evidence
 ```
@@ -464,6 +471,7 @@ npx supabase migration new add_column_to_evidence
 This creates: `supabase/migrations/[timestamp]_add_column_to_evidence.sql`
 
 **Best practices**:
+
 - One logical change per migration file
 - Include comments explaining WHY
 - Test locally before deployment
@@ -471,6 +479,7 @@ This creates: `supabase/migrations/[timestamp]_add_column_to_evidence.sql`
 - Always include RLS policies for new tables
 
 **Deploying migrations**:
+
 ```bash
 # Test locally
 npx supabase db reset
@@ -489,11 +498,13 @@ git push origin main
 ### Foreign Key Constraints
 
 All foreign keys have `ON DELETE CASCADE` to maintain referential integrity:
+
 - Deleting workspace → deletes systems, assessments, obligations, evidence
 - Deleting assessment → deletes obligations, evidence
 - Deleting user → deletes workspace roles
 
 **Verify constraints**:
+
 ```sql
 SELECT constraint_name, table_name, column_name, foreign_table_name
 FROM information_schema.key_column_usage
@@ -506,13 +517,13 @@ Verify no orphaned records exist:
 
 ```sql
 -- Check for evidence without obligation
-SELECT COUNT(*) FROM evidence 
-WHERE obligation_id IS NOT NULL 
+SELECT COUNT(*) FROM evidence
+WHERE obligation_id IS NOT NULL
 AND obligation_id NOT IN (SELECT id FROM obligations);
 -- Should return: 0
 
 -- Check for obligations without assessment
-SELECT COUNT(*) FROM obligations 
+SELECT COUNT(*) FROM obligations
 WHERE assessment_id NOT IN (SELECT id FROM assessments);
 -- Should return: 0
 ```
@@ -524,7 +535,7 @@ WHERE assessment_id NOT IN (SELECT id FROM assessments);
 ### Current Storage Usage
 
 ```sql
-SELECT 
+SELECT
   tablename,
   pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename))
 FROM pg_tables
@@ -535,6 +546,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Growth Projections
 
 Based on usage patterns:
+
 - **Evidence table**: Grows with ~10-100 records per obligation
 - **Assessments table**: Grows with ~1-5 per system per year
 - **Obligations table**: Grows with ~5-50 per assessment
@@ -544,6 +556,7 @@ For 100 customers with 50 systems each: ~250K records (manageable)
 ### Archive Strategy
 
 For long-term retention:
+
 1. Assessments >1 year old → archive to separate table
 2. Evidence >2 years old → archive or delete
 3. Completed obligations → keep (audit requirement)

@@ -25,13 +25,16 @@ Comprehensive monthly audit of compliance, security, data integrity, and operati
 ### Row Level Security (RLS) Verification
 
 - [ ] RLS enabled on all tenant data tables
+
   ```sql
-  SELECT relname, relrowsecurity FROM pg_class 
+  SELECT relname, relrowsecurity FROM pg_class
   WHERE relname IN ('evidence', 'obligations', 'assessments', 'ai_systems', 'workspaces');
   ```
+
   Expected: All show `relrowsecurity = true`
 
 - [ ] RLS policies exist for all access patterns
+
   ```sql
   SELECT tablename, policyname FROM pg_policies ORDER BY tablename;
   ```
@@ -68,24 +71,30 @@ Comprehensive monthly audit of compliance, security, data integrity, and operati
 ### Data Consistency Checks
 
 - [ ] No orphaned records (evidence without valid obligation)
+
   ```sql
-  SELECT COUNT(*) FROM evidence 
-  WHERE obligation_id IS NOT NULL 
+  SELECT COUNT(*) FROM evidence
+  WHERE obligation_id IS NOT NULL
   AND obligation_id NOT IN (SELECT id FROM obligations);
   ```
+
   Expected: 0
 
 - [ ] No cross-workspace references
+
   ```sql
   SELECT COUNT(*) FROM evidence e
   WHERE workspace_id != (SELECT workspace_id FROM obligations WHERE id = e.obligation_id);
   ```
+
   Expected: 0
 
 - [ ] No dangling foreign keys
+
   ```sql
   SELECT COUNT(*) FROM ai_systems WHERE workspace_id NOT IN (SELECT id FROM workspaces);
   ```
+
   Expected: 0
 
 - [ ] No audit log tampering (if exists)
@@ -220,9 +229,11 @@ For each workspace (sample critical ones):
   - Issues found: None ☐
 
 - [ ] Unused indexes identified
+
   ```sql
   SELECT * FROM pg_stat_user_indexes WHERE idx_scan = 0;
   ```
+
   Count: __ (clean up if >5)
 
 - [ ] Statistics up-to-date
@@ -236,6 +247,7 @@ For each workspace (sample critical ones):
 ### Vulnerability Scanning
 
 - [ ] Dependencies scanned for vulnerabilities
+
   ```bash
   npm audit
   ```
@@ -403,8 +415,8 @@ For each workspace (sample critical ones):
 ### Critical Issues Found
 
 | Issue | Severity | Action | Owner | Due |
-|-------|----------|--------|-------|-----|
-| | | | | |
+| ----- | -------- | ------ | ----- | --- |
+|       |          |        |       |     |
 
 ### Recommendations
 

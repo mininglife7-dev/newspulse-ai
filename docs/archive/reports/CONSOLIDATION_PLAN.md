@@ -2,7 +2,7 @@
 
 **Phase:** 3 (Planning & Preservation)  
 **Status:** DRAFT FOR EXECUTION  
-**Authority:** Governor Ω under Operation Single Throne  
+**Authority:** Governor Ω under Operation Single Throne
 
 ---
 
@@ -35,6 +35,7 @@ Additionally, recent work on `governor-bootstrap-protocol` (+89 commits) and `pr
 ### Consolidation Categories
 
 #### Category A: IMMEDIATE MERGE (Ready to Land)
+
 Branches with 1-2 commits, up-to-date with main, no conflicts.
 
 - `claude/governor-omega-v2-w29yi4` (PR #148)
@@ -44,12 +45,14 @@ Branches with 1-2 commits, up-to-date with main, no conflicts.
 **Action:** Review, verify CI passes, merge as-is.
 
 #### Category B: CRITICAL PRESERVATION (Diverged, Must Be Handled)
+
 Branches with 50+ commits, diverged from main, representing substantial work.
 
 - `claude/repair-git-remotes-p1ez7c` (PR #124) — **261 commits**
 - `claude/governor-bootstrap-protocol-h56kwb` — **89 commits**
 
-**Action:** 
+**Action:**
+
 1. Analyze each commit in detail
 2. Determine if work should be cherry-picked, rebased, or fully merged
 3. Identify conflicts with current main
@@ -57,6 +60,7 @@ Branches with 50+ commits, diverged from main, representing substantial work.
 5. Execute carefully with staged testing
 
 #### Category C: ASSESS & PRESERVE (Multiple Governor variants)
+
 Branches representing other Governor evolution phases.
 
 - All other Governor-* branches (v2, v3, bootstrap, evolution, etc.)
@@ -64,6 +68,7 @@ Branches representing other Governor evolution phases.
 - Hercules-related branches
 
 **Action:**
+
 1. Collect latest commit from each
 2. Extract useful decisions/lessons
 3. Document in `docs/governor/` institutional memory
@@ -71,6 +76,7 @@ Branches representing other Governor evolution phases.
 5. Archive the branch
 
 #### Category D: FEATURE/FIX ASSESSMENT (Individual features)
+
 Branches for specific features or fixes.
 
 - `feat/rate-limiter-telemetry`
@@ -78,12 +84,14 @@ Branches for specific features or fixes.
 - All other targeted fixes
 
 **Action:**
+
 1. Check if work is already on main
 2. If not, assess for inclusion in Governor Ω's work stream
 3. Cherry-pick or merge as appropriate
 4. Stop or merge
 
 #### Category E: SAFE ARCHIVAL (History & Backups)
+
 Branches that are historical records or safety backups.
 
 - `backup/main-pre-forcepush-1719dcf`
@@ -101,6 +109,7 @@ Branches that are historical records or safety backups.
 **Objective:** Understand what billing/team work exists and how to integrate it.
 
 **Steps:**
+
 1. Fetch `origin/claude/repair-git-remotes-p1ez7c` locally
 2. Analyze commits:
    - Run `git log origin/main..origin/claude/repair-git-remotes-p1ez7c --format="%h %s"` to get all 261 commit subjects
@@ -126,6 +135,7 @@ Branches that are historical records or safety backups.
 **Objective:** Review Governor Ω v2.0's institutional memory system for incorporation.
 
 **Steps:**
+
 1. Review the commit: `git show 0c59d99`
 2. Examine new files:
    - `docs/governor/README.md` — what structure does it define?
@@ -145,6 +155,7 @@ Branches that are historical records or safety backups.
 **Objective:** Review Cathedral evolution documentation.
 
 **Steps:**
+
 1. Review the DECISION_REGISTER update
 2. Understand what DR-0021 says about Cathedral/Living Organization
 3. Assess whether Cathedral deserves continued executive status or becomes a playbook/department
@@ -157,6 +168,7 @@ Branches that are historical records or safety backups.
 **Objective:** Understand what Phase 2 hardening and bootstrap work exists.
 
 **Steps:**
+
 1. Get latest commit: `git log origin/claude/governor-bootstrap-protocol-h56kwb -1 --format="%h %ai %s"`
 2. Analyze commits: group by feature area (infrastructure, hardening, docs, tests)
 3. Check for overlap with main or production-readiness-final branch
@@ -173,6 +185,7 @@ Branches that are historical records or safety backups.
 **Objective:** Inventory all Governor variants and decide disposition.
 
 **Action for each Governor variant branch:**
+
 1. Check latest commit timestamp
 2. Extract any unique decisions or lessons
 3. Document in `GOVERNOR_EVOLUTION_REGISTER.md`
@@ -187,6 +200,7 @@ Branches that are historical records or safety backups.
 **Objective:** Triage remaining feature and fix branches.
 
 **Action for each feature/fix branch:**
+
 1. Check if work is already on main
 2. If yes: mark as "merged elsewhere"
 3. If no: assess value and conflicts
@@ -200,6 +214,7 @@ Branches that are historical records or safety backups.
 **Objective:** Consolidate governance, decisions, and authority into single Ω structure.
 
 **Actions:**
+
 1. Merge or integrate all governance documentation
 2. Consolidate all DECISION_REGISTER entries
 3. Consolidate all RISK_REGISTER entries
@@ -215,6 +230,7 @@ Branches that are historical records or safety backups.
 **Objective:** Verify consolidation is complete and safe.
 
 **Actions:**
+
 1. CI pass: `npm run lint`, `npm run type-check`, `npm test`, `npm run build`
 2. No conflicts: all merges clean
 3. All work preserved: git log shows all original commits
@@ -229,12 +245,14 @@ Branches that are historical records or safety backups.
 ## EXECUTION CHECKLIST
 
 ### Pre-Consolidation
+
 - [ ] Consolidation Inventory created
 - [ ] Consolidation Plan drafted
 - [ ] All branches fetched and assessed
 - [ ] Freeze declared on parallel sessions
 
 ### Consolidation Execution
+
 - [ ] Task 3a-1: PR #124 assessed and merged/archived
 - [ ] Task 3a-2: PR #148 reviewed and merged
 - [ ] Task 3a-3: PR #146 reviewed and merged
@@ -244,6 +262,7 @@ Branches that are historical records or safety backups.
 - [ ] All decisions documented in CONSOLIDATION_REGISTER
 
 ### Post-Consolidation
+
 - [ ] All new work merged or cherry-picked
 - [ ] `docs/governor/` contains single source of truth
 - [ ] CLAUDE.md updated to reflect Governor Ω sole authority
@@ -254,6 +273,7 @@ Branches that are historical records or safety backups.
 - [ ] Founder briefed on consolidation completion
 
 ### Final Handoff
+
 - [ ] Consolidation report created
 - [ ] All evidence documented
 - [ ] Next priorities clear
@@ -264,18 +284,23 @@ Branches that are historical records or safety backups.
 ## RISKS & MITIGATIONS
 
 ### Risk: Merge Conflicts in Diverged Branches
+
 **Mitigation:** Create temporary feature branches for conflict resolution; test locally before pushing.
 
 ### Risk: Lost Work from PR #124
+
 **Mitigation:** Preserve all 261 commits in git history; if merge fails, create separate archive branch with all commits documented.
 
 ### Risk: Parallel Executives Override Decision
+
 **Mitigation:** Update CLAUDE.md to remove their mandates; mark all parallel constitutions as archived in docs.
 
 ### Risk: CI Failure After Consolidation
+
 **Mitigation:** Test each merge locally; run full CI suite before pushing; stage large merges carefully.
 
 ### Risk: Confusion About Authority
+
 **Mitigation:** Create clear FOUNDER_ACTION_REQUIRED decision board; only Governor Ω can update priority queue.
 
 ---
@@ -318,4 +343,3 @@ Consolidation is successful when:
 2. **All Parallel Sessions:** No new work; stand by for consolidation signals
 
 3. **Founder:** Brief on consolidation progress at Phase 3d checkpoint
-

@@ -1,4 +1,5 @@
 # GOVERNOR AUTONOMOUS OPERATING MANUAL
+
 **Version:** 1.0  
 **Part of:** GOVERNOR EXECUTION FABRIC v1  
 **Date:** 2026-07-16
@@ -6,7 +7,9 @@
 ---
 
 ## FOR: Founder / Executive Authority
+
 ## RE: Operating Governor Ω in Production
+
 ## TIME TO READ: 10 minutes
 
 ---
@@ -72,11 +75,13 @@ curl http://governor-api/status
 ### When Governor Needs You
 
 **Approval Notifications** arrive via:
+
 - Email (for critical decisions)
 - Slack (for routine approvals)
 - Dashboard (always available)
 
 **Typical approval:**
+
 ```
 🔔 Approval Needed
 
@@ -107,11 +112,13 @@ These happen ~1-2 times per week:
 ### Launch a New Feature
 
 **What you do:**
+
 1. Write product spec
 2. Create GitHub issue with spec
 3. Tell Governor: "Launch feature X"
 
 **What Governor does:**
+
 1. Breaks feature into tasks
 2. Opens PRs for implementation
 3. Runs tests continuously
@@ -125,10 +132,12 @@ These happen ~1-2 times per week:
 ### Fix a Production Bug
 
 **What you do:**
+
 1. Identify the bug
 2. Tell Governor: "Fix production issue X"
 
 **What Governor does:**
+
 1. Analyzes logs to find root cause
 2. Writes a fix
 3. Tests locally
@@ -143,10 +152,12 @@ These happen ~1-2 times per week:
 ### Investigate a Production Alert
 
 **What you do:**
+
 1. See alert in Slack
 2. Tell Governor: "Investigate alert X"
 
 **What Governor does:**
+
 1. Collects logs
 2. Analyzes patterns
 3. Identifies root cause
@@ -194,17 +205,17 @@ When Governor needs approval:
 
 ### Approval Decision Rules
 
-| Action | Auto-Approve? | Your Role |
-|--------|---------------|-----------|
-| Push tested code | ✅ | Nothing |
-| Deploy after CI pass | ✅ | Nothing (1-click if needed) |
-| Create PR | ✅ | Nothing |
-| Fix failing test | ✅ | Nothing |
-| **Deploy with CI fail** | ❌ | Approve or reject (risky) |
-| **Set secret** | ❌ | Approve only |
-| **Rotate credential** | ❌ | Approve only |
-| **Delete code/data** | ❌ | Approve or reject |
-| **Production rollback** | ❌ | Approve only |
+| Action                  | Auto-Approve? | Your Role                   |
+| ----------------------- | ------------- | --------------------------- |
+| Push tested code        | ✅            | Nothing                     |
+| Deploy after CI pass    | ✅            | Nothing (1-click if needed) |
+| Create PR               | ✅            | Nothing                     |
+| Fix failing test        | ✅            | Nothing                     |
+| **Deploy with CI fail** | ❌            | Approve or reject (risky)   |
+| **Set secret**          | ❌            | Approve only                |
+| **Rotate credential**   | ❌            | Approve only                |
+| **Delete code/data**    | ❌            | Approve or reject           |
+| **Production rollback** | ❌            | Approve only                |
 
 ---
 
@@ -248,7 +259,7 @@ Recent Actions (Last 24 Hours)
 12:34 UTC ✅ Deployed v1.2.3 to production
          Branch: main @ a1b2c3d
          Status: Healthy
-         
+
 11:22 UTC ✅ Merged PR #42 (Fix: parser race)
          Approver: Founder
          Tests: All passing
@@ -270,6 +281,7 @@ Recent Actions (Last 24 Hours)
 Governor alerts you immediately for:
 
 **🔴 CRITICAL:**
+
 - Production API down
 - Database failure
 - Security breach detected
@@ -277,6 +289,7 @@ Governor alerts you immediately for:
 - Data corruption detected
 
 **🟠 WARNING:**
+
 - High error rate (>5%)
 - Performance degradation
 - Credential about to expire
@@ -284,6 +297,7 @@ Governor alerts you immediately for:
 - Multiple deployment failures
 
 **🟡 INFO:**
+
 - Deployment started
 - Credential rotated
 - Backup completed
@@ -296,6 +310,7 @@ Governor alerts you immediately for:
 ### ❌ Don't Manually Deploy
 
 If you deploy manually and Governor doesn't know:
+
 - Governor may try to deploy while you're deploying
 - Audit trail breaks
 - Verification doesn't happen
@@ -306,6 +321,7 @@ If you deploy manually and Governor doesn't know:
 ### ❌ Don't Manually Rotate Secrets
 
 If you rotate a secret without Governor:
+
 - Governor still has the old secret
 - Services break
 - Audit trail breaks
@@ -315,6 +331,7 @@ If you rotate a secret without Governor:
 ### ❌ Don't Approve Unknown Actions
 
 If you see an approval and don't understand it:
+
 - Click [📋 Details]
 - Read the reasoning
 - Still confused? Click [❌ DENY] and ask Governor to explain
@@ -324,6 +341,7 @@ If you see an approval and don't understand it:
 ### ❌ Don't Ignore Alerts
 
 Alerts mean something needs attention. If Governor can't handle it:
+
 - Escalates to you
 - Tells you exactly what's needed
 - Waits for your decision
@@ -337,11 +355,13 @@ Alerts mean something needs attention. If Governor can't handle it:
 ### Governor Seems Stuck
 
 **Signs:**
+
 - No new missions completed
 - Dashboard shows "status: waiting"
 - No approvals requested
 
 **What to do:**
+
 1. Check Governor health: `curl http://governor-api/health`
 2. Check recent logs: `curl http://governor-api/logs?limit=100`
 3. If unhealthy, restart: `systemctl restart governor`
@@ -350,10 +370,12 @@ Alerts mean something needs attention. If Governor can't handle it:
 ### Governor Is Spamming Alerts
 
 **Signs:**
+
 - Too many notifications
 - Alerts seem repetitive
 
 **What to do:**
+
 1. Go to Dashboard → Alerts → Settings
 2. Adjust alert thresholds
 3. Mute temporary alerts
@@ -362,11 +384,13 @@ Alerts mean something needs attention. If Governor can't handle it:
 ### Governor Got It Wrong
 
 **Signs:**
+
 - Wrong deployment
 - Wrong decision made
 - Failed to understand requirement
 
 **What to do:**
+
 1. Click [❌ DENY] on the approval
 2. Add context: "This needs manual review because..."
 3. Governor learns and adjusts next time
@@ -375,6 +399,7 @@ Alerts mean something needs attention. If Governor can't handle it:
 ### Need Governor to Stop
 
 **Emergency stop:**
+
 ```bash
 # Pause all missions
 curl -X POST http://governor-api/control/pause
@@ -417,9 +442,11 @@ curl -X POST http://governor-api/control/resume
 **Example:** Integrate with Slack for notifications
 
 **What you do:**
+
 1. Tell Governor: "Add Slack integration"
 
 **What Governor does:**
+
 1. Develops Slack module
 2. Tests with staging workspace
 3. Gets your approval
@@ -433,9 +460,11 @@ curl -X POST http://governor-api/control/resume
 **Example:** Integrate with AWS for infrastructure
 
 **What you do:**
+
 1. Tell Governor: "Add AWS CLI support"
 
 **What Governor does:**
+
 1. Develops AWS module
 2. Adds to tool registry
 3. Tests with safe operations first
@@ -471,6 +500,7 @@ Action Required:
 ```
 
 **What to do:**
+
 - Click [Details] to understand full context
 - Click [Approve All] if comfortable with recommendations
 - Governor executes immediately, monitors for issues
@@ -501,6 +531,7 @@ Action Required:
 ```
 
 **What to do:**
+
 - Click [Approve Rollback] to immediately restore service
 - Once stable, tell Governor: "Investigate the query issue"
 - Governor roots it out and proposes fix
@@ -537,6 +568,7 @@ Go? [ YES ] [ NO ] [ STAGING FIRST ]
 ```
 
 **What to do:**
+
 - Review the metrics and verification
 - If confident: Click [YES]
 - If want to test first: Click [STAGING FIRST]
@@ -605,14 +637,17 @@ Go? [ YES ] [ NO ] [ STAGING FIRST ]
 ### Governor Support Channels
 
 **Urgent (Response: <5 min):**
+
 - Critical alerts channel: `#governor-critical`
 - Direct: `governor-support@company.com`
 
 **Standard (Response: <1 hour):**
+
 - Slack: `#governor-help`
 - Dashboard: Help → Contact Support
 
 **Questions:**
+
 - FAQ: `docs/governor/FAQ.md`
 - Troubleshooting: `docs/governor/TROUBLESHOOTING.md`
 - Architecture: `docs/governor/GOVERNOR-EXECUTION-FABRIC-v1-ARCHITECTURE.md`
@@ -657,11 +692,13 @@ Common commands:
 Governor is built on the principle that **you should focus on what matters** (strategy, products, customers) **while Governor handles the logistics** (deployments, testing, monitoring).
 
 If Governor does something unexpected:
+
 - It's usually right (it learns from everything)
 - But if unsure, deny approval and ask for details
 - Governor learns and improves each iteration
 
-**Your job is to:** 
+**Your job is to:**
+
 1. Point Governor at problems
 2. Make strategic decisions
 3. Review escalations

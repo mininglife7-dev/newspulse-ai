@@ -53,16 +53,16 @@ export default function PrivacyPage() {
 
       <h2>Tenant Isolation</h2>
       <p>
-        Workspace data is isolated per tenant and enforced at the database
-        level with row-level security: members of one workspace cannot read
-        another workspace's data.
+        Workspace data is isolated per tenant and enforced at the database level
+        with row-level security: members of one workspace cannot read another
+        workspace's data.
       </p>
 
       <h2>Legal Basis</h2>
       <p>
-        We process account and workspace data to provide the service you sign
-        up for (performance of contract), and with your consent where
-        applicable. You can withdraw consent by deleting your account.
+        We process account and workspace data to provide the service you sign up
+        for (performance of contract), and with your consent where applicable.
+        You can withdraw consent by deleting your account.
       </p>
 
       <h2>Data Storage &amp; Security</h2>
@@ -85,8 +85,8 @@ export default function PrivacyPage() {
       <h2>Third-Party Services</h2>
       <ul>
         <li>
-          <strong>Supabase:</strong> Database and authentication. See
-          Supabase's privacy policy.
+          <strong>Supabase:</strong> Database and authentication. See Supabase's
+          privacy policy.
         </li>
         <li>
           <strong>Vercel:</strong> Hosting platform. See Vercel's privacy
@@ -96,8 +96,8 @@ export default function PrivacyPage() {
 
       <h2>Your Rights</h2>
       <p>
-        Under GDPR (if you are in the EU) and similar privacy laws, you have
-        the right to:
+        Under GDPR (if you are in the EU) and similar privacy laws, you have the
+        right to:
       </p>
       <ul>
         <li>
@@ -111,23 +111,22 @@ export default function PrivacyPage() {
           forgotten)
         </li>
         <li>
-          <strong>Portability:</strong> Request data export in a portable
-          format
+          <strong>Portability:</strong> Request data export in a portable format
         </li>
         <li>
           <strong>Objection:</strong> Object to certain processing
         </li>
       </ul>
       <p>
-        To exercise these rights, contact your onboarding representative or
-        the workspace owner.
+        To exercise these rights, contact your onboarding representative or the
+        workspace owner.
       </p>
 
       <h2>Policy Changes</h2>
       <p>
-        We may update this privacy policy periodically. Significant changes
-        will be announced via the Platform. Your continued use after changes
-        are posted means you accept the updated policy.
+        We may update this privacy policy periodically. Significant changes will
+        be announced via the Platform. Your continued use after changes are
+        posted means you accept the updated policy.
       </p>
     </div>
   );

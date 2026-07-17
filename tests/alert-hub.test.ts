@@ -30,16 +30,36 @@ describe('Alert Hub (DNA-GOV-005)', () => {
     });
 
     it('deduplicates recurring alerts (same source + title)', () => {
-      recordAlert('blocking-conditions', 'critical', 'GitHub Actions outage', 'No runs');
-      recordAlert('blocking-conditions', 'critical', 'GitHub Actions outage', 'Still no runs');
+      recordAlert(
+        'blocking-conditions',
+        'critical',
+        'GitHub Actions outage',
+        'No runs'
+      );
+      recordAlert(
+        'blocking-conditions',
+        'critical',
+        'GitHub Actions outage',
+        'Still no runs'
+      );
 
       const alerts = getActiveAlerts();
       expect(alerts).toHaveLength(1); // Should be deduplicated
     });
 
     it('tracks different alerts separately', () => {
-      recordAlert('blocking-conditions', 'critical', 'GitHub Actions outage', 'No runs');
-      recordAlert('deployment', 'warning', 'Deployment mismatch', 'Code not live');
+      recordAlert(
+        'blocking-conditions',
+        'critical',
+        'GitHub Actions outage',
+        'No runs'
+      );
+      recordAlert(
+        'deployment',
+        'warning',
+        'Deployment mismatch',
+        'Code not live'
+      );
 
       const alerts = getActiveAlerts();
       expect(alerts).toHaveLength(2);
@@ -48,7 +68,12 @@ describe('Alert Hub (DNA-GOV-005)', () => {
 
   describe('resolveAlert', () => {
     it('marks alert as resolved', () => {
-      const alert = recordAlert('blocking-conditions', 'critical', 'GitHub Actions outage', 'No runs');
+      const alert = recordAlert(
+        'blocking-conditions',
+        'critical',
+        'GitHub Actions outage',
+        'No runs'
+      );
 
       resolveAlert(alert.id);
 
@@ -59,7 +84,12 @@ describe('Alert Hub (DNA-GOV-005)', () => {
 
   describe('getActiveAlerts', () => {
     it('returns only unresolved alerts', () => {
-      const alert1 = recordAlert('blocking-conditions', 'critical', 'Alert 1', 'desc');
+      const alert1 = recordAlert(
+        'blocking-conditions',
+        'critical',
+        'Alert 1',
+        'desc'
+      );
       const alert2 = recordAlert('deployment', 'warning', 'Alert 2', 'desc');
 
       resolveAlert(alert1.id);
@@ -129,7 +159,12 @@ describe('Alert Hub (DNA-GOV-005)', () => {
     });
 
     it('excludes resolved alerts from report', () => {
-      const alert = recordAlert('blocking-conditions', 'critical', 'Alert', 'desc');
+      const alert = recordAlert(
+        'blocking-conditions',
+        'critical',
+        'Alert',
+        'desc'
+      );
       resolveAlert(alert.id);
 
       const report = getAlertHubReport();
@@ -140,7 +175,12 @@ describe('Alert Hub (DNA-GOV-005)', () => {
 
   describe('cleanupResolvedAlerts', () => {
     it('removes old resolved alerts', () => {
-      const alert = recordAlert('blocking-conditions', 'critical', 'Alert', 'desc');
+      const alert = recordAlert(
+        'blocking-conditions',
+        'critical',
+        'Alert',
+        'desc'
+      );
       resolveAlert(alert.id);
 
       // Wait a tiny bit to ensure time difference
@@ -152,7 +192,12 @@ describe('Alert Hub (DNA-GOV-005)', () => {
     });
 
     it('keeps recent resolved alerts', () => {
-      const alert = recordAlert('blocking-conditions', 'critical', 'Alert', 'desc');
+      const alert = recordAlert(
+        'blocking-conditions',
+        'critical',
+        'Alert',
+        'desc'
+      );
       resolveAlert(alert.id);
 
       const cleaned = cleanupResolvedAlerts(60); // 60 minutes in future
@@ -188,7 +233,13 @@ describe('Alert Hub (DNA-GOV-005)', () => {
         'No workflow runs',
         'Check GitHub status'
       );
-      recordAlert('deployment', 'warning', 'Deployment mismatch', 'Code not live', 'Force redeploy');
+      recordAlert(
+        'deployment',
+        'warning',
+        'Deployment mismatch',
+        'Code not live',
+        'Force redeploy'
+      );
 
       const report = getAlertHubReport();
       const formatted = formatAlertHubReport(report);
@@ -241,11 +292,26 @@ describe('Alert Hub (DNA-GOV-005)', () => {
     });
 
     it('handles multiple DNA sources', () => {
-      recordAlert('blocking-conditions', 'critical', 'External blocker', 'desc');
-      recordAlert('production-health', 'warning', 'Health check failed', 'desc');
+      recordAlert(
+        'blocking-conditions',
+        'critical',
+        'External blocker',
+        'desc'
+      );
+      recordAlert(
+        'production-health',
+        'warning',
+        'Health check failed',
+        'desc'
+      );
       recordAlert('deployment', 'warning', 'Deployment issue', 'desc');
       recordAlert('error-rate', 'critical', 'High error rate', 'desc');
-      recordAlert('security', 'critical', 'Critical vulnerabilities found', 'CVE-2024-12345');
+      recordAlert(
+        'security',
+        'critical',
+        'Critical vulnerabilities found',
+        'CVE-2024-12345'
+      );
 
       const report = getAlertHubReport();
 
@@ -259,11 +325,23 @@ describe('Alert Hub (DNA-GOV-005)', () => {
     });
 
     it('tracks security vulnerabilities as alerts', () => {
-      recordAlert('security', 'critical', 'Critical dependencies outdated', '1 critical CVE requiring immediate patching');
-      recordAlert('security', 'warning', 'High severity vulnerabilities', '5 high-severity CVEs available for patching');
+      recordAlert(
+        'security',
+        'critical',
+        'Critical dependencies outdated',
+        '1 critical CVE requiring immediate patching'
+      );
+      recordAlert(
+        'security',
+        'warning',
+        'High severity vulnerabilities',
+        '5 high-severity CVEs available for patching'
+      );
 
       const report = getAlertHubReport();
-      const securityAlerts = report.alerts.filter((a) => a.source === 'security');
+      const securityAlerts = report.alerts.filter(
+        (a) => a.source === 'security'
+      );
 
       expect(securityAlerts).toHaveLength(2);
       expect(securityAlerts[0].severity).toBe('critical');

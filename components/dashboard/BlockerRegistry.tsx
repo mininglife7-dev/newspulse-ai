@@ -57,8 +57,10 @@ export default function BlockerRegistry({ blockers }: Props) {
   // Sort by status: open first, then blocked, then in_progress, then resolved
   const sortedBlockers = [...blockers].sort((a, b) => {
     const statusOrder = { open: 0, blocked: 1, in_progress: 2, resolved: 3 };
-    return (statusOrder[a.status as keyof typeof statusOrder] || 4) -
-      (statusOrder[b.status as keyof typeof statusOrder] || 4);
+    return (
+      (statusOrder[a.status as keyof typeof statusOrder] || 4) -
+      (statusOrder[b.status as keyof typeof statusOrder] || 4)
+    );
   });
 
   const stats = {
@@ -79,42 +81,59 @@ export default function BlockerRegistry({ blockers }: Props) {
         </div>
         <div className="rounded-lg border border-green-500/30 bg-green-950/20 p-3">
           <div className="text-xs uppercase text-white/40">Resolved</div>
-          <div className="mt-2 text-2xl font-bold text-green-300">{stats.resolved}</div>
+          <div className="mt-2 text-2xl font-bold text-green-300">
+            {stats.resolved}
+          </div>
         </div>
         <div className="rounded-lg border border-blue-500/30 bg-blue-950/20 p-3">
           <div className="text-xs uppercase text-white/40">In Progress</div>
-          <div className="mt-2 text-2xl font-bold text-blue-300">{stats.inProgress}</div>
+          <div className="mt-2 text-2xl font-bold text-blue-300">
+            {stats.inProgress}
+          </div>
         </div>
         <div className="rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3">
           <div className="text-xs uppercase text-white/40">Open</div>
-          <div className="mt-2 text-2xl font-bold text-yellow-300">{stats.open}</div>
+          <div className="mt-2 text-2xl font-bold text-yellow-300">
+            {stats.open}
+          </div>
         </div>
         <div className="rounded-lg border border-red-500/30 bg-red-950/20 p-3">
           <div className="text-xs uppercase text-white/40">Blocked</div>
-          <div className="mt-2 text-2xl font-bold text-red-300">{stats.blocked}</div>
+          <div className="mt-2 text-2xl font-bold text-red-300">
+            {stats.blocked}
+          </div>
         </div>
       </div>
 
       {/* Blockers List */}
       <div className="space-y-2">
         {sortedBlockers.map((blocker) => (
-          <div key={blocker.id} className={`rounded-lg border transition ${getStatusBg(blocker.status)}`}>
+          <div
+            key={blocker.id}
+            className={`rounded-lg border transition ${getStatusBg(blocker.status)}`}
+          >
             <button
-              onClick={() => setExpandedId(expandedId === blocker.id ? null : blocker.id)}
+              onClick={() =>
+                setExpandedId(expandedId === blocker.id ? null : blocker.id)
+              }
               className="w-full p-4 text-left hover:bg-white/5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-1 items-start gap-3">
                   <div className="mt-1">{getStatusIcon(blocker.status)}</div>
                   <div className="flex-1">
-                    <div className="font-semibold">{blocker.id} — {blocker.title}</div>
+                    <div className="font-semibold">
+                      {blocker.id} — {blocker.title}
+                    </div>
                     <div className="mt-1 flex items-center gap-2 text-sm text-white/70">
                       <span>{blocker.problem}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${getRiskBadgeColor(blocker.riskLevel)}`}>
+                  <span
+                    className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${getRiskBadgeColor(blocker.riskLevel)}`}
+                  >
                     {blocker.riskLevel} risk
                   </span>
                   <span className="whitespace-nowrap rounded-full bg-black/50 px-2 py-1 text-xs capitalize text-white/70">
@@ -139,7 +158,9 @@ export default function BlockerRegistry({ blockers }: Props) {
                 </div>
 
                 <div className="mt-4">
-                  <div className="mb-2 uppercase text-white/40">Rollback Path</div>
+                  <div className="mb-2 uppercase text-white/40">
+                    Rollback Path
+                  </div>
                   <div className="rounded bg-black/30 p-2 font-mono text-xs text-white/70">
                     {blocker.rollbackPath}
                   </div>
@@ -150,7 +171,10 @@ export default function BlockerRegistry({ blockers }: Props) {
                     <div className="mb-2 uppercase text-white/40">Evidence</div>
                     <div className="flex flex-wrap gap-2">
                       {blocker.evidence.map((e) => (
-                        <span key={e} className="rounded bg-accent-500/20 px-2 py-1 text-xs text-accent-300">
+                        <span
+                          key={e}
+                          className="rounded bg-accent-500/20 px-2 py-1 text-xs text-accent-300"
+                        >
                           {e}
                         </span>
                       ))}

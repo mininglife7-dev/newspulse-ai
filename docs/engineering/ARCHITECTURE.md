@@ -15,7 +15,7 @@ EURO AI is a multi-tenant, web-based AI governance platform for EU AI Act compli
 
 **Stack**: Next.js 16 (App Router) → React 19 → TypeScript → Supabase (PostgreSQL + Auth)  
 **Deployment**: Vercel (with preview environments for PRs)  
-**Data**: Supabase PostgreSQL (EU region) with RLS-based workspace isolation  
+**Data**: Supabase PostgreSQL (EU region) with RLS-based workspace isolation
 
 ---
 
@@ -28,6 +28,7 @@ EURO AI is a multi-tenant, web-based AI governance platform for EU AI Act compli
 **Location**: `/app` directory
 
 **Pages**:
+
 - `/auth/*` — Authentication (sign up, login, password reset)
 - `/workspace` — Workspace dashboard and management
 - `/inventory` — AI systems inventory and management
@@ -39,6 +40,7 @@ EURO AI is a multi-tenant, web-based AI governance platform for EU AI Act compli
 - `/governance` — Internal ops dashboard (admin only)
 
 **Key Technologies**:
+
 - React 19 with Hooks for state management
 - Next.js App Router (server components default)
 - TypeScript (strict mode)
@@ -53,6 +55,7 @@ EURO AI is a multi-tenant, web-based AI governance platform for EU AI Act compli
 **Location**: `/app/api` directory
 
 **Route Structure**:
+
 ```
 /api/
 ├── auth/
@@ -82,6 +85,7 @@ EURO AI is a multi-tenant, web-based AI governance platform for EU AI Act compli
 ```
 
 **Middleware & Auth**:
+
 - Supabase JWT validation on protected routes
 - Workspace isolation verification (RLS via JWT claims)
 - Role-based authorization (owner/admin/analyst/viewer)
@@ -126,6 +130,7 @@ EURO AI is a multi-tenant, web-based AI governance platform for EU AI Act compli
 **Features**: PostgreSQL 14+, RLS enabled, automatic backups, point-in-time recovery
 
 **Key Tables**:
+
 ```
 workspaces
 ├── id (UUID, primary key)
@@ -186,12 +191,14 @@ user_workspace_roles
 ```
 
 **Row Level Security (RLS)**:
+
 - All workspace-scoped tables have RLS enabled
 - Policy: `workspace_id = auth.jwt() ->> 'workspace_id'`
 - Users cannot query data from other workspaces
 - Even direct SQL queries respect RLS
 
 **Indexes**:
+
 - Primary keys (automatic)
 - Foreign keys for joins
 - `workspace_id` on all tenant tables (RLS enforcement)
@@ -202,6 +209,7 @@ user_workspace_roles
 **Purpose**: User identity and session management
 
 **Flow**:
+
 1. User signs up with email/password
 2. Supabase creates user record + sends verification email
 3. User verifies email
@@ -212,6 +220,7 @@ user_workspace_roles
 8. Workspace ID injected into JWT claims by trigger
 
 **Session Management**:
+
 - Tokens refreshed automatically (refresh token stored)
 - Expired sessions redirect to login
 - Logout clears session and cookies
@@ -256,7 +265,7 @@ User sees updated UI
    - Extract workspace_id from JWT
    - Validate system_id belongs to this workspace
    - Call lib/assessment.createAssessment()
-   
+
 4. Library Function
    - Validate input
    - Create record with workspace_id
@@ -266,11 +275,11 @@ User sees updated UI
    - INSERT into assessments (id, workspace_id, system_id, ...)
    - RLS policy checked: workspace_id = JWT workspace
    - Allowed: INSERT succeeds
-   
+
 6. Response
    - 201 Created
    - JSON: { id: "ass-789", system_id: "sys-123", ... }
-   
+
 7. Frontend
    - Update state with new assessment
    - Redirect to assessment page
@@ -287,19 +296,19 @@ Scenario: User in Workspace A tries to access Workspace B data
    Authorization: Bearer [JWT with workspace_id = ws-A]
 
 2. RLS Enforcement
-   SELECT * FROM assessments 
-   WHERE id = 'ass-999' 
+   SELECT * FROM assessments
+   WHERE id = 'ass-999'
    AND workspace_id = (JWT -> 'workspace_id')  // ws-A
-   
+
    RLS Policy checks:
    - Is workspace_id = ws-A? No, it's ws-B
    - REJECT: Return empty result
-   
+
 3. Response
    - 404 Not Found
    OR
    - Empty result
-   
+
 User cannot access workspace B's data
 ```
 
@@ -312,12 +321,14 @@ User cannot access workspace B's data
 **Approach**: Database-level isolation using PostgreSQL RLS instead of application-level filtering
 
 **Benefits**:
+
 - Cannot accidentally leak data to wrong customer
 - Works even for direct database access
 - SQL injection cannot bypass isolation
 - Enforced at the data layer (strongest guarantee)
 
 **Implementation**:
+
 ```sql
 -- Enable RLS on workspace-scoped table
 ALTER TABLE assessments ENABLE ROW LEVEL SECURITY;
@@ -333,26 +344,28 @@ CREATE POLICY "Workspace isolation" ON assessments
 **Approach**: Each API route is stateless and can be called independently
 
 **Benefits**:
+
 - Easy to scale (routes can run on different servers)
 - Easy to test (no shared state)
 - Easy to monitor (each request is independent)
 
 **Pattern**:
+
 ```typescript
 // app/api/assessments/route.ts
 export async function POST(request: Request) {
   // 1. Validate auth
   const session = await getSession()
   if (!session) return new Response('Unauthorized', { status: 401 })
-  
+
   // 2. Parse & validate input
   const data = await request.json()
   const errors = validateAssessment(data)
   if (errors.length > 0) return new Response(..., { status: 400 })
-  
+
   // 3. Execute business logic
   const assessment = await createAssessment(session.workspace_id, data)
-  
+
   // 4. Return result
   return new Response(JSON.stringify(assessment), { status: 201 })
 }
@@ -363,11 +376,13 @@ export async function POST(request: Request) {
 **Approach**: Validate on both client (UX) and server (security)
 
 **Client validation**:
+
 - Real-time feedback to user
 - Prevent empty submissions
 - Better UX
 
 **Server validation** (always required):
+
 - Never trust client input
 - Catch injection attacks
 - Enforce business rules
@@ -375,21 +390,21 @@ export async function POST(request: Request) {
 ```typescript
 // lib/validation/assessment.ts
 export function validateAssessment(data: unknown): string[] {
-  const errors = []
-  
+  const errors = [];
+
   if (!data || typeof data !== 'object') {
-    return ['Invalid input']
+    return ['Invalid input'];
   }
-  
+
   if (!data.system_id || typeof data.system_id !== 'string') {
-    errors.push('system_id is required')
+    errors.push('system_id is required');
   }
-  
+
   if (data.answers && typeof data.answers !== 'object') {
-    errors.push('answers must be an object')
+    errors.push('answers must be an object');
   }
-  
-  return errors
+
+  return errors;
 }
 ```
 
@@ -476,6 +491,7 @@ Production Environment
 ### Authenticated Endpoints
 
 All endpoints that access customer data require:
+
 - Valid JWT token in Authorization header
 - Token issued by Supabase Auth
 - Token contains workspace_id claim
@@ -510,19 +526,21 @@ Reasonable query times (<500ms for complex queries)
 ### Future (Many Workspaces)
 
 **Potential bottlenecks**:
+
 - `workspace_id` queries without index (RLS scans all rows)
   - Solution: Index on `(workspace_id)` for each table
-  
+
 - Large workspaces with many AI systems
   - Solution: Pagination, lazy loading
-  
+
 - Complex assessments with many questions
   - Solution: Optimize question definitions storage
-  
+
 - Many users per workspace
   - Solution: Caching, session optimization
 
 **Scaling strategy**:
+
 1. Monitor query performance with EXPLAIN ANALYZE
 2. Add indexes on slow queries
 3. Consider read replicas for reporting queries
@@ -538,7 +556,7 @@ Reasonable query times (<500ms for complex queries)
 - **Supabase**: Authentication, Database, Storage
   - Dependency: Critical (single point of failure)
   - Mitigation: Backup/restore procedures, monitoring
-  
+
 - **Vercel**: Hosting and Deployment
   - Dependency: Critical (production uptime)
   - Mitigation: CDN caching, fallback procedures
@@ -546,6 +564,7 @@ Reasonable query times (<500ms for complex queries)
 ### Future Integrations
 
 Hooks identified for potential future integrations:
+
 - Email service for notifications
 - Storage service for evidence files
 - Analytics for compliance reporting

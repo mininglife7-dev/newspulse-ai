@@ -24,7 +24,11 @@ async function checkComponent(
 
     const responseTime = performance.now() - start;
     if (!result.ok) {
-      logger.error(`Health check component degraded: ${name}`, 'HEALTH_CHECK_DEGRADED', result);
+      logger.error(
+        `Health check component degraded: ${name}`,
+        'HEALTH_CHECK_DEGRADED',
+        result
+      );
     }
     return {
       status: result.ok ? 'healthy' : 'degraded',
@@ -35,7 +39,11 @@ async function checkComponent(
     };
   } catch (error) {
     const responseTime = performance.now() - start;
-    logger.error(`Health check component down: ${name}`, 'HEALTH_CHECK_DOWN', error);
+    logger.error(
+      `Health check component down: ${name}`,
+      'HEALTH_CHECK_DOWN',
+      error
+    );
     return {
       status: 'down',
       component: name,

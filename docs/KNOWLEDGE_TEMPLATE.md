@@ -21,6 +21,7 @@
 [Content here]
 
 ### [Subsection]
+
 [Content]
 
 ---
@@ -42,6 +43,7 @@
 ## Error Handling (if applicable)
 
 **If [X happens]**:
+
 - Action: [what to do]
 - Reference: [related runbook/checklist]
 
@@ -58,11 +60,13 @@
 ## Examples (if applicable)
 
 ### Example 1: [Scenario]
+
 ```
 [Code/configuration example]
 ```
 
 ### Example 2: [Scenario]
+
 ```
 [Code/configuration example]
 ```

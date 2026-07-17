@@ -1,4 +1,5 @@
 # Data Retention & Deletion Policy
+
 ## EURO AI (Cathedral) — GDPR Compliance & Data Lifecycle Management
 
 **Authority:** Governor (Chief Advisor & Chief of Staff)  
@@ -23,35 +24,35 @@ EURO AI respects the EU's General Data Protection Regulation (GDPR), including t
 
 ### Workspace Data (Customer-Controlled)
 
-| Data Type | Retention Period | Why This Period | Customer Control |
-|-----------|------------------|-----------------|------------------|
-| **AI Systems** | Until workspace deleted | Core business data; customer owns | Full (can delete anytime) |
-| **Risk Assessments** | Until workspace deleted | Core compliance data; audit trail needs it | Full (can delete anytime) |
-| **Evidence Documents** | Until workspace deleted | Compliance evidence; required for audits | Full (can delete anytime) |
-| **Remediation Records** | Until workspace deleted | Legal evidence; customer compliance requirement | Full (can delete anytime) |
-| **HERCULES Event Logs** | Until workspace deleted | Enterprise operating system records | Governor-controlled (immutable during pilot) |
+| Data Type               | Retention Period        | Why This Period                                 | Customer Control                             |
+| ----------------------- | ----------------------- | ----------------------------------------------- | -------------------------------------------- |
+| **AI Systems**          | Until workspace deleted | Core business data; customer owns               | Full (can delete anytime)                    |
+| **Risk Assessments**    | Until workspace deleted | Core compliance data; audit trail needs it      | Full (can delete anytime)                    |
+| **Evidence Documents**  | Until workspace deleted | Compliance evidence; required for audits        | Full (can delete anytime)                    |
+| **Remediation Records** | Until workspace deleted | Legal evidence; customer compliance requirement | Full (can delete anytime)                    |
+| **HERCULES Event Logs** | Until workspace deleted | Enterprise operating system records             | Governor-controlled (immutable during pilot) |
 
 **Why:** Customer data is the customer's property. EURO AI retains it as long as the customer wants it.
 
 ### User Account Data
 
-| Data Type | Retention Period | Why This Period | Notes |
-|-----------|------------------|-----------------|-------|
-| **Profile (name, email, org)** | Until user deletion request | User identity; customer owns | GDPR right to be forgotten applies |
-| **Auth logs (login history)** | 90 days | Security monitoring; aged logs can be deleted | Automatic purge after 90 days |
-| **Workspace membership** | Until user deletion | Audit trail; shows who had access to what | Retained for compliance (can be anonymized) |
-| **Audit trail entries** | 7 years (EU regulation) | Legal/regulatory requirement for business records | Immutable after 30 days |
+| Data Type                      | Retention Period            | Why This Period                                   | Notes                                       |
+| ------------------------------ | --------------------------- | ------------------------------------------------- | ------------------------------------------- |
+| **Profile (name, email, org)** | Until user deletion request | User identity; customer owns                      | GDPR right to be forgotten applies          |
+| **Auth logs (login history)**  | 90 days                     | Security monitoring; aged logs can be deleted     | Automatic purge after 90 days               |
+| **Workspace membership**       | Until user deletion         | Audit trail; shows who had access to what         | Retained for compliance (can be anonymized) |
+| **Audit trail entries**        | 7 years (EU regulation)     | Legal/regulatory requirement for business records | Immutable after 30 days                     |
 
 **Why:** 90-day auth log retention balances security investigation needs with privacy. 7-year audit log retention satisfies EU business record requirements.
 
 ### System Data (Non-Customer)
 
-| Data Type | Retention Period | Why This Period | Deletion |
-|-----------|------------------|-----------------|----------|
-| **Application logs** | 30 days | Troubleshooting & incident investigation | Auto-purged; no customer control |
-| **Performance metrics** | 90 days | Capacity planning & alerting | Auto-purged; aggregated after 30 days |
-| **Error reports** | 30 days | Bug tracking & fixes | Auto-purged; no PII included |
-| **Monitoring data** | 365 days (annual) | Year-over-year health trending | Auto-purged; no customer data included |
+| Data Type               | Retention Period  | Why This Period                          | Deletion                               |
+| ----------------------- | ----------------- | ---------------------------------------- | -------------------------------------- |
+| **Application logs**    | 30 days           | Troubleshooting & incident investigation | Auto-purged; no customer control       |
+| **Performance metrics** | 90 days           | Capacity planning & alerting             | Auto-purged; aggregated after 30 days  |
+| **Error reports**       | 30 days           | Bug tracking & fixes                     | Auto-purged; no PII included           |
+| **Monitoring data**     | 365 days (annual) | Year-over-year health trending           | Auto-purged; no customer data included |
 
 **Why:** Operational data needed for platform health; no customer PII included; auto-deletion after periods expire.
 
@@ -66,16 +67,19 @@ EURO AI respects the EU's General Data Protection Regulation (GDPR), including t
 **Process:**
 
 **Step 1: Receive Request (Governor)**
+
 - Customer or user sends: "I want to delete my account" or "Please exercise my right to be forgotten"
 - Governor responds within 24 hours: "Understood. We'll process your deletion within 30 days per GDPR."
 - Governor opens ticket: "User Deletion Request — [User Name]"
 
 **Step 2: Validation (Governor)**
+
 - Confirm user identity (email address + workspace)
 - Confirm user is not a workspace owner (see "Workspace Owner Deletion" below if they are)
 - Check for active sessions; warn user they'll be logged out
 
 **Step 3: Data Preparation (Governor)**
+
 - Run deletion query:
   ```sql
   BEGIN;
@@ -84,55 +88,60 @@ EURO AI respects the EU's General Data Protection Regulation (GDPR), including t
   FROM risk_assessments
   WHERE user_id = '[USER_ID]'
   GROUP BY workspace_id;
-  
+
   -- Document: All assessments authored by user will become unattributed
   -- (author_id → NULL per FK ON DELETE SET NULL policy)
-  
+
   COMMIT;
   ```
 
 **Step 4: Customer Notification (Governor)**
+
 - Email customer: "User [Name] will be deleted in 24 hours. You can cancel this request by replying to this email."
 - Include: List of content that will become unattributed (assessments, evidence, comments)
 - Include: Option to download user's data before deletion (export feature)
 
 **Step 5: Deletion Execution (Governor)**
+
 - After 24-hour cooling-off period, execute:
   ```sql
   BEGIN;
-  
+
   -- Anonymize user name/email
   UPDATE auth.users
   SET email = 'deleted-' || gen_random_uuid() || '@deleted.local'
   WHERE id = '[USER_ID]';
-  
+
   -- Anonymize profile
   UPDATE profiles
   SET full_name = 'Deleted User'
   WHERE user_id = '[USER_ID]';
-  
+
   -- Log deletion
   INSERT INTO audit_log (workspace_id, user_id, action, resource_type, details)
-  VALUES (NULL, '[USER_ID]', 'user_deleted', 'auth.users', 
+  VALUES (NULL, '[USER_ID]', 'user_deleted', 'auth.users',
     'User account permanently deleted per GDPR request');
-  
+
   -- Supabase automatically cascades deletes to workspace_members, etc.
   -- via FK constraints
-  
+
   COMMIT;
   ```
 
 **Step 6: Verification (Governor)**
+
 - Confirm user cannot log in
 - Confirm auth.users email is anonymized
 - Confirm profile is anonymized
 - Send confirmation email: "Your account has been permanently deleted. You can no longer log in to EURO AI."
 
 **Step 7: Archive (Governor)**
+
 - Save deletion request + approval in secure archive (encrypted backups)
 - Retain for 7 years (EU regulation: business records)
 
 **Success Criteria:**
+
 - User cannot authenticate
 - User data is anonymized (not deleted outright, for audit trail integrity)
 - Audit log shows deletion timestamp + who approved it
@@ -147,15 +156,18 @@ EURO AI respects the EU's General Data Protection Regulation (GDPR), including t
 **Process:**
 
 **Step 1: Receive Request (Governor)**
+
 - Customer/workspace owner sends: "We want to delete our workspace and all data"
 - Governor responds: "Understood. We'll delete your workspace within 48 hours. Please confirm in writing that this is intentional."
 
 **Step 2: Owner Confirmation (Governor)**
+
 - Workspace owner must reply to confirmation email: "Yes, delete everything"
 - Or via support form: "I confirm deletion of workspace [Workspace ID]"
 - Cooling-off period: 48 hours (no irreversible action for 2 days)
 
 **Step 3: Data Backup (Governor)**
+
 - Before deletion, offer customer a complete data export:
   ```
   "Would you like a backup of your data before we delete it?
@@ -165,24 +177,26 @@ EURO AI respects the EU's General Data Protection Regulation (GDPR), including t
 - Optional: Customer requests backup via email
 
 **Step 4: Final Confirmation (Governor)**
+
 - Send final confirmation email:
   "Your workspace [Workspace Name] will be permanently deleted on [Date+48hrs].
-   After deletion, you cannot recover any data.
-   Reply to confirm, or email support@euro-ai.production to cancel deletion."
+  After deletion, you cannot recover any data.
+  Reply to confirm, or email support@euro-ai.production to cancel deletion."
 
 **Step 5: Deletion Execution (Governor + Founder)**
+
 - After 48 hours + owner approval:
   ```sql
   BEGIN;
-  
+
   -- Log deletion (before any data is deleted)
   INSERT INTO audit_log (workspace_id, action, resource_type, details)
   VALUES ('[WORKSPACE_ID]', 'workspace_deleted', 'workspaces',
     'Workspace permanently deleted per customer request. Owner: [Owner Name]. Date: [Date].');
-  
+
   -- Delete all workspace-specific data (cascades via FK)
   DELETE FROM workspaces WHERE id = '[WORKSPACE_ID]';
-  
+
   -- Cascading deletes will handle:
   -- - workspace_members
   -- - ai_systems
@@ -190,20 +204,23 @@ EURO AI respects the EU's General Data Protection Regulation (GDPR), including t
   -- - evidence
   -- - remediation_tasks
   -- - hercules_* (enterprise records associated with workspace)
-  
+
   COMMIT;
   ```
 
 **Step 6: Verification (Governor)**
+
 - Confirm workspace no longer appears in customer's account
 - Confirm all related data deleted (via count queries)
 - Send confirmation email: "Your workspace and all data have been permanently deleted."
 
 **Step 7: Archive Deletion Request (Governor)**
+
 - Save customer's deletion request + approvals in secure archive
 - Retain for 7 years (EU regulation: business records)
 
 **Success Criteria:**
+
 - Workspace no longer accessible
 - All child data deleted
 - Audit log captures deletion event (immutable)
@@ -217,6 +234,7 @@ EURO AI respects the EU's General Data Protection Regulation (GDPR), including t
 **Auth Logs (Auto-purge after 90 days):**
 
 Scheduled job (runs daily at 2 AM UTC):
+
 ```sql
 DELETE FROM auth_logs
 WHERE created_at < NOW() - INTERVAL '90 days';
@@ -225,6 +243,7 @@ WHERE created_at < NOW() - INTERVAL '90 days';
 **Application Logs (Auto-purge after 30 days):**
 
 Scheduled job (runs daily at 2 AM UTC):
+
 ```sql
 DELETE FROM application_logs
 WHERE created_at < NOW() - INTERVAL '30 days'
@@ -239,6 +258,7 @@ AND created_at < NOW() - INTERVAL '90 days';
 **Performance Metrics (Auto-purge after 90 days):**
 
 Scheduled job (runs weekly, Sundays at 3 AM UTC):
+
 ```sql
 -- Aggregate metrics older than 30 days into summaries
 INSERT INTO performance_metrics_summary (metric_name, daily_avg, date_range)
@@ -260,10 +280,12 @@ WHERE created_at < NOW() - INTERVAL '90 days';
 ### Audit Log Requirements
 
 **The audit_log table is immutable after 30 days.** This satisfies GDPR's balance between:
+
 - **Right to be forgotten:** User personal data deleted
 - **Business records:** Compliance history retained anonymously
 
 **Immutable audit log fields:**
+
 ```
 id: UUID (primary key; never changes)
 workspace_id: UUID (identifies which customer; can be deleted but log entry remains)
@@ -278,6 +300,7 @@ created_at: TIMESTAMP (when action occurred; immutable)
 ```
 
 **Modification rules:**
+
 - ✅ Allowed: Anonymize user_id field after user deletion
 - ✅ Allowed: Truncate ip_address after 90 days (for privacy)
 - ❌ NOT allowed: Delete audit log entry itself
@@ -287,6 +310,7 @@ created_at: TIMESTAMP (when action occurred; immutable)
 **Example: Audit log after user deletion**
 
 Before deletion:
+
 ```
 id: 550e8400-e29b-41d4-a716-446655440000
 workspace_id: e10ee1b2-99a3-4d4c-a5a0-a9e9f3e0e6b1
@@ -298,6 +322,7 @@ created_at: 2026-05-10 14:22:00 UTC
 ```
 
 After user deletion (30+ days later):
+
 ```
 id: 550e8400-e29b-41d4-a716-446655440000  (← Unchanged)
 workspace_id: e10ee1b2-99a3-4d4c-a5a0-a9e9f3e0e6b1  (← Unchanged)
@@ -318,11 +343,11 @@ created_at: 2026-05-10 14:22:00 UTC  (← Unchanged)
 
 **Supabase manages daily backups automatically.**
 
-| Backup Type | Frequency | Retention | Recovery Time |
-|-------------|-----------|-----------|----------------|
-| Automated snapshot | Daily (2 AM UTC) | 7 days | ~15 minutes |
-| Point-in-time recovery | Every 6 hours | 28 days | ~30 minutes |
-| Long-term archive | Weekly | 1 year (cold storage) | ~24 hours |
+| Backup Type            | Frequency        | Retention             | Recovery Time |
+| ---------------------- | ---------------- | --------------------- | ------------- |
+| Automated snapshot     | Daily (2 AM UTC) | 7 days                | ~15 minutes   |
+| Point-in-time recovery | Every 6 hours    | 28 days               | ~30 minutes   |
+| Long-term archive      | Weekly           | 1 year (cold storage) | ~24 hours     |
 
 **Governor cannot directly access Supabase backups.** Restoration requires Supabase support.
 
@@ -355,12 +380,14 @@ created_at: 2026-05-10 14:22:00 UTC  (← Unchanged)
 **HERCULES records are service-role-only. Deletion is NOT permitted** (even by customer on request).
 
 Rationale:
+
 - HERCULES tracks enterprise governance decisions (Cathedral operating as Enterprise 001)
 - Audit trail shows historical state of enterprise decisions
 - Deleting would violate governance compliance
 - Customer does not "own" HERCULES records (Founder does)
 
 **What if customer wants to delete HERCULES data?**
+
 - Governor explains: HERCULES is immutable governance record; cannot be deleted
 - Governor offers: Anonymization of sensitive HERCULES metadata (on case-by-case basis)
 - Founder approval required for any HERCULES modification
@@ -372,6 +399,7 @@ Rationale:
 Answer: **Files are soft-deleted (marked as deleted, but not physically removed for 30 days).**
 
 Process:
+
 1. Customer deletes assessment
 2. File marked with deleted_at timestamp in database
 3. File remains on storage for 30 days (in case of accidental deletion)
@@ -389,6 +417,7 @@ Process:
 **Customer can request:** "Give me all my data in a machine-readable format"
 
 **EURO AI provides:**
+
 - CSV export via Settings → Export (downloadable immediately)
 - API export via GET /api/export?format=json (for technical teams)
 - Email export: support@euro-ai.production with subject line "Access Request"
@@ -400,6 +429,7 @@ Process:
 **Customer can request:** "Fix incorrect data in my assessments"
 
 **EURO AI provides:**
+
 - Edit feature in platform (customer can edit any field)
 - Or email Governor: "Please correct [data] in my workspace"
 
@@ -410,12 +440,14 @@ Process:
 **Customer can request:** "Delete my account and all my data"
 
 **EURO AI provides:**
+
 - User deletion procedure (see Part 2, Section 1)
 - Workspace deletion procedure (see Part 2, Section 2)
 
 **Response time:** Within 30 days; cooling-off period of 48 hours before irreversible deletion
 
 **Exceptions:**
+
 - Audit log entries cannot be deleted (retained for 7 years for compliance)
 - HERCULES records cannot be deleted (immutable governance records)
 - Backups retain deleted data for up to 7 days (automatic recovery windows)
@@ -425,6 +457,7 @@ Process:
 **Customer can request:** "Give me my data in a format I can import to another service"
 
 **EURO AI provides:**
+
 - CSV export (can be imported to Excel, other platforms)
 - JSON export (can be parsed programmatically)
 - Format: Standardized schema (documented in API docs)
@@ -438,6 +471,7 @@ Process:
 **EURO AI limitation:** Not currently supported for pilot customers. Processing is minimal (read-only access), but full restriction requires engineering work (v1.1 feature).
 
 **What we do instead:**
+
 - Freeze workspace (disable all editing; read-only mode)
 - Stop sending any notifications or reports
 - Continue automatic backups (for your protection)
@@ -451,6 +485,7 @@ Process:
 ### Customer (Workspace Owner)
 
 **You can:**
+
 - Delete your own account (right to be forgotten)
 - Delete entire workspace (right to erasure)
 - Export your data anytime (right to portability)
@@ -458,11 +493,13 @@ Process:
 - Request backup before deletion (risk mitigation)
 
 **You cannot:**
+
 - Delete audit logs (immutable for compliance)
 - Restore data after 48-hour cooling-off period expires (irreversible)
 - Access deleted users' personal data (anonymized)
 
 **How to:**
+
 1. **Delete your account:** Settings → Account → "Delete Account"
 2. **Delete workspace:** Settings → Workspace → "Delete Workspace"
 3. **Export data:** Settings → Export → "Download CSV"
@@ -471,6 +508,7 @@ Process:
 ### Governor (Support & Operations)
 
 **You handle:**
+
 - Receiving deletion requests from customers
 - Validating customer identity
 - Executing deletions (after customer confirmation)
@@ -479,11 +517,13 @@ Process:
 - Monitoring automated purges (auth logs, app logs, metrics)
 
 **You cannot:**
+
 - Delete data without customer written request + confirmation
 - Modify audit logs
 - Restore deleted data (only Supabase can do point-in-time recovery)
 
 **Tools available:**
+
 - Supabase SQL console (for manual verification queries)
 - Supabase backup dashboard (for restore requests to Supabase support)
 - Audit log viewer (in-platform: Settings → Audit Trail)
@@ -491,12 +531,14 @@ Process:
 ### Founder
 
 **You approve:**
+
 - Workspace deletions (after 48-hour cooling period expires)
 - Any HERCULES data modifications
 - Data retention policy changes
 - Exceptions to standard deletion procedures (rare cases)
 
 **You monitor:**
+
 - Deletion request volume (governance metric)
 - Average deletion processing time (SLA: 30 days max)
 - Any unscheduled/unauthorized deletions (security audits)
@@ -528,6 +570,7 @@ Process:
 ### Monthly Deletion Report (Governor → Founder)
 
 **Report contents:**
+
 - Total user deletions this month
 - Total workspace deletions this month
 - Average processing time (from request to completion)
@@ -537,6 +580,7 @@ Process:
 **Frequency:** First Friday of each month
 
 **Example:**
+
 ```
 July 2026 Deletion Report:
 - User deletions: 2
@@ -549,6 +593,7 @@ July 2026 Deletion Report:
 ### Annual GDPR Compliance Audit (Founder)
 
 **Review:**
+
 - All deletion procedures executed correctly
 - Audit logs are immutable (no tampering)
 - Backups retained per policy
@@ -565,17 +610,20 @@ July 2026 Deletion Report:
 ### Pilot Customers (Special Handling)
 
 **During pilot phase (Weeks 1-5):**
+
 - Workspace deletion requests require Founder approval (to protect pilot investment)
 - User deletion allowed normally
 - Data export encouraged weekly
 
 **After pilot completion (Week 6+):**
+
 - Workspace deletion requests follow standard procedure
 - No special approvals needed
 
 ### HERCULES Data (Immutable by Design)
 
 **HERCULES workspace records cannot be deleted because:**
+
 - They are enterprise governance records (not customer-specific)
 - They are foundational to Cathedral's living enterprise operating system
 - Deletion would create audit gaps
@@ -585,12 +633,14 @@ July 2026 Deletion Report:
 ### Legal Hold (Litigation/Investigation)
 
 **If customer data is subject to legal hold:**
+
 - Governor notifies Founder immediately
 - All deletion requests are paused
 - Data is preserved indefinitely until legal hold lifted
 - Customer notified: "We received a legal hold; your data will be retained per legal requirement"
 
 **Process:**
+
 - Founder receives legal hold notice from lawyer
 - Founder pauses all deletion operations for affected workspace(s)
 - Governor documents hold in audit log: "legal_hold_initiated, reason: [litigation detail]"
@@ -622,15 +672,15 @@ A: Customer data is deleted per this policy unless customer explicitly opts in t
 
 ## Part 12: Implementation Status
 
-| Procedure | Status | Implemented By | Notes |
-|-----------|--------|-----------------|-------|
-| User account deletion | ✅ Ready | Governor (SQL trigger) | Tested in dev; verified idempotent |
-| Workspace deletion | ✅ Ready | Governor (SQL trigger) | 48-hour cooling period enforced |
-| Aged data purge (90-day auth logs) | ⏳ Pending | DevOps (scheduled job) | Need cron job setup on Supabase |
-| Audit log immutability | ✅ Ready | Database constraints | Primary key lock + no UPDATE permissions |
-| User export (CSV) | ✅ Ready | Application API | Settings → Export available now |
-| API export (JSON) | ⏳ Pending v1.1 | Engineering | Scheduled for Month 2 development |
-| Right to restrict processing | ⏳ Pending v1.1 | Engineering | Requires read-only workspace mode |
+| Procedure                          | Status          | Implemented By         | Notes                                    |
+| ---------------------------------- | --------------- | ---------------------- | ---------------------------------------- |
+| User account deletion              | ✅ Ready        | Governor (SQL trigger) | Tested in dev; verified idempotent       |
+| Workspace deletion                 | ✅ Ready        | Governor (SQL trigger) | 48-hour cooling period enforced          |
+| Aged data purge (90-day auth logs) | ⏳ Pending      | DevOps (scheduled job) | Need cron job setup on Supabase          |
+| Audit log immutability             | ✅ Ready        | Database constraints   | Primary key lock + no UPDATE permissions |
+| User export (CSV)                  | ✅ Ready        | Application API        | Settings → Export available now          |
+| API export (JSON)                  | ⏳ Pending v1.1 | Engineering            | Scheduled for Month 2 development        |
+| Right to restrict processing       | ⏳ Pending v1.1 | Engineering            | Requires read-only workspace mode        |
 
 ---
 
@@ -639,15 +689,15 @@ A: Customer data is deleted per this policy unless customer explicitly opts in t
 **In your onboarding materials, include:**
 
 > **Your Data Rights (GDPR Compliance)**
-> 
+>
 > EURO AI gives you full control over your data:
-> 
+>
 > ✅ **Export anytime:** Settings → Export gives you a backup of all your data as CSV  
 > ✅ **Delete anytime:** Settings → Account → Delete Account (48-hour confirmation required)  
 > ✅ **Delete workspace:** Settings → Workspace → Delete (48-hour cooling period; all data removed)  
 > ✅ **Audit trail:** All actions logged; you can view who changed what and when  
-> ✅ **Right to be forgotten:** Full compliance with GDPR Article 17  
-> 
+> ✅ **Right to be forgotten:** Full compliance with GDPR Article 17
+>
 > We retain automated backups for 7 days after deletion (for accident recovery).  
 > We retain compliance audit logs for 7 years (regulatory requirement).  
 > We never sell your data.
@@ -659,4 +709,3 @@ A: Customer data is deleted per this policy unless customer explicitly opts in t
 **Author:** Governor (Chief Advisor & Chief of Staff)  
 **Reviewed By:** [Founder Name]  
 **Status:** Ready for customer onboarding
-

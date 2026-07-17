@@ -18,6 +18,7 @@ Updated continuously; read this instead of being interrupted.
 ### Database Deployment Status (Tokyo → EU Migration)
 
 **Current Production (Tokyo):**
+
 - **Project:** `yrroytwfdrafvajdfkog` (ap-northeast-1, AWS Tokyo)
 - **Status:** ✅ Deployment verified complete (runs 29479537494 + 29479962355)
 - **Schema:** 22 tables, 62 indexes, 43 RLS policies, 5 CEIS tables, 1 auth trigger, 3 functions
@@ -25,6 +26,7 @@ Updated continuously; read this instead of being interrupted.
 - **RISK-007:** ✅ CLOSED — auth→profiles trigger confirmed present (trigger verification fix in PR #156)
 
 **EU Migration Preparation:**
+
 - ✅ Phase 1 COMPLETE: Current state documented, migration checklist created (RISK-008-EU-MIGRATION-CHECKLIST.md)
 - ✅ Deployment workflow verified: SUPABASE_DB_URL method works identically for any region
 - ✅ Rollback path documented: Simple secret revert; zero data loss
@@ -48,6 +50,7 @@ Updated continuously; read this instead of being interrupted.
    - Publishable Key (new format, starts with sb_publishable_)
 
 **Timeline after you provide credentials:** Governor will autonomously execute Phases 3-7 in ~35 minutes:
+
 - Phase 3: Update GitHub Secrets + Variables (5 min)
 - Phase 4: Deploy to EU project (10 min)
 - Phase 5: Validate all gates (5 min)
@@ -55,6 +58,7 @@ Updated continuously; read this instead of being interrupted.
 - Phase 7: Final production readiness report with GO recommendation (5 min)
 
 **Remaining standing actions (not blocking EU migration):**
+
 1. Vercel env: `CEIS_CRON_SECRET` (optional: `OPENAI_API_KEY`, `FIRECRAWL_API_KEY`) — enables full CEIS capability (RISK-006)
 2. Branch protection on `main` — standing recommendation (RISK-002)
 

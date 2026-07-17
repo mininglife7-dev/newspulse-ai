@@ -363,7 +363,9 @@ describe('Customer Retention - DNS-GOV-018', () => {
       });
 
       const health = getCustomerHealth('user-1');
-      const expiredTriggers = health.activeTriggers.filter((t) => new Date(t.expiresAt) <= new Date());
+      const expiredTriggers = health.activeTriggers.filter(
+        (t) => new Date(t.expiresAt) <= new Date()
+      );
 
       expect(expiredTriggers.length).toBe(0);
     });
@@ -409,7 +411,11 @@ describe('Customer Retention - DNS-GOV-018', () => {
 
       const metrics = calculateRetentionMetrics();
 
-      expect(metrics.healthyCustomers + metrics.atRiskCustomers + metrics.criticalRiskCustomers).toBeGreaterThan(0);
+      expect(
+        metrics.healthyCustomers +
+          metrics.atRiskCustomers +
+          metrics.criticalRiskCustomers
+      ).toBeGreaterThan(0);
     });
 
     it('categorizes customers by churn risk', () => {
@@ -423,7 +429,12 @@ describe('Customer Retention - DNS-GOV-018', () => {
 
       const metrics = calculateRetentionMetrics();
 
-      expect(metrics.churnRisk.low + metrics.churnRisk.medium + metrics.churnRisk.high + metrics.churnRisk.critical).toBeGreaterThan(0);
+      expect(
+        metrics.churnRisk.low +
+          metrics.churnRisk.medium +
+          metrics.churnRisk.high +
+          metrics.churnRisk.critical
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -464,7 +475,9 @@ describe('Customer Retention - DNS-GOV-018', () => {
       const highRisk = getHighRiskCustomers(10);
 
       expect(highRisk.length).toBeGreaterThan(0);
-      expect(highRisk[0].risk.score).toBeGreaterThanOrEqual(highRisk[1]?.risk.score || 0);
+      expect(highRisk[0].risk.score).toBeGreaterThanOrEqual(
+        highRisk[1]?.risk.score || 0
+      );
     });
 
     it('respects limit parameter', () => {
@@ -568,7 +581,11 @@ describe('Customer Retention - DNS-GOV-018', () => {
       });
 
       const triggers = generateTriggers('user-1');
-      expect(triggers.some((t) => t.type === 'churn-warning' && t.priority === 'critical')).toBe(true);
+      expect(
+        triggers.some(
+          (t) => t.type === 'churn-warning' && t.priority === 'critical'
+        )
+      ).toBe(true);
     });
 
     it('generates retention strategy for diverse customer base', () => {
@@ -607,8 +624,12 @@ describe('Customer Retention - DNS-GOV-018', () => {
       });
 
       // Verify strategy differentiation
-      expect(results.champion.healthScore).toBeGreaterThan(results.dormant.healthScore);
-      expect(results.dormant.riskScore).toBeGreaterThan(results.champion.riskScore);
+      expect(results.champion.healthScore).toBeGreaterThan(
+        results.dormant.healthScore
+      );
+      expect(results.dormant.riskScore).toBeGreaterThan(
+        results.champion.riskScore
+      );
       expect(results.new.triggerCount).toBeGreaterThan(0);
     });
   });

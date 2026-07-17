@@ -112,6 +112,7 @@ All 3 health checks must pass:
 ### Real-Time Monitoring (Always Check These)
 
 **Founder Alert Hub:** GET /api/alerts
+
 ```json
 {
   "alerts": [
@@ -127,6 +128,7 @@ All 3 health checks must pass:
 ```
 
 **Production Health:** GET /api/production-health
+
 ```json
 {
   "landing_page": "ok",
@@ -138,6 +140,7 @@ All 3 health checks must pass:
 ```
 
 **Error Rate Monitoring:** GET /api/error-rate
+
 ```json
 {
   "last_1h": "0.2%", // critical if >15%
@@ -355,13 +358,13 @@ If you see $150+/day spending:
 
 ## Emergency Contacts
 
-| Issue | Contact | Response Time |
-|-------|---------|---|
-| Vercel Down | Vercel Status Page | <5 min |
-| Supabase Down | Supabase Status Page | <30 min |
-| Email Not Sending | Supabase Settings (Email Auth) | <5 min (if misconfigured) |
-| GitHub Actions Down | GitHub Status Page | <15 min |
-| Billing Issues | Vercel/Supabase dashboards | 1 hour (manual review) |
+| Issue               | Contact                        | Response Time             |
+| ------------------- | ------------------------------ | ------------------------- |
+| Vercel Down         | Vercel Status Page             | <5 min                    |
+| Supabase Down       | Supabase Status Page           | <30 min                   |
+| Email Not Sending   | Supabase Settings (Email Auth) | <5 min (if misconfigured) |
+| GitHub Actions Down | GitHub Status Page             | <15 min                   |
+| Billing Issues      | Vercel/Supabase dashboards     | 1 hour (manual review)    |
 
 ---
 

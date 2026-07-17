@@ -1,4 +1,5 @@
 # Cathedral Deployment Automation Guide
+
 ## Autonomous Execution Framework for 2026-09-01 Launch
 
 **Purpose:** Enable rapid, repeatable deployment cycles with minimal manual intervention  
@@ -34,6 +35,7 @@ echo "✅ Credentials verified"
 ## Phase 2: Schema Deployment (Autonomous)
 
 ### Step 1: Read Schema File
+
 ```bash
 # Load schema from repo
 SCHEMA=$(cat supabase/schema.sql)
@@ -48,6 +50,7 @@ echo "✅ Schema file loaded ($(wc -l < supabase/schema.sql) lines)"
 ```
 
 ### Step 2: Deploy to Supabase
+
 ```bash
 # Use Supabase CLI for automated deployment
 # Install if needed: npm install -g supabase
@@ -67,6 +70,7 @@ echo "✅ Schema deployed to production"
 ```
 
 ### Step 3: Verify Tables Created
+
 ```bash
 # Use Supabase API to list tables
 curl -s \
@@ -83,6 +87,7 @@ echo "✅ Tables verified in Supabase"
 ## Phase 3: Connectivity Verification (Autonomous)
 
 ### Health Check Endpoint
+
 ```bash
 # Start dev server with Supabase credentials loaded
 npm run dev &
@@ -107,6 +112,7 @@ kill $DEV_PID
 ```
 
 ### API Response Verification
+
 ```bash
 # Test critical API endpoints
 curl -X GET http://localhost:3000/api/health \
@@ -127,6 +133,7 @@ curl -X GET http://localhost:3000/api/health \
 ## Phase 4: Signup Flow Test (Autonomous)
 
 ### Create Test User
+
 ```bash
 # Via Supabase API
 TEST_EMAIL="test-$(date +%s)@example.com"
@@ -150,6 +157,7 @@ echo "✅ Test user created: $TEST_EMAIL"
 ```
 
 ### Verify Profile Created
+
 ```bash
 # Check profile in database
 curl -s -X GET \
@@ -162,6 +170,7 @@ echo "✅ Profile created and accessible"
 ```
 
 ### Verify RLS (Row-Level Security)
+
 ```bash
 # Create second test user
 TEST_EMAIL_2="test-$(date +%s)-2@example.com"
@@ -400,17 +409,17 @@ tail -50 ~/.npm/supabase/logs  # If using Supabase CLI
 # Run every 5 minutes during launch day
 while true; do
   echo "[$(date)] Checking production health..."
-  
+
   # API health
   curl -s http://localhost:3000/api/health | jq '.checks.database'
-  
+
   # Database query count
   curl -s -H "Authorization: Bearer $SUPABASE_SERVICE" \
     "$SUPABASE_URL/rest/v1/rpc/get_query_count" | jq '.count'
-  
+
   # Error rate
   npm run test -- tests/api-health.test.ts --reporter=json | jq '.stats.failures'
-  
+
   sleep 300  # 5 minutes
 done
 ```
@@ -425,7 +434,7 @@ done
 
 # Escalation:
 # - API down 5+ min = P1 incident
-# - Database slow >500ms = P2 incident  
+# - Database slow >500ms = P2 incident
 # - Error rate >1% = P2 incident
 ```
 
@@ -489,4 +498,3 @@ done
 **Triggers:** Supabase credential receipt  
 **Maintenance:** Update after each deployment cycle  
 **Owner:** Governor Omega
-

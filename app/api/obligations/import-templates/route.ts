@@ -4,7 +4,9 @@ import { getTemplatesForRiskLevel } from '@/lib/obligation-templates';
 
 export const dynamic = 'force-dynamic';
 
-async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
+async function resolveContext(
+  supabase: Awaited<ReturnType<typeof createRouteClient>>
+) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -48,9 +50,15 @@ export async function POST(request: NextRequest) {
   }
 
   const riskLevel = body.riskLevel as string;
-  if (!riskLevel || !['unacceptable', 'high', 'medium', 'low'].includes(riskLevel)) {
+  if (
+    !riskLevel ||
+    !['unacceptable', 'high', 'medium', 'low'].includes(riskLevel)
+  ) {
     return NextResponse.json(
-      { ok: false, error: 'Valid riskLevel required (unacceptable/high/medium/low)' },
+      {
+        ok: false,
+        error: 'Valid riskLevel required (unacceptable/high/medium/low)',
+      },
       { status: 400 }
     );
   }
@@ -90,7 +98,11 @@ export async function POST(request: NextRequest) {
 
       if (existing) {
         // Obligation already exists, skip
-        createdObligations.push({ id: existing.id, title: template.title, skipped: true });
+        createdObligations.push({
+          id: existing.id,
+          title: template.title,
+          skipped: true,
+        });
         continue;
       }
 
@@ -109,12 +121,19 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error || !data) {
-        console.error('[api/obligations/import-templates] failed to create obligation:', error);
+        console.error(
+          '[api/obligations/import-templates] failed to create obligation:',
+          error
+        );
         // Continue with other templates even if one fails
         continue;
       }
 
-      createdObligations.push({ id: data.id, title: template.title, skipped: false });
+      createdObligations.push({
+        id: data.id,
+        title: template.title,
+        skipped: false,
+      });
     }
 
     const created = createdObligations.filter((o) => !o.skipped).length;

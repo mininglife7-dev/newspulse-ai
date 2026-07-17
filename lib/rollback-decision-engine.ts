@@ -15,7 +15,8 @@ import {
   RollbackAuditEntry,
 } from './deployment-verification';
 
-export type RollbackState = 'pending' | 'in-progress' | 'verifying' | 'completed' | 'failed';
+export type RollbackState =
+  'pending' | 'in-progress' | 'verifying' | 'completed' | 'failed';
 
 export interface RollbackPolicy {
   maxAttemptsPerDeployment: number;
@@ -45,7 +46,12 @@ export interface RollbackAttempt {
 }
 
 export interface RollbackDecision {
-  decision: 'proceed' | 'retry-verification' | 'hold-for-review' | 'rollback-now' | 'escalate-to-founder';
+  decision:
+    | 'proceed'
+    | 'retry-verification'
+    | 'hold-for-review'
+    | 'rollback-now'
+    | 'escalate-to-founder';
   evidence: DecisionEvidence[];
   confidence: number; // 0-100
   estimatedOutageMinutes: number;
@@ -85,7 +91,9 @@ export class RollbackDecisionEngine {
     this.policy = { ...DEFAULT_ROLLBACK_POLICY, ...policy };
   }
 
-  public async makeDecision(context: RollbackDecisionContext): Promise<RollbackDecision> {
+  public async makeDecision(
+    context: RollbackDecisionContext
+  ): Promise<RollbackDecision> {
     const { deploymentId, verificationReport, previousAttempts } = context;
     const evidence: DecisionEvidence[] = [];
     let totalWeight = 0;
@@ -106,7 +114,10 @@ export class RollbackDecisionEngine {
     totalWeight += cooldownSignal.weight;
 
     // Signal 4: Retry exhaustion
-    const retrySignal = this.checkRetryExhaustion(deploymentId, previousAttempts);
+    const retrySignal = this.checkRetryExhaustion(
+      deploymentId,
+      previousAttempts
+    );
     evidence.push(retrySignal);
     totalWeight += retrySignal.weight;
 
@@ -125,7 +136,8 @@ export class RollbackDecisionEngine {
     const decision = this.classifyDecision(riskLevel, evidence, context);
 
     // Estimate outage minutes if rollback not done
-    const estimatedOutageMinutes = this.estimateOutageIfNotRolledBack(verificationReport);
+    const estimatedOutageMinutes =
+      this.estimateOutageIfNotRolledBack(verificationReport);
 
     return {
       decision,
@@ -138,7 +150,9 @@ export class RollbackDecisionEngine {
     };
   }
 
-  private analyzeHealthStatus(report: DeploymentVerificationReport): DecisionEvidence {
+  private analyzeHealthStatus(
+    report: DeploymentVerificationReport
+  ): DecisionEvidence {
     const passPercentage = (report.passedChecks / report.checks.length) * 100;
 
     let status: 'pass' | 'fail' | 'degraded' = 'pass';
@@ -158,7 +172,10 @@ export class RollbackDecisionEngine {
     };
   }
 
-  private detectRollbackLoops(deploymentId: string, context: RollbackDecisionContext): DecisionEvidence {
+  private detectRollbackLoops(
+    deploymentId: string,
+    context: RollbackDecisionContext
+  ): DecisionEvidence {
     if (!this.policy.preventRollbackLoops) {
       return {
         type: 'loop-detection',
@@ -176,7 +193,10 @@ export class RollbackDecisionEngine {
       const now = Date.now();
       const minutesSinceLastRollback = (now - lastTime) / 1000 / 60;
 
-      if (minutesSinceLastRollback < ROLLBACK_LOOP_THRESHOLD_MINUTES && loopCount > 1) {
+      if (
+        minutesSinceLastRollback < ROLLBACK_LOOP_THRESHOLD_MINUTES &&
+        loopCount > 1
+      ) {
         return {
           type: 'loop-detection',
           signal: `Possible rollback loop: ${loopCount} rollbacks in ${minutesSinceLastRollback.toFixed(1)} minutes`,
@@ -230,7 +250,9 @@ export class RollbackDecisionEngine {
     deploymentId: string,
     previousAttempts: RollbackAttempt[]
   ): DecisionEvidence {
-    const failedAttempts = previousAttempts.filter((a) => !a.result?.success).length;
+    const failedAttempts = previousAttempts.filter(
+      (a) => !a.result?.success
+    ).length;
     const isExhausted = failedAttempts >= this.policy.maxAttemptsPerDeployment;
 
     return {
@@ -243,8 +265,12 @@ export class RollbackDecisionEngine {
     };
   }
 
-  private estimateOutageImpact(report: DeploymentVerificationReport): DecisionEvidence {
-    const failedChecks = report.checks.filter((c) => c.result === 'fail').length;
+  private estimateOutageImpact(
+    report: DeploymentVerificationReport
+  ): DecisionEvidence {
+    const failedChecks = report.checks.filter(
+      (c) => c.result === 'fail'
+    ).length;
     const criticalFailures = report.checks
       .filter(
         (c) =>
@@ -254,7 +280,12 @@ export class RollbackDecisionEngine {
       )
       .filter((c) => c.result === 'fail').length;
 
-    const impactLevel = criticalFailures > 0 ? 'critical' : failedChecks > 3 ? 'high' : 'moderate';
+    const impactLevel =
+      criticalFailures > 0
+        ? 'critical'
+        : failedChecks > 3
+          ? 'high'
+          : 'moderate';
 
     return {
       type: 'outage-impact',
@@ -265,7 +296,9 @@ export class RollbackDecisionEngine {
     };
   }
 
-  private classifyRiskLevel(evidence: DecisionEvidence[]): 'low' | 'medium' | 'high' | 'critical' {
+  private classifyRiskLevel(
+    evidence: DecisionEvidence[]
+  ): 'low' | 'medium' | 'high' | 'critical' {
     const failedSignals = evidence.filter((e) => e.status === 'fail').length;
     const criticalSignals = evidence.filter(
       (e) => e.status === 'fail' && e.weight >= 0.7
@@ -291,7 +324,12 @@ export class RollbackDecisionEngine {
     riskLevel: string,
     evidence: DecisionEvidence[],
     context: RollbackDecisionContext
-  ): 'proceed' | 'retry-verification' | 'hold-for-review' | 'rollback-now' | 'escalate-to-founder' {
+  ):
+    | 'proceed'
+    | 'retry-verification'
+    | 'hold-for-review'
+    | 'rollback-now'
+    | 'escalate-to-founder' {
     // Check for blocking signals
     const loopSignal = evidence.find((e) => e.type === 'loop-detection');
     const cooldownSignal = evidence.find((e) => e.type === 'cooldown-check');
@@ -314,7 +352,9 @@ export class RollbackDecisionEngine {
       case 'critical':
         return 'rollback-now'; // Immediate rollback for critical failures
       case 'high':
-        return context.previousAttempts.length > 0 ? 'rollback-now' : 'retry-verification';
+        return context.previousAttempts.length > 0
+          ? 'rollback-now'
+          : 'retry-verification';
       case 'medium':
         return 'retry-verification'; // Retry verification before rollback
       case 'low':
@@ -324,8 +364,12 @@ export class RollbackDecisionEngine {
     }
   }
 
-  private estimateOutageIfNotRolledBack(report: DeploymentVerificationReport): number {
-    const failedChecks = report.checks.filter((c) => c.result === 'fail').length;
+  private estimateOutageIfNotRolledBack(
+    report: DeploymentVerificationReport
+  ): number {
+    const failedChecks = report.checks.filter(
+      (c) => c.result === 'fail'
+    ).length;
 
     if (failedChecks === 0) return 0; // No outage if no failures
     if (failedChecks <= 2) return 15; // 15 min estimated outage for minor failures
@@ -353,12 +397,18 @@ export class RollbackDecisionEngine {
     }
   }
 
-  public recordRollbackAttempt(deploymentId: string, attempt: RollbackAttempt): void {
+  public recordRollbackAttempt(
+    deploymentId: string,
+    attempt: RollbackAttempt
+  ): void {
     if (!this.rollbackHistory.has(deploymentId)) {
       this.rollbackHistory.set(deploymentId, []);
     }
     this.rollbackHistory.get(deploymentId)!.push(attempt);
-    this.loopDetectionMap.set(deploymentId, (this.loopDetectionMap.get(deploymentId) || 0) + 1);
+    this.loopDetectionMap.set(
+      deploymentId,
+      (this.loopDetectionMap.get(deploymentId) || 0) + 1
+    );
   }
 
   public recordSuccessfulRollback(deploymentId: string): void {
@@ -459,7 +509,8 @@ export async function executeRollback(
       currentDeploymentId: request.previousDeploymentId,
       beforeState,
       afterState,
-      recoveryProof: 'Verified: All 10 health checks passed; error rate < 1%; latency P99 < 500ms',
+      recoveryProof:
+        'Verified: All 10 health checks passed; error rate < 1%; latency P99 < 500ms',
       auditLog,
     };
   } catch (error) {

@@ -151,7 +151,8 @@ export default function CommandCentre() {
               ⚡ HERCULES Command Centre
             </h1>
             <p className="text-slate-600 mt-2">
-              Living Enterprise Operating System — Real-time organism health & control
+              Living Enterprise Operating System — Real-time organism health &
+              control
             </p>
           </div>
           <button
@@ -159,27 +160,33 @@ export default function CommandCentre() {
             disabled={refreshing}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
+            />
             Refresh
           </button>
         </div>
 
         {/* Last Refresh */}
         {lastRefresh && (
-          <p className="text-sm text-slate-500 mb-6">Last updated: {lastRefresh}</p>
+          <p className="text-sm text-slate-500 mb-6">
+            Last updated: {lastRefresh}
+          </p>
         )}
 
         {/* Overall Health Card */}
         {health && (
-          <div className={`p-6 rounded-lg border-2 mb-8 ${
-            health.overallStatus === 'HEALTHY'
-              ? 'bg-green-50 border-green-200'
-              : health.overallStatus === 'DEGRADED'
-              ? 'bg-yellow-50 border-yellow-200'
-              : health.overallStatus === 'AT_RISK'
-              ? 'bg-orange-50 border-orange-200'
-              : 'bg-red-50 border-red-200'
-          }`}>
+          <div
+            className={`p-6 rounded-lg border-2 mb-8 ${
+              health.overallStatus === 'HEALTHY'
+                ? 'bg-green-50 border-green-200'
+                : health.overallStatus === 'DEGRADED'
+                  ? 'bg-yellow-50 border-yellow-200'
+                  : health.overallStatus === 'AT_RISK'
+                    ? 'bg-orange-50 border-orange-200'
+                    : 'bg-red-50 border-red-200'
+            }`}
+          >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
                 {getStatusIcon(health.overallStatus)}
@@ -188,16 +195,18 @@ export default function CommandCentre() {
                     {health.overallStatus === 'HEALTHY'
                       ? '🟢 HEALTHY'
                       : health.overallStatus === 'DEGRADED'
-                      ? '🟡 DEGRADED'
-                      : health.overallStatus === 'AT_RISK'
-                      ? '🟠 AT_RISK'
-                      : '🔴 CRITICAL'}
+                        ? '🟡 DEGRADED'
+                        : health.overallStatus === 'AT_RISK'
+                          ? '🟠 AT_RISK'
+                          : '🔴 CRITICAL'}
                   </h2>
                   <p className="text-sm text-slate-600">Enterprise Health</p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold">{health.overallPercentage}%</div>
+                <div className="text-3xl font-bold">
+                  {health.overallPercentage}%
+                </div>
                 <p className="text-xs text-slate-600">System Operational</p>
               </div>
             </div>
@@ -209,10 +218,10 @@ export default function CommandCentre() {
                   health.overallPercentage >= 90
                     ? 'bg-green-600'
                     : health.overallPercentage >= 70
-                    ? 'bg-yellow-600'
-                    : health.overallPercentage >= 50
-                    ? 'bg-orange-600'
-                    : 'bg-red-600'
+                      ? 'bg-yellow-600'
+                      : health.overallPercentage >= 50
+                        ? 'bg-orange-600'
+                        : 'bg-red-600'
                 }`}
                 style={{ width: `${health.overallPercentage}%` }}
               />
@@ -235,7 +244,9 @@ export default function CommandCentre() {
             {/* Blocking Issues */}
             {health.blockingIssues.length > 0 && (
               <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded">
-                <p className="font-semibold text-red-900 mb-2">🚨 Blocking Issues:</p>
+                <p className="font-semibold text-red-900 mb-2">
+                  🚨 Blocking Issues:
+                </p>
                 <ul className="space-y-1 text-sm text-red-800">
                   {health.blockingIssues.map((issue, i) => (
                     <li key={i}>• {issue}</li>
@@ -264,9 +275,13 @@ export default function CommandCentre() {
                     <div className="flex justify-between items-start mb-1">
                       <div className="flex items-center gap-2">
                         <OrganIcon organ={organ.organ} />
-                        <span className="font-semibold text-sm">{organ.organ}</span>
+                        <span className="font-semibold text-sm">
+                          {organ.organ}
+                        </span>
                       </div>
-                      <span className="text-xs font-bold">{organ.percentage}%</span>
+                      <span className="text-xs font-bold">
+                        {organ.percentage}%
+                      </span>
                     </div>
                     {organ.issues.length > 0 && (
                       <ul className="text-xs space-y-1 mt-2">
@@ -292,32 +307,47 @@ export default function CommandCentre() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                  <div className="text-2xl font-bold text-blue-600">{kernel.enterprises}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {kernel.enterprises}
+                  </div>
                   <p className="text-xs text-slate-600">Enterprises</p>
                 </div>
                 <div className="p-3 bg-purple-50 rounded border border-purple-200">
-                  <div className="text-2xl font-bold text-purple-600">{kernel.missions}</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {kernel.missions}
+                  </div>
                   <p className="text-xs text-slate-600">Missions</p>
                 </div>
                 <div className="p-3 bg-green-50 rounded border border-green-200">
-                  <div className="text-2xl font-bold text-green-600">{kernel.tasks}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {kernel.tasks}
+                  </div>
                   <p className="text-xs text-slate-600">Total Tasks</p>
                 </div>
                 <div className="p-3 bg-orange-50 rounded border border-orange-200">
-                  <div className="text-2xl font-bold text-orange-600">{kernel.queuedTasks}</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {kernel.queuedTasks}
+                  </div>
                   <p className="text-xs text-slate-600">Queued</p>
                 </div>
                 <div className="p-3 bg-red-50 rounded border border-red-200">
-                  <div className="text-2xl font-bold text-red-600">{kernel.events}</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {kernel.events}
+                  </div>
                   <p className="text-xs text-slate-600">Events</p>
                 </div>
                 <div className="p-3 bg-slate-100 rounded border border-slate-300">
-                  <div className="text-2xl font-bold text-slate-700">{kernel.auditLogEntries}</div>
+                  <div className="text-2xl font-bold text-slate-700">
+                    {kernel.auditLogEntries}
+                  </div>
                   <p className="text-xs text-slate-600">Audit Entries</p>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-slate-50 rounded text-xs text-slate-600">
-                <p>Last heartbeat: {new Date(kernel.lastHeartbeat).toLocaleString()}</p>
+                <p>
+                  Last heartbeat:{' '}
+                  {new Date(kernel.lastHeartbeat).toLocaleString()}
+                </p>
               </div>
             </div>
           )}
@@ -326,10 +356,12 @@ export default function CommandCentre() {
         {/* Footer */}
         <div className="bg-white rounded-lg shadow-md p-6 border border-slate-200 text-center">
           <p className="text-sm text-slate-600">
-            HERCULES v1.0 operational | Governor autonomous execution constitution active
+            HERCULES v1.0 operational | Governor autonomous execution
+            constitution active
           </p>
           <p className="text-xs text-slate-500 mt-2">
-            Founder: Control and observe via /api/hercules/kernel (missions, tasks, events) and /api/hercules/health
+            Founder: Control and observe via /api/hercules/kernel (missions,
+            tasks, events) and /api/hercules/health
           </p>
         </div>
       </div>

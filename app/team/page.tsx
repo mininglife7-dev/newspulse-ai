@@ -105,7 +105,8 @@ export default function TeamPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to invite');
+      if (!res.ok || !data.ok)
+        throw new Error(data.error || 'Failed to invite');
       setForm({ email: '', role: 'member' });
       setShowForm(false);
       await loadMembers();
@@ -175,7 +176,10 @@ export default function TeamPage() {
       {canManage && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-slate-400">
-            {members.filter((m) => m.status !== 'removed').length} member{members.filter((m) => m.status !== 'removed').length !== 1 ? 's' : ''}
+            {members.filter((m) => m.status !== 'removed').length} member
+            {members.filter((m) => m.status !== 'removed').length !== 1
+              ? 's'
+              : ''}
           </div>
           <button
             onClick={() => setShowForm((v) => !v)}
@@ -199,7 +203,10 @@ export default function TeamPage() {
           )}
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm text-slate-300">
+              <label
+                htmlFor="email"
+                className="mb-1 block text-sm text-slate-300"
+              >
                 Email <span className="text-red-400">*</span>
               </label>
               <input
@@ -212,13 +219,18 @@ export default function TeamPage() {
               />
             </div>
             <div>
-              <label htmlFor="role" className="mb-1 block text-sm text-slate-300">
+              <label
+                htmlFor="role"
+                className="mb-1 block text-sm text-slate-300"
+              >
                 Role <span className="text-red-400">*</span>
               </label>
               <select
                 id="role"
                 value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value as any })}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value as any })
+                }
                 className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
               >
                 <option value="member">Member</option>
@@ -274,7 +286,8 @@ export default function TeamPage() {
           <Users className="mx-auto mb-4 h-10 w-10 text-slate-600" />
           <h2 className="text-lg font-semibold text-white">Just you for now</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-            Invite team members to collaborate on compliance assessments and evidence collection.
+            Invite team members to collaborate on compliance assessments and
+            evidence collection.
           </p>
         </div>
       ) : (
@@ -290,7 +303,9 @@ export default function TeamPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Mail className="h-5 w-5 text-cyan-400" />
-                      <span className="font-medium text-white">{member.email}</span>
+                      <span className="font-medium text-white">
+                        {member.email}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <span
@@ -314,7 +329,9 @@ export default function TeamPage() {
                     <div className="flex items-center gap-2">
                       <select
                         value={member.role}
-                        onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                        onChange={(e) =>
+                          handleRoleChange(member.id, e.target.value)
+                        }
                         className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none"
                       >
                         <option value="viewer">Viewer</option>

@@ -119,5 +119,4 @@ export interface DashboardError {
 }
 
 export type DashboardResponse =
-  | (DashboardState & { ok?: true })
-  | DashboardError;
+  (DashboardState & { ok?: true }) | DashboardError;

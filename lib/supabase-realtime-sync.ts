@@ -64,7 +64,10 @@ const syncState: RealtimeSyncState = {
 };
 
 const conflicts: Map<string, RealtimeConflict> = new Map();
-const eventHandlers: Map<string, Set<(event: RealtimeEvent_v) => void>> = new Map();
+const eventHandlers: Map<
+  string,
+  Set<(event: RealtimeEvent_v) => void>
+> = new Map();
 let subscriptionCounter = 0;
 
 /**
@@ -183,7 +186,8 @@ export function broadcastRealtimeEvent(
     } catch (err) {
       console.error(`Error in realtime handler for ${table}:`, err);
       syncState.errorCount++;
-      syncState.lastError = err instanceof Error ? err.message : 'Unknown error';
+      syncState.lastError =
+        err instanceof Error ? err.message : 'Unknown error';
     }
   });
 
@@ -274,13 +278,18 @@ export function getSyncState(): {
  * Get active subscriptions
  */
 export function getActiveSubscriptions(): RealtimeSubscription[] {
-  return Array.from(syncState.subscriptions.values()).filter((sub) => sub.active);
+  return Array.from(syncState.subscriptions.values()).filter(
+    (sub) => sub.active
+  );
 }
 
 /**
  * Get recent events
  */
-export function getRecentEvents(table?: string, limit: number = 50): RealtimeEvent_v[] {
+export function getRecentEvents(
+  table?: string,
+  limit: number = 50
+): RealtimeEvent_v[] {
   let events = syncState.eventHistory;
 
   if (table) {

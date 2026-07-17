@@ -22,17 +22,17 @@ The dev server runs on [http://localhost:3000](http://localhost:3000) with hot r
 
 Copy `.env.example` to `.env.local` and fill in these values:
 
-| Variable                          | Required | Where to get it             |
-| --------------------------------- | -------- | --------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`        | yes      | Supabase → Settings → API   |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | yes      | Supabase → Settings → API   |
-| `SUPABASE_SERVICE_ROLE_KEY`       | yes      | Supabase → Settings → API   |
-| `SUPABASE_PROJECT_ID`             | yes      | From Supabase URL            |
-| `GITHUB_OWNER`                    | yes      | Your GitHub organization    |
-| `GITHUB_REPO`                     | yes      | Your GitHub repository      |
-| `ADMIN_TOKEN`                     | no       | For production only; generate with `openssl rand -hex 32` |
-| `GITHUB_TOKEN`                    | no       | GitHub PAT for CI monitoring |
-| `NEXT_PUBLIC_APP_URL`             | no       | Your production deployment URL (required for health checks) |
+| Variable                        | Required | Where to get it                                             |
+| ------------------------------- | -------- | ----------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | Supabase → Settings → API                                   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | Supabase → Settings → API                                   |
+| `SUPABASE_SERVICE_ROLE_KEY`     | yes      | Supabase → Settings → API                                   |
+| `SUPABASE_PROJECT_ID`           | yes      | From Supabase URL                                           |
+| `GITHUB_OWNER`                  | yes      | Your GitHub organization                                    |
+| `GITHUB_REPO`                   | yes      | Your GitHub repository                                      |
+| `ADMIN_TOKEN`                   | no       | For production only; generate with `openssl rand -hex 32`   |
+| `GITHUB_TOKEN`                  | no       | GitHub PAT for CI monitoring                                |
+| `NEXT_PUBLIC_APP_URL`           | no       | Your production deployment URL (required for health checks) |
 
 ---
 

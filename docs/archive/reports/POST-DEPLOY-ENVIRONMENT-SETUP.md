@@ -58,6 +58,7 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 **Step 3: Redeploy**
 
 To pick up the new environment variable:
+
 1. Go to: **Deployments**
 2. Click the ellipsis (...) on the latest deployment
 3. Select: **Redeploy**
@@ -66,6 +67,7 @@ To pick up the new environment variable:
 **Verification:**
 
 After redeployment, the CEIS cron scheduler will activate automatically:
+
 - Check `/api/alerts` endpoint for any CEIS-related messages
 - CEIS compliance checks will run on schedule (default: every 24 hours)
 - Audit trail will be recorded in `ceis_audit` table
@@ -152,11 +154,11 @@ After redeployment, the CEIS cron scheduler will activate automatically:
 
 ## Environment Variable Reference
 
-| Variable | Required | Source | Notes |
-|----------|----------|--------|-------|
-| `CEIS_CRON_SECRET` | ✅ Yes (for first customer) | Generated locally | 32-character base64 string |
-| `OPENAI_API_KEY` | ⚠️ Optional | OpenAI Platform | Starts with `sk-` |
-| `FIRECRAWL_API_KEY` | ⚠️ Optional | Firecrawl Dashboard | Advanced feature only |
+| Variable            | Required                    | Source              | Notes                      |
+| ------------------- | --------------------------- | ------------------- | -------------------------- |
+| `CEIS_CRON_SECRET`  | ✅ Yes (for first customer) | Generated locally   | 32-character base64 string |
+| `OPENAI_API_KEY`    | ⚠️ Optional                 | OpenAI Platform     | Starts with `sk-`          |
+| `FIRECRAWL_API_KEY` | ⚠️ Optional                 | Firecrawl Dashboard | Advanced feature only      |
 
 ---
 
@@ -187,11 +189,13 @@ After redeployment, the CEIS cron scheduler will activate automatically:
 **Symptom:** Compliance tracking not activating or audit trail not appearing
 
 **Diagnosis:**
+
 1. Check Vercel environment variables: Is `CEIS_CRON_SECRET` set?
 2. Check deployment: Did the redeploy complete successfully?
 3. Check logs: Look for CEIS-related errors in `/api/alerts`
 
 **Resolution:**
+
 1. Verify environment variable was saved to production
 2. Trigger redeploy again (sometimes doesn't pick up on first try)
 3. Wait 1-2 minutes for scheduler to activate
@@ -201,11 +205,13 @@ After redeployment, the CEIS cron scheduler will activate automatically:
 **Symptom:** Risk assessment analysis is basic/limited
 
 **Diagnosis:**
+
 1. Is `OPENAI_API_KEY` set in Vercel?
 2. Is the API key valid (hasn't been revoked)?
 3. Is there sufficient API credit in OpenAI account?
 
 **Resolution:**
+
 1. Verify OpenAI key is in Vercel production environment
 2. Check OpenAI account balance at platform.openai.com
 3. Redeploy if key was just added
@@ -214,14 +220,14 @@ After redeployment, the CEIS cron scheduler will activate automatically:
 
 ## Impact Summary
 
-| Feature | Without Variable | With Variable |
-|---------|------------------|---------------|
-| **Basic signup/login** | ✅ Works | ✅ Works |
-| **Workspace creation** | ✅ Works | ✅ Works |
-| **Risk assessment** | ✅ Basic | ✅ Enhanced (with AI) |
-| **CEIS compliance tracking** | ❌ Disabled | ✅ Enabled |
-| **Audit trail** | ❌ Limited | ✅ Complete |
-| **Web monitoring** | ❌ Disabled | ✅ Enabled (with Firecrawl) |
+| Feature                      | Without Variable | With Variable               |
+| ---------------------------- | ---------------- | --------------------------- |
+| **Basic signup/login**       | ✅ Works         | ✅ Works                    |
+| **Workspace creation**       | ✅ Works         | ✅ Works                    |
+| **Risk assessment**          | ✅ Basic         | ✅ Enhanced (with AI)       |
+| **CEIS compliance tracking** | ❌ Disabled      | ✅ Enabled                  |
+| **Audit trail**              | ❌ Limited       | ✅ Complete                 |
+| **Web monitoring**           | ❌ Disabled      | ✅ Enabled (with Firecrawl) |
 
 ---
 
@@ -235,6 +241,7 @@ After redeployment, the CEIS cron scheduler will activate automatically:
 ## Questions?
 
 Refer to:
+
 - CEIS Documentation: `docs/CEIS-FEATURES.md`
 - Vercel Environment Setup: `docs/infra/VERCEL-SETUP.md`
 - API Keys Management: `docs/infra/API-KEYS.md`

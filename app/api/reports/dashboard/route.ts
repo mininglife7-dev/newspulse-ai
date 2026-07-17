@@ -5,7 +5,9 @@ import { PDFDocument, rgb } from 'pdf-lib';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function resolveContext(supabase: Awaited<ReturnType<typeof createRouteClient>>) {
+async function resolveContext(
+  supabase: Awaited<ReturnType<typeof createRouteClient>>
+) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -59,26 +61,42 @@ export async function GET() {
       .eq('workspace_id', ctx.workspaceId);
 
     const totalSystems = systems?.length || 0;
-    const assessedSystems = new Set(assessments?.map((a: any) => a.ai_system_id)).size || 0;
+    const assessedSystems =
+      new Set(assessments?.map((a: any) => a.ai_system_id)).size || 0;
 
     const riskDistribution = {
-      unacceptable: (assessments || []).filter((a: any) => a.risk_level === 'unacceptable').length,
-      high: (assessments || []).filter((a: any) => a.risk_level === 'high').length,
-      medium: (assessments || []).filter((a: any) => a.risk_level === 'medium').length,
-      low: (assessments || []).filter((a: any) => a.risk_level === 'low').length,
+      unacceptable: (assessments || []).filter(
+        (a: any) => a.risk_level === 'unacceptable'
+      ).length,
+      high: (assessments || []).filter((a: any) => a.risk_level === 'high')
+        .length,
+      medium: (assessments || []).filter((a: any) => a.risk_level === 'medium')
+        .length,
+      low: (assessments || []).filter((a: any) => a.risk_level === 'low')
+        .length,
     };
 
     const assessmentStatus = {
-      draft: (assessments || []).filter((a: any) => a.status === 'draft').length,
-      in_review: (assessments || []).filter((a: any) => a.status === 'in_review').length,
-      finalized: (assessments || []).filter((a: any) => a.status === 'finalized').length,
+      draft: (assessments || []).filter((a: any) => a.status === 'draft')
+        .length,
+      in_review: (assessments || []).filter(
+        (a: any) => a.status === 'in_review'
+      ).length,
+      finalized: (assessments || []).filter(
+        (a: any) => a.status === 'finalized'
+      ).length,
     };
 
     const evidenceStatus = {
-      submitted: (evidence || []).filter((e: any) => e.status === 'submitted').length,
-      under_review: (evidence || []).filter((e: any) => e.status === 'under_review').length,
-      approved: (evidence || []).filter((e: any) => e.status === 'approved').length,
-      rejected: (evidence || []).filter((e: any) => e.status === 'rejected').length,
+      submitted: (evidence || []).filter((e: any) => e.status === 'submitted')
+        .length,
+      under_review: (evidence || []).filter(
+        (e: any) => e.status === 'under_review'
+      ).length,
+      approved: (evidence || []).filter((e: any) => e.status === 'approved')
+        .length,
+      rejected: (evidence || []).filter((e: any) => e.status === 'rejected')
+        .length,
     };
 
     // Generate PDF
@@ -119,12 +137,15 @@ export async function GET() {
       color: rgb(0, 0, 0),
     });
     y -= 15;
-    page.drawText(`Assessed: ${assessedSystems} (${totalSystems > 0 ? Math.round((assessedSystems / totalSystems) * 100) : 0}%)`, {
-      x: 50,
-      y,
-      size: 11,
-      color: rgb(0, 0, 0),
-    });
+    page.drawText(
+      `Assessed: ${assessedSystems} (${totalSystems > 0 ? Math.round((assessedSystems / totalSystems) * 100) : 0}%)`,
+      {
+        x: 50,
+        y,
+        size: 11,
+        color: rgb(0, 0, 0),
+      }
+    );
     y -= 15;
     page.drawText(`Pending Assessment: ${totalSystems - assessedSystems}`, {
       x: 50,
@@ -144,10 +165,26 @@ export async function GET() {
     y -= 20;
 
     const riskLevels = [
-      { label: 'Unacceptable (Prohibited)', count: riskDistribution.unacceptable, color: rgb(1, 0.2, 0.2) },
-      { label: 'High Risk', count: riskDistribution.high, color: rgb(1, 0.6, 0.2) },
-      { label: 'Medium Risk', count: riskDistribution.medium, color: rgb(1, 0.8, 0.2) },
-      { label: 'Low Risk', count: riskDistribution.low, color: rgb(0.2, 0.8, 0.2) },
+      {
+        label: 'Unacceptable (Prohibited)',
+        count: riskDistribution.unacceptable,
+        color: rgb(1, 0.2, 0.2),
+      },
+      {
+        label: 'High Risk',
+        count: riskDistribution.high,
+        color: rgb(1, 0.6, 0.2),
+      },
+      {
+        label: 'Medium Risk',
+        count: riskDistribution.medium,
+        color: rgb(1, 0.8, 0.2),
+      },
+      {
+        label: 'Low Risk',
+        count: riskDistribution.low,
+        color: rgb(0.2, 0.8, 0.2),
+      },
     ];
 
     riskLevels.forEach(({ label, count, color }) => {
@@ -231,8 +268,12 @@ export async function GET() {
     y -= 25;
 
     // Readiness Score
-    const assessmentReadiness = totalSystems > 0 ? Math.round((assessedSystems / totalSystems) * 100) : 0;
-    const evidenceReadiness = (evidence || []).length > 0 ? Math.round((evidenceStatus.approved / (evidence || []).length) * 100) : 0;
+    const assessmentReadiness =
+      totalSystems > 0 ? Math.round((assessedSystems / totalSystems) * 100) : 0;
+    const evidenceReadiness =
+      (evidence || []).length > 0
+        ? Math.round((evidenceStatus.approved / (evidence || []).length) * 100)
+        : 0;
     const readiness = Math.round((assessmentReadiness + evidenceReadiness) / 2);
 
     page.drawText('Compliance Readiness', {
@@ -244,7 +285,11 @@ export async function GET() {
     y -= 20;
 
     const readinessColor =
-      readiness >= 75 ? rgb(0.2, 0.8, 0.2) : readiness >= 50 ? rgb(1, 0.8, 0.2) : rgb(1, 0.2, 0.2);
+      readiness >= 75
+        ? rgb(0.2, 0.8, 0.2)
+        : readiness >= 50
+          ? rgb(1, 0.8, 0.2)
+          : rgb(1, 0.2, 0.2);
 
     page.drawText(`Overall Readiness: ${readiness}%`, {
       x: 50,

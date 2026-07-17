@@ -32,12 +32,14 @@ Each decision record includes:
 **Context**: Repository has ~300 governance files with duplication, 42 API route directories with overlapping concerns, and fragmented governance. Founder needs clear roadmap for institutional consolidation.
 
 **Options Considered**:
+
 1. ❌ Immediate consolidation (all duplication fixed at once) — risk: rework without governance clarity, decision conflicts
 2. ✅ Sequential 10-stage program (each stage builds on prior) — recommended: clear authority, verification at each step, prevents rework
 
 **Decision**: Implement 10-stage institutional build program (STAGE 0: Reconnaissance, STAGE 1: Governance Kernel, through STAGE 10: Production Readiness). Each stage must complete and be verified before proceeding.
 
 **Impact**:
+
 - STAGE 0 complete: Repository assessment, risk baseline, architecture map documented
 - STAGE 1 in progress: Governor Ω operational framework, decision protocol, reporting standards
 - STAGE 2 queued: Duplication consolidation (Assessment, Deployment verification, Error tracking)
@@ -45,7 +47,8 @@ Each decision record includes:
 
 **Owner**: Governor Ω (autonomous, per Alpha Cathedral Ω directive)  
 **Status**: Active (STAGE 1 implementing)  
-**Related**: 
+**Related**:
+
 - `docs/governance/IMPLEMENTATION_ROADMAP.md` (10 stages defined)
 - `docs/governor/PROJECT_STATE.md` (completion tracker)
 - `docs/governor/NEXT_ACTION.md` (stage decisions)
@@ -59,10 +62,12 @@ Each decision record includes:
 **Context**: Multiple Governor versions referenced in docs (CONSOLIDATION_REGISTER.md mentions v2, v3, bootstrap, evolution variants). This creates confusion about operational authority.
 
 **Options Considered**:
+
 1. ❌ Keep multiple Governor variants (enables experimentation) — risk: unclear authority, contradictory decisions
 2. ✅ Single Governor Ω authority (clear, unified, executable) — recommended: one decision maker, clear boundaries, institutional clarity
 
 **Decision**: Governor Ω is the sole executive authority for:
+
 - Repository operations (code, architecture, testing, CI/CD)
 - Engineering decisions (design, refactoring, standards)
 - Documentation governance (structure, maintenance)
@@ -71,6 +76,7 @@ Each decision record includes:
 All other Governor variants are now methodologies/departments within Governor Ω, not independent authorities. See `docs/governor/CONSOLIDATION_REGISTER.md` for complete audit.
 
 **Impact**:
+
 - Clear operational authority: Governor Ω, operating under FOUNDER_ADVISOR_CONSTITUTION.md and FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md
 - Decision clarity: Class A (autonomous), Class B (advised), Class C (escalated), Class D (blocked) decisions defined
 - Institutional memory: Future Governors know who decides what and why
@@ -78,6 +84,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Owner**: Governor Ω (per Alpha Cathedral Ω directive)  
 **Status**: Active  
 **Related**:
+
 - `docs/governance/AGENTS.md` (Governor Ω identity and capabilities)
 - `docs/governance/GOVERNOR_OPERATIONAL_FRAMEWORK.md` (decision protocol)
 - `docs/governor/CONSOLIDATION_REGISTER.md` (consolidation audit)
@@ -91,17 +98,19 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Context**: ~300 markdown files across 5 directories (root, docs/governance/, docs/governor/, docs/infra/, docs/integrity/) with overlapping content. Multiple versions of FOUNDER-BRIEF, DECISION_REGISTER, deployment runbooks create contradictory guidance.
 
 **Options Considered**:
+
 1. ❌ Archive all old files (loses historical context, rework if we need old info)
 2. ✅ Consolidate to single source of truth per topic, archive historical snapshots (keeps context, prevents duplication)
 
 **Decision**:
+
 - **Authoritative Documents** (~15-20 files):
   - Constitutions (FOUNDER_ADVISOR, AUTONOMOUS_EXECUTION, COMMUNICATION)
   - Governance (AGENTS, OPERATIONAL_FRAMEWORK, DECISION_LOG)
   - Standards (ENGINEERING, TESTING, DOCUMENTATION)
   - Roadmap (IMPLEMENTATION_ROADMAP, PROJECT_STATE, NEXT_ACTION)
   - Procedures (DEPLOYMENT, INCIDENT_RESPONSE, VERIFICATION)
-  
+
 - **Archive** (~250 files):
   - Checkpoint snapshots (move to `docs/archive/checkpoints/`)
   - Old roadmaps/phases (move to `docs/archive/history/`)
@@ -115,6 +124,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
   - Clear authority (who decides, when to update)
 
 **Impact**:
+
 - Founder clarity: Single place to look for each topic
 - Governor clarity: No contradictory guidance
 - Operational efficiency: Update once, not multiple places
@@ -123,6 +133,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Owner**: Governor Ω  
 **Status**: Queued for STAGE 2 (consolidation implementation)  
 **Related**:
+
 - STAGE 2 (Repository Organization) roadmap
 - `docs/governance/IMPLEMENTATION_ROADMAP.md` (Stage 2 plan)
 
@@ -133,16 +144,19 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Date**: 2026-07-16  
 **Title**: Consolidate 42 API route directories into clear domain structure  
 **Context**: 42 endpoint directories with overlapping concerns:
+
 - `assessment/` + `assessments/` (both exist, unclear primary)
 - `deployment-verification/` + `deployment-canary/` + `verify-deployment/` (3 implementations)
 - `errors/` + `error-tracking/` + `error-rate/` (3 implementations)
 - Experimental: `evolution/`, `hercules/`, `cathedral-readiness/` (status unclear)
 
 **Options Considered**:
+
 1. ❌ Leave as-is (low effort now, high maintenance cost later, data sync risk)
 2. ✅ Consolidate with clear domain structure (higher effort now, lower cost long-term, clear contracts)
 
 **Decision**: Consolidate API routes with clear naming:
+
 - **Primary routes** (customer-facing): `/api/workspace/`, `/api/inventory/`, `/api/assessment/`, `/api/evidence/`, `/api/obligations/`, `/api/team/`, `/api/reports/`
 - **Internal routes** (monitoring/ops): `/api/health/`, `/api/alerts/`, `/api/metrics/`
 - **Deprecated** (to be removed or consolidated):
@@ -152,6 +166,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
   - `evolution/`, `hercules/`, `cathedral-readiness/` → archive or clarify status
 
 **Impact**:
+
 - Clear API contracts (one endpoint per resource)
 - Reduced maintenance burden (single implementation per concern)
 - Data consistency (no sync issues across multiple implementations)
@@ -160,6 +175,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Owner**: Governor Ω  
 **Status**: Queued for STAGE 2 (consolidation)  
 **Related**:
+
 - STAGE 2 (Repository Organization) roadmap
 - `docs/governance/IMPLEMENTATION_ROADMAP.md` (Stage 2 detailed plan)
 
@@ -172,10 +188,12 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Context**: STAGE 0 identified RISK-003 (Governance Fragmentation) as blocking institutional build. STAGE 1 creates governance documents that define operational authority and decision protocol.
 
 **Options Considered**:
+
 1. ❌ Skip governance, go straight to code consolidation (risk: decisions lack authority, rework)
 2. ✅ Governance first, then code consolidation (recommended: clear authority prevents rework)
 
 **Decision**: STAGE 1 implements:
+
 - `AGENTS.md` — Governor Ω identity, capabilities, boundaries
 - `GOVERNOR_OPERATIONAL_FRAMEWORK.md` — Decision protocol (Class A/B/C/D decisions)
 - `DECISION_LOG.md` — Permanent record of architectural decisions
@@ -183,6 +201,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 - `docs/governor/lessons/LESSONS.md` — Learning from stages
 
 **Impact**:
+
 - Clear authority: Governor Ω decides Class A/B, escalates C/D to Founder
 - Clear boundaries: Engineering owns code/architecture; Founder owns vision/legal/strategy
 - Clear protocol: How decisions are made, logged, and communicated
@@ -191,6 +210,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Owner**: Governor Ω  
 **Status**: Active (STAGE 1 implementing)  
 **Related**:
+
 - `docs/governance/AGENTS.md`
 - `docs/governance/GOVERNOR_OPERATIONAL_FRAMEWORK.md`
 - `docs/governance/IMPLEMENTATION_ROADMAP.md` (STAGE 1 details)
@@ -204,10 +224,12 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Context**: STAGE 2 consolidated repository structure; now need to enforce consistency across codebase to enable sustainable scaling. De-facto patterns exist but are not documented, leading to inconsistency and review friction.
 
 **Options Considered**:
+
 1. ❌ No formal standards (rely on code review) — risk: inconsistent patterns, slow onboarding, subjective review
 2. ✅ Document observed patterns, enforce with tooling — recommended: clear expectations, faster review, easier onboarding
 
 **Decision**: STAGE 3 implements:
+
 - `ENGINEERING_STANDARDS.md` — Codify observed best practices:
   - TypeScript strict mode, no `any` types
   - API route structure with error handling
@@ -232,6 +254,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
   - Blocks push on failures
 
 **Impact**:
+
 - Consistency: All code follows documented patterns
 - Quality: Standards prevent common bugs (implicit types, missing error handling, RLS bypasses)
 - Onboarding: New developers learn from examples, not subjective feedback
@@ -241,6 +264,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 **Owner**: Governor Ω  
 **Status**: Active (STAGE 3 Phase 3.1 complete, Phase 3.2 enforcement in progress)  
 **Related**:
+
 - `docs/governance/ENGINEERING_STANDARDS.md`
 - `docs/governance/INTEGRATION_TEST_STANDARD.md`
 - `.husky/pre-push` (enforcement hook)
@@ -248,6 +272,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 - `docs/governor/PROJECT_STATE.md` (Phase 3.2 metrics)
 
 **Phase 3.3 Progress** (Integration Tests): ✅ COMPLETE
+
 - ✅ Created test infrastructure (tests/setup.ts, tests/fixtures.ts)
 - ✅ Implemented 4 customer journey integration test suites:
   1. Auth & Workspace Setup: 5 positive tests + 3 error scenarios
@@ -261,6 +286,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 - Next: Phase 3.4 Verification (final sign-off, pre-push enforcement validation)
 
 **Phase 3.2 Progress** (Standards Enforcement): ✅ COMPLETE
+
 - ✅ 10 high-impact customer-facing API routes refactored:
   - `/api/assessments/route.ts`, `/api/assessments/[id]/route.ts`
   - `/api/team/route.ts`, `/api/team/[id]/route.ts`
@@ -279,6 +305,7 @@ All other Governor variants are now methodologies/departments within Governor Ω
 - Next: Phase 3.3 Integration Tests to address RISK-004 (customer journey verification gaps)
 
 **Refactoring Pattern** (consistent across all routes):
+
 1. Import logger and validators modules
 2. Define typed Request interface (replacing `any`)
 3. Replace manual validation with validators.enum/string/object

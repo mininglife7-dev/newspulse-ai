@@ -59,6 +59,7 @@ If health check fails: Do NOT proceed. Contact on-call engineer.
 ### For Each New Feature
 
 **Step 1: Understand the feature**
+
 - Read the PR description
 - Know: What changed, why, expected behavior
 - Know: Which pages/endpoints affected
@@ -66,6 +67,7 @@ If health check fails: Do NOT proceed. Contact on-call engineer.
 **Step 2: Test happy path** (main workflow)
 
 Example: If feature is "evidence linking to obligations"
+
 ```
 1. Create workspace (if needed)
 2. Create AI system
@@ -89,6 +91,7 @@ Example: If feature is "evidence linking to obligations"
 **Step 4: Verify no regressions**
 
 Test that unchanged features still work:
+
 - Log in still works
 - Workspace switching works
 - Previous features not broken
@@ -114,16 +117,19 @@ Test that unchanged features still work:
 ### For Each Bug Fix
 
 **Step 1: Reproduce original bug**
+
 - Understand what was broken
 - Verify bug actually exists in released version
 - Document steps to reproduce
 
 **Step 2: Test the fix**
+
 - Perform the same steps that caused bug
 - Verify bug no longer happens
 - Test edge cases that might trigger bug again
 
 **Step 3: Verify fix didn't break other features**
+
 - Features that use the same code
 - Related features that might be affected
 - Any features mentioned in the fix PR
@@ -144,15 +150,16 @@ Use browser DevTools (F12 → Network tab):
 5. Check: No failed requests (404, 500 errors)
 ```
 
-| Page | Target | Acceptable |
-|------|--------|-----------|
-| Login | <2s | <3s |
-| Workspace | <2s | <3s |
-| Inventory | <3s | <4s |
-| Assessment | <3s | <4s |
-| Evidence | <3s | <4s |
+| Page       | Target | Acceptable |
+| ---------- | ------ | ---------- |
+| Login      | <2s    | <3s        |
+| Workspace  | <2s    | <3s        |
+| Inventory  | <3s    | <4s        |
+| Assessment | <3s    | <4s        |
+| Evidence   | <3s    | <4s        |
 
 **If slow**:
+
 - Check Network tab for slow requests
 - Check browser console for errors
 - Verify database is not overloaded
@@ -161,12 +168,14 @@ Use browser DevTools (F12 → Network tab):
 ### Database Performance
 
 Check Supabase monitoring:
+
 1. Supabase dashboard → Database → Monitoring
 2. CPU: Should be <80%
 3. Query time: No recent spikes
 4. Connections: <20 (normal)
 
 **If database slow**:
+
 - Check for long-running queries
 - Verify no connection leaks
 - Contact DBA if persistent
@@ -214,7 +223,7 @@ SELECT COUNT(*) FROM evidence WHERE obligation_id IS NULL;
 -- Should return: 0
 
 -- Check for cross-workspace leaks
-SELECT COUNT(*) FROM evidence 
+SELECT COUNT(*) FROM evidence
 WHERE workspace_id != (SELECT workspace_id FROM obligations WHERE id = obligation_id);
 -- Should return: 0
 ```
@@ -222,6 +231,7 @@ WHERE workspace_id != (SELECT workspace_id FROM obligations WHERE id = obligatio
 ### Required Fields
 
 For new features, verify all required fields are:
+
 - Validated on input (prevent save without value)
 - Visible in list views (user can see what they created)
 - Editable (user can change after creation)
@@ -273,6 +283,7 @@ Test on:
 - [ ] Mobile (iPhone or Android)
 
 For each:
+
 - [ ] Feature works
 - [ ] No console errors
 - [ ] Text readable (not cut off)
@@ -286,6 +297,7 @@ For each:
 ### Application Logs
 
 Check for errors in logs:
+
 ```bash
 # Supabase dashboard → Logs
 # Filter: Last 30 minutes (since deployment)
@@ -296,6 +308,7 @@ Check for errors in logs:
 ### Browser Console
 
 Open DevTools Console:
+
 - [ ] No red errors
 - [ ] Warnings are acceptable (framework warnings)
 - [ ] No "undefined is not a function" errors
@@ -380,22 +393,26 @@ Before approving release:
 ### If Issues Found
 
 **Severity 1 (Blocking)**:
+
 - Feature doesn't work
 - Data is corrupted or leaked
 - Security vulnerability
 - **Action**: Rollback immediately (see PROCEDURES/ROLLBACK.md)
 
 **Severity 2 (High)**:
+
 - Feature partially broken
 - Performance degraded
 - **Action**: Fix forward or rollback (decision required)
 
 **Severity 3 (Medium)**:
+
 - Minor UI issue
 - Non-critical feature broken
 - **Action**: Log issue, plan fix for next release
 
 **Severity 4 (Low)**:
+
 - Typo or cosmetic issue
 - **Action**: Log issue, fix when convenient
 
@@ -408,6 +425,7 @@ Before approving release:
 **Cause**: Environment variables or configuration different
 
 **Fix**:
+
 - Check environment variables (Vercel → Settings → Environment)
 - Verify database connection (health endpoint)
 - Check for region-specific issues
@@ -417,6 +435,7 @@ Before approving release:
 **Cause**: Not visible locally due to faster hardware/network
 
 **Fix**:
+
 - Add database index
 - Optimize query (see DATABASE_OPERATIONS.md)
 - Verify CDN caching is working
@@ -426,6 +445,7 @@ Before approving release:
 **Cause**: Race condition or incomplete transaction
 
 **Fix**:
+
 - Add database constraints
 - Improve error handling
 - Add validation

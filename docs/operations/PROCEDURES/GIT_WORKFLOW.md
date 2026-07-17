@@ -23,6 +23,7 @@ Standard Git workflow and commit message conventions for the EURO AI repository.
 **Format**: `[category]/[description]`
 
 **Categories**:
+
 - `feat/` — New feature (e.g., `feat/evidence-linking`)
 - `fix/` — Bug fix (e.g., `fix/assessment-validation`)
 - `refactor/` — Code refactoring without behavior change (e.g., `refactor/extract-obligation-logic`)
@@ -33,6 +34,7 @@ Standard Git workflow and commit message conventions for the EURO AI repository.
 - `perf/` — Performance improvements (e.g., `perf/optimize-assessment-queries`)
 
 **Description**:
+
 - Lowercase
 - Use hyphens (not underscores)
 - Descriptive but concise (3-5 words)
@@ -43,6 +45,7 @@ Standard Git workflow and commit message conventions for the EURO AI repository.
   - ❌ `bug/issue`
 
 **Current Naming** (for institutional work):
+
 - All work uses: `claude/[roadmap-identifier]`
 - Example: `claude/alpha-cathedral-roadmap-2tea9o`
 
@@ -62,6 +65,7 @@ git branch
 ### Keeping Branch Up-to-Date
 
 **If main has changed**:
+
 ```bash
 # Fetch latest
 git fetch origin
@@ -77,6 +81,7 @@ npm test
 ```
 
 **Never use merge** (creates merge commits):
+
 ```bash
 # ❌ Don't do this
 git merge origin/main
@@ -119,12 +124,14 @@ git rebase origin/main
 - Reference decision or issue if applicable
 
 **Good**:
+
 - `feat: add evidence linking to obligations`
 - `fix: validate assessment input before saving`
 - `refactor: extract obligation calculation logic`
 - `docs: document risk assessment algorithm`
 
 **Bad**:
+
 - `Added feature for evidence linking` (past tense, no type)
 - `Fix Bug` (vague, capitalized)
 - `REFACTOR: Code cleanup.` (period, all caps)
@@ -185,12 +192,14 @@ Related: DR-0105 (Decision record)
 **Atomic commits**: Each commit should be a logical unit
 
 ❌ Bad:
+
 ```
 git add . && git commit -m "lots of changes"
 # Mixes 5 unrelated features, 10 bug fixes, doc updates
 ```
 
 ✅ Good:
+
 ```
 # Commit 1: Add evidence linking feature
 git add app/api/evidence/[id]/link.ts
@@ -230,11 +239,13 @@ git commit  # Opens editor for detailed message
 ### Fixing Commits
 
 **If you made a typo in the commit message**:
+
 ```bash
 git commit --amend -m "correct message"
 ```
 
 **If you forgot to add a file**:
+
 ```bash
 git add forgotten_file.ts
 git commit --amend  # No `-m` — keeps original message
@@ -256,6 +267,7 @@ git push -u origin feat/your-feature-name
 ```
 
 **On GitHub**:
+
 1. Create PR (GitHub may show "Compare & pull request" button)
 2. Title: Same as main commit message
 3. Description: Explain changes, why they matter, how to test
@@ -267,6 +279,7 @@ git push -u origin feat/your-feature-name
 **If reviewer requests changes**:
 
 1. **Make the change locally**
+
    ```bash
    git checkout feat/your-feature-name
    # ... edit files ...
@@ -288,6 +301,7 @@ git push -u origin feat/your-feature-name
 **Preferred method: Squash Merge**
 
 Before merging, ensure:
+
 - [ ] All checks pass (CI/CD green)
 - [ ] All conversations resolved
 - [ ] At least one approval
@@ -339,6 +353,7 @@ git diff main..feat/your-feature
 ### Clean History
 
 Before pushing, ensure:
+
 - No unnecessary merge commits
 - Commits are logical units
 - Commit messages are clear
@@ -415,6 +430,7 @@ git push -f origin main
 ### Before Pushing to Main
 
 1. **Verify tests pass**
+
    ```bash
    npm test
    npm run type-check
@@ -422,6 +438,7 @@ git push -f origin main
    ```
 
 2. **Rebase on latest main**
+
    ```bash
    git fetch origin
    git rebase origin/main
@@ -429,12 +446,14 @@ git push -f origin main
    ```
 
 3. **View changes being deployed**
+
    ```bash
    git log main..HEAD  # Commits being added
    git diff main      # All changes
    ```
 
 4. **Push to feature branch first**
+
    ```bash
    git push origin feat/your-feature
    ```
@@ -445,16 +464,16 @@ git push -f origin main
 
 ## Quick Reference
 
-| Task | Command |
-|------|---------|
-| Create branch | `git checkout -b feat/name origin/main` |
-| Commit change | `git commit -m "type: description"` |
-| Push branch | `git push -u origin feat/name` |
-| Keep updated | `git rebase origin/main && npm test` |
-| View commits | `git log --oneline -n 5` |
-| Undo last commit | `git reset --soft HEAD~1` |
-| Fix message | `git commit --amend` |
-| Clean up | `git branch -d feat/old-branch` |
+| Task             | Command                                 |
+| ---------------- | --------------------------------------- |
+| Create branch    | `git checkout -b feat/name origin/main` |
+| Commit change    | `git commit -m "type: description"`     |
+| Push branch      | `git push -u origin feat/name`          |
+| Keep updated     | `git rebase origin/main && npm test`    |
+| View commits     | `git log --oneline -n 5`                |
+| Undo last commit | `git reset --soft HEAD~1`               |
+| Fix message      | `git commit --amend`                    |
+| Clean up         | `git branch -d feat/old-branch`         |
 
 ---
 

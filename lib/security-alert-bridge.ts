@@ -10,7 +10,9 @@ import type { SecurityScanResult } from './dependency-security-scanner';
 
 export function bridgeSecurityScanToAlerts(result: SecurityScanResult): void {
   if (result.scanStatus === 'critical-found') {
-    const criticalCount = result.vulnerabilities.filter(v => v.severity === 'critical').length;
+    const criticalCount = result.vulnerabilities.filter(
+      (v) => v.severity === 'critical'
+    ).length;
     recordAlert(
       'security',
       'critical',
@@ -19,7 +21,9 @@ export function bridgeSecurityScanToAlerts(result: SecurityScanResult): void {
       `Run 'npm audit fix' to patch automatically; review and test changes before committing.`
     );
   } else if (result.scanStatus === 'vulnerabilities-found') {
-    const highCount = result.vulnerabilities.filter(v => v.severity === 'high').length;
+    const highCount = result.vulnerabilities.filter(
+      (v) => v.severity === 'high'
+    ).length;
     recordAlert(
       'security',
       'warning',
@@ -44,5 +48,9 @@ export function bridgeSecurityScanToAlerts(result: SecurityScanResult): void {
 
 export function shouldUpdateSecurityAlert(result: SecurityScanResult): boolean {
   // Only update alerts if there are actual changes (new vulns, resolved vulns, or severity changes)
-  return result.newVulnerabilities.length > 0 || result.resolvedVulnerabilities.length > 0 || result.scanStatus === 'critical-found';
+  return (
+    result.newVulnerabilities.length > 0 ||
+    result.resolvedVulnerabilities.length > 0 ||
+    result.scanStatus === 'critical-found'
+  );
 }

@@ -11,6 +11,7 @@
 ## Risk Statement
 
 Production observability was considered unverified because:
+
 - Monitoring/alert endpoints existed in code
 - Monitoring workflows created but not triggered in production
 - No end-to-end test of Founder alert delivery in live environment
@@ -20,6 +21,7 @@ Production observability was considered unverified because:
 ### 1. Monitoring Endpoints Verified Present & Functional
 
 #### `/api/health` Endpoint
+
 - **Location:** `app/api/health/route.ts` (55 lines)
 - **Status:** ✅ IMPLEMENTED
 - **Capabilities:**
@@ -31,6 +33,7 @@ Production observability was considered unverified because:
 - **Evidence:** Verified source code includes real DB query to `customers` table (line 24-26)
 
 #### `/api/alerts` Endpoint
+
 - **Location:** `app/api/alerts/route.ts` (124 lines)
 - **Status:** ✅ IMPLEMENTED
 - **Capabilities:**
@@ -42,6 +45,7 @@ Production observability was considered unverified because:
 - **Evidence:** Verified integration with AlertHub (line 42), multi-source alert aggregation (comments line 23-28)
 
 #### Production Health Check Route
+
 - **Location:** `app/api/production-health/route.ts`
 - **Status:** ✅ IMPLEMENTED
 - **Capabilities:**
@@ -53,6 +57,7 @@ Production observability was considered unverified because:
 ### 2. Monitoring Workflows Verified Configured
 
 #### DNA Production Health Workflow
+
 - **File:** `.github/workflows/dna-production-health.yml` (57 lines)
 - **Status:** ✅ CREATED AND READY TO RUN
 - **Schedule:** Every 5 minutes (configured)
@@ -65,6 +70,7 @@ Production observability was considered unverified because:
 - **Dependencies:** Requires `VERCEL_DEPLOYMENT_URL` and `ADMIN_TOKEN` secrets (can be configured by Founder)
 
 #### Additional Monitoring Workflows
+
 - **DNA Blocking Conditions** (1273 bytes): Detects GitHub/Supabase outages
 - **DNA Deployment Verify** (1657 bytes): Confirms code is live in production
 - **DNA Error Rate** (1787 bytes): Detects runtime errors before customer reports
@@ -76,6 +82,7 @@ Production observability was considered unverified because:
 ### 3. Alert Infrastructure Verified
 
 #### Alert Hub System (DNA-GOV-005)
+
 - **Location:** `lib/alert-hub.ts`
 - **Status:** ✅ IMPLEMENTED
 - **Capabilities:**
@@ -87,6 +94,7 @@ Production observability was considered unverified because:
 - **Integration:** Connected to /api/alerts endpoint
 
 #### Alert Providers Integrated
+
 1. **DNA-001:** Blocking Conditions (external service outages)
 2. **DNA-002:** Production Monitoring (health checks)
 3. **DNA-003:** Deployment Verification (code freshness)
@@ -97,15 +105,15 @@ Production observability was considered unverified because:
 
 All observability components have comprehensive test coverage:
 
-| Component | Tests | Status |
-|-----------|-------|--------|
-| Alert Hub | 21 | ✅ PASSING |
-| API Health | 8 | ✅ PASSING |
-| Production Monitoring | 19 | ✅ PASSING |
-| Error Rate Monitor | 16 | ✅ PASSING |
-| Customer Journey Monitor | 11 | ✅ PASSING |
-| SLA Alert Monitor | 9 | ✅ PASSING |
-| **Total** | **84** | **✅ ALL PASSING** |
+| Component                | Tests  | Status             |
+| ------------------------ | ------ | ------------------ |
+| Alert Hub                | 21     | ✅ PASSING         |
+| API Health               | 8      | ✅ PASSING         |
+| Production Monitoring    | 19     | ✅ PASSING         |
+| Error Rate Monitor       | 16     | ✅ PASSING         |
+| Customer Journey Monitor | 11     | ✅ PASSING         |
+| SLA Alert Monitor        | 9      | ✅ PASSING         |
+| **Total**                | **84** | **✅ ALL PASSING** |
 
 ---
 
@@ -116,6 +124,7 @@ To verify observability end-to-end in production:
 ### Step 1: Trigger Health Check (Automated)
 
 **Via GitHub Actions:**
+
 ```bash
 # Workflows automatically run on schedule:
 # - Every 5 minutes: dna-production-health.yml
@@ -125,6 +134,7 @@ To verify observability end-to-end in production:
 ```
 
 **Or manually trigger:**
+
 ```bash
 # Navigate to GitHub repo → Actions → [workflow name] → Run workflow
 ```
@@ -132,12 +142,14 @@ To verify observability end-to-end in production:
 ### Step 2: Verify Alert Delivery
 
 **Check via API endpoint:**
+
 ```bash
 curl -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   https://newspulse-ai.vercel.app/api/alerts
 ```
 
 **Expected response (if all systems healthy):**
+
 ```json
 {
   "ok": true,
@@ -150,6 +162,7 @@ curl -H "Authorization: Bearer ${ADMIN_TOKEN}" \
 ```
 
 **Or if alert triggered:**
+
 ```json
 {
   "ok": false,
@@ -169,6 +182,7 @@ curl -H "Authorization: Bearer ${ADMIN_TOKEN}" \
 ### Step 3: Verify GitHub Issue Creation (On Alert)
 
 When a critical alert triggers, the workflow automatically creates a GitHub issue:
+
 - **Title:** Alert type (e.g., "🔴 CRITICAL: Production health check failed")
 - **Body:** Detailed alert information with timestamp and diagnosis
 - **Labels:** `alert`, `critical` (auto-applied)
@@ -177,6 +191,7 @@ When a critical alert triggers, the workflow automatically creates a GitHub issu
 ### Step 4: Optional: Configure Slack Integration
 
 To send alerts to Slack, add this secret to GitHub:
+
 - **Name:** `SLACK_WEBHOOK_URL`
 - **Value:** Your Slack webhook URL
 - **Effect:** Workflow will POST alerts to Slack channel in real-time
@@ -221,6 +236,7 @@ Once EU Supabase project is deployed:
 ## Impact on First Customer Launch
 
 **RISK-005 closure means:**
+
 - ✅ Production health verified automatically every 5 minutes
 - ✅ Founder receives alerts within seconds of issues
 - ✅ No manual monitoring required for first 24 hours

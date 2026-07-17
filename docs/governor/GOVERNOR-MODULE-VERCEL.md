@@ -1,4 +1,5 @@
 # GOVERNOR MODULE: Vercel Integration
+
 **Module Name:** Vercel  
 **Module Version:** 1.0  
 **Part of:** GOVERNOR EXECUTION FABRIC v1  
@@ -21,12 +22,12 @@ The Vercel module enables Governor to manage production deployments, environment
 ```python
 class VercelModule(Module):
     """Vercel deployment integration for Governor"""
-    
+
     name = "vercel"
     version = "1.0"
     dependencies = ["curl", "jq"]
     permissions = ["deploy:execute", "config:write", "logs:read"]
-    
+
     async def init(self) -> bool:
         """Initialize Vercel module"""
         # Load Vercel project configuration
@@ -34,7 +35,7 @@ class VercelModule(Module):
         # Detect deployment settings
         # Load environment strategies
         return True
-    
+
     async def health_check(self) -> HealthStatus:
         """Verify Vercel is accessible"""
         # Test API connectivity
@@ -50,6 +51,7 @@ class VercelModule(Module):
 ### 1. Deployment Management
 
 **Trigger Production Deployment**
+
 ```yaml
 Capability: deploy_production
 Input:
@@ -77,6 +79,7 @@ Escalate: (if checks fail or verification fails)
 ```
 
 **Get Deployment Status**
+
 ```yaml
 Capability: get_deployment_status
 Input:
@@ -94,6 +97,7 @@ Automation: Autonomous
 ```
 
 **Rollback Deployment**
+
 ```yaml
 Capability: rollback_deployment
 Input:
@@ -110,6 +114,7 @@ Automation: Escalate (always requires approval)
 ```
 
 **Cancel Deployment**
+
 ```yaml
 Capability: cancel_deployment
 Input:
@@ -127,6 +132,7 @@ Autonomous: (if preview)
 ### 2. Environment Configuration
 
 **Set Environment Variable**
+
 ```yaml
 Capability: set_env_var
 Input:
@@ -146,6 +152,7 @@ Automation: Autonomous (if not sensitive) OR Escalate (if sensitive)
 ```
 
 **Get Environment Variables**
+
 ```yaml
 Capability: get_env_vars
 Input:
@@ -160,6 +167,7 @@ Automation: Autonomous
 ```
 
 **Delete Environment Variable**
+
 ```yaml
 Capability: delete_env_var
 Input:
@@ -174,6 +182,7 @@ Automation: Escalate (if production) OR Autonomous (if preview)
 ```
 
 **Bulk Update Environment Variables**
+
 ```yaml
 Capability: bulk_set_env_vars
 Input:
@@ -192,6 +201,7 @@ Automation: Autonomous (non-sensitive) OR Escalate (sensitive)
 ### 3. Logs & Monitoring
 
 **Get Deployment Logs**
+
 ```yaml
 Capability: get_deployment_logs
 Input:
@@ -209,6 +219,7 @@ Automation: Autonomous
 ```
 
 **Stream Logs (Real-Time)**
+
 ```yaml
 Capability: stream_logs
 Input:
@@ -225,6 +236,7 @@ Automation: Autonomous
 ```
 
 **Get Performance Metrics**
+
 ```yaml
 Capability: get_performance_metrics
 Input:
@@ -242,6 +254,7 @@ Automation: Autonomous
 ```
 
 **Get Error Tracking**
+
 ```yaml
 Capability: get_error_tracking
 Input:
@@ -260,6 +273,7 @@ Automation: Autonomous
 ### 4. Preview Deployments
 
 **Create Preview Deployment**
+
 ```yaml
 Capability: create_preview_deployment
 Input:
@@ -277,6 +291,7 @@ Automation: Autonomous
 ```
 
 **List Preview Deployments**
+
 ```yaml
 Capability: list_preview_deployments
 Input:
@@ -290,6 +305,7 @@ Automation: Autonomous
 ```
 
 **Delete Preview Deployment**
+
 ```yaml
 Capability: delete_preview_deployment
 Input:
@@ -304,6 +320,7 @@ Automation: Autonomous
 ### 5. Project Configuration
 
 **Get Project Settings**
+
 ```yaml
 Capability: get_project_settings
 Input: (none)
@@ -322,6 +339,7 @@ Automation: Autonomous
 ```
 
 **Update Build Settings**
+
 ```yaml
 Capability: update_build_settings
 Input:
@@ -341,6 +359,7 @@ Automation: Escalate (infrastructure change)
 ### 6. Health & Verification
 
 **Health Check Production**
+
 ```yaml
 Capability: health_check_production
 Input:
@@ -358,6 +377,7 @@ Automation: Autonomous
 ```
 
 **Verify Deployment Success**
+
 ```yaml
 Capability: verify_deployment_success
 Input:
@@ -383,19 +403,19 @@ Automation: Autonomous
 ```python
 async def deploy_with_verification():
     """Complete deployment pipeline with safety checks"""
-    
+
     # 1. Pre-deployment verification
     log("Starting pre-deployment checks...")
     env_check = await verify_env_vars()
     if not env_check.all_required_set:
         raise MissingEnvVars(f"Missing: {env_check.missing}")
-    
+
     # 2. Wait for CI to complete
     log("Waiting for CI pipeline...")
     ci_status = await wait_for_ci_complete(timeout=600)
     if ci_status != "success":
         raise CIPipelineFailed(ci_status)
-    
+
     # 3. Trigger deployment
     log("Triggering production deployment...")
     deployment = await deploy_production(
@@ -403,7 +423,7 @@ async def deploy_with_verification():
         environment="production",
         verify=True
     )
-    
+
     # 4. Stream logs
     log("Streaming deployment logs...")
     logs = await stream_logs(
@@ -411,12 +431,12 @@ async def deploy_with_verification():
         until_condition="ready or error",
         timeout_seconds=600
     )
-    
+
     # 5. Verify deployment health
     log("Verifying deployment...")
     if deployment.status == "error":
         raise DeploymentFailed(f"Deployment failed: {logs}")
-    
+
     # 6. Run post-deployment checks
     health = await health_check_production(timeout_seconds=60)
     if health.status != "healthy":
@@ -425,7 +445,7 @@ async def deploy_with_verification():
         if health.status == "down":
             await rollback_deployment(deployment.deployment_id)
             raise ProductionHealthCheckFailed("Auto-rolled back")
-    
+
     return {
         "deployment_id": deployment.deployment_id,
         "url": deployment.deployment_url,
@@ -439,10 +459,10 @@ async def deploy_with_verification():
 ```python
 def execute_with_safety(operation, environment, timeout=600):
     """Execute with automatic rollback on failure"""
-    
+
     # 1. Get current deployment
     current = get_current_deployment(environment)
-    
+
     # 2. Execute operation
     try:
         result = operation.execute()
@@ -464,20 +484,20 @@ def get_current_deployment(environment):
 
 ## AUTHORIZATION MATRIX
 
-| Operation | Autonomous | Escalate | Founder |
-|-----------|-----------|----------|---------|
-| Deploy (main, CI pass) | ✅ | | |
-| Deploy (main, CI fail) | | ✅ | |
-| Deploy (other branch) | | ✅ | |
-| Rollback | | ✅ | |
-| Cancel deployment | ✅ | | |
-| Set env var (non-sensitive) | ✅ | | |
-| Set env var (sensitive) | | ✅ | |
-| Delete env var | | ✅ | |
-| View logs | ✅ | | |
-| View metrics | ✅ | | |
-| Update build settings | | ✅ | |
-| Health check | ✅ | | |
+| Operation                   | Autonomous | Escalate | Founder |
+| --------------------------- | ---------- | -------- | ------- |
+| Deploy (main, CI pass)      | ✅         |          |         |
+| Deploy (main, CI fail)      |            | ✅       |         |
+| Deploy (other branch)       |            | ✅       |         |
+| Rollback                    |            | ✅       |         |
+| Cancel deployment           | ✅         |          |         |
+| Set env var (non-sensitive) | ✅         |          |         |
+| Set env var (sensitive)     |            | ✅       |         |
+| Delete env var              |            | ✅       |         |
+| View logs                   | ✅         |          |         |
+| View metrics                | ✅         |          |         |
+| Update build settings       |            | ✅       |         |
+| Health check                | ✅         |          |         |
 
 ---
 
@@ -488,14 +508,14 @@ def get_current_deployment(environment):
 ```python
 async def auto_deploy_after_merge():
     """Triggered when PR merges to main"""
-    
+
     # 1. Wait for CI to complete
     log("Waiting for CI pipeline...")
     ci = await wait_for_ci(timeout=900)
     if ci.status != "success":
         escalate(f"CI failed: {ci.status}")
         return
-    
+
     # 2. Verify all env vars set
     env_vars = await get_env_vars("production")
     required = ["DATABASE_URL", "API_KEY", "ENCRYPTION_KEY"]
@@ -503,7 +523,7 @@ async def auto_deploy_after_merge():
     if missing:
         escalate(f"Missing env vars: {missing}")
         return
-    
+
     # 3. Deploy production
     log("Deploying to production...")
     deployment = await deploy_production(
@@ -512,21 +532,21 @@ async def auto_deploy_after_merge():
         verify=True,
         timeout_seconds=600
     )
-    
+
     # 4. Stream logs
     logs = await stream_logs(
         deployment_id=deployment.deployment_id,
         until_condition="ready or error"
     )
-    
+
     if deployment.status != "ready":
         escalate(f"Deployment failed: {logs}")
         return
-    
+
     # 5. Health check
     await asyncio.sleep(10)  # Allow time for startup
     health = await health_check_production()
-    
+
     if health.status != "healthy":
         log(f"Health check degraded: {health}")
         # Auto-rollback only if completely down
@@ -534,10 +554,10 @@ async def auto_deploy_after_merge():
             await rollback_deployment(deployment.deployment_id)
             escalate("Production health check failed, rolled back")
         return
-    
+
     # 6. Collect evidence
     metrics = await get_performance_metrics(deployment.deployment_id, "1h")
-    
+
     return {
         "deployment_id": deployment.deployment_id,
         "url": deployment.deployment_url,
@@ -552,7 +572,7 @@ async def auto_deploy_after_merge():
 ```python
 async def configure_production_env():
     """Set all required production environment variables"""
-    
+
     env_vars = {
         "DATABASE_URL": vault.get("production_db_url"),
         "API_KEY": vault.get("production_api_key"),
@@ -561,27 +581,27 @@ async def configure_production_env():
         "CACHE_TTL": "3600",
         "RATE_LIMIT": "1000"
     }
-    
+
     # Sensitive vs non-sensitive
     sensitive_vars = ["DATABASE_URL", "API_KEY", "ENCRYPTION_KEY"]
-    
+
     for name, value in env_vars.items():
         is_sensitive = name in sensitive_vars
-        
+
         await set_env_var(
             name=name,
             value=value,
             environment="production",
             sensitive=is_sensitive
         )
-        
+
         log(f"Set {name} (sensitive={is_sensitive})")
-    
+
     # Verify all set
     verify = await get_env_vars("production")
     if len(verify) < len(env_vars):
         raise EnvVarConfigurationFailed("Not all vars set")
-    
+
     log("Production environment configured successfully")
     return verify
 ```
@@ -591,38 +611,38 @@ async def configure_production_env():
 ```python
 async def monitor_production_performance():
     """Continuous monitoring of production metrics"""
-    
+
     # Get latest deployment
     deployment = await get_current_deployment("production")
-    
+
     # Get metrics
     metrics = await get_performance_metrics(
         deployment_id=deployment.deployment_id,
         time_range="1h"
     )
-    
+
     # Check thresholds
     alerts = []
-    
+
     if metrics.response_time_ms.p99 > 1000:
         alerts.append(f"P99 latency high: {metrics.response_time_ms.p99}ms")
-    
+
     if metrics.error_rate > 1.0:  # > 1%
         alerts.append(f"Error rate elevated: {metrics.error_rate}%")
-    
+
     if metrics.uptime < 99.9:
         alerts.append(f"Uptime degraded: {metrics.uptime}%")
-    
+
     # Get errors
     errors = await get_error_tracking(deployment.deployment_id, "production")
     if errors.total_unique_errors > 10:
         top_error = errors.errors[0]
         alerts.append(f"New errors detected: {top_error.message} ({top_error.count}x)")
-    
+
     # Escalate if critical
     if alerts and "uptime" in alerts[0].lower():
         escalate(f"Production incident: {alerts}")
-    
+
     return {
         "deployment_id": deployment.deployment_id,
         "metrics": metrics,
@@ -638,17 +658,20 @@ async def monitor_production_performance():
 **Token Storage:** Encrypted in vault, specific to Vercel project.
 
 **Required Credentials:**
+
 - Vercel API token (for deployment API)
 - Project ID (public)
 - Environment-specific secrets (stored separately)
 
 **Audit Trail:**
+
 - Every deployment logged with deployment ID, user, timestamp
 - All env var changes logged (names, not values)
 - All rollbacks logged with reason
 - Performance degradation alerts logged
 
 **Secret Handling:**
+
 - Env vars stored in Vercel (never in code)
 - Sensitive vars masked in logs
 - Deploy logs redact secrets automatically
@@ -691,12 +714,14 @@ Alerts:
 ### Problem: "Build Failed" During Deployment
 
 **Diagnosis:**
+
 - Code has syntax errors
 - Dependencies missing/incompatible
 - Build script timeout
 - Environment variables missing
 
 **Solution:**
+
 1. Check build logs for specific error
 2. Verify all dependencies installed
 3. Run build locally to reproduce
@@ -705,11 +730,13 @@ Alerts:
 ### Problem: "Cannot Rollback" - Previous Deployment Unavailable
 
 **Diagnosis:**
+
 - Previous deployment expired
 - Deployment history cleared
 - Wrong environment specified
 
 **Solution:**
+
 1. Manually specify known good deployment ID
 2. Redeploy from Git history instead
 3. Use full rollback procedure with backup
@@ -717,12 +744,14 @@ Alerts:
 ### Problem: Health Check Succeeds but Requests Fail
 
 **Diagnosis:**
+
 - Health endpoint is special-cased
 - Database connection issue
 - Service dependencies down
 - Cache stale/incorrect
 
 **Solution:**
+
 1. Check application logs for errors
 2. Verify database/service dependencies
 3. Clear cache if applicable
@@ -737,6 +766,7 @@ Alerts:
 **Deployment API:** https://vercel.com/docs/api
 
 **See Also:**
+
 - GOVERNOR-EXECUTION-FABRIC-v1-ARCHITECTURE.md (Layer 3: Execution Fabric)
 - GOVERNOR-VERIFICATION-PROCEDURES.md (Deployment verification)
 - GOVERNOR-MODULE-GITHUB.md (Git/GitHub integration)

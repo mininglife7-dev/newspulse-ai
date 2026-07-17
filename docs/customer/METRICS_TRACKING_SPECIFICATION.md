@@ -18,22 +18,24 @@ Track every step of the customer journey. Funnel drop-off identifies friction.
 
 ### Signup Funnel
 
-| Metric | Target | How to Measure | Acceptable Range |
-|---|---|---|---|
-| **Page Views** | Signup page seen | Check Vercel Analytics or browser history | 1+ page views = interest confirmed |
-| **Form Starts** | Customer fills email field | Check browser console, log events | >80% of page views |
-| **Form Submissions** | Customer clicks "Sign Up" | Supabase auth logs | >90% of form starts |
-| **Email Sent** | Verification email generated | Supabase auth logs | 100% of submissions |
-| **Email Opened** | Customer checks inbox | Email tracking (if available) | >70% of sent |
-| **Email Verified** | Clicks confirmation link | Supabase `email_confirmed_at` timestamp | >80% of sent |
-| **Signup Success Rate** | Email confirmed | (verified / submitted) × 100 | >80% success |
+| Metric                  | Target                       | How to Measure                            | Acceptable Range                   |
+| ----------------------- | ---------------------------- | ----------------------------------------- | ---------------------------------- |
+| **Page Views**          | Signup page seen             | Check Vercel Analytics or browser history | 1+ page views = interest confirmed |
+| **Form Starts**         | Customer fills email field   | Check browser console, log events         | >80% of page views                 |
+| **Form Submissions**    | Customer clicks "Sign Up"    | Supabase auth logs                        | >90% of form starts                |
+| **Email Sent**          | Verification email generated | Supabase auth logs                        | 100% of submissions                |
+| **Email Opened**        | Customer checks inbox        | Email tracking (if available)             | >70% of sent                       |
+| **Email Verified**      | Clicks confirmation link     | Supabase `email_confirmed_at` timestamp   | >80% of sent                       |
+| **Signup Success Rate** | Email confirmed              | (verified / submitted) × 100              | >80% success                       |
 
 **Interpretation:**
+
 - If >10% drop before form submit → Signup form has friction (unclear, confusing, or slow)
 - If >20% drop at email verification → Email delivery issue or customer confusion
 - If <70% verified → May need to resend link, improve email instructions, or check spam folder
 
 **Action:** If funnel drops below targets, contact customer with specific help:
+
 - Form friction: "Is the signup form unclear? I can walk you through it."
 - Email verification: "Did you get the verification email? Let me resend it or help troubleshoot."
 
@@ -41,15 +43,16 @@ Track every step of the customer journey. Funnel drop-off identifies friction.
 
 ### Login & Setup Funnel
 
-| Metric | Target | How to Measure | Note |
-|---|---|---|---|
-| **Login Attempts** | Customer returns to signin | Supabase session logs | Should be 1 (email verified → direct login) |
-| **Login Success** | Session created | Supabase `sessions` table | 100% if credentials correct |
-| **Workspace Created** | POST /api/workspace succeeds | Supabase `workspaces` table | Should be 1 |
-| **Company Set Up** | Form completed | Supabase `companies` table | Should be 1 |
-| **Dashboard Access** | First dashboard view | Browser console + Vercel logs | 1+ view = product seen |
+| Metric                | Target                       | How to Measure                | Note                                        |
+| --------------------- | ---------------------------- | ----------------------------- | ------------------------------------------- |
+| **Login Attempts**    | Customer returns to signin   | Supabase session logs         | Should be 1 (email verified → direct login) |
+| **Login Success**     | Session created              | Supabase `sessions` table     | 100% if credentials correct                 |
+| **Workspace Created** | POST /api/workspace succeeds | Supabase `workspaces` table   | Should be 1                                 |
+| **Company Set Up**    | Form completed               | Supabase `companies` table    | Should be 1                                 |
+| **Dashboard Access**  | First dashboard view         | Browser console + Vercel logs | 1+ view = product seen                      |
 
 **Expected Timeline:**
+
 - Signup → Email verification: <5 min
 - Email verified → First login: <30 min (customer checking email)
 - Login → Workspace creation: <5 min (usually immediate)
@@ -63,16 +66,17 @@ If customer takes >1 hour from signup to workspace creation, follow up: "Are you
 
 ### Feature Adoption
 
-| Feature | Metric | Target | How to Measure |
-|---|---|---|---|
-| **Dashboard** | Views per day | ≥1 | Vercel logs: GET /dashboard |
-| **Search** | Searches performed | ≥1 | POST /api/search calls |
-| **History** | History page viewed | ≥1 | GET /dashboard → history tab |
-| **Metrics** | Metrics viewed | ≥1 | API calls to analytics endpoints |
+| Feature       | Metric              | Target | How to Measure                   |
+| ------------- | ------------------- | ------ | -------------------------------- |
+| **Dashboard** | Views per day       | ≥1     | Vercel logs: GET /dashboard      |
+| **Search**    | Searches performed  | ≥1     | POST /api/search calls           |
+| **History**   | History page viewed | ≥1     | GET /dashboard → history tab     |
+| **Metrics**   | Metrics viewed      | ≥1     | API calls to analytics endpoints |
 
 **Target:** Customer uses ≥3 features in Week 1 = strong product-market fit signal
 
 **If customer uses 0 features in first 3 days:**
+
 - Send feature education email (template in COMMUNICATION_TEMPLATES.md)
 - If still unused after 7 days → Reach out: "What would be most helpful? Can I show you around?"
 
@@ -80,14 +84,15 @@ If customer takes >1 hour from signup to workspace creation, follow up: "Are you
 
 ### Session Depth
 
-| Metric | Target | Measure | Interpretation |
-|---|---|---|---|
-| **Time on Dashboard** | ≥5 min/session | Browser DevTools → Network timing | <2 min = too quick, probably confused |
-| **Pages Visited/Session** | ≥2 | Vercel logs: unique routes | 1 page = didn't explore |
-| **Repeat Sessions** | ≥2 in Week 1 | (day 2 login logged) | 1 session = no return interest |
-| **Session Duration Trend** | Increasing | Track per day | Increasing = getting more value |
+| Metric                     | Target         | Measure                           | Interpretation                        |
+| -------------------------- | -------------- | --------------------------------- | ------------------------------------- |
+| **Time on Dashboard**      | ≥5 min/session | Browser DevTools → Network timing | <2 min = too quick, probably confused |
+| **Pages Visited/Session**  | ≥2             | Vercel logs: unique routes        | 1 page = didn't explore               |
+| **Repeat Sessions**        | ≥2 in Week 1   | (day 2 login logged)              | 1 session = no return interest        |
+| **Session Duration Trend** | Increasing     | Track per day                     | Increasing = getting more value       |
 
 **Red Flags:**
+
 - Session < 1 min → Likely error or navigation confusion
 - 0 repeat sessions by day 3 → Product not compelling, follow up
 - Each session same length → Routine task, not exploration (potential but not exciting)
@@ -100,14 +105,15 @@ If customer takes >1 hour from signup to workspace creation, follow up: "Are you
 
 Track these daily; plot on a simple graph.
 
-| Dimension | Scoring | Healthy | At Risk |
-|---|---|---|---|
-| **Login Frequency** | Days active / 7 days | ≥4 days/week | <2 days/week |
-| **Feature Adoption** | Features used / total available | ≥50% | <25% |
-| **Time per Session** | Avg session duration | >5 min | <2 min |
-| **Weekly Usage Trend** | Compare week 1 vs week 2 | Increasing | Decreasing |
+| Dimension              | Scoring                         | Healthy      | At Risk      |
+| ---------------------- | ------------------------------- | ------------ | ------------ |
+| **Login Frequency**    | Days active / 7 days            | ≥4 days/week | <2 days/week |
+| **Feature Adoption**   | Features used / total available | ≥50%         | <25%         |
+| **Time per Session**   | Avg session duration            | >5 min       | <2 min       |
+| **Weekly Usage Trend** | Compare week 1 vs week 2        | Increasing   | Decreasing   |
 
 **Calculation (simple 0-100 score):**
+
 ```
 engagement_score = (
   (login_frequency / 7) * 25 +     // 25 points for frequency
@@ -126,12 +132,12 @@ engagement_score = (
 
 ### Performance
 
-| Metric | Target | How to Measure | Red Flag |
-|---|---|---|---|
-| **Page Load Time** | <2 sec | Vercel Analytics | >5 sec = customer frustration |
-| **API Response Time** | <500ms | GET /api/health latency | >2 sec = likely Supabase slow |
-| **Error Rate** | 0% | Supabase + Vercel error logs | >1% = investigate |
-| **Database Query Latency** | <200ms | Supabase query logs | >1 sec = needs index |
+| Metric                     | Target | How to Measure               | Red Flag                      |
+| -------------------------- | ------ | ---------------------------- | ----------------------------- |
+| **Page Load Time**         | <2 sec | Vercel Analytics             | >5 sec = customer frustration |
+| **API Response Time**      | <500ms | GET /api/health latency      | >2 sec = likely Supabase slow |
+| **Error Rate**             | 0%     | Supabase + Vercel error logs | >1% = investigate             |
+| **Database Query Latency** | <200ms | Supabase query logs          | >1 sec = needs index          |
 
 ### Reliability
 
@@ -142,6 +148,7 @@ engagement_score = (
 | **Database Downtime** | 0 | Supabase status |
 
 **If you see any red flags:**
+
 1. Check /api/alerts for system status
 2. Review Vercel logs for errors
 3. Check Supabase dashboard for query performance
@@ -153,22 +160,22 @@ engagement_score = (
 
 ### Indirect Signals (Watch for These)
 
-| Signal | Means | Action |
-|---|---|---|
-| Customer replies to welcome email | Interest, engagement | Warm follow-up (use COMMUNICATION_TEMPLATES.md) |
-| Asks questions about features | Learning, exploring | Detailed answer, share docs/tutorials |
-| Reports a bug | Detail-oriented, invested | Quick fix + thank you |
-| Asks "When will X feature...?" | Wants more value | Note for roadmap, share timeline |
-| Goes silent (no activity 3+ days) | Lost interest or stuck | Friendly re-engagement (churn recovery email) |
-| Shares product with team | High satisfaction | Encourage team adoption, offer team features |
+| Signal                            | Means                     | Action                                          |
+| --------------------------------- | ------------------------- | ----------------------------------------------- |
+| Customer replies to welcome email | Interest, engagement      | Warm follow-up (use COMMUNICATION_TEMPLATES.md) |
+| Asks questions about features     | Learning, exploring       | Detailed answer, share docs/tutorials           |
+| Reports a bug                     | Detail-oriented, invested | Quick fix + thank you                           |
+| Asks "When will X feature...?"    | Wants more value          | Note for roadmap, share timeline                |
+| Goes silent (no activity 3+ days) | Lost interest or stuck    | Friendly re-engagement (churn recovery email)   |
+| Shares product with team          | High satisfaction         | Encourage team adoption, offer team features    |
 
 ### Email Response Rate
 
-| Scenario | Target Response Time | Goal |
-|---|---|---|
-| Founder welcome email → customer reply | <24 hours | Shows interest, start dialogue |
-| Customer question → Founder reply | <2 hours | Builds trust, shows responsiveness |
-| Customer bug report → Founder investigation | <1 hour | Demonstrates care for their issues |
+| Scenario                                    | Target Response Time | Goal                               |
+| ------------------------------------------- | -------------------- | ---------------------------------- |
+| Founder welcome email → customer reply      | <24 hours            | Shows interest, start dialogue     |
+| Customer question → Founder reply           | <2 hours             | Builds trust, shows responsiveness |
+| Customer bug report → Founder investigation | <1 hour              | Demonstrates care for their issues |
 
 ---
 

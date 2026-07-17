@@ -42,7 +42,10 @@ export interface KnowledgeMemory {
  * Get the knowledge file path (supports environment override for testing).
  */
 function getKnowledgeFile(): string {
-  return process.env.KNOWLEDGE_MEMORY_FILE || 'docs/governance/KNOWLEDGE-MEMORY.jsonl';
+  return (
+    process.env.KNOWLEDGE_MEMORY_FILE ||
+    'docs/governance/KNOWLEDGE-MEMORY.jsonl'
+  );
 }
 
 /**
@@ -81,7 +84,9 @@ export async function writeKnowledge(entry: KnowledgeEntry): Promise<void> {
 /**
  * Query knowledge by tag (e.g., "auth", "performance").
  */
-export async function queryKnowledgeByTag(tag: string): Promise<KnowledgeEntry[]> {
+export async function queryKnowledgeByTag(
+  tag: string
+): Promise<KnowledgeEntry[]> {
   const entries = await readKnowledge();
   return entries.filter((e) => e.tags.includes(tag));
 }
@@ -115,7 +120,8 @@ export async function getKnowledgeSummary(): Promise<KnowledgeMemory> {
 
   return {
     entries,
-    lastUpdated: entries[entries.length - 1]?.timestamp ?? new Date().toISOString(),
+    lastUpdated:
+      entries[entries.length - 1]?.timestamp ?? new Date().toISOString(),
     sessionsSeen: sessionIds.size,
     entriesByTag,
   };
@@ -125,7 +131,9 @@ export async function getKnowledgeSummary(): Promise<KnowledgeMemory> {
  * Find unresolved issues/learnings related to a specific area.
  * Used to identify what still needs investigation or fixing.
  */
-export async function getUnresolvedKnowledge(tag?: string): Promise<KnowledgeEntry[]> {
+export async function getUnresolvedKnowledge(
+  tag?: string
+): Promise<KnowledgeEntry[]> {
   let entries = await readKnowledge();
 
   if (tag) {
@@ -152,7 +160,9 @@ export async function getHighImpactLearnings(): Promise<KnowledgeEntry[]> {
 /**
  * Check if a specific knowledge pattern already exists (prevents duplicates).
  */
-export async function knowledgeExists(title: string): Promise<KnowledgeEntry | null> {
+export async function knowledgeExists(
+  title: string
+): Promise<KnowledgeEntry | null> {
   const entries = await readKnowledge();
   return entries.find((e) => e.title === title) ?? null;
 }

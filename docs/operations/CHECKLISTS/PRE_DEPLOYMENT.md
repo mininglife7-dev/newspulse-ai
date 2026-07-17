@@ -23,6 +23,7 @@ Verify code meets quality standards and is safe to deploy to production before p
 ## Code Quality Verification
 
 - [ ] **All changes committed**
+
   ```bash
   git status
   ```
@@ -31,6 +32,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - If files exist: `git add` then `git commit -m "..."`
 
 - [ ] **Correct branch**
+
   ```bash
   git branch
   ```
@@ -39,6 +41,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - If wrong: `git checkout <correct-branch>`
 
 - [ ] **TypeScript strict mode passing**
+
   ```bash
   npm run type-check
   ```
@@ -47,6 +50,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - Common: Remove `any` types, add proper interfaces
 
 - [ ] **ESLint passing**
+
   ```bash
   npm run lint
   ```
@@ -54,6 +58,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - If fails: Run `npm run format` to auto-fix, then re-run
 
 - [ ] **Prettier formatting correct**
+
   ```bash
   npm run format
   git diff
@@ -62,6 +67,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - If formatting changed: `git add .` and `git commit -am "style: prettier formatting"`
 
 - [ ] **Unit tests passing**
+
   ```bash
   npm test
   ```
@@ -70,6 +76,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - New code should include tests (see ENGINEERING_STANDARDS.md)
 
 - [ ] **E2E tests passing (if UI changed)**
+
   ```bash
   npm run test:e2e
   ```
@@ -78,6 +85,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - If fails: Check test expectations match new behavior
 
 - [ ] **No console.log/console.error statements**
+
   ```bash
   grep -r "console\." app/ lib/ --include="*.ts" --include="*.tsx"
   ```
@@ -161,6 +169,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - No comments for obvious code (bad: `// increment counter`, good: `// skip records from other workspaces`)
 
 - [ ] **Commit messages are clear**
+
   ```bash
   git log --oneline -n 5
   ```
@@ -185,6 +194,7 @@ Verify code meets quality standards and is safe to deploy to production before p
 ## Git Workflow Verification
 
 - [ ] **Rebased on main (if main changed)**
+
   ```bash
   git fetch origin
   git rebase origin/main
@@ -194,6 +204,7 @@ Verify code meets quality standards and is safe to deploy to production before p
   - If tests fail: Debug and fix
 
 - [ ] **Feature branch is clean**
+
   ```bash
   git log origin/main..HEAD --oneline
   ```
@@ -254,6 +265,7 @@ Before committing to push:
 4. Once passing, proceed with deployment
 
 **Example**:
+
 - Type-check fails → Read error, fix, re-run `npm run type-check`
 - Test fails → Debug in `npm test -- --watch`, fix, re-run
 - Missing docs → Update docs, `git add`, `git commit`

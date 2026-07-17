@@ -137,8 +137,9 @@ export default function DashboardPage() {
         <Alert variant="warning">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Data Integrity Warning:</strong> {state.inconsistencies.issues.length} inconsistencies detected.
-            See Consistency Check tab.
+            <strong>Data Integrity Warning:</strong>{' '}
+            {state.inconsistencies.issues.length} inconsistencies detected. See
+            Consistency Check tab.
           </AlertDescription>
         </Alert>
       )}
@@ -147,8 +148,14 @@ export default function DashboardPage() {
       <Tabs defaultValue="readiness" className="w-full">
         <TabsList className="grid w-full grid-cols-5 gap-2 bg-card p-1">
           <TabsTrigger value="readiness">Launch Readiness</TabsTrigger>
-          <TabsTrigger value="missions">Missions ({state.missionProgress.open + state.missionProgress.inProgress})</TabsTrigger>
-          <TabsTrigger value="blockers">Blockers ({state.blockers.filter(b => b.status === 'open').length})</TabsTrigger>
+          <TabsTrigger value="missions">
+            Missions (
+            {state.missionProgress.open + state.missionProgress.inProgress})
+          </TabsTrigger>
+          <TabsTrigger value="blockers">
+            Blockers ({state.blockers.filter((b) => b.status === 'open').length}
+            )
+          </TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="consistency">Consistency</TabsTrigger>
         </TabsList>
@@ -160,7 +167,10 @@ export default function DashboardPage() {
 
         {/* Missions Tab */}
         <TabsContent value="missions" className="mt-6">
-          <MissionTracker missions={state.missions} missionProgress={state.missionProgress} />
+          <MissionTracker
+            missions={state.missions}
+            missionProgress={state.missionProgress}
+          />
         </TabsContent>
 
         {/* Blockers Tab */}

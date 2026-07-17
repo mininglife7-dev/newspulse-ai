@@ -25,9 +25,11 @@ Routine weekly review of system health, performance, security, and operational m
 ### Service Status
 
 - [ ] Health endpoint responding
+
   ```bash
   curl -s https://newspulse-ai.vercel.app/api/health | jq .
   ```
+
   Expected: `status: healthy`, all components ✅
 
 - [ ] Vercel deployment status
@@ -53,13 +55,13 @@ Routine weekly review of system health, performance, security, and operational m
 
 Review metrics from previous 7 days:
 
-| Page | Target | Actual | Status |
-|------|--------|--------|--------|
-| Login | <2s | __ | ☐ |
-| Workspace | <2s | __ | ☐ |
-| Inventory | <3s | __ | ☐ |
-| Assessment | <3s | __ | ☐ |
-| Evidence | <3s | __ | ☐ |
+| Page       | Target | Actual | Status |
+| ---------- | ------ | ------ | ------ |
+| Login      | <2s    | __     | ☐      |
+| Workspace  | <2s    | __     | ☐      |
+| Inventory  | <3s    | __     | ☐      |
+| Assessment | <3s    | __     | ☐      |
+| Evidence   | <3s    | __     | ☐      |
 
 - [ ] All pages within target
 - [ ] No degradation from last week
@@ -245,24 +247,24 @@ Review metrics from previous 7 days:
 Must fix immediately:
 
 | Issue | Owner | Due Date | Status |
-|-------|-------|----------|--------|
-| | | | |
+| ----- | ----- | -------- | ------ |
+|       |       |          |        |
 
 ### High Priority Issues (P2)
 
 Fix this week:
 
 | Issue | Owner | Due Date | Status |
-|-------|-------|----------|--------|
-| | | | |
+| ----- | ----- | -------- | ------ |
+|       |       |          |        |
 
 ### Backlog Items (P3)
 
 Fix when time allows:
 
 | Issue | Owner | Suggested | Status |
-|-------|-------|-----------|--------|
-| | | | |
+| ----- | ----- | --------- | ------ |
+|       |       |           |        |
 
 ---
 
@@ -297,18 +299,18 @@ Fix when time allows:
 
 ## Quick Reference
 
-| Check | Time | Status |
-|-------|------|--------|
-| System Health | 10min | ☐ |
-| Performance | 10min | ☐ |
-| Uptime & Reliability | 5min | ☐ |
-| Security | 5min | ☐ |
-| User Activity | 5min | ☐ |
-| Incidents & Alerts | 5min | ☐ |
-| Dependencies | 5min | ☐ |
-| Logs & Monitoring | 5min | ☐ |
-| Documentation | 5min | ☐ |
-| **TOTAL** | **~50min** | **☐** |
+| Check                | Time       | Status |
+| -------------------- | ---------- | ------ |
+| System Health        | 10min      | ☐      |
+| Performance          | 10min      | ☐      |
+| Uptime & Reliability | 5min       | ☐      |
+| Security             | 5min       | ☐      |
+| User Activity        | 5min       | ☐      |
+| Incidents & Alerts   | 5min       | ☐      |
+| Dependencies         | 5min       | ☐      |
+| Logs & Monitoring    | 5min       | ☐      |
+| Documentation        | 5min       | ☐      |
+| **TOTAL**            | **~50min** | **☐**  |
 
 ---
 

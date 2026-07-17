@@ -130,7 +130,9 @@ describe('Customer Journey Monitor (DNA-GOV-006)', () => {
         status: 200,
       });
 
-      const report = await monitorCustomerJourneys(testBaseUrl, ['api-health-check']);
+      const report = await monitorCustomerJourneys(testBaseUrl, [
+        'api-health-check',
+      ]);
 
       expect(report.journeys).toHaveLength(1);
       expect(report.journeys[0].status).toBe('success');
@@ -157,7 +159,9 @@ describe('Customer Journey Monitor (DNA-GOV-006)', () => {
       const report = await monitorCustomerJourneys(testBaseUrl);
 
       // Should have alerts for failed journeys
-      const hasCriticalAlert = report.alerts.some((a) => a.includes('CRITICAL'));
+      const hasCriticalAlert = report.alerts.some((a) =>
+        a.includes('CRITICAL')
+      );
       if (report.summary.failedJourneys > 0) {
         expect(hasCriticalAlert || report.alerts.length > 0).toBe(true);
       }
@@ -168,7 +172,9 @@ describe('Customer Journey Monitor (DNA-GOV-006)', () => {
         status: 200,
       });
 
-      const report = await monitorCustomerJourneys(testBaseUrl, ['api-health-check']);
+      const report = await monitorCustomerJourneys(testBaseUrl, [
+        'api-health-check',
+      ]);
 
       expect(report.journeys).toHaveLength(1);
       expect(report.journeys[0].name).toBe('api-health-check');
@@ -181,7 +187,9 @@ describe('Customer Journey Monitor (DNA-GOV-006)', () => {
         status: 200,
       });
 
-      const report = await monitorCustomerJourneys(testBaseUrl, ['api-health-check']);
+      const report = await monitorCustomerJourneys(testBaseUrl, [
+        'api-health-check',
+      ]);
       const alert = formatCustomerJourneyAlert(report);
 
       expect(alert).toContain('✅');

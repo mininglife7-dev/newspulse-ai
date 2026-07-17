@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-16 (Afternoon)  
 **Status:** STRATEGY PIVOT — Rebase infeasible, preservation + cherry-pick required  
-**Authority:** Governor Ω  
+**Authority:** Governor Ω
 
 ---
 
@@ -11,6 +11,7 @@
 ### What Happened
 
 Attempted staged rebase of `origin/claude/repair-git-remotes-p1ez7c` (261 commits) onto `origin/main`:
+
 - **Result:** 248 remaining commits (13 already merged with main)
 - **Conflicts:** **40+ "add/add" conflicts** on first batch alone
 - **Files affected:** Nearly every core file (.env.example, CLAUDE.md, README.md, CI/CD workflows, app routes, docs)
@@ -19,6 +20,7 @@ Attempted staged rebase of `origin/claude/repair-git-remotes-p1ez7c` (261 commit
 ### Why This Matters
 
 The add/add conflicts indicate:
+
 1. The repair branch branched from an older main state
 2. While it evolved with 261 commits implementing billing, team APIs, schema migrations, etc.
 3. Main **also evolved independently** with its own implementations of similar features
@@ -29,6 +31,7 @@ The add/add conflicts indicate:
 ### Implication
 
 This is **not a simple merge**. It's a **fundamental architecture decision**:
+
 - **Keep main's implementations** (current production code, already deployed)
 - **Cherry-pick specific features from repair branch** (if they're genuinely better)
 - **Accept both branches as parallel architectural experiments** and document the reasons
@@ -59,12 +62,14 @@ Branches with significant, diverged work that cannot be merged cleanly:
 **Decision:** **PRESERVE BOTH IMPLEMENTATIONS; DO NOT MERGE YET**
 
 **Rationale:**
+
 1. **Data preservation:** All 261 commits remain in git history; no work is lost
 2. **Time constraint:** Merging would require days of conflict resolution
 3. **Quality:** Current main is production-ready; repair branch is diverged and unverified on current main
 4. **Strategic value:** Keep both implementations available for future consolidation (post-launch)
 
 **Actions:**
+
 1. ✅ Document the parallel implementations in CONSOLIDATION_DECISION_LOG
 2. Create a **preservation archive tag**: `archive/claude-repair-git-remotes-p1ez7c-261-commits`
 3. Mark the branch in docs as "parallel archive — preserved for future consolidation"
@@ -81,6 +86,7 @@ Branches with significant, diverged work that cannot be merged cleanly:
 Most other branches will follow a similar pattern — diverged work that represents parallel architectural experiments rather than failing attempts.
 
 **Process:**
+
 1. For each branch, check if work is already on main
 2. If yes → mark as "merged elsewhere" and archive
 3. If no → assess value:
@@ -104,6 +110,7 @@ Once Tier 1-2 are complete:
 ## DECISION: WHY NOT FORCE MERGE PR #124?
 
 ### Option A: Force Merge PR #124 into Main
+
 - **Pro:** Consolidates work into one branch
 - **Con:** Requires resolving 40+ conflicts on each commit; could take 8-12 hours
 - **Con:** Risk of choosing wrong implementation in each conflict
@@ -112,6 +119,7 @@ Once Tier 1-2 are complete:
 - **Verdict:** ❌ **Not worthwhile for parallel implementations that main already has**
 
 ### Option B: Preserve Both, Cherry-Pick Strategic Features
+
 - **Pro:** Keeps both implementations available for code review
 - **Pro:** Can selectively integrate best-of-both if features are genuinely superior
 - **Pro:** Main remains stable
@@ -120,6 +128,7 @@ Once Tier 1-2 are complete:
 - **Verdict:** ✅ **Best approach for time-constrained consolidation**
 
 ### Option C: Abandon Repair Branch, Keep Main
+
 - **Pro:** Simplest — no decisions needed
 - **Con:** Loses potential improvements from repair branch
 - **Con:** Creates perception that months of work is "wasted"
@@ -131,60 +140,64 @@ Once Tier 1-2 are complete:
 
 ### Decision 1: PR #124 (Billing/Team — 261 commits)
 
-| Aspect | Resolution |
-|--------|-----------|
-| **Branch** | `origin/claude/repair-git-remotes-p1ez7c` |
-| **Status** | Parallel diverged work; add/add conflicts on 40+ files |
-| **Decision** | PRESERVE, DO NOT MERGE |
-| **Archive Tag** | `archive/claude-repair-git-remotes-261-commits` |
-| **Preservation** | All commits remain in git history; branch marked read-only in docs |
+| Aspect            | Resolution                                                                  |
+| ----------------- | --------------------------------------------------------------------------- |
+| **Branch**        | `origin/claude/repair-git-remotes-p1ez7c`                                   |
+| **Status**        | Parallel diverged work; add/add conflicts on 40+ files                      |
+| **Decision**      | PRESERVE, DO NOT MERGE                                                      |
+| **Archive Tag**   | `archive/claude-repair-git-remotes-261-commits`                             |
+| **Preservation**  | All commits remain in git history; branch marked read-only in docs          |
 | **Future Action** | Post-launch architectural review: assess features for selective integration |
-| **Documentation** | Updated in CONSOLIDATION_REGISTER.md with full rationale |
+| **Documentation** | Updated in CONSOLIDATION_REGISTER.md with full rationale                    |
 
 ### Decision 2: PR #148 (Governor Ω v2.0)
 
-| Aspect | Resolution |
-|--------|-----------|
-| **Branch** | `origin/claude/governor-omega-v2-w29yi4` |
-| **Status** | Clean institutional memory contribution (+1 commit, +256 lines) |
-| **Decision** | MERGED ✅ |
-| **Merged Into** | `claude/governor-omega-consolidation-0z2qbl` |
-| **New Files** | docs/governor/{README, executive/BASELINE, lessons/LESSONS, reports/README, risks/RISK-REGISTER} |
-| **Impact** | Established `docs/governor/` institutional memory structure |
+| Aspect          | Resolution                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| **Branch**      | `origin/claude/governor-omega-v2-w29yi4`                                                         |
+| **Status**      | Clean institutional memory contribution (+1 commit, +256 lines)                                  |
+| **Decision**    | MERGED ✅                                                                                        |
+| **Merged Into** | `claude/governor-omega-consolidation-0z2qbl`                                                     |
+| **New Files**   | docs/governor/{README, executive/BASELINE, lessons/LESSONS, reports/README, risks/RISK-REGISTER} |
+| **Impact**      | Established `docs/governor/` institutional memory structure                                      |
 
 ### Decision 3: PR #146 (Cathedral Evolution)
 
-| Aspect | Resolution |
-|--------|-----------|
-| **Branch** | `origin/claude/cathedral-evolution-system-ku0h5l` |
-| **Status** | Clean decision documentation (+1 commit, +34 lines to DECISION_REGISTER) |
-| **Decision** | MERGED ✅ |
-| **Merged Into** | `claude/governor-omega-consolidation-0z2qbl` |
-| **Content** | DR-0021: CEIS endpoint hardening and PR queue reconciliation |
-| **Impact** | Cathedral documented as methodology within Governor Ω; not independent executive |
+| Aspect          | Resolution                                                                       |
+| --------------- | -------------------------------------------------------------------------------- |
+| **Branch**      | `origin/claude/cathedral-evolution-system-ku0h5l`                                |
+| **Status**      | Clean decision documentation (+1 commit, +34 lines to DECISION_REGISTER)         |
+| **Decision**    | MERGED ✅                                                                        |
+| **Merged Into** | `claude/governor-omega-consolidation-0z2qbl`                                     |
+| **Content**     | DR-0021: CEIS endpoint hardening and PR queue reconciliation                     |
+| **Impact**      | Cathedral documented as methodology within Governor Ω; not independent executive |
 
 ---
 
 ## REMAINING CONSOLIDATION WORK
 
 ### Phase 3b: Batch Assessment (Next)
+
 - Assess Governor variants (14 branches)
 - Assess infrastructure/deployment branches (5 branches)
 - Assess features/fixes branches (11 branches)
 - Categorize: merge, cherry-pick, preserve, or archive
 
 ### Phase 3c: Documentation Consolidation
+
 - Merge all governance documentation into single source of truth
 - Consolidate decision registers
 - Consolidate risk registers
 - Create architecture documentation showing Cathedral/Hercules/Living Organism as capabilities
 
 ### Phase 3d: Authority Consolidation
+
 - Update CLAUDE.md to reflect Governor Ω sole executive authority
 - Archive all parallel Governor constitutions as historical records
 - Create final GOVERNOR_OMEGA_CONSTITUTION.md
 
 ### Phase 3e: Verification & Cleanup
+
 - CI pass: lint, type-check, tests, build
 - No conflicts or uncommitted work
 - All decisions documented
@@ -196,6 +209,7 @@ Once Tier 1-2 are complete:
 ## TIMELINE IMPACT
 
 **Original Estimate:**
+
 - Phase 3a: 1 day (critical branches)
 - Phase 3b: 1 day (batch assessment)
 - Phase 3c-d: 1 day (documentation)
@@ -203,6 +217,7 @@ Once Tier 1-2 are complete:
 - **Total: 3.5 days**
 
 **Revised Estimate (After Rebase Failure):**
+
 - Phase 3a: ✅ Complete (2 merges, 1 preservation decision)
 - Phase 3b: 1 day (batch assessment — no rebase attempts)
 - Phase 3c-d: 1 day (documentation)
@@ -218,6 +233,7 @@ Once Tier 1-2 are complete:
 ### Risk: "What if repair branch had better implementations?"
 
 **Mitigation:**
+
 - Branch is archived and tagged; code review can happen post-launch
 - If features are genuinely superior, cherry-pick commits can be done in a follow-up consolidation phase
 - Document the choice explicitly so future decision-makers know this was deliberate
@@ -225,6 +241,7 @@ Once Tier 1-2 are complete:
 ### Risk: "Duplicate work is wasted effort"
 
 **Mitigation:**
+
 - The work wasn't entirely wasted — both branches verified the billing system is complex
 - We've documented the parallel implementations so future teams understand the design space
 - Post-launch architectural review will extract lessons from both approaches
@@ -232,6 +249,7 @@ Once Tier 1-2 are complete:
 ### Risk: "CI might fail after consolidation"
 
 **Mitigation:**
+
 - Only merging clean branches (PR #148, #146)
 - No code changes to main yet — just governance docs and decisions
 - Full CI suite before pushing consolidation branch
@@ -261,10 +279,10 @@ Once Tier 1-2 are complete:
 ## CONCLUSION
 
 **Consolidation is proceeding effectively despite the rebase failure.** By pivoting to preservation + selective integration, we:
+
 - Save days of conflict resolution
 - Maintain code stability (main remains unchanged)
 - Preserve all work in git history (no data loss)
 - Document decisions clearly for future architectures
 
 **Status:** Phase 3a complete; Phase 3b assessment beginning.
-

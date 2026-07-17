@@ -16,7 +16,8 @@ Complete thorough analysis of production incidents to understand what happened, 
 
 **When to use**: Within 24 hours of incident resolution
 
-**Participants**: 
+**Participants**:
+
 - Technical Lead (who investigated)
 - Incident Commander (who managed response)
 - Code Author (if caused by recent change)
@@ -87,13 +88,13 @@ Create a detailed timeline of the incident (fill from incident response notes):
 
 Document the investigation timeline (use actual times):
 
-| Time | Action | Findings |
-|------|--------|----------|
-| 14:23 UTC | Checked health endpoint | Response time 5s |
-| 14:25 UTC | Reviewed error logs | 1000+ 500 errors/min |
-| 14:27 UTC | Checked database | High connection count, 250 active |
-| 14:30 UTC | Reviewed deployments | Deployment 30 min prior |
-| ... | ... | ... |
+| Time      | Action                  | Findings                          |
+| --------- | ----------------------- | --------------------------------- |
+| 14:23 UTC | Checked health endpoint | Response time 5s                  |
+| 14:25 UTC | Reviewed error logs     | 1000+ 500 errors/min              |
+| 14:27 UTC | Checked database        | High connection count, 250 active |
+| 14:30 UTC | Reviewed deployments    | Deployment 30 min prior           |
+| ...       | ...                     | ...                               |
 
 ### Resolution Phase
 
@@ -118,16 +119,19 @@ Document the investigation timeline (use actual times):
 Describe the incident in neutral, factual terms:
 
 **Customer Experience**: What did customers see or experience?
+
 ```
 [Describe what customers experienced]
 ```
 
 **System Behavior**: What did systems do wrong?
+
 ```
 [Describe system behavior that was incorrect]
 ```
 
 **Scope**: Which components/features affected?
+
 ```
 [List affected components]
 ```
@@ -137,26 +141,31 @@ Describe the incident in neutral, factual terms:
 Root cause analysis (use 5 Whys technique):
 
 **Why 1**: Why did the system fail?
+
 ```
 [Answer]
 ```
 
 **Why 2**: Why did that condition exist?
+
 ```
 [Answer]
 ```
 
 **Why 3**: Why wasn't it detected/prevented?
+
 ```
 [Answer]
 ```
 
 **Why 4**: Why did our procedures not catch it?
+
 ```
 [Answer]
 ```
 
 **Root Cause** (most fundamental reason):
+
 ```
 [One or two sentences explaining the root cause]
 ```
@@ -271,18 +280,21 @@ What should we improve? What would prevent this next time?
 What principle or pattern did we learn that applies beyond this incident?
 
 **Lesson 1**:
+
 ```
 If [condition], then [consequence].
 Therefore: [What we should do to prevent similar issues]
 ```
 
 **Lesson 2**:
+
 ```
 [Another lesson]
 Therefore: [Action]
 ```
 
 **Lesson 3**:
+
 ```
 [Another lesson]
 Therefore: [Action]
@@ -294,12 +306,12 @@ Therefore: [Action]
 
 Summary of what will happen next:
 
-| Action | Owner | Target Date | Priority | Tracked In |
-|--------|-------|-------------|----------|-----------|
-| Add monitoring alert for connection pool | [Name] | 2026-07-17 | Critical | GH #123 |
-| Update DATABASE_OPERATIONS.md runbook | [Name] | 2026-07-18 | High | GH #124 |
-| Add test for connection pool exhaustion | [Name] | 2026-07-18 | High | GH #125 |
-| Review RLS policies for similar gaps | [Name] | 2026-07-20 | Medium | GH #126 |
+| Action                                   | Owner  | Target Date | Priority | Tracked In |
+| ---------------------------------------- | ------ | ----------- | -------- | ---------- |
+| Add monitoring alert for connection pool | [Name] | 2026-07-17  | Critical | GH #123    |
+| Update DATABASE_OPERATIONS.md runbook    | [Name] | 2026-07-18  | High     | GH #124    |
+| Add test for connection pool exhaustion  | [Name] | 2026-07-18  | High     | GH #125    |
+| Review RLS policies for similar gaps     | [Name] | 2026-07-20  | Medium   | GH #126    |
 
 ---
 

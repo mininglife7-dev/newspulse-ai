@@ -14,12 +14,14 @@
 
 **What:** Run `supabase/schema.sql` in Supabase SQL editor
 
-**Why:** 
+**Why:**
+
 - Auth flow will silently fail without schema (customers cannot sign up)
 - RLS policies must be deployed to live project (not auto-deployed from code)
 - Without this, first customer signup → immediate failure
 
 **Consequences:**
+
 - If deployed: Customers can sign up and use workspace setup
 - If not deployed: All customer attempts fail with silent 403 errors
 - If delayed: Every day without this is customer-ready code sitting idle
@@ -41,11 +43,13 @@
 **What:** Enable "Email" auth method in Supabase → Project Settings → Auth
 
 **Why:**
+
 - Email signup flow checks this setting before sending verification emails
 - Without this, signup form accepts email but never sends confirmation
 - First customer to sign up will report "never received email"
 
 **Consequences:**
+
 - If enabled: Email verification flow works end-to-end
 - If not enabled: Signup appears to work but verification email never arrives
 - If delayed: Soft launch impossible (customers can't verify emails)
@@ -67,11 +71,13 @@
 **What:** Check GitHub → Settings → Billing → Actions usage and limits
 
 **Why:**
+
 - GitHub Actions went dark at 04:15 UTC today (4+ hours of undetected CI/CD failure)
 - This indicates spending cap or rate limit was hit
 - Without CI verification, all future PRs merge without automated tests
 
 **Consequences:**
+
 - If resolved: CI pipeline resumes; all PRs verified automatically
 - If not resolved: Every merge is unverified; risks of broken code in production
 - If delayed: Team cannot trust deployments; manual testing required for every PR
@@ -91,22 +97,26 @@
 Once these 3 decisions are executed:
 
 ✅ **DNA-GOV-001** will verify:
+
 - GitHub Actions is responding (workflow runs created)
 - No external blockers preventing merges
 
 ✅ **DNA-GOV-002** will verify:
+
 - Landing page loads (connectivity)
 - Signup page renders (auth routes accessible)
 - API responds (backend alive)
 - Supabase connection works (database connected)
 
 ✅ **DNA-GOV-006** will verify:
+
 - Customer can visit landing page
 - Customer can reach signup
 - Customer can submit workspace setup form
 - All flows respond within SLA
 
 If any verification fails, Governor will alert Founder immediately with:
+
 - What failed
 - Why it failed
 - Recommended action
@@ -145,32 +155,35 @@ If any verification fails, Governor will alert Founder immediately with:
 
 ## GOVERNOR STATUS
 
-| Metric | Status |
-|--------|--------|
-| **Code quality** | ✅ 178/178 tests passing |
-| **Build status** | ✅ Clean (npm run build) |
-| **Deployment** | ✅ Live on Vercel |
-| **Infrastructure** | ✅ DNA monitoring via GitHub Actions |
-| **Launch readiness** | ⏳ Awaiting Founder console actions |
-| **Customer readiness** | 🔴 Blocked on 3 decisions |
+| Metric                 | Status                               |
+| ---------------------- | ------------------------------------ |
+| **Code quality**       | ✅ 178/178 tests passing             |
+| **Build status**       | ✅ Clean (npm run build)             |
+| **Deployment**         | ✅ Live on Vercel                    |
+| **Infrastructure**     | ✅ DNA monitoring via GitHub Actions |
+| **Launch readiness**   | ⏳ Awaiting Founder console actions  |
+| **Customer readiness** | 🔴 Blocked on 3 decisions            |
 
 ---
 
 ## NEXT ACTIONS
 
 **Immediate (Founder):**
+
 1. Deploy `supabase/schema.sql` (2 min)
 2. Enable Email auth in Supabase (2 min)
 3. Check GitHub Actions billing (5 min)
 4. Report status back to Governor
 
 **Immediate (Governor):**
+
 1. Monitor DNA-GOV-001/002/006 for verification results
 2. Alert if any verification fails
 3. Surface next decision when current decisions complete
 4. Begin customer launch documentation
 
 **Parallel (Governor):**
+
 1. Extend DNA-GOV-007 to auto-capture these decisions
 2. Analyze organizational capability improvements
 3. Prepare post-launch monitoring plan

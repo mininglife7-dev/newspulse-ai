@@ -10,8 +10,10 @@
  * health monitoring, automatic abort when metrics degrade, and manual kill-switch.
  */
 
-export type CanaryStage = 'planning' | 'staged' | 'active' | 'aborted' | 'complete';
-export type CanaryMetric = 'error_rate' | 'latency' | 'availability' | 'memory' | 'cpu';
+export type CanaryStage =
+  'planning' | 'staged' | 'active' | 'aborted' | 'complete';
+export type CanaryMetric =
+  'error_rate' | 'latency' | 'availability' | 'memory' | 'cpu';
 
 export interface CanaryThreshold {
   metric: CanaryMetric;
@@ -44,7 +46,10 @@ export interface CanaryDeployment {
   abortedAt?: string;
   abortReason?: string;
   // Metrics snapshot
-  metrics: Record<CanaryMetric, { current: number; baseline: number; status: 'ok' | 'warning' | 'critical' }>;
+  metrics: Record<
+    CanaryMetric,
+    { current: number; baseline: number; status: 'ok' | 'warning' | 'critical' }
+  >;
   // History
   stageHistory: Array<{
     stage: number;
@@ -114,14 +119,18 @@ export function planCanaryDeployment(
 /**
  * Get a canary deployment
  */
-export function getCanaryDeployment(deploymentId: string): CanaryDeployment | undefined {
+export function getCanaryDeployment(
+  deploymentId: string
+): CanaryDeployment | undefined {
   return deployments.get(deploymentId);
 }
 
 /**
  * Start the canary deployment at the first stage
  */
-export function startCanaryDeployment(deploymentId: string): CanaryDeployment | undefined {
+export function startCanaryDeployment(
+  deploymentId: string
+): CanaryDeployment | undefined {
   const deployment = deployments.get(deploymentId);
   if (!deployment) return undefined;
 
@@ -192,7 +201,12 @@ export function recordCanaryMetrics(
       deployment.metrics[threshold.metric] = {
         current: currentValue,
         baseline: deployment.metrics[threshold.metric]?.baseline || 0,
-        status: snapshot.criticalIssues.length > 0 ? 'critical' : snapshot.warnings.length > 0 ? 'warning' : 'ok',
+        status:
+          snapshot.criticalIssues.length > 0
+            ? 'critical'
+            : snapshot.warnings.length > 0
+              ? 'warning'
+              : 'ok',
       };
     }
   }
@@ -206,7 +220,10 @@ export function recordCanaryMetrics(
 
   // If critical issues found, abort
   if (snapshot.criticalIssues.length > 0) {
-    abortCanaryDeployment(deploymentId, `Critical metrics exceeded: ${snapshot.criticalIssues.join('; ')}`);
+    abortCanaryDeployment(
+      deploymentId,
+      `Critical metrics exceeded: ${snapshot.criticalIssues.join('; ')}`
+    );
   }
 
   deployments.set(deploymentId, deployment);
@@ -216,7 +233,9 @@ export function recordCanaryMetrics(
 /**
  * Increment to next stage if current stage is healthy
  */
-export function incrementCanaryStage(deploymentId: string): CanaryDeployment | undefined {
+export function incrementCanaryStage(
+  deploymentId: string
+): CanaryDeployment | undefined {
   const deployment = deployments.get(deploymentId);
   if (!deployment) return undefined;
 
@@ -230,7 +249,8 @@ export function incrementCanaryStage(deploymentId: string): CanaryDeployment | u
 
   // Mark current stage as completed
   if (deployment.stageHistory.length > 0) {
-    const lastStage = deployment.stageHistory[deployment.stageHistory.length - 1];
+    const lastStage =
+      deployment.stageHistory[deployment.stageHistory.length - 1];
     lastStage.completedAt = new Date().toISOString();
     lastStage.status = 'completed';
   }
@@ -238,7 +258,8 @@ export function incrementCanaryStage(deploymentId: string): CanaryDeployment | u
   // Move to next stage
   deployment.currentStage++;
   deployment.status = 'active';
-  deployment.currentPercentage = deployment.stages[deployment.currentStage - 1]?.percentage || 100;
+  deployment.currentPercentage =
+    deployment.stages[deployment.currentStage - 1]?.percentage || 100;
 
   deployment.stageHistory.push({
     stage: deployment.currentStage,
@@ -248,7 +269,10 @@ export function incrementCanaryStage(deploymentId: string): CanaryDeployment | u
   });
 
   // Check if we reached 100%
-  if (deployment.currentPercentage === 100 && deployment.currentStage === deployment.stages.length) {
+  if (
+    deployment.currentPercentage === 100 &&
+    deployment.currentStage === deployment.stages.length
+  ) {
     completeCanaryDeployment(deploymentId);
   }
 
@@ -259,12 +283,15 @@ export function incrementCanaryStage(deploymentId: string): CanaryDeployment | u
 /**
  * Mark deployment as complete
  */
-export function completeCanaryDeployment(deploymentId: string): CanaryDeployment | undefined {
+export function completeCanaryDeployment(
+  deploymentId: string
+): CanaryDeployment | undefined {
   const deployment = deployments.get(deploymentId);
   if (!deployment) return undefined;
 
   if (deployment.stageHistory.length > 0) {
-    const lastStage = deployment.stageHistory[deployment.stageHistory.length - 1];
+    const lastStage =
+      deployment.stageHistory[deployment.stageHistory.length - 1];
     lastStage.completedAt = new Date().toISOString();
     lastStage.status = 'completed';
   }
@@ -279,7 +306,10 @@ export function completeCanaryDeployment(deploymentId: string): CanaryDeployment
 /**
  * Abort canary deployment with reason
  */
-export function abortCanaryDeployment(deploymentId: string, reason: string): CanaryDeployment | undefined {
+export function abortCanaryDeployment(
+  deploymentId: string,
+  reason: string
+): CanaryDeployment | undefined {
   const deployment = deployments.get(deploymentId);
   if (!deployment) return undefined;
 
@@ -288,7 +318,8 @@ export function abortCanaryDeployment(deploymentId: string, reason: string): Can
   }
 
   if (deployment.stageHistory.length > 0) {
-    const lastStage = deployment.stageHistory[deployment.stageHistory.length - 1];
+    const lastStage =
+      deployment.stageHistory[deployment.stageHistory.length - 1];
     lastStage.abortedAt = new Date().toISOString();
     lastStage.status = 'aborted';
   }
@@ -304,14 +335,18 @@ export function abortCanaryDeployment(deploymentId: string, reason: string): Can
 /**
  * Get health snapshots for a deployment
  */
-export function getCanaryHealthSnapshots(deploymentId: string): CanaryHealthSnapshot[] {
+export function getCanaryHealthSnapshots(
+  deploymentId: string
+): CanaryHealthSnapshot[] {
   return healthSnapshots.get(deploymentId) || [];
 }
 
 /**
  * Get latest health snapshot
  */
-export function getLatestCanarySnapshot(deploymentId: string): CanaryHealthSnapshot | undefined {
+export function getLatestCanarySnapshot(
+  deploymentId: string
+): CanaryHealthSnapshot | undefined {
   const snapshots = healthSnapshots.get(deploymentId) || [];
   return snapshots[snapshots.length - 1];
 }
@@ -319,17 +354,19 @@ export function getLatestCanarySnapshot(deploymentId: string): CanaryHealthSnaps
 /**
  * Get canary deployment summary
  */
-export function getCanarySummary(deploymentId: string): {
-  id: string;
-  name: string;
-  version: string;
-  status: CanaryStage;
-  progress: string; // "Stage 2 of 3 (25%)"
-  health: string; // "✅ Healthy", "⚠️ Warnings", "🔴 Critical"
-  elapsedTime: string; // "2 hours 30 minutes"
-  expectedCompletion: string; // Estimated time to 100%
-  lastMetrics: Record<CanaryMetric, number>;
-} | undefined {
+export function getCanarySummary(deploymentId: string):
+  | {
+      id: string;
+      name: string;
+      version: string;
+      status: CanaryStage;
+      progress: string; // "Stage 2 of 3 (25%)"
+      health: string; // "✅ Healthy", "⚠️ Warnings", "🔴 Critical"
+      elapsedTime: string; // "2 hours 30 minutes"
+      expectedCompletion: string; // Estimated time to 100%
+      lastMetrics: Record<CanaryMetric, number>;
+    }
+  | undefined {
   const deployment = deployments.get(deploymentId);
   if (!deployment) return undefined;
 
@@ -337,7 +374,9 @@ export function getCanarySummary(deploymentId: string): {
   const lastSnapshot = snapshots[snapshots.length - 1];
 
   // Calculate elapsed time
-  const elapsed = new Date(deployment.lastCheckedAt).getTime() - new Date(deployment.startedAt).getTime();
+  const elapsed =
+    new Date(deployment.lastCheckedAt).getTime() -
+    new Date(deployment.startedAt).getTime();
   const hours = Math.floor(elapsed / 3600000);
   const minutes = Math.floor((elapsed % 3600000) / 60000);
   const elapsedStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
@@ -403,7 +442,9 @@ export function formatCanaryStatus(deployment: CanaryDeployment): string {
       ? ` (${deployment.currentPercentage}% → ${deployment.currentStage}/${deployment.stages.length} stages)`
       : '';
 
-  const reason = deployment.abortReason ? `\n  ⚠️  Reason: ${deployment.abortReason}` : '';
+  const reason = deployment.abortReason
+    ? `\n  ⚠️  Reason: ${deployment.abortReason}`
+    : '';
 
   return `${statusIcon} [${deployment.status}] ${deployment.name} v${deployment.version}${progressStr}${reason}`;
 }

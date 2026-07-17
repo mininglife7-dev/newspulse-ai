@@ -1,4 +1,5 @@
 # Supabase Deployment Verification Checklist
+
 **Purpose:** Verify that the Supabase schema has been correctly deployed and all RLS policies are in place  
 **Audience:** Founder (verification only; no CLI/code changes needed)  
 **Time Required:** 10–15 minutes
@@ -33,6 +34,7 @@ ORDER BY table_name;
 ```
 
 **Expected output if schema IS deployed:**
+
 ```
 ai_systems
 assessments
@@ -88,6 +90,7 @@ supabase db pull  # This will show you the current schema
 ### Schema Safety Features
 
 The schema is **idempotent** — safe to run multiple times:
+
 - Uses `CREATE TABLE IF NOT EXISTS` (won't fail if tables exist)
 - Uses `CREATE OR REPLACE FUNCTION` (overwrites functions safely)
 - Uses `CREATE INDEX IF NOT EXISTS` (won't fail if indexes exist)
@@ -110,6 +113,7 @@ ORDER BY table_name;
 ```
 
 **Expected:** 20+ tables including:
+
 - `auth.users` (Supabase built-in)
 - `profiles`, `workspaces`, `workspace_members`, `companies`
 - `ai_systems`, `risk_assessments`, `assessments`
@@ -143,6 +147,7 @@ ORDER BY tablename, policyname;
 **Expected:** 30+ policies across tables (each table should have SELECT, INSERT, UPDATE, DELETE policies)
 
 Example policies you should see:
+
 - `obligations_select_workspace_members` — Members can read workspace obligations
 - `workspace_members_select_own` — Users can see their workspace roster
 - `evidence_insert_workspace_members` — Members can submit evidence
@@ -158,6 +163,7 @@ ORDER BY routine_name;
 ```
 
 **Expected:** Functions like:
+
 - `handle_new_user` — Creates profile when user signs up
 - `is_workspace_member` — RLS helper: checks if user is a workspace member
 - `is_workspace_admin` — RLS helper: checks if user is a workspace admin
@@ -210,6 +216,7 @@ After schema deployment, verify Vercel has the correct Supabase environment vari
 **Do NOT commit these to git. Vercel environment variables are the safe place for secrets.**
 
 Get these from Supabase:
+
 1. In Supabase dashboard, go to **Settings** → **API**
 2. Copy the values under "Project API keys"
 
@@ -230,6 +237,7 @@ Once schema is deployed and env vars are set on Vercel, test the end-to-end flow
 **If all steps work:** Schema is deployed correctly ✅
 
 **If any step fails:**
+
 - **Step 3 fails (no confirmation email):** Email provider not configured in Supabase
 - **Step 5 fails (form doesn't save):** RLS policies not deployed; workspace creation is blocked
 - **Step 7 fails (obligations page doesn't load):** Obligations table or RLS policies not deployed
@@ -256,7 +264,7 @@ After schema is deployed and teams are using the system:
 
 ```sql
 -- Check for policy evaluation delays
-SELECT schemaname, tablename, policyname, 
+SELECT schemaname, tablename, policyname,
        COUNT(*) as evaluations
 FROM pg_stat_statements
 WHERE query LIKE '%policy%'
@@ -307,18 +315,21 @@ Run the full PREFLIGHT_CHECK.sql again to ensure no policy conflicts before depl
 
 ### Problem: RLS policies not enforced (queries succeed when they should fail)
 
-**Cause:** 
+**Cause:**
+
 1. RLS not enabled on the table, OR
 2. Service role key is being used instead of anon key
 
 **Solution:**
+
 - Verify `rowsecurity = true` for the table: `SELECT * FROM pg_tables WHERE tablename='obligations' AND rowsecurity=true;`
 - Check that your API calls use the **anon key**, not service role key. Service role bypasses RLS.
 
 ### Problem: Forgot email confirmation, can't sign in
 
 **Cause:** Email configuration issue or user never clicked link  
-**Solution:** 
+**Solution:**
+
 1. In Supabase **Auth Users** tab, find the user
 2. Click the user row
 3. Manually mark as confirmed (or resend email)
@@ -351,6 +362,7 @@ Date: ___________    Person: ___________
 ## Next Steps
 
 Once verified:
+
 1. ✅ Schema is deployed and all RLS policies are in place
 2. ✅ Email confirmation is configured
 3. ✅ Environment variables are set on Vercel

@@ -100,7 +100,11 @@ export async function POST(request: NextRequest) {
           report = await verifyDeployment(deploymentId);
         } catch (e) {
           // If verification fails, continue with orchestration anyway
-          logger.error('Failed to verify deployment', 'DEPLOYMENT_VERIFICATION_ERROR', e);
+          logger.error(
+            'Failed to verify deployment',
+            'DEPLOYMENT_VERIFICATION_ERROR',
+            e
+          );
         }
       }
 

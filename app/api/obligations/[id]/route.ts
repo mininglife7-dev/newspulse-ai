@@ -37,7 +37,11 @@ async function resolveContext(
     .maybeSingle();
 
   if (memberError) {
-    logger.error('Workspace membership lookup failed', 'MEMBERSHIP_LOOKUP_ERROR', memberError);
+    logger.error(
+      'Workspace membership lookup failed',
+      'MEMBERSHIP_LOOKUP_ERROR',
+      memberError
+    );
     return { status: 500, error: 'Membership lookup failed' };
   }
 
@@ -80,8 +84,17 @@ export async function PUT(
   }
 
   const validationResult = validate(body, {
-    status: validators.optional(validators.enum(['identified', 'in_progress', 'completed', 'not_applicable'])),
-    priority: validators.optional(validators.enum(['critical', 'high', 'medium', 'low'])),
+    status: validators.optional(
+      validators.enum([
+        'identified',
+        'in_progress',
+        'completed',
+        'not_applicable',
+      ])
+    ),
+    priority: validators.optional(
+      validators.enum(['critical', 'high', 'medium', 'low'])
+    ),
     due_date: validators.optional(validators.string()),
   });
 
@@ -129,7 +142,11 @@ export async function PUT(
     .maybeSingle();
 
   if (obligationError) {
-    logger.error('Obligation lookup failed', 'OBLIGATION_LOOKUP_ERROR', obligationError);
+    logger.error(
+      'Obligation lookup failed',
+      'OBLIGATION_LOOKUP_ERROR',
+      obligationError
+    );
     return NextResponse.json(
       { ok: false, error: 'Failed to verify obligation' },
       { status: 500 }
