@@ -51,7 +51,7 @@ jobs:
           # Create a validation script
           cat > .github/validate-migrations.mjs << 'EOF'
           import { readFileSync, writeFileSync } from 'fs';
-          import { analyzeMigrationBatch } from './lib/schema-migration-validator.ts';
+          import { analyzeMigrationBatch } from '../lib/schema-migration-validator.ts';
 
           const files = process.argv.slice(2).filter(f => f.trim());
           const migrations = files.map(file => ({
