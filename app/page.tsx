@@ -8,6 +8,8 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+export const revalidate = 3600; // Revalidate every hour
+
 export default function LandingPage() {
   return (
     <div className="space-y-20">
