@@ -155,12 +155,38 @@ jobs:
               # name and fall back to a local socket. Parse it into arguments.
               echo "ℹ️  Value is a pasted 'psql ...' command — parsing its flags"
               read -r -a PSQL_CONN_ARGS <<< "${SUPABASE_DB_URL#psql }"
+              if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+                export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+              fi
+            elif [[ "$SUPABASE_DB_URL" == postgres://* || "$SUPABASE_DB_URL" == postgresql://* ]]; then
+              # Parse the URI ourselves instead of handing it to psql: dashboard
+              # passwords often contain characters that must be percent-encoded
+              # in a URI, and the [YOUR-PASSWORD] placeholder brackets sometimes
+              # survive substitution. PGPASSWORD needs no encoding at all.
+              echo "ℹ️  Parsing connection URI into libpq parameters"
+              eval "$(python3 - <<'PYEOF'
+          import os, re, shlex
+          from urllib.parse import unquote
+          url = os.environ["SUPABASE_DB_URL"].strip()
+          m = re.match(r"^postgres(?:ql)?://(.*)@([^@/]+?)(?::(\d+))?/([^?\s]+)", url, re.S)
+          if not m:
+              print("echo '❌ Could not parse SUPABASE_DB_URL as a postgresql:// URI'; exit 1")
+          else:
+              userinfo, host, port, db = m.group(1), m.group(2), m.group(3) or "5432", m.group(4)
+              user, _, pw = userinfo.partition(":")
+              if pw.startswith("[") and pw.endswith("]"):
+                  pw = pw[1:-1]  # strip template placeholder brackets
+              pw = unquote(pw)  # decode valid %XX; invalid sequences pass through raw
+              print("export PGHOST=%s PGPORT=%s PGUSER=%s PGPASSWORD=%s PGDATABASE=%s" % (
+                  shlex.quote(host), shlex.quote(port), shlex.quote(unquote(user)), shlex.quote(pw), shlex.quote(db)))
+          PYEOF
+              )"
+              PSQL_CONN_ARGS=()
             else
               PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
-            fi
-            # Pooler URIs / psql commands usually omit the password; supply it via env.
-            if [ -n "$SUPABASE_DB_PASSWORD" ]; then
-              export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+              if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+                export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+              fi
             fi
           else
             # Fall back to direct connection (requires IPv4 add-on on newer projects)
@@ -251,14 +277,37 @@ jobs:
           echo "🔐 Running security tests..."
 
           if [ -n "$SUPABASE_DB_URL" ]; then
-            # Accept both a connection URI and a pasted "psql ..." command (see deploy step).
+            # Accept a pasted "psql ..." command, a URI (parsed natively — see
+            # deploy step for why), or a plain value.
             if [[ "$SUPABASE_DB_URL" == psql\ * ]]; then
               read -r -a PSQL_CONN_ARGS <<< "${SUPABASE_DB_URL#psql }"
+              if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+                export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+              fi
+            elif [[ "$SUPABASE_DB_URL" == postgres://* || "$SUPABASE_DB_URL" == postgresql://* ]]; then
+              eval "$(python3 - <<'PYEOF'
+          import os, re, shlex
+          from urllib.parse import unquote
+          url = os.environ["SUPABASE_DB_URL"].strip()
+          m = re.match(r"^postgres(?:ql)?://(.*)@([^@/]+?)(?::(\d+))?/([^?\s]+)", url, re.S)
+          if not m:
+              print("echo '❌ Could not parse SUPABASE_DB_URL as a postgresql:// URI'; exit 1")
+          else:
+              userinfo, host, port, db = m.group(1), m.group(2), m.group(3) or "5432", m.group(4)
+              user, _, pw = userinfo.partition(":")
+              if pw.startswith("[") and pw.endswith("]"):
+                  pw = pw[1:-1]
+              pw = unquote(pw)
+              print("export PGHOST=%s PGPORT=%s PGUSER=%s PGPASSWORD=%s PGDATABASE=%s" % (
+                  shlex.quote(host), shlex.quote(port), shlex.quote(unquote(user)), shlex.quote(pw), shlex.quote(db)))
+          PYEOF
+              )"
+              PSQL_CONN_ARGS=()
             else
               PSQL_CONN_ARGS=("$SUPABASE_DB_URL")
-            fi
-            if [ -n "$SUPABASE_DB_PASSWORD" ]; then
-              export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+              if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+                export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
+              fi
             fi
           else
             PGHOST="db.${SUPABASE_PROJECT_ID}.supabase.co"
