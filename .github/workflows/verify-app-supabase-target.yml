@@ -1,0 +1,72 @@
+name: Verify App Supabase Target
+
+# Read-only evidence collector: fetches the live application from a GitHub
+# runner (which has unrestricted egress, unlike Governor cloud sandboxes)
+# and reports which Supabase project the deployed bundle references.
+# NEXT_PUBLIC_SUPABASE_URL is baked into the client JS at build time, so
+# the bundle is authoritative for what the app actually talks to.
+# No secrets are read or printed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_urls:
+        description: 'Space-separated candidate production URLs'
+        required: false
+        default: 'https://newspulse-ai.vercel.app https://newspulse-ai-production.vercel.app'
+        type: string
+      expected_ref:
+        description: 'Expected Supabase project ref'
+        required: false
+        default: 'cwbcvjiklrrkpmybefdp'
+        type: string
+
+jobs:
+  verify-target:
+    name: Verify deployed app Supabase target
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch app and extract Supabase references
+        env:
+          APP_URLS: ${{ inputs.app_urls }}
+          EXPECTED_REF: ${{ inputs.expected_ref }}
+        run: |
+          overall=1
+          for URL in $APP_URLS; do
+            echo "=============================="
+            echo "🌐 Probing $URL"
+            code=$(curl -sL -o /tmp/page.html -w "%{http_code}" --max-time 30 "$URL" || echo 000)
+            echo "   HTTP status: $code"
+            if [ "$code" != "200" ]; then
+              echo "   ⏭️  Skipping (not serving 200)"
+              continue
+            fi
+            refs_page=$(grep -oE 'https://[a-z0-9]+\.supabase\.co' /tmp/page.html | sort -u || true)
+            # Scan up to 25 linked JS chunks — env vars usually live in the bundle
+            chunks=$(grep -oE '"/_next/static/[^"]+\.js"' /tmp/page.html | tr -d '"' | sort -u | head -25 || true)
+            refs_js=""
+            for js in $chunks; do
+              refs_js="$refs_js $(curl -sL --max-time 30 "$URL$js" | grep -oE 'https://[a-z0-9]+\.supabase\.co' || true)"
+            done
+            refs=$(echo "$refs_page $refs_js" | tr ' ' '\n' | grep -E '^https' | sort -u || true)
+            echo "   Supabase references found in HTML+bundle:"
+            if [ -n "$refs" ]; then echo "$refs" | sed 's/^/     /'; else echo "     (none)"; fi
+            if echo "$refs" | grep -q "$EXPECTED_REF"; then
+              echo "   ✅ MATCH: app references https://${EXPECTED_REF}.supabase.co"
+              overall=0
+            fi
+            if echo "$refs" | grep -qv "$EXPECTED_REF"; then
+              echo "   ⚠️  Non-expected Supabase references also present (see list above)"
+            fi
+            echo "   /api/health response:"
+            curl -sL --max-time 30 "$URL/api/health" | head -c 500 || echo "(unreachable)"
+            echo ""
+          done
+          echo "=============================="
+          if [ $overall -eq 0 ]; then
+            echo "✅ VERDICT: deployed app targets expected Supabase project ($EXPECTED_REF)"
+          else
+            echo "❌ VERDICT: expected project ref NOT found in any probed deployment"
+          fi
+          exit $overall
