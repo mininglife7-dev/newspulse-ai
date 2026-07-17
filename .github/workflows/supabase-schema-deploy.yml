@@ -224,7 +224,7 @@ jobs:
           deployment_failed=0
 
           # Run schema deployment
-          if psql "${PSQL_CONN_ARGS[@]}" -f supabase/schema.sql > /tmp/deploy.log 2>&1; then
+          if psql "${PSQL_CONN_ARGS[@]}" -v ON_ERROR_STOP=1 -f supabase/schema.sql > /tmp/deploy.log 2>&1; then
             echo "✅ Schema deployed successfully"
           else
             echo "❌ Schema deployment failed"
@@ -236,7 +236,7 @@ jobs:
           if [ $deployment_failed -eq 0 ]; then
             echo ""
             echo "🧬 Deploying CEIS schema..."
-            if psql "${PSQL_CONN_ARGS[@]}" -f supabase/ceis-schema.sql > /tmp/ceis-deploy.log 2>&1; then
+            if psql "${PSQL_CONN_ARGS[@]}" -v ON_ERROR_STOP=1 -f supabase/ceis-schema.sql > /tmp/ceis-deploy.log 2>&1; then
               echo "✅ CEIS schema deployed successfully"
             else
               echo "❌ CEIS schema deployment failed"

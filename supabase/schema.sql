@@ -29,7 +29,9 @@ create table if not exists public.profiles (
     email             text        not null,
     first_name        text,
     last_name         text,
-    current_workspace_id uuid references public.workspaces(id) on delete set null,
+    -- current_workspace_id is added AFTER workspaces exists (see below):
+    -- an inline FK here forward-references workspaces and silently broke
+    -- profiles creation on fresh databases (found by journey run 29598931271).
     created_at        timestamptz not null default now(),
     updated_at        timestamptz not null default now()
 );
@@ -93,6 +95,11 @@ create table if not exists public.workspaces (
     updated_at        timestamptz not null default now(),
     unique(slug, owner_id)
 );
+
+-- profiles.current_workspace_id — deferred FK (workspaces must exist first).
+-- Idempotent on both fresh and existing databases.
+alter table public.profiles
+  add column if not exists current_workspace_id uuid references public.workspaces(id) on delete set null;
 
 create index if not exists workspaces_owner_id_idx on public.workspaces (owner_id);
 create index if not exists workspaces_slug_idx on public.workspaces (slug);
