@@ -1,6 +1,6 @@
 # PROJECT_STATE — Verified Facts Only
 
-**Last verified:** 2026-07-17 ~14:00 UTC (EU migration in progress — Frankfurt reached, password auth failing)
+**Last verified:** 2026-07-17 ~14:10 UTC (EU database migration VERIFIED — run `29586277262`)
 Rules: facts only, each labelled and evidence-cited. Unknown stays UNKNOWN
 until verified. Update whenever verified reality changes.
 
