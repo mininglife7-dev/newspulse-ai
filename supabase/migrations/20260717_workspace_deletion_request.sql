@@ -24,6 +24,7 @@ create index if not exists workspace_deletion_request_scheduled_idx on public.wo
 alter table public.workspace_deletion_request enable row level security;
 
 -- Workspace owners can read their workspace's deletion requests
+drop policy if exists "Workspace owners can read deletion requests" on public.workspace_deletion_request;
 create policy "Workspace owners can read deletion requests" on public.workspace_deletion_request
     for select using (
         exists (
@@ -33,6 +34,7 @@ create policy "Workspace owners can read deletion requests" on public.workspace_
         )
     );
 
--- Service role can insert/update (API routes handle this)
+-- Service role can insert/update (API routes handle this via service-role key which bypasses RLS)
+drop policy if exists "Service role can manage deletion requests" on public.workspace_deletion_request;
 create policy "Service role can manage deletion requests" on public.workspace_deletion_request
     for all using (false) with check (false);

@@ -22,9 +22,11 @@ create index if not exists account_deletion_request_scheduled_idx on public.acco
 alter table public.account_deletion_request enable row level security;
 
 -- Users can read their own deletion requests
+drop policy if exists "Users can read own deletion requests" on public.account_deletion_request;
 create policy "Users can read own deletion requests" on public.account_deletion_request
     for select using (user_id = auth.uid());
 
--- Service role can insert/update (API routes handle this)
+-- Service role can insert/update (API routes handle this via service-role key which bypasses RLS)
+drop policy if exists "Service role can manage deletion requests" on public.account_deletion_request;
 create policy "Service role can manage deletion requests" on public.account_deletion_request
     for all using (false) with check (false);
