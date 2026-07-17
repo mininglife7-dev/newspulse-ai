@@ -95,8 +95,8 @@ async function signupAndSession(email, pw) {
 }
 
 const PW = `Cj!${RUNID}aX9`;
-const emailA = `governor.cj.a.${RUNID}@euroai-journey.test`;
-const emailB = `governor.cj.b.${RUNID}@euroai-journey.test`;
+const emailA = `governor.cj.a.${RUNID}@gmail.com`;
+const emailB = `governor.cj.b.${RUNID}@gmail.com`;
 
 // 1. Landing page
 {
