@@ -1,6 +1,6 @@
 # PROJECT_STATE — Verified Facts Only
 
-**Last verified:** 2026-07-17 ~14:10 UTC (EU database migration VERIFIED — run `29586277262`)
+**Last verified:** 2026-07-17 16:45 UTC (EU migration CLOSED end-to-end — runs `29586277262` + `29596903172`)
 Rules: facts only, each labelled and evidence-cited. Unknown stays UNKNOWN
 until verified. Update whenever verified reality changes.
 

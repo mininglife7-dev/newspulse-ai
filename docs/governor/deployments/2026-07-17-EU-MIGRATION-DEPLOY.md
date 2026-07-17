@@ -43,3 +43,26 @@ All 3 jobs success.
   `yrroytwfdrafvajdfkog` (no customer data ever landed there).
 - Recommended: rotate the DB password once more at leisure — it transited
   chat during setup.
+
+## Closure — app-side verification (16:37 UTC)
+
+Production application verified end-to-end on the EU project:
+
+- **True production URL:** `https://newspulse-ai-eight.vercel.app`
+  (Founder-confirmed from Vercel dashboard; publicly served, no auth wall).
+  Note: `newspulse-ai.vercel.app`, cited ~90× in older docs, is NOT this
+  project — bare vercel.app names are global first-come.
+- **Runtime evidence** (probe run
+  [`29596903172`](https://github.com/mininglife7-dev/newspulse-ai/actions/runs/29596903172),
+  `/api/health` verbatim): `{"ok":true,"status":"healthy","db":"ok",
+"supabase_host":"cwbcvjiklrrkpmybefdp.supabase.co","uptime_s":226,
+"checks":{"supabase_url":true,"supabase_anon":true,"supabase_service":true}}`
+  — the live server is wired to the Frankfurt project with a working DB
+  connection (`supabase_host` reporting added in #177 for exactly this).
+- **RISK-008 CLOSED.** Data residency is EU end-to-end: database deployed
+  and verified in Frankfurt (run `29586277262`) AND the production app
+  runtime confirmed against it (run `29596903172`).
+
+Remaining Founder-discretion items (not blockers): decommission Tokyo
+project `yrroytwfdrafvajdfkog` (no customer data ever landed); rotate the
+DB password at leisure (transited chat during setup).

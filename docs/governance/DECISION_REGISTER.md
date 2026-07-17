@@ -23,7 +23,7 @@ are never requested from the Founder.
 - **Expected outcome:** After Founder's Vercel repoint, the platform
   serves EU customers from EU data residency; Tokyo project retired by
   Founder decision.
-- **Actual outcome:** DB side verified complete; app repoint pending.
+- **Actual outcome:** CLOSED end-to-end 2026-07-17: app runtime confirmed on Frankfurt (`supabase_host` evidence, run `29596903172`) at production URL `newspulse-ai-eight.vercel.app`.
 - **Status:** Active.
 
 ## DR-0024 — Truth reconciliation: deploy workflow restored, EU-GO certification voided
