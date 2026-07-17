@@ -7,6 +7,25 @@ are never requested from the Founder.
 
 ---
 
+## DR-0025 — EU production database migration executed and certified
+
+- **Decision:** Executed the RISK-008 migration to Supabase project
+  `cwbcvjiklrrkpmybefdp` (Frankfurt). Certified from run `29586277262`'s
+  own logs: pooler `aws-0-eu-central-1`, schema + CEIS deployed, 21/60/39
+  objects, trigger 1/1, CEIS hard-verify, all security tests PASS. Interim
+  engineering: native URI parsing in the deploy workflow (#171) after the
+  pasted credential formats broke psql twice; leaked logs of the two
+  failed runs deleted; credential now a masked Secret.
+- **Authority:** Governor autonomous (engineering) + Founder (credentials,
+  password reset) — Founder-activated mission.
+- **Evidence:** Runs `29584989863` → `29585730440` → `29586277262`;
+  deployment record `docs/governor/deployments/2026-07-17-EU-MIGRATION-DEPLOY.md`.
+- **Expected outcome:** After Founder's Vercel repoint, the platform
+  serves EU customers from EU data residency; Tokyo project retired by
+  Founder decision.
+- **Actual outcome:** DB side verified complete; app repoint pending.
+- **Status:** Active.
+
 ## DR-0024 — Truth reconciliation: deploy workflow restored, EU-GO certification voided
 
 - **Decision:** (a) Restored `.github/workflows/supabase-schema-deploy.yml`
