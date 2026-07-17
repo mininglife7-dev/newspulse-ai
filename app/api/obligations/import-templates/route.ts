@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { getTemplatesForRiskLevel } from '@/lib/obligation-templates';
+import { logCreate, getClientIp } from '@/lib/audit-logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +11,12 @@ async function resolveContext(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: 401 as const, error: 'Authentication required' };
+  if (!user)
+    return {
+      status: 401 as const,
+      error: 'Authentication required',
+      userId: undefined,
+    };
 
   const { data: membership } = await supabase
     .from('workspace_members')
@@ -24,12 +30,14 @@ async function resolveContext(
     return {
       status: 401 as const,
       error: 'Not a workspace member',
+      userId: undefined,
     };
   }
 
   return {
     status: 200 as const,
     workspaceId: membership.workspace_id as string,
+    userId: user.id,
   };
 }
 
@@ -127,6 +135,25 @@ export async function POST(request: NextRequest) {
         );
         // Continue with other templates even if one fails
         continue;
+      }
+
+      // Log obligation creation (GDPR Article 30)
+      if (ctx.userId && ctx.workspaceId) {
+        await logCreate(
+          ctx.workspaceId,
+          'obligation',
+          data.id,
+          ctx.userId,
+          {
+            title: template.title,
+            source: template.source,
+            priority: template.priority,
+            fromTemplate: true,
+            riskLevel,
+          },
+          getClientIp(request),
+          request.headers.get('user-agent') || undefined
+        );
       }
 
       createdObligations.push({
