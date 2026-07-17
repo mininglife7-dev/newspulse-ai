@@ -98,9 +98,9 @@ describe('Risk Assessment Journey', () => {
     const assessments = await listAssessments(workspaceId);
 
     expect(assessments.length).toBeGreaterThanOrEqual(3);
-    expect(assessments.map((a) => a.id)).toContain(a1.id);
-    expect(assessments.map((a) => a.id)).toContain(a2.id);
-    expect(assessments.map((a) => a.id)).toContain(a3.id);
+    expect(assessments.map((a: any) => a.id)).toContain(a1.id);
+    expect(assessments.map((a: any) => a.id)).toContain(a2.id);
+    expect(assessments.map((a: any) => a.id)).toContain(a3.id);
   });
 
   it('should track assessment creation time', async () => {
@@ -178,8 +178,9 @@ describe('Risk Assessment Journey', () => {
     });
 
     it('should isolate assessments by workspace', async () => {
-      const workspace2Id = (await createTestWorkspace('other-user-' + Date.now()))
-        .id;
+      const workspace2Id = (
+        await createTestWorkspace('other-user-' + Date.now())
+      ).id;
       const system1 = await createTestAISystem(workspaceId);
       const system2 = await createTestAISystem(workspace2Id);
 
@@ -189,11 +190,15 @@ describe('Risk Assessment Journey', () => {
       const ws1Assessments = await listAssessments(workspaceId);
       const ws2Assessments = await listAssessments(workspace2Id);
 
-      expect(ws1Assessments.map((a) => a.id)).toContain(assessment1.id);
-      expect(ws1Assessments.map((a) => a.id)).not.toContain(assessment2.id);
+      expect(ws1Assessments.map((a: any) => a.id)).toContain(assessment1.id);
+      expect(ws1Assessments.map((a: any) => a.id)).not.toContain(
+        assessment2.id
+      );
 
-      expect(ws2Assessments.map((a) => a.id)).toContain(assessment2.id);
-      expect(ws2Assessments.map((a) => a.id)).not.toContain(assessment1.id);
+      expect(ws2Assessments.map((a: any) => a.id)).toContain(assessment2.id);
+      expect(ws2Assessments.map((a: any) => a.id)).not.toContain(
+        assessment1.id
+      );
     });
   });
 });

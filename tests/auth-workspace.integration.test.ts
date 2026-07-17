@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { getTestSupabase, cleanupTestData } from './setup';
-import { createTestWorkspace, addWorkspaceMember, TEST_USERS } from './fixtures';
+import {
+  createTestWorkspace,
+  addWorkspaceMember,
+  TEST_USERS,
+} from './fixtures';
 
 /**
  * Auth & Workspace Setup Journey Integration Tests
@@ -52,9 +56,21 @@ describe('Auth & Workspace Setup Journey', () => {
   it('should create workspace with different roles', async () => {
     const workspace = await createTestWorkspace(userId);
 
-    const owner = await addWorkspaceMember(workspace.id, 'owner-' + Date.now(), 'owner');
-    const admin = await addWorkspaceMember(workspace.id, 'admin-' + Date.now(), 'admin');
-    const member = await addWorkspaceMember(workspace.id, 'member-' + Date.now(), 'member');
+    const owner = await addWorkspaceMember(
+      workspace.id,
+      'owner-' + Date.now(),
+      'owner'
+    );
+    const admin = await addWorkspaceMember(
+      workspace.id,
+      'admin-' + Date.now(),
+      'admin'
+    );
+    const member = await addWorkspaceMember(
+      workspace.id,
+      'member-' + Date.now(),
+      'member'
+    );
 
     expect(owner.role).toBe('owner');
     expect(admin.role).toBe('admin');
@@ -63,7 +79,9 @@ describe('Auth & Workspace Setup Journey', () => {
 
   it('should enforce workspace isolation - user cannot access other workspaces', async () => {
     const workspace1 = await createTestWorkspace(userId);
-    const workspace2 = await createTestWorkspace('different-user-' + Date.now());
+    const workspace2 = await createTestWorkspace(
+      'different-user-' + Date.now()
+    );
 
     // User should be able to see workspace1
     const ws1 = await getTestSupabase()
@@ -100,7 +118,7 @@ describe('Auth & Workspace Setup Journey', () => {
     expect(members).toBeDefined();
     expect(members?.length).toBeGreaterThanOrEqual(2);
 
-    const memberIds = members?.map((m) => m.user_id) || [];
+    const memberIds = members?.map((m: any) => m.user_id) || [];
     expect(memberIds).toContain(member1);
     expect(memberIds).toContain(member2);
   });

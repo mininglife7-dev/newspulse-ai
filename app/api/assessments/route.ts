@@ -43,7 +43,11 @@ async function resolveContext(
     .maybeSingle();
 
   if (memberError) {
-    logger.error('Workspace membership lookup failed', 'WORKSPACE_LOOKUP_ERROR', memberError);
+    logger.error(
+      'Workspace membership lookup failed',
+      'WORKSPACE_LOOKUP_ERROR',
+      memberError
+    );
     return { status: 500, error: 'Workspace lookup failed' };
   }
 
@@ -122,8 +126,10 @@ export async function POST(request: NextRequest) {
 
   const validationResult = validate(body, {
     aiSystemId: validators.string({ minLength: 1 }),
-    answers: validators.object(),
-    status: validators.optional(validators.enum(['draft', 'in_review', 'finalized'])),
+    answers: validators.object({}, { allowExtraFields: true }),
+    status: validators.optional(
+      validators.enum(['draft', 'in_review', 'finalized'])
+    ),
   });
 
   if (!validationResult.ok) {
@@ -181,7 +187,11 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (existingError) {
-    logger.error('Assessment existence check failed', 'ASSESSMENT_QUERY_ERROR', existingError);
+    logger.error(
+      'Assessment existence check failed',
+      'ASSESSMENT_QUERY_ERROR',
+      existingError
+    );
     return NextResponse.json(
       { ok: false, error: 'Failed to check assessment status' },
       { status: 500 }
@@ -213,7 +223,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      logger.error('Assessment update failed', 'ASSESSMENT_UPDATE_ERROR', error);
+      logger.error(
+        'Assessment update failed',
+        'ASSESSMENT_UPDATE_ERROR',
+        error
+      );
       return NextResponse.json(
         { ok: false, error: 'Failed to update assessment' },
         { status: 500 }
@@ -229,7 +243,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      logger.error('Assessment creation failed', 'ASSESSMENT_INSERT_ERROR', error);
+      logger.error(
+        'Assessment creation failed',
+        'ASSESSMENT_INSERT_ERROR',
+        error
+      );
       return NextResponse.json(
         { ok: false, error: 'Failed to create assessment' },
         { status: 500 }
@@ -240,7 +258,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Auto-generate obligations based on risk level and recommendations
-  const assessmentId = (response as Record<string, unknown>)?.id as string | undefined;
+  const assessmentId = (response as Record<string, unknown>)?.id as
+    string | undefined;
   if (assessmentId) {
     try {
       const priorityMap: Record<string, string> = {
@@ -267,7 +286,11 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         if (existingError) {
-          logger.error('Obligation lookup failed', 'OBLIGATION_LOOKUP_ERROR', existingError);
+          logger.error(
+            'Obligation lookup failed',
+            'OBLIGATION_LOOKUP_ERROR',
+            existingError
+          );
           continue;
         }
 
@@ -291,7 +314,11 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (createError || !created) {
-            logger.error('Obligation creation failed', 'OBLIGATION_CREATE_ERROR', createError);
+            logger.error(
+              'Obligation creation failed',
+              'OBLIGATION_CREATE_ERROR',
+              createError
+            );
             continue;
           }
           obligationId = created.id;
@@ -305,11 +332,19 @@ export async function POST(request: NextRequest) {
           });
 
         if (linkError) {
-          logger.error('Obligation linking failed', 'OBLIGATION_LINK_ERROR', linkError);
+          logger.error(
+            'Obligation linking failed',
+            'OBLIGATION_LINK_ERROR',
+            linkError
+          );
         }
       }
     } catch (err) {
-      logger.error('Obligation auto-generation failed', 'OBLIGATION_GEN_ERROR', err);
+      logger.error(
+        'Obligation auto-generation failed',
+        'OBLIGATION_GEN_ERROR',
+        err
+      );
     }
   }
 

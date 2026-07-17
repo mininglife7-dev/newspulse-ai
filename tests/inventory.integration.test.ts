@@ -43,7 +43,7 @@ describe('AI System Inventory Journey', () => {
 
     expect(systems).toBeDefined();
     expect(systems?.length).toBeGreaterThan(0);
-    expect(systems?.map((s) => s.id)).toContain(system.id);
+    expect(systems?.map((s: any) => s.id)).toContain(system.id);
   });
 
   it('should update system details', async () => {
@@ -88,9 +88,9 @@ describe('AI System Inventory Journey', () => {
       .eq('workspace_id', workspaceId);
 
     expect(systems?.length).toBeGreaterThanOrEqual(3);
-    expect(systems?.map((s) => s.id)).toContain(system1.id);
-    expect(systems?.map((s) => s.id)).toContain(system2.id);
-    expect(systems?.map((s) => s.id)).toContain(system3.id);
+    expect(systems?.map((s: any) => s.id)).toContain(system1.id);
+    expect(systems?.map((s: any) => s.id)).toContain(system2.id);
+    expect(systems?.map((s: any) => s.id)).toContain(system3.id);
   });
 
   it('should support different system types', async () => {
@@ -106,7 +106,7 @@ describe('AI System Inventory Journey', () => {
       .select('*')
       .eq('workspace_id', workspaceId);
 
-    const types = systems?.map((s) => s.system_type) || [];
+    const types = systems?.map((s: any) => s.system_type) || [];
     expect(types).toContain('general-purpose');
     expect(types).toContain('high-risk');
   });
@@ -142,7 +142,9 @@ describe('AI System Inventory Journey', () => {
     });
 
     it('should isolate systems by workspace', async () => {
-      const workspace2Id = (await createTestWorkspace('other-user-' + Date.now())).id;
+      const workspace2Id = (
+        await createTestWorkspace('other-user-' + Date.now())
+      ).id;
       const system = await createTestAISystem(workspaceId);
 
       const { data: ws1Systems } = await supabase
@@ -155,8 +157,8 @@ describe('AI System Inventory Journey', () => {
         .select('*')
         .eq('workspace_id', workspace2Id);
 
-      expect(ws1Systems?.map((s) => s.id)).toContain(system.id);
-      expect(ws2Systems?.map((s) => s.id)).not.toContain(system.id);
+      expect(ws1Systems?.map((s: any) => s.id)).toContain(system.id);
+      expect(ws2Systems?.map((s: any) => s.id)).not.toContain(system.id);
     });
 
     it('should prevent deleting non-existent system', async () => {

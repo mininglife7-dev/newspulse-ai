@@ -1,5 +1,4 @@
 import { getTestSupabase, cleanupTestData } from './setup';
-import { v4 as uuidv4 } from 'crypto';
 
 /**
  * Test fixtures and factory functions for integration tests
@@ -136,7 +135,9 @@ export async function createTestObligation(
     title: `Test Obligation ${Date.now()}`,
     status: 'identified',
     priority: 'medium',
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0],
     ...overrides,
   };
 

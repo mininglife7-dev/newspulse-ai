@@ -93,7 +93,9 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     systemType: validators.optional(validators.string()),
     vendor: validators.optional(validators.string()),
     purpose: validators.optional(validators.string()),
-    status: validators.optional(validators.enum(['active', 'pilot', 'deprecated'])),
+    status: validators.optional(
+      validators.enum(['active', 'pilot', 'deprecated'])
+    ),
   });
 
   if (!validationResult.ok) {
@@ -112,7 +114,10 @@ export async function PATCH(req: Request, { params }: RouteContext) {
   }
 
   if (validated.systemType !== undefined) {
-    if (validated.systemType && !SYSTEM_TYPES.includes(validated.systemType)) {
+    if (
+      validated.systemType &&
+      !SYSTEM_TYPES.includes(validated.systemType as any)
+    ) {
       return NextResponse.json(
         {
           ok: false,
@@ -121,7 +126,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
         { status: 400 }
       );
     }
-    updates.system_type = validated.systemType || null;
+    updates.system_type = (validated.systemType || null) as any;
   }
 
   if (validated.vendor !== undefined) {

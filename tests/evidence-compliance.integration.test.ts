@@ -52,7 +52,7 @@ describe('Evidence & Compliance Journey', () => {
 
     expect(linked).toBeDefined();
     expect(linked.length).toBeGreaterThan(0);
-    expect(linked.map((e) => e.id)).toContain(evidence.id);
+    expect(linked.map((e: any) => e.id)).toContain(evidence.id);
   });
 
   it('should support multiple evidence per obligation', async () => {
@@ -73,9 +73,9 @@ describe('Evidence & Compliance Journey', () => {
     const linked = await listEvidenceForObligation(obligation.id);
 
     expect(linked.length).toBeGreaterThanOrEqual(3);
-    expect(linked.map((e) => e.id)).toContain(ev1.id);
-    expect(linked.map((e) => e.id)).toContain(ev2.id);
-    expect(linked.map((e) => e.id)).toContain(ev3.id);
+    expect(linked.map((e: any) => e.id)).toContain(ev1.id);
+    expect(linked.map((e: any) => e.id)).toContain(ev2.id);
+    expect(linked.map((e: any) => e.id)).toContain(ev3.id);
   });
 
   it('should update evidence status', async () => {
@@ -186,10 +186,14 @@ describe('Evidence & Compliance Journey', () => {
       .select('status')
       .eq('workspace_id', workspaceId);
 
-    const identified = obligations?.filter((o) => o.status === 'identified').length || 0;
-    const inProgress = obligations?.filter((o) => o.status === 'in_progress').length || 0;
-    const completed = obligations?.filter((o) => o.status === 'completed').length || 0;
-    const approved = evidence?.filter((e) => e.status === 'approved').length || 0;
+    const identified =
+      obligations?.filter((o: any) => o.status === 'identified').length || 0;
+    const inProgress =
+      obligations?.filter((o: any) => o.status === 'in_progress').length || 0;
+    const completed =
+      obligations?.filter((o: any) => o.status === 'completed').length || 0;
+    const approved =
+      evidence?.filter((e: any) => e.status === 'approved').length || 0;
 
     expect(identified).toBe(1);
     expect(inProgress).toBe(1);
@@ -224,8 +228,9 @@ describe('Evidence & Compliance Journey', () => {
     });
 
     it('should isolate evidence by workspace', async () => {
-      const workspace2Id = (await createTestWorkspace('other-user-' + Date.now()))
-        .id;
+      const workspace2Id = (
+        await createTestWorkspace('other-user-' + Date.now())
+      ).id;
 
       const system1 = await createTestAISystem(workspaceId);
       const system2 = await createTestAISystem(workspace2Id);
@@ -233,8 +238,14 @@ describe('Evidence & Compliance Journey', () => {
       const assessment1 = await createTestAssessment(workspaceId, system1.id);
       const assessment2 = await createTestAssessment(workspace2Id, system2.id);
 
-      const obligation1 = await createTestObligation(workspaceId, assessment1.id);
-      const obligation2 = await createTestObligation(workspace2Id, assessment2.id);
+      const obligation1 = await createTestObligation(
+        workspaceId,
+        assessment1.id
+      );
+      const obligation2 = await createTestObligation(
+        workspace2Id,
+        assessment2.id
+      );
 
       const evidence1 = await createTestEvidence(workspaceId, obligation1.id);
       const evidence2 = await createTestEvidence(workspace2Id, obligation2.id);
@@ -242,11 +253,11 @@ describe('Evidence & Compliance Journey', () => {
       const ws1Evidence = await listEvidenceForObligation(obligation1.id);
       const ws2Evidence = await listEvidenceForObligation(obligation2.id);
 
-      expect(ws1Evidence.map((e) => e.id)).toContain(evidence1.id);
-      expect(ws1Evidence.map((e) => e.id)).not.toContain(evidence2.id);
+      expect(ws1Evidence.map((e: any) => e.id)).toContain(evidence1.id);
+      expect(ws1Evidence.map((e: any) => e.id)).not.toContain(evidence2.id);
 
-      expect(ws2Evidence.map((e) => e.id)).toContain(evidence2.id);
-      expect(ws2Evidence.map((e) => e.id)).not.toContain(evidence1.id);
+      expect(ws2Evidence.map((e: any) => e.id)).toContain(evidence2.id);
+      expect(ws2Evidence.map((e: any) => e.id)).not.toContain(evidence1.id);
     });
   });
 });
