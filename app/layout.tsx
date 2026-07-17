@@ -12,6 +12,8 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
+  style: ['normal'],
 });
 
 const SITE_URL =
@@ -38,8 +40,6 @@ export const metadata: Metadata = {
       'Transform AI governance from compliance checklist into strategic advantage.',
     type: 'website',
   },
-  // PWA: manifest is served by app/manifest.ts; these fields make iOS Safari
-  // treat the app as an installable standalone Home Screen app.
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
