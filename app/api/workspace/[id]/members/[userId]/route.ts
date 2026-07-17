@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { logMemberOperation, getClientIp } from '@/lib/audit-logger';
 
 interface UpdateMemberBody {
   action?: 'accept' | 'reject' | 'remove' | 'change_role';
@@ -96,6 +97,17 @@ export async function PATCH(
 
       if (updateError) throw updateError;
 
+      // Log member addition acceptance (GDPR Article 30)
+      await logMemberOperation(
+        id,
+        'member_add',
+        user.id,
+        userId,
+        { action: 'accept', role: updated.role },
+        getClientIp(req),
+        req.headers.get('user-agent') || undefined
+      );
+
       return NextResponse.json({
         ok: true,
         member: updated,
@@ -123,6 +135,17 @@ export async function PATCH(
         .eq('id', userId);
 
       if (deleteError) throw deleteError;
+
+      // Log member removal via rejection (GDPR Article 30)
+      await logMemberOperation(
+        id,
+        'member_remove',
+        user.id,
+        userId,
+        { action: 'reject', role: targetMember.role },
+        getClientIp(req),
+        req.headers.get('user-agent') || undefined
+      );
 
       return NextResponse.json({
         ok: true,
@@ -163,6 +186,17 @@ export async function PATCH(
         .eq('id', userId);
 
       if (deleteError) throw deleteError;
+
+      // Log member removal (GDPR Article 30)
+      await logMemberOperation(
+        id,
+        'member_remove',
+        user.id,
+        userId,
+        { action: 'remove', role: targetMember.role },
+        getClientIp(req),
+        req.headers.get('user-agent') || undefined
+      );
 
       return NextResponse.json({
         ok: true,
@@ -206,6 +240,21 @@ export async function PATCH(
         .single();
 
       if (updateError) throw updateError;
+
+      // Log permission change (GDPR Article 30)
+      await logMemberOperation(
+        id,
+        'permission_change',
+        user.id,
+        userId,
+        {
+          action: 'change_role',
+          oldRole: targetMember.role,
+          newRole: body.role,
+        },
+        getClientIp(req),
+        req.headers.get('user-agent') || undefined
+      );
 
       return NextResponse.json({
         ok: true,
