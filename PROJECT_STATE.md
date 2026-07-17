@@ -17,8 +17,12 @@ until verified. Update whenever verified reality changes.
 ## Current deployment status
 
 - **Application code:** deployed to Vercel (pushes to main auto-deploy);
-  production URL serving status not checked from this environment — code
-  deploy Verified via Vercel bot, live-URL behavior **UNKNOWN**.
+  production URL (`https://newspulse-ai.vercel.app`) **UNREACHABLE** from this
+  cloud environment — blocked by organization egress policy (proxy status:
+  "gateway answered 403 to CONNECT (policy denial or upstream failure)" for
+  host `newspulse-ai.vercel.app:443`, timestamp 2026-07-17T03:31:12Z). Code
+  deploy Verified via Vercel bot; live-URL behavior cannot be verified from
+  cloud. — Verified (blocker)
 - **Production database:** Supabase project `yrroytwfdrafvajdfkog`,
   **AWS Tokyo (`ap-northeast-1`)** — schema + CEIS deployed and verified.
   Evidence: runs `29479537494`, `29479962355`, `29490828367` (all success;

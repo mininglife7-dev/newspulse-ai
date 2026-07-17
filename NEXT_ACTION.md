@@ -61,8 +61,14 @@ Any Governor Ω session (start with the execution loop in AGENTS.md).
 
 ## Queued missions (not active — do not start)
 
-1. Customer-journey verification against the live environment →
-   DEMO_READINESS.md rows out of UNKNOWN (was active; superseded by
-   Founder instruction — resume after migration).
+1. **Customer-journey verification** against the live environment →
+   DEMO_READINESS.md rows out of UNKNOWN (was active; superseded by EU
+   migration directive — resume after migration). ⚠️ **BLOCKED on
+   environment access:** Production URL (`https://newspulse-ai.vercel.app`)
+   unreachable from cloud environment (network egress policy, proxy 403). No
+   staging/preview environment available. Requires: (1) network exemption
+   for vercel.app, (2) staging Vercel deployment, or (3) local staging.
+   When this mission becomes active again, this blocker must be resolved
+   first. See DEMO_READINESS.md rows 2-11 (all BLOCKED).
 2. Adopt or close PR #124 (billing/obligations tests) and PR #149
    (test lab) with evidence.
