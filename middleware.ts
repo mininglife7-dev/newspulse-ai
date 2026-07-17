@@ -8,19 +8,15 @@ import {
   isCorsAllowed,
 } from '@/lib/cors-config';
 import { checkRateLimit, getRateLimitStatus } from '@/lib/global-rate-limiter';
-import {
-  getCacheConfig,
-  generateCacheControl,
-} from '@/lib/performance/cache-config';
 
 /**
- * EURO AI middleware: session refresh + auth routing + rate limiting + CORS + caching.
+ * EURO AI middleware: session refresh + auth routing + rate limiting + CORS.
  *
  * Uses @supabase/ssr cookie sessions, so the session the browser client
  * establishes at sign-in is visible here. Route protection is a UX
  * concern — data security is enforced by RLS in the database.
  *
- * Cache-Control headers are applied based on route classification (static, semi-dynamic, dynamic).
+ * Page caching is managed via ISR (export const revalidate) in page.tsx files.
  */
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -138,19 +134,6 @@ export async function middleware(req: NextRequest) {
         res.headers.set(key, value);
       }
     });
-  }
-
-  // Apply Cache-Control headers for page routes (not API routes, which set their own)
-  if (!pathname.startsWith('/api/')) {
-    const cacheConfig = getCacheConfig(pathname);
-    if (cacheConfig && cacheConfig.maxAge > 0) {
-      const cacheControl = generateCacheControl(cacheConfig);
-      res.headers.set('Cache-Control', cacheControl);
-      // Vary by cookie for authenticated routes (user-specific caching)
-      if (kind === 'protected') {
-        res.headers.append('Vary', 'Cookie');
-      }
-    }
   }
 
   return res;
