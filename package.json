@@ -19,6 +19,8 @@
     "test:smoke": "node scripts/smoke-test.mjs",
     "performance:baseline": "node scripts/performance-baseline.mjs",
     "performance:baseline:save": "node scripts/performance-baseline.mjs --save",
+    "perf:measure": "node scripts/performance-measurement.mjs",
+    "perf:measure:save": "node scripts/performance-measurement.mjs --save",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -43,6 +45,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.10",
     "husky": "^9.1.7",
+    "lighthouse": "^13.4.0",
     "lint-staged": "^17.0.8",
     "postcss": "^8.5.10",
     "prettier": "^3.9.5",

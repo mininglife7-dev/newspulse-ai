@@ -9,7 +9,7 @@
  * --url: Base URL to test (default: http://localhost:3000)
  */
 
-import { spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -48,7 +48,7 @@ async function runLighthouse(url, pageUrl) {
   return new Promise((resolve) => {
     console.log(`\n📊 Measuring Lighthouse for ${pageUrl}...`);
 
-    const lighthouse = spawn('npx', ['lighthouse', `${url}${pageUrl}`, '--output=json', '--chrome-flags="--headless"'], {
+    const lighthouse = spawn('npx', ['lighthouse', `${url}${pageUrl}`, '--output=json', '--chrome-flags="--headless --no-sandbox --disable-gpu"'], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -309,14 +309,9 @@ async function main() {
   console.log(`📍 Base URL: ${baseUrl}`);
   console.log(`📝 Critical pages: ${CRITICAL_PAGES.length}`);
 
-  // Check if Lighthouse CLI is available
-  const { spawnSync } = require('child_process');
-  const lighthouseCheck = spawnSync('npx', ['which', 'lighthouse'], { encoding: 'utf-8' });
-
-  if (lighthouseCheck.status !== 0) {
-    console.log('\n⚠️  Lighthouse CLI not found. Installing...');
-    spawnSync('npm', ['install', '--save-dev', 'lighthouse'], { cwd: projectRoot, stdio: 'inherit' });
-  }
+  // Use Playwright Chromium for Lighthouse
+  const chromiumPath = '/opt/pw-browsers/chromium';
+  process.env.CHROME_PATH = chromiumPath;
 
   // Measure Lighthouse scores
   console.log('\n📊 Measuring Lighthouse Scores');
