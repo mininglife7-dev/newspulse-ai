@@ -13,8 +13,12 @@ import {
   getAnalyticsSummary,
   formatAnalyticsStatus,
 } from '@/lib/analytics-pipeline';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   const action = request.nextUrl.searchParams.get('action');
   const timestamp = new Date().toISOString();
 
@@ -41,7 +45,10 @@ export async function GET(request: NextRequest) {
       case 'metrics': {
         const startDate = request.nextUrl.searchParams.get('startDate');
         const endDate = request.nextUrl.searchParams.get('endDate');
-        const metrics = getUsageMetrics(startDate || undefined, endDate || undefined);
+        const metrics = getUsageMetrics(
+          startDate || undefined,
+          endDate || undefined
+        );
         return NextResponse.json(
           { ok: true, timestamp, payload: metrics },
           { status: 200 }
@@ -65,7 +72,13 @@ export async function GET(request: NextRequest) {
 
       case 'events-by-category': {
         const category = request.nextUrl.searchParams.get('category');
-        if (category !== 'pageview' && category !== 'click' && category !== 'conversion' && category !== 'error' && category !== 'performance') {
+        if (
+          category !== 'pageview' &&
+          category !== 'click' &&
+          category !== 'conversion' &&
+          category !== 'error' &&
+          category !== 'performance'
+        ) {
           return NextResponse.json(
             { ok: false, timestamp, error: 'Invalid category parameter' },
             { status: 400 }
@@ -146,7 +159,8 @@ export async function GET(request: NextRequest) {
           {
             ok: false,
             timestamp,
-            error: 'Invalid action. Valid actions: health, summary, status, metrics, user-events, events-by-category, events-by-action, features, session, cohort',
+            error:
+              'Invalid action. Valid actions: health, summary, status, metrics, user-events, events-by-category, events-by-action, features, session, cohort',
           },
           { status: 400 }
         );
@@ -164,6 +178,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   const timestamp = new Date().toISOString();
 
   try {
@@ -186,7 +203,11 @@ export async function POST(request: NextRequest) {
 
         if (typeof category !== 'string' || typeof action !== 'string') {
           return NextResponse.json(
-            { ok: false, timestamp, error: 'Missing or invalid category and action fields' },
+            {
+              ok: false,
+              timestamp,
+              error: 'Missing or invalid category and action fields',
+            },
             { status: 400 }
           );
         }
@@ -208,7 +229,11 @@ export async function POST(request: NextRequest) {
 
         if (typeof feature !== 'string' || typeof userId !== 'string') {
           return NextResponse.json(
-            { ok: false, timestamp, error: 'Missing or invalid feature and user_id fields' },
+            {
+              ok: false,
+              timestamp,
+              error: 'Missing or invalid feature and user_id fields',
+            },
             { status: 400 }
           );
         }
@@ -225,7 +250,11 @@ export async function POST(request: NextRequest) {
 
         if (typeof cohortDate !== 'string') {
           return NextResponse.json(
-            { ok: false, timestamp, error: 'Missing or invalid cohort_date field' },
+            {
+              ok: false,
+              timestamp,
+              error: 'Missing or invalid cohort_date field',
+            },
             { status: 400 }
           );
         }
@@ -242,7 +271,8 @@ export async function POST(request: NextRequest) {
           {
             ok: false,
             timestamp,
-            error: 'Invalid command. Valid commands: track-event, track-adoption, calculate-cohort',
+            error:
+              'Invalid command. Valid commands: track-event, track-adoption, calculate-cohort',
           },
           { status: 400 }
         );

@@ -4,6 +4,7 @@
  * PHASE 3: Multi-enterprise isolation verification endpoint.
  * Completely independent from Cathedral, proving HERCULES can manage
  * multiple enterprises without cross-contamination.
+ * ADMIN TOKEN REQUIRED: Pass Authorization: Bearer <token> header
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,10 +14,14 @@ import {
 } from '@/lib/enterprise-002-init';
 import { HerculesKernel } from '@/lib/hercules-kernel';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action');
 
@@ -99,7 +104,8 @@ export async function GET(request: NextRequest) {
       const checks = {
         distinctIds: cathedral.id !== enterprise2.id,
         distinctNames: cathedral.name !== enterprise2.name,
-        distinctMissions: cathedral.missionStatement !== enterprise2.missionStatement,
+        distinctMissions:
+          cathedral.missionStatement !== enterprise2.missionStatement,
         cathealthStatus: cathedral.status,
         enterprise2Status: enterprise2.status,
       };
@@ -135,7 +141,11 @@ export async function GET(request: NextRequest) {
       isolationVerified: state.isolationVerified,
     });
   } catch (error) {
-    logger.error('Enterprise 002 endpoint error', 'ENTERPRISE_002_ERROR', error);
+    logger.error(
+      'Enterprise 002 endpoint error',
+      'ENTERPRISE_002_ERROR',
+      error
+    );
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -2,6 +2,7 @@
  * HERCULES Cathedral Enterprise Registration API
  *
  * Endpoint for initializing and querying Cathedral/EURO AI as Enterprise 001.
+ * ADMIN TOKEN REQUIRED: Pass Authorization: Bearer <token> header
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,10 +12,14 @@ import {
 } from '@/lib/cathedral-enterprise-init';
 import { HerculesKernel } from '@/lib/hercules-kernel';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action');
 

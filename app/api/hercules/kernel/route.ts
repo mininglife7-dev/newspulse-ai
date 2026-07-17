@@ -3,6 +3,7 @@
  *
  * Exposes the unified kernel service for enterprise management,
  * mission tracking, task queue, and system status.
+ * ADMIN TOKEN REQUIRED: Pass Authorization: Bearer <token> header
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,10 +14,14 @@ import {
   type Task,
 } from '@/lib/hercules-kernel';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   const kernel = HerculesKernel.getInstance();
 
   const { searchParams } = new URL(request.url);
@@ -81,7 +86,11 @@ export async function GET(request: NextRequest) {
       kernel: kernel.getSystemStatus(),
     });
   } catch (error) {
-    logger.error('HERCULES kernel GET request failed', 'KERNEL_GET_ERROR', error);
+    logger.error(
+      'HERCULES kernel GET request failed',
+      'KERNEL_GET_ERROR',
+      error
+    );
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -90,6 +99,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   const kernel = HerculesKernel.getInstance();
 
   try {
@@ -137,13 +149,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'create-task') {
-      const {
-        enterpriseId,
-        title,
-        description,
-        priority,
-        authorityRequired,
-      } = body;
+      const { enterpriseId, title, description, priority, authorityRequired } =
+        body;
 
       const task = kernel.createTask(enterpriseId, {
         title,
@@ -225,12 +232,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(
-      { error: 'Unknown action' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    logger.error('HERCULES kernel POST request failed', 'KERNEL_POST_ERROR', error);
+    logger.error(
+      'HERCULES kernel POST request failed',
+      'KERNEL_POST_ERROR',
+      error
+    );
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

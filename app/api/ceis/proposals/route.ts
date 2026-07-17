@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listProposals } from '@/lib/ceis/store';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 import type { DnaStatus } from '@/lib/ceis/types';
 
 export const runtime = 'nodejs';
@@ -12,8 +13,11 @@ const STATUSES: DnaStatus[] = [
   'rejected',
 ];
 
-/** GET /api/ceis/proposals[?status=proposed] — list DNA proposals. */
+/** GET /api/ceis/proposals[?status=proposed] — list DNA proposals. ADMIN TOKEN REQUIRED */
 export async function GET(req: NextRequest) {
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   const statusParam = req.nextUrl.searchParams.get('status');
   if (statusParam && !STATUSES.includes(statusParam as DnaStatus)) {
     return NextResponse.json(

@@ -10,6 +10,7 @@
  * - Customer journey (DNA-006)
  *
  * Produces: Single HEALTHY/DEGRADED/AT_RISK/CRITICAL verdict
+ * ADMIN TOKEN REQUIRED: Pass Authorization: Bearer <token> header
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -21,6 +22,7 @@ import type {
 } from '@/lib/hercules-kernel';
 import { getRequiredAppUrl } from '@/lib/config-validation';
 import { logger } from '@/lib/logger';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -378,6 +380,9 @@ function calculateOverallHealth(organs: OrganHealth[]): {
 }
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     // Collect health from all organs in parallel
     const [production, errorRates, security, costs, performance, journey] =

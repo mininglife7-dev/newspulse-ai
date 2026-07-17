@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLatestReport, listReports } from '@/lib/ceis/store';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/ceis/report          — latest weekly evolution report.
+ * GET /api/ceis/report          — latest weekly evolution report. ADMIN TOKEN REQUIRED
  * GET /api/ceis/report?all=1    — recent reports (up to 12).
  */
 export async function GET(req: NextRequest) {
+  if (!requireAdminToken(req)) {
+    return unauthorizedResponse();
+  }
   try {
     if (req.nextUrl.searchParams.get('all') === '1') {
       const reports = await listReports();

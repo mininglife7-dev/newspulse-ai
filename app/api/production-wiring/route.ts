@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProductionWiring } from '@/lib/production-wiring';
 import { ErrorMetrics, ErrorPattern } from '@/lib/error-tracking';
+import { requireAdminToken, unauthorizedResponse } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,9 @@ interface ProductionWiringRequest {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body: ProductionWiringRequest = await request.json();
     const { deploymentId, errorMetrics, errorPatterns } = body;
@@ -67,7 +71,11 @@ export async function POST(request: NextRequest) {
     }));
 
     // Process errors into incidents
-    const incidents = await wiring.processErrorsIntoIncidents(deploymentId, metrics, patterns);
+    const incidents = await wiring.processErrorsIntoIncidents(
+      deploymentId,
+      metrics,
+      patterns
+    );
 
     // Orchestrate response for each incident
     const orchestrations = await Promise.all(
@@ -114,14 +122,14 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const deploymentId = request.nextUrl.searchParams.get('deploymentId');
     const alertId = request.nextUrl.searchParams.get('alertId');
@@ -160,14 +168,14 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest) {
+  if (!requireAdminToken(request)) {
+    return unauthorizedResponse();
+  }
   try {
     const body = await request.json();
     const {
@@ -202,9 +210,6 @@ export async function PUT(request: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
