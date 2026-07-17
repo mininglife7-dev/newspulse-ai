@@ -155,6 +155,8 @@ let A = null;
     );
     if (relogin.json?.access_token) A = relogin.json;
   } else {
+    console.log('   signup response body:', JSON.stringify(r.signup.json).slice(0, 600));
+    if (r.signin) console.log('   signin response body:', JSON.stringify(r.signin.json).slice(0, 600));
     step(
       '2. User registration',
       r.signup.status === 200,
