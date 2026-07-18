@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 const MOCK_PORT = 4545;
-const APP_PORT = 3100;
+const APP_PORT = process.env.SKIP_WEBSERVER ? 3000 : 3100;
 
 /**
  * E2E smoke suite. Supabase is replaced by tests/e2e/mock-services.mjs (which
@@ -24,23 +24,25 @@ export default defineConfig({
       ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } }
       : {}),
   },
-  webServer: [
-    {
-      command: 'node tests/e2e/mock-services.mjs',
-      url: `http://127.0.0.1:${MOCK_PORT}/health`,
-      reuseExistingServer: false,
-      env: { MOCK_PORT: String(MOCK_PORT) },
-    },
-    {
-      command: `npx next dev -p ${APP_PORT}`,
-      url: `http://127.0.0.1:${APP_PORT}/api/health`,
-      reuseExistingServer: false,
-      timeout: 120_000,
-      env: {
-        NEXT_PUBLIC_SUPABASE_URL: `http://127.0.0.1:${MOCK_PORT}/supabase`,
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_publishable_e2e',
-        SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_e2e',
-      },
-    },
-  ],
+  webServer: process.env.SKIP_WEBSERVER
+    ? []
+    : [
+        {
+          command: 'node tests/e2e/mock-services.mjs',
+          url: `http://127.0.0.1:${MOCK_PORT}/health`,
+          reuseExistingServer: false,
+          env: { MOCK_PORT: String(MOCK_PORT) },
+        },
+        {
+          command: `npx next dev -p ${APP_PORT}`,
+          url: `http://127.0.0.1:${APP_PORT}/api/health`,
+          reuseExistingServer: true,
+          timeout: 120_000,
+          env: {
+            NEXT_PUBLIC_SUPABASE_URL: `http://127.0.0.1:${MOCK_PORT}/supabase`,
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_publishable_e2e',
+            SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_e2e',
+          },
+        },
+      ],
 });

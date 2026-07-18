@@ -10,11 +10,11 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
-    // Exclude integration tests from standard run unless explicitly requested
-    // (integration tests require dev server or mocked API to run)
+    // Exclude integration and E2E tests from standard run
+    // (integration tests require dev server or mocked API; E2E tests run via Playwright)
     exclude: process.env.INCLUDE_INTEGRATION_TESTS
-      ? []
-      : ['tests/**/*.integration.test.ts'],
+      ? ['tests/e2e/**/*.test.ts']
+      : ['tests/**/*.integration.test.ts', 'tests/e2e/**/*.test.ts'],
     // Env-dependent code paths are exercised explicitly per test;
     // start every test file with a clean slate.
     unstubEnvs: true,
