@@ -1,0 +1,225 @@
+phenotype_id: "claude-code-github-cloud-20260719"
+genome_version: "1.0.0" # (to be defined)
+dna_version: "1.0.0"
+environment: "github_cloud"
+timestamp: "2026-07-19T03:50:00Z"
+session_id: "claude-code-session-20260719"
+
+# ENVIRONMENT DESCRIPTION
+environment_details:
+  host: "Claude Code remote execution environment"
+  platform: "Linux 6.18.5 (cloud container)"
+  node_version: ">= 22.0.0"
+  repository: "mininglife7-dev/newspulse-ai"
+  branch: "claude/governor-os-foundation-89zihp"
+  egress_policy: "Restrictive (proxy denies external URLs; see PROJECT_STATE.md)"
+  network_access:
+    vercel_app: "BLOCKED (egress policy)"
+    supabase_co: "BLOCKED (egress policy)"
+    github_api: "VERIFIED (git operations work)"
+    github_actions: "AVAILABLE (can dispatch workflows)"
+
+# CAPABILITIES VERIFIED IN THIS SESSION
+verified_capabilities_this_session:
+  - capability_id: "repository_read"
+    name: "Repository Read"
+    verified_by: "git status, pwd, git log, file listing"
+    timestamp: "2026-07-19T03:50:00Z"
+    status: "VERIFIED"
+    evidence: "git commands executed successfully"
+
+  - capability_id: "git_history_inspection"
+    name: "Git History Inspection"
+    verified_by: "git rev-parse HEAD, git branch -v"
+    timestamp: "2026-07-19T03:50:00Z"
+    status: "VERIFIED"
+    evidence: "branch and commit SHA confirmed"
+
+  - capability_id: "file_reading"
+    name: "File Reading (YAML, Markdown, JSON, TypeScript)"
+    verified_by: "Read tool on AGENTS.md, CLAUDE.md, package.json, tsconfig.json"
+    timestamp: "2026-07-19T03:50:00Z"
+    status: "VERIFIED"
+    evidence: "files successfully read"
+
+  - capability_id: "file_writing"
+    name: "File Writing"
+    verified_by: "Write tool; created CATHEDRAL_COMPATIBILITY_MAP.md, CATHEDRAL_DNA.yaml, this file"
+    timestamp: "2026-07-19T03:50:00Z"
+    status: "VERIFIED"
+    evidence: "three files written and will be committed"
+
+  - capability_id: "yaml_validation"
+    name: "YAML Syntax Validation"
+    verified_by: "Will validate with node/javascript YAML parser"
+    timestamp: "2026-07-19T03:50:00Z"
+    status: "WILL_VERIFY"
+    evidence: "pending"
+
+  - capability_id: "git_staging_and_commit"
+    name: "Git Staging and Commit"
+    verified_by: "git add, git commit, git log"
+    timestamp: "2026-07-19T03:50:00Z"
+    status: "ASSUMED_AVAILABLE"
+    evidence: "will execute after validation"
+
+# CAPABILITIES HISTORICALLY VERIFIED (NOT RE-VERIFIED THIS SESSION)
+historical_capabilities_not_reverified:
+  - capability_id: "npm_lint"
+    name: "ESLint via npm run lint"
+    last_verified: "2026-07-16 (PROJECT_STATE.md: 0 errors)"
+    status: "ASSUMED_AVAILABLE"
+    revert_reason: "Will verify during Phase 1 reference mission execution"
+
+  - capability_id: "npm_type_check"
+    name: "TypeScript via npm run type-check"
+    last_verified: "2026-07-16 (PROJECT_STATE.md: 0 errors)"
+    status: "ASSUMED_AVAILABLE"
+    revert_reason: "Will verify during Phase 1 reference mission execution"
+
+  - capability_id: "npm_test"
+    name: "vitest via npm test"
+    last_verified: "2026-07-16 (PROJECT_STATE.md: 1287 passing, 20 skipped)"
+    status: "ASSUMED_AVAILABLE"
+    revert_reason: "Will verify during Phase 1 reference mission execution"
+
+  - capability_id: "npm_build"
+    name: "Next.js via npm run build"
+    last_verified: "2026-07-16 (PROJECT_STATE.md: green)"
+    status: "ASSUMED_AVAILABLE"
+    revert_reason: "Will verify during Phase 1 reference mission execution; may be expensive"
+
+  - capability_id: "playwright_e2e"
+    name: "Playwright E2E tests via npm run test:e2e"
+    last_verified: "2026-07-16 (PROJECT_STATE.md: smoke tests passing)"
+    status: "ASSUMED_AVAILABLE"
+    revert_reason: "Blocked by email configuration; will verify in later mission"
+
+  - capability_id: "supabase_db_access"
+    name: "Supabase production database"
+    last_verified: "2026-07-17 (RISK-008: Frankfurt deployment verified; run 29596903172)"
+    status: "AVAILABLE_BUT_BLOCKED"
+    revert_reason: "Not used in Foundation phase; only tested in Anne's mission"
+
+  - capability_id: "vercel_deployment_url"
+    name: "https://newspulse-ai-eight.vercel.app"
+    last_verified: "2026-07-17 (deployment verified; egress policy blocks access)"
+    status: "BLOCKED"
+    revert_reason: "Egress proxy denies vercel.app; can be accessed via GitHub Actions runner"
+
+# CAPABILITIES BLOCKED BY POLICY
+blocked_capabilities:
+  - capability_id: "github_push"
+    name: "GitHub Remote Push"
+    reason: "Policy requires draft PR creation only after completion gate passes"
+    status: "AVAILABLE_BUT_POLICY_BLOCKED"
+    unblock_condition: "Phase 0.5 completion, full evidence, no secrets, draft PR via GitHub API"
+
+  - capability_id: "external_url_fetch"
+    name: "Fetch External URLs (vercel.app, supabase.co)"
+    reason: "Egress proxy policy denies CONNECT to external hosts"
+    status: "BLOCKED"
+    workaround: "Use GitHub Actions runner with outbound access"
+    evidence: "PROJECT_STATE.md: proxy 403 on vercel.app:443"
+
+  - capability_id: "direct_github_api"
+    name: "Direct GitHub API Access"
+    reason: "Claude Code does not have direct GitHub API client"
+    status: "NOT_AVAILABLE"
+    alternative: "Use git commands; dispatch GitHub Actions workflows"
+
+  - capability_id: "supabase_write"
+    name: "Write to Production Supabase"
+    reason: "Founder policy: no production mutations during Foundation phase"
+    status: "POLICY_BLOCKED"
+    unblock_condition: "Foundation completion gate + explicit Founder approval for Anne's mission"
+
+# CAPABILITIES UNAVAILABLE IN THIS ENVIRONMENT
+unavailable_capabilities:
+  - capability_id: "windows_filesystem"
+    name: "Windows C:\\ Filesystem"
+    reason: "Environment is Linux; no access to Windows paths"
+    status: "UNAVAILABLE"
+
+  - capability_id: "local_browser_session"
+    name: "Interactive Browser Session"
+    reason: "Cloud environment is headless; no display server"
+    status: "UNAVAILABLE"
+    alternative: "Playwright headless browser available via npm; GitHub Actions runner for interactive testing"
+
+  - capability_id: "founder_laptop_access"
+    name: "Direct Access to Founder's Windows Laptop"
+    reason: "Separate environment; no network bridge"
+    status: "UNAVAILABLE"
+
+  - capability_id: "paid_external_services"
+    name: "Activate Paid Services (email SMTP, monitoring, etc.)"
+    reason: "Requires Founder authorization and billing setup"
+    status: "REQUIRES_APPROVAL"
+    examples: ["Resend SMTP", "Datadog", "external API keys"]
+
+# PERMISSIONS IN THIS ENVIRONMENT
+permissions:
+  read:
+    - repository_files
+    - git_history
+    - configuration_files
+    - project_documentation
+  write:
+    - local_files_in_repository
+    - git_commits (on current branch only)
+    - documentation
+  blocked:
+    - github_repository_settings
+    - secrets_management
+    - external_api_keys
+    - production_data_mutations
+  requires_approval:
+    - github_push
+    - pull_request_creation
+    - workflow_dispatch
+    - production_changes
+
+# AUTHORITY SCOPE
+authority_scope: "engineering_foundation_proof"
+allowed_actions:
+  - autonomous: "repository_read, project_inspection, file_writing, documentation, local_persistence, analysis"
+  - allow_with_audit: "approved_command_execution, test_running, build_generation"
+  - require_approval: "github_push, production_changes, external_service_activation, paid_features"
+  - deny: "secret_exposure, data_deletion, irreversible_production_changes"
+
+# HEALTH STATUS
+health_status: "healthy"
+health_checks:
+  repository_accessible: true
+  git_functional: true
+  node_available: true
+  npm_available: true
+  write_permission: true
+  disk_space: "sufficient"
+  network_basic: true
+  network_external: false
+
+# DATA BOUNDARIES
+data_boundaries:
+  - "No secrets in any output or evidence"
+  - "No production customer data used or exposed"
+  - "Local persistence only (SQLite or JSON Lines)"
+  - "No Supabase mutations during Foundation phase"
+  - "No external API calls except git (via GitHub)"
+  - "All evidence redacted before storage"
+
+# PHENOTYPE CONSTRAINTS
+constraints:
+  - "Every capability used must be verified-in-session or explicitly cleared as available"
+  - "No capability available from genome is used without phenotype verification"
+  - "Historical capability claims are reference only; not current evidence"
+  - "This phenotype is valid only for this session; future sessions must re-verify"
+  - "Fallback capabilities (manual procedures) documented for each automated capability"
+
+# NEXT STEPS
+next_validation:
+  - "Validate YAML syntax of CATHEDRAL_DNA.yaml and this file"
+  - "Commit three Phase 0.5 files"
+  - "Begin Phase 0.5 continued: create CATHEDRAL_GENOME schema and specification"
+  - "Execute reference mission with capability re-verification in each phase"
