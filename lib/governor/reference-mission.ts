@@ -11,7 +11,12 @@ import { Planner } from './planner';
 import { getOrCreateRegistry } from './capability-registry';
 import { getOrCreatePolicyEngine } from './policy-engine';
 import { ExecutionAdapter, executeNpm } from './execution-adapter';
-import { getOrCreateLedger, recordTaskExecution, recordVerification, recordCapabilityCheck } from './evidence-ledger';
+import {
+  getOrCreateLedger,
+  recordTaskExecution,
+  recordVerification,
+  recordCapabilityCheck,
+} from './evidence-ledger';
 import { CapabilityRegistry } from './capability-registry';
 import { PolicyEngine } from './policy-engine';
 import { EvidenceLedger } from './evidence-ledger';
@@ -76,7 +81,13 @@ export class ReferenceMissionExecutor {
     // Step 3: Decompose into tasks
     const tasks = Planner.planReferenceHealthCheck(mission.mission_id);
     for (const task of tasks) {
-      missionModel.addTask(task.class, task.description, task.capability_required, task.command, task.verification_rule);
+      missionModel.addTask(
+        task.class,
+        task.description,
+        task.capability_required,
+        task.command,
+        task.verification_rule
+      );
     }
 
     console.log(`📝 Decomposed into ${tasks.length} tasks`);
@@ -87,9 +98,13 @@ export class ReferenceMissionExecutor {
     console.log('\n🔍 Checking capabilities...');
 
     for (const task of tasks) {
-      const capabilityCheck = this.capabilityRegistry.checkCapabilityHealth(task.capability_required);
+      const capabilityCheck = this.capabilityRegistry.checkCapabilityHealth(
+        task.capability_required
+      );
       const status = capabilityCheck.available ? '✓' : '✗';
-      console.log(`  ${status} ${task.capability_required}: ${capabilityCheck.status}`);
+      console.log(
+        `  ${status} ${task.capability_required}: ${capabilityCheck.status}`
+      );
 
       recordCapabilityCheck(
         mission.mission_id,
@@ -113,7 +128,9 @@ export class ReferenceMissionExecutor {
         break;
       }
 
-      console.log(`\n[${nextTask.sequence}/${tasks.length}] ${nextTask.description}`);
+      console.log(
+        `\n[${nextTask.sequence}/${tasks.length}] ${nextTask.description}`
+      );
       console.log(`   Task ID: ${nextTask.task_id}`);
 
       // Transition to EXECUTING
@@ -131,17 +148,25 @@ export class ReferenceMissionExecutor {
         console.log(`   $ ${nextTask.command}`);
 
         // Policy check
-        const policyCheck = await this.policyEngine.evaluate(nextTask.capability_required, {
-          task_id: nextTask.task_id,
-          mission_id: mission.mission_id,
-          command: nextTask.command,
-          actor: 'Governor Ω',
-          authority_level: 'autonomous',
-        });
+        const policyCheck = await this.policyEngine.evaluate(
+          nextTask.capability_required,
+          {
+            task_id: nextTask.task_id,
+            mission_id: mission.mission_id,
+            command: nextTask.command,
+            actor: 'Governor Ω',
+            authority_level: 'autonomous',
+          }
+        );
 
         if (policyCheck.action === 'DENY') {
           console.log(`   ✗ DENIED: ${policyCheck.reason}`);
-          missionModel.recordTaskResult(nextTask.task_id, 1, '', policyCheck.reason);
+          missionModel.recordTaskResult(
+            nextTask.task_id,
+            1,
+            '',
+            policyCheck.reason
+          );
           missionModel.transitionTaskTo(nextTask.task_id, 'FAILED');
           failureCount++;
           continue;
@@ -176,11 +201,19 @@ export class ReferenceMissionExecutor {
 
         // Transition
         if (result.exit_code === 0) {
-          missionModel.transitionTaskTo(nextTask.task_id, 'VERIFYING', result.exit_code);
+          missionModel.transitionTaskTo(
+            nextTask.task_id,
+            'VERIFYING',
+            result.exit_code
+          );
           missionModel.transitionTaskTo(nextTask.task_id, 'COMPLETE');
           successCount++;
         } else {
-          missionModel.transitionTaskTo(nextTask.task_id, 'FAILED', result.exit_code);
+          missionModel.transitionTaskTo(
+            nextTask.task_id,
+            'FAILED',
+            result.exit_code
+          );
           failureCount++;
         }
       } else if (nextTask.class === 'VERIFICATION') {
@@ -205,7 +238,9 @@ export class ReferenceMissionExecutor {
           missionModel.transitionTaskTo(nextTask.task_id, 'COMPLETE');
           successCount++;
         } else {
-          console.log('   ✗ Verification FAILED (prior tasks did not all succeed)');
+          console.log(
+            '   ✗ Verification FAILED (prior tasks did not all succeed)'
+          );
           missionModel.recordVerification(nextTask.task_id, false, 'FAIL');
           recordVerification(
             nextTask.task_id,
@@ -220,6 +255,7 @@ export class ReferenceMissionExecutor {
         }
       } else if (nextTask.class === 'EVIDENCE_COLLECTION') {
         console.log('   📊 Collecting health indicators and lessons...');
+        missionModel.transitionTaskTo(nextTask.task_id, 'VERIFYING');
         missionModel.transitionTaskTo(nextTask.task_id, 'COMPLETE');
         successCount++;
       }
@@ -235,8 +271,14 @@ export class ReferenceMissionExecutor {
       console.log('\n✅ Mission COMPLETE (all tasks succeeded)');
       missionModel.complete('SUCCESS', 'All tasks executed successfully', 0.95);
     } else {
-      console.log(`\n⚠️  Mission COMPLETE (${successCount} passed, ${failureCount} failed)`);
-      missionModel.complete('PARTIAL_SUCCESS', `${failureCount} task(s) failed`, 0.70);
+      console.log(
+        `\n⚠️  Mission COMPLETE (${successCount} passed, ${failureCount} failed)`
+      );
+      missionModel.complete(
+        'PARTIAL_SUCCESS',
+        `${failureCount} task(s) failed`,
+        0.7
+      );
     }
 
     // Step 7: Generate report
@@ -245,7 +287,9 @@ export class ReferenceMissionExecutor {
     console.log('\n📈 Execution Report:');
     console.log(`   Mission ID: ${report.mission_id}`);
     console.log(`   Status: ${report.status}`);
-    console.log(`   Tasks: ${report.completed_tasks}/${report.total_tasks} completed`);
+    console.log(
+      `   Tasks: ${report.completed_tasks}/${report.total_tasks} completed`
+    );
     console.log(`   Duration: ${report.execution_duration_ms}ms`);
     console.log(`   Evidence: ${report.evidence_count} entries recorded`);
 
@@ -255,7 +299,11 @@ export class ReferenceMissionExecutor {
   /**
    * Generate execution report
    */
-  private generateReport(mission: any, tasks: any[], duration_ms: number): MissionExecutionReport {
+  private generateReport(
+    mission: any,
+    tasks: any[],
+    duration_ms: number
+  ): MissionExecutionReport {
     const evidence = this.evidenceLedger.getSummary();
 
     const taskReports = tasks.map((task) => ({
@@ -308,8 +356,12 @@ export async function executeReferenceMission(): Promise<void> {
     console.log('='.repeat(60));
     console.log(`Mission ID: ${report.mission_id}`);
     console.log(`Status: ${report.status}`);
-    console.log(`Tasks: ${report.completed_tasks}/${report.total_tasks} completed`);
-    console.log(`Duration: ${(report.execution_duration_ms / 1000).toFixed(2)}s`);
+    console.log(
+      `Tasks: ${report.completed_tasks}/${report.total_tasks} completed`
+    );
+    console.log(
+      `Duration: ${(report.execution_duration_ms / 1000).toFixed(2)}s`
+    );
     console.log(`Fitness Baseline: ${report.fitness_baseline}`);
     console.log(`Fitness Post-Execution: ${report.fitness_post_execution}`);
     console.log(`Evidence Recorded: ${report.evidence_count} entries`);

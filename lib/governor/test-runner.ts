@@ -1,8 +1,8 @@
+/// <reference types="node" />
 /**
  * Phase 1 Operational Acceptance Gate — Test Runner
  * Executes reference mission and captures all evidence for inspection.
  */
-
 import { ReferenceMissionExecutor } from './reference-mission';
 import { getOrCreateRegistry } from './capability-registry';
 import { getOrCreatePolicyEngine } from './policy-engine';
@@ -48,7 +48,9 @@ export async function runOperationalAcceptanceGate(): Promise<void> {
     console.log('\n📈 Reference Mission Execution Report:');
     console.log(`   Mission ID: ${report.mission_id}`);
     console.log(`   Status: ${report.status}`);
-    console.log(`   Tasks: ${report.completed_tasks}/${report.total_tasks} completed`);
+    console.log(
+      `   Tasks: ${report.completed_tasks}/${report.total_tasks} completed`
+    );
     console.log(`   Failed: ${report.failed_tasks}`);
     console.log(`   Duration: ${report.execution_duration_ms}ms`);
     console.log(`   Fitness Baseline: ${report.fitness_baseline}`);
@@ -61,7 +63,9 @@ export async function runOperationalAcceptanceGate(): Promise<void> {
     console.log(`   Total Evidence Entries: ${summary.total}`);
     console.log(`   By Type:`);
     console.log(`     - TASK_RESULT: ${summary.by_type.TASK_RESULT}`);
-    console.log(`     - VERIFICATION_RESULT: ${summary.by_type.VERIFICATION_RESULT}`);
+    console.log(
+      `     - VERIFICATION_RESULT: ${summary.by_type.VERIFICATION_RESULT}`
+    );
     console.log(`     - CAPABILITY_CHECK: ${summary.by_type.CAPABILITY_CHECK}`);
     console.log(`     - HEALTH_INDICATOR: ${summary.by_type.HEALTH_INDICATOR}`);
     console.log(`     - LESSON: ${summary.by_type.LESSON}`);
@@ -92,7 +96,9 @@ export async function runOperationalAcceptanceGate(): Promise<void> {
         validHashes++;
       } else {
         invalidHashes++;
-        console.log(`   ✗ INVALID: ${entry.evidence_id} - ${verification.reason}`);
+        console.log(
+          `   ✗ INVALID: ${entry.evidence_id} - ${verification.reason}`
+        );
       }
     }
 
@@ -101,7 +107,11 @@ export async function runOperationalAcceptanceGate(): Promise<void> {
 
     // Final verdict
     console.log('\n' + '='.repeat(70));
-    if (report.status === 'SUCCESS' && validHashes === allEvidence.length && report.failed_tasks === 0) {
+    if (
+      report.status === 'SUCCESS' &&
+      validHashes === allEvidence.length &&
+      report.failed_tasks === 0
+    ) {
       console.log('✅ PHASE_1_OPERATIONALLY_ACCEPTED');
       console.log('   - Reference mission executed successfully');
       console.log('   - All tasks completed');
