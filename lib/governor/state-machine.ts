@@ -41,10 +41,10 @@ const VALID_MISSION_TRANSITIONS: Record<MissionState, Set<MissionState>> = {
   AUTHORIZED: new Set(['EXECUTING', 'BLOCKED', 'CANCELLED']),
   EXECUTING: new Set(['VERIFYING', 'BLOCKED', 'FAILED', 'CANCELLED']),
   VERIFYING: new Set(['COMPLETED', 'FAILED', 'BLOCKED']),
-  COMPLETED: new Set([]); // Terminal: no transitions out
+  COMPLETED: new Set([]), // Terminal: no transitions out
   BLOCKED: new Set(['AUTHORIZED', 'FAILED', 'CANCELLED']),
   FAILED: new Set(['BLOCKED', 'CANCELLED']),
-  CANCELLED: new Set([]); // Terminal: no transitions out
+  CANCELLED: new Set([]), // Terminal: no transitions out
 };
 
 /**
@@ -54,10 +54,10 @@ const VALID_TASK_TRANSITIONS: Record<TaskState, Set<TaskState>> = {
   QUEUED: new Set(['RUNNING', 'BLOCKED', 'CANCELLED']),
   RUNNING: new Set(['VERIFYING', 'FAILED', 'BLOCKED']),
   VERIFYING: new Set(['COMPLETED', 'FAILED']),
-  COMPLETED: new Set([]),
-  FAILED: new Set(['QUEUED']), // Can retry
+  COMPLETED: new Set([]) as Set<TaskState>,
+  FAILED: new Set(['QUEUED']) as Set<TaskState>, // Can retry
   BLOCKED: new Set(['RUNNING', 'FAILED', 'CANCELLED']),
-  CANCELLED: new Set([]),
+  CANCELLED: new Set([]) as Set<TaskState>,
 };
 
 // State machine rules
