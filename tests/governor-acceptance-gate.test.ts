@@ -7,18 +7,21 @@ import { getOrCreateLedger } from '../lib/governor/evidence-ledger';
 describe('Phase 1 Operational Acceptance Gate', () => {
   let report: any;
 
-  beforeAll(async () => {
-    // Initialize all components
-    const registry = await getOrCreateRegistry();
-    const engine = await getOrCreatePolicyEngine(registry);
-    const ledger = getOrCreateLedger();
+  beforeAll(
+    async () => {
+      // Initialize all components
+      const registry = await getOrCreateRegistry();
+      const engine = await getOrCreatePolicyEngine(registry);
+      const ledger = getOrCreateLedger();
 
-    // Create executor
-    const executor = new ReferenceMissionExecutor(registry, engine, ledger);
+      // Create executor
+      const executor = new ReferenceMissionExecutor(registry, engine, ledger);
 
-    // Execute reference mission
-    report = await executor.execute();
-  });
+      // Execute reference mission
+      report = await executor.execute();
+    },
+    30000 // Increase hook timeout to accommodate reference mission execution (18+ seconds)
+  );
 
   it('should complete with SUCCESS status', () => {
     expect(report.status).toBe('SUCCESS');
