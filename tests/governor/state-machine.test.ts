@@ -10,7 +10,10 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MissionStateMachine, TaskStateMachine } from '@/lib/governor/state-machine';
+import {
+  MissionStateMachine,
+  TaskStateMachine,
+} from '@/lib/governor/state-machine';
 import type { Mission, Task } from '@/lib/governor/contracts';
 
 // ============================================================================
@@ -53,7 +56,14 @@ function createTestTask(): Task {
       parameters: {},
       requiredAuthority: 'A_AUTONOMOUS',
       evidenceRequired: ['test-output'],
-      successCriteria: [{ name: 'Task succeeds', description: 'Task must succeed', condition: 'success', required: true }],
+      successCriteria: [
+        {
+          name: 'Task succeeds',
+          description: 'Task must succeed',
+          condition: 'success',
+          required: true,
+        },
+      ],
       priority: 1,
       maxRetries: 3,
       timeoutMs: 60000,
@@ -98,31 +108,26 @@ describe('MissionStateMachine', () => {
       mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
-      await sm.transitionTo(
-        'AUTHORIZED',
-        'Authorizing mission',
-        'test-user',
-        {
-          policyDecision: {
+      await sm.transitionTo('AUTHORIZED', 'Authorizing mission', 'test-user', {
+        policyDecision: {
+          schemaVersion: '1.0.0',
+          id: 'policy_001',
+          taskId: 'task_001',
+          decision: 'ALLOW',
+          authority: 'A_AUTONOMOUS',
+          rule: {
             schemaVersion: '1.0.0',
-            id: 'policy_001',
-            taskId: 'task_001',
-            decision: 'ALLOW',
-            authority: 'A_AUTONOMOUS',
-            rule: {
-              schemaVersion: '1.0.0',
-              action: 'test',
-              requiredAuthority: 'A_AUTONOMOUS',
-              rationale: 'Test action',
-              riskLevel: 'LOW',
-            },
-            reasoning: 'Test policy',
-            madeAt: new Date().toISOString(),
-            madeBy: 'test-user',
-            evidence: [],
+            action: 'test',
+            requiredAuthority: 'A_AUTONOMOUS',
+            rationale: 'Test action',
+            riskLevel: 'LOW',
           },
-        }
-      );
+          reasoning: 'Test policy',
+          madeAt: new Date().toISOString(),
+          madeBy: 'test-user',
+          evidence: [],
+        },
+      });
 
       expect(sm.getState()).toBe('AUTHORIZED');
     });
@@ -132,31 +137,26 @@ describe('MissionStateMachine', () => {
       mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
-      await sm.transitionTo(
-        'EXECUTING',
-        'Starting execution',
-        'test-user',
-        {
-          policyDecision: {
+      await sm.transitionTo('EXECUTING', 'Starting execution', 'test-user', {
+        policyDecision: {
+          schemaVersion: '1.0.0',
+          id: 'policy_001',
+          taskId: 'task_001',
+          decision: 'ALLOW',
+          authority: 'A_AUTONOMOUS',
+          rule: {
             schemaVersion: '1.0.0',
-            id: 'policy_001',
-            taskId: 'task_001',
-            decision: 'ALLOW',
-            authority: 'A_AUTONOMOUS',
-            rule: {
-              schemaVersion: '1.0.0',
-              action: 'test',
-              requiredAuthority: 'A_AUTONOMOUS',
-              rationale: 'Test action',
-              riskLevel: 'LOW',
-            },
-            reasoning: 'Test policy',
-            madeAt: new Date().toISOString(),
-            madeBy: 'test-user',
-            evidence: [],
+            action: 'test',
+            requiredAuthority: 'A_AUTONOMOUS',
+            rationale: 'Test action',
+            riskLevel: 'LOW',
           },
-        }
-      );
+          reasoning: 'Test policy',
+          madeAt: new Date().toISOString(),
+          madeBy: 'test-user',
+          evidence: [],
+        },
+      });
 
       expect(sm.getState()).toBe('EXECUTING');
       expect(mission.startedAt).toBeDefined();
@@ -168,41 +168,36 @@ describe('MissionStateMachine', () => {
       mission.evidence = ['evidence_001'];
       sm = new MissionStateMachine(mission);
 
-      await sm.transitionTo(
-        'VERIFYING',
-        'Starting verification',
-        'test-user',
-        {
-          executionResult: {
-            schemaVersion: '1.0.0',
-            taskId: 'task_001',
-            success: true,
-            output: { status: 'success' },
-            executedAt: new Date().toISOString(),
-            executedBy: 'test-executor',
-            durationMs: 1000,
-            evidence: [
-              {
-                schemaVersion: '1.0.0',
-                id: 'evidence_001',
-                missionId: 'mission_test_001',
-                taskId: 'task_001',
-                type: 'test-output',
-                source: 'test-runner',
-                content: 'Test output',
-                contentHash: 'abc123',
-                collectedAt: new Date().toISOString(),
-                producer: 'test-executor',
-                relationship: 'proves-success',
-                sensitivity: 'INTERNAL',
-                isRedacted: false,
-                provenance: 'direct',
-                tags: ['test'],
-              },
-            ],
-          },
-        }
-      );
+      await sm.transitionTo('VERIFYING', 'Starting verification', 'test-user', {
+        executionResult: {
+          schemaVersion: '1.0.0',
+          taskId: 'task_001',
+          success: true,
+          output: { status: 'success' },
+          executedAt: new Date().toISOString(),
+          executedBy: 'test-executor',
+          durationMs: 1000,
+          evidence: [
+            {
+              schemaVersion: '1.0.0',
+              id: 'evidence_001',
+              missionId: 'mission_test_001',
+              taskId: 'task_001',
+              type: 'test-output',
+              source: 'test-runner',
+              content: 'Test output',
+              contentHash: 'abc123',
+              collectedAt: new Date().toISOString(),
+              producer: 'test-executor',
+              relationship: 'proves-success',
+              sensitivity: 'INTERNAL',
+              isRedacted: false,
+              provenance: 'direct',
+              tags: ['test'],
+            },
+          ],
+        },
+      });
 
       expect(sm.getState()).toBe('VERIFYING');
     });
@@ -212,25 +207,20 @@ describe('MissionStateMachine', () => {
       mission.evidence = ['evidence_001'];
       sm = new MissionStateMachine(mission);
 
-      await sm.transitionTo(
-        'COMPLETED',
-        'Mission succeeded',
-        'test-user',
-        {
-          verificationResult: {
-            schemaVersion: '1.0.0',
-            taskId: 'task_001',
-            status: 'VERIFIED',
-            confidence: 100,
-            verifiedAt: new Date().toISOString(),
-            verifiedBy: 'test-verifier',
-            supportingEvidence: ['evidence_001'],
-            gaps: [],
-            contradictions: [],
-            reasoning: 'All evidence supports success',
-          },
-        }
-      );
+      await sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
+        verificationResult: {
+          schemaVersion: '1.0.0',
+          taskId: 'task_001',
+          status: 'VERIFIED',
+          confidence: 100,
+          verifiedAt: new Date().toISOString(),
+          verifiedBy: 'test-verifier',
+          supportingEvidence: ['evidence_001'],
+          gaps: [],
+          contradictions: [],
+          reasoning: 'All evidence supports success',
+        },
+      });
 
       expect(sm.getState()).toBe('COMPLETED');
       expect(mission.completedAt).toBeDefined();
@@ -239,9 +229,9 @@ describe('MissionStateMachine', () => {
 
   describe('Invalid Transitions', () => {
     it('should reject CREATED → COMPLETED (skipping states)', async () => {
-      expect(async () => {
-        await sm.transitionTo('COMPLETED', 'Trying to skip states', 'test-user');
-      }).rejects.toThrow(/INVALID_STATE_TRANSITION/);
+      await expect(
+        sm.transitionTo('COMPLETED', 'Trying to skip states', 'test-user')
+      ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
     it('should reject COMPLETED → anything (terminal state)', async () => {
@@ -249,24 +239,28 @@ describe('MissionStateMachine', () => {
       mission.completedAt = new Date().toISOString();
       sm = new MissionStateMachine(mission);
 
-      expect(async () => {
-        await sm.transitionTo('FAILED', 'Trying to transition from terminal state', 'test-user');
-      }).rejects.toThrow(/INVALID_STATE_TRANSITION/);
+      await expect(
+        sm.transitionTo(
+          'FAILED',
+          'Trying to transition from terminal state',
+          'test-user'
+        )
+      ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
     it('should reject CREATED → EXECUTING (invalid path)', async () => {
-      expect(async () => {
-        await sm.transitionTo('EXECUTING', 'Invalid transition', 'test-user');
-      }).rejects.toThrow(/INVALID_STATE_TRANSITION/);
+      await expect(
+        sm.transitionTo('EXECUTING', 'Invalid transition', 'test-user')
+      ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
     it('should reject EXECUTING → EXECUTING (same state)', async () => {
       mission.state = 'EXECUTING';
       sm = new MissionStateMachine(mission);
 
-      expect(async () => {
-        await sm.transitionTo('EXECUTING', 'Already executing', 'test-user');
-      }).rejects.toThrow(/INVALID_STATE_TRANSITION/);
+      await expect(
+        sm.transitionTo('EXECUTING', 'Already executing', 'test-user')
+      ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
   });
 
@@ -276,18 +270,19 @@ describe('MissionStateMachine', () => {
       mission.evidence = ['evidence_001'];
       sm = new MissionStateMachine(mission);
 
-      expect(async () => {
-        await sm.transitionTo('COMPLETED', 'No verification result', 'test-user', {});
-      }).rejects.toThrow(/POLICY_VIOLATION/);
+      await expect(
+        sm.transitionTo('COMPLETED', 'No verification result', 'test-user', {})
+      ).rejects.toThrow(/POLICY_VIOLATION/);
     });
 
     it('should reject AUTHORIZED → EXECUTING without policy decision', async () => {
       mission.state = 'AUTHORIZED';
+      mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
-      expect(async () => {
-        await sm.transitionTo('EXECUTING', 'No policy decision', 'test-user', {});
-      }).rejects.toThrow(/POLICY_VIOLATION/);
+      await expect(
+        sm.transitionTo('EXECUTING', 'No policy decision', 'test-user', {})
+      ).rejects.toThrow(/POLICY_VIOLATION/);
     });
   });
 
@@ -429,18 +424,23 @@ describe('TaskStateMachine', () => {
       task.startedAt = new Date().toISOString();
       sm = new TaskStateMachine(task);
 
-      await sm.transitionTo('VERIFYING', 'Starting verification', 'test-executor', {
-        executionResult: {
-          schemaVersion: '1.0.0',
-          taskId: 'task_test_001',
-          success: true,
-          output: {},
-          executedAt: new Date().toISOString(),
-          executedBy: 'test-executor',
-          durationMs: 1000,
-          evidence: [],
-        },
-      });
+      await sm.transitionTo(
+        'VERIFYING',
+        'Starting verification',
+        'test-executor',
+        {
+          executionResult: {
+            schemaVersion: '1.0.0',
+            taskId: 'task_test_001',
+            success: true,
+            output: {},
+            executedAt: new Date().toISOString(),
+            executedBy: 'test-executor',
+            durationMs: 1000,
+            evidence: [],
+          },
+        }
+      );
 
       expect(sm.getState()).toBe('VERIFYING');
     });
@@ -482,9 +482,9 @@ describe('TaskStateMachine', () => {
 
   describe('Invalid Task Transitions', () => {
     it('should reject QUEUED → COMPLETED (skipping states)', async () => {
-      expect(async () => {
-        await sm.transitionTo('COMPLETED', 'Skipping states', 'test-executor');
-      }).rejects.toThrow(/INVALID_STATE_TRANSITION/);
+      await expect(
+        sm.transitionTo('COMPLETED', 'Skipping states', 'test-executor')
+      ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
     it('should reject COMPLETED → anything (terminal)', async () => {
@@ -492,9 +492,13 @@ describe('TaskStateMachine', () => {
       task.completedAt = new Date().toISOString();
       sm = new TaskStateMachine(task);
 
-      expect(async () => {
-        await sm.transitionTo('FAILED', 'Cannot revert from terminal', 'test-executor');
-      }).rejects.toThrow(/INVALID_STATE_TRANSITION/);
+      await expect(
+        sm.transitionTo(
+          'FAILED',
+          'Cannot revert from terminal',
+          'test-executor'
+        )
+      ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
   });
 

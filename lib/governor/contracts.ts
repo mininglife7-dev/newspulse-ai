@@ -28,7 +28,8 @@ export interface Versioned {
  * - MINOR bump: additive change, backwards-compatible
  * - PATCH bump: bug fix, no schema change
  */
-export type SchemaCompatibility = 'compatible' | 'incompatible' | 'requires-migration';
+export type SchemaCompatibility =
+  'compatible' | 'incompatible' | 'requires-migration';
 
 export function checkSchemaCompatibility(
   current: string,
@@ -53,9 +54,26 @@ export function checkSchemaCompatibility(
 // CORE TYPES — MISSION & TASK LIFECYCLE
 // ============================================================================
 
-export type MissionState = 'CREATED' | 'VALIDATED' | 'PLANNED' | 'AUTHORIZED' | 'EXECUTING' | 'VERIFYING' | 'COMPLETED' | 'BLOCKED' | 'FAILED' | 'CANCELLED';
+export type MissionState =
+  | 'CREATED'
+  | 'VALIDATED'
+  | 'PLANNED'
+  | 'AUTHORIZED'
+  | 'EXECUTING'
+  | 'VERIFYING'
+  | 'COMPLETED'
+  | 'BLOCKED'
+  | 'FAILED'
+  | 'CANCELLED';
 
-export type TaskState = 'QUEUED' | 'RUNNING' | 'VERIFYING' | 'COMPLETED' | 'BLOCKED' | 'FAILED' | 'CANCELLED';
+export type TaskState =
+  | 'QUEUED'
+  | 'RUNNING'
+  | 'VERIFYING'
+  | 'COMPLETED'
+  | 'BLOCKED'
+  | 'FAILED'
+  | 'CANCELLED';
 
 export interface MissionRequest extends Versioned {
   schemaVersion: '1.0.0';
@@ -146,7 +164,8 @@ export type AuthorityClass = 'A_AUTONOMOUS' | 'B_GUARDRAILS' | 'C_FOUNDER_ONLY';
 
 export type ActionClass = string; // Applications define their own action types
 
-export type PolicyDecisionType = 'ALLOW' | 'DENY' | 'ESCALATE' | 'REQUIRE_EVIDENCE' | 'REQUIRE_APPROVAL';
+export type PolicyDecisionType =
+  'ALLOW' | 'DENY' | 'ESCALATE' | 'REQUIRE_EVIDENCE' | 'REQUIRE_APPROVAL';
 
 export interface AuthorityEnvelope extends Versioned {
   schemaVersion: '1.0.0';
@@ -223,7 +242,12 @@ export interface VerificationRequest extends Versioned {
   successCriteria: SuccessCriterion[];
 }
 
-export type VerificationStatus = 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'UNVERIFIED' | 'CONTRADICTED' | 'FAILED_VERIFICATION';
+export type VerificationStatus =
+  | 'VERIFIED'
+  | 'PARTIALLY_VERIFIED'
+  | 'UNVERIFIED'
+  | 'CONTRADICTED'
+  | 'FAILED_VERIFICATION';
 
 export interface VerificationResult extends Versioned {
   schemaVersion: '1.0.0';
@@ -317,7 +341,8 @@ export interface LearningRecord extends Versioned {
   evidence: string[]; // Evidence IDs supporting this learning
   learnedAt: string; // ISO 8601
   learnedBy: string;
-  status: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'DEPRECATED';
+  status:
+    'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'DEPRECATED';
   approvedAt?: string;
   approvedBy?: string;
   conflictsWith?: string[]; // Other learning IDs that contradict this
@@ -336,7 +361,13 @@ export interface EvolutionProposal extends Versioned {
   sourceLearning: string[]; // Which learning IDs support this?
   proposedAt: string; // ISO 8601
   proposedBy: string;
-  status: 'PROPOSED' | 'APPROVED' | 'EXECUTING' | 'VALIDATED' | 'REJECTED' | 'ROLLED_BACK';
+  status:
+    | 'PROPOSED'
+    | 'APPROVED'
+    | 'EXECUTING'
+    | 'VALIDATED'
+    | 'REJECTED'
+    | 'ROLLED_BACK';
   approvedAt?: string;
   approvedBy?: string;
   rollbackReason?: string;
@@ -462,12 +493,20 @@ export interface EscalationHandler {
   /**
    * Approve an escalation.
    */
-  approve(escalationId: string, approvedBy: string, resolution: string): Promise<void>;
+  approve(
+    escalationId: string,
+    approvedBy: string,
+    resolution: string
+  ): Promise<void>;
 
   /**
    * Reject an escalation.
    */
-  reject(escalationId: string, rejectedBy: string, reason: string): Promise<void>;
+  reject(
+    escalationId: string,
+    rejectedBy: string,
+    reason: string
+  ): Promise<void>;
 }
 
 // ============================================================================
@@ -483,7 +522,10 @@ export interface PolicyEngine {
    * Evaluate a policy decision for a task.
    * Applications configure rules; Governor OS enforces them.
    */
-  evaluatePolicy(task: Task, authority: AuthorityClass): Promise<PolicyDecision>;
+  evaluatePolicy(
+    task: Task,
+    authority: AuthorityClass
+  ): Promise<PolicyDecision>;
 
   /**
    * Register a policy rule.
@@ -510,10 +552,13 @@ export function serializeGovernorObject<T extends Versioned>(obj: T): string {
     if (typeof value === 'object' && value !== null) {
       return Object.keys(value)
         .sort()
-        .reduce((result, key) => {
-          result[key] = value[key];
-          return result;
-        }, {} as Record<string, unknown>);
+        .reduce(
+          (result, key) => {
+            result[key] = value[key];
+            return result;
+          },
+          {} as Record<string, unknown>
+        );
     }
     return value;
   });
@@ -542,9 +587,11 @@ export function deserializeGovernorObject<T extends Versioned>(
   return obj;
 }
 
-export default {
+const governorContractsExport = {
   GOVERNOR_SCHEMA_VERSION,
   checkSchemaCompatibility,
   serializeGovernorObject,
   deserializeGovernorObject,
 };
+
+export default governorContractsExport;

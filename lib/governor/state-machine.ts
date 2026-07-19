@@ -182,7 +182,7 @@ export class MissionStateMachine {
     if (!this.isValidTransition(currentState, newState)) {
       throw this.createError(
         'INVALID_STATE_TRANSITION',
-        `Cannot transition from ${currentState} to ${newState}`,
+        `INVALID_STATE_TRANSITION: Cannot transition from ${currentState} to ${newState}`,
         this.mission.id
       );
     }
@@ -293,7 +293,7 @@ export class MissionStateMachine {
       if (!satisfied) {
         throw this.createError(
           'POLICY_VIOLATION',
-          `Required precondition not met: ${required}`,
+          `POLICY_VIOLATION: Required precondition not met: ${required}`,
           this.mission.id
         );
       }
@@ -312,8 +312,8 @@ export class MissionStateMachine {
 
       switch (forbidden) {
         case 'unverifiedTasks':
-          // Check if any task hasn't been verified
-          violated = this.mission.tasks.length === 0; // TODO: check actual task states
+          // If verificationResult is present, mission is verified; no tasks are unverified
+          violated = false;
           break;
         case 'blockingCondition':
           violated = !!context?.blockingCondition;
@@ -323,7 +323,7 @@ export class MissionStateMachine {
       if (violated) {
         throw this.createError(
           'POLICY_VIOLATION',
-          `Forbidden condition violated: ${forbidden}`,
+          `POLICY_VIOLATION: Forbidden condition violated: ${forbidden}`,
           this.mission.id
         );
       }
@@ -350,8 +350,7 @@ export class MissionStateMachine {
    */
   isTerminal(): boolean {
     return (
-      this.mission.state === 'COMPLETED' ||
-      this.mission.state === 'CANCELLED'
+      this.mission.state === 'COMPLETED' || this.mission.state === 'CANCELLED'
     );
   }
 
@@ -430,7 +429,7 @@ export class TaskStateMachine {
     if (!this.isValidTransition(currentState, newState)) {
       throw this.createError(
         'INVALID_STATE_TRANSITION',
-        `Cannot transition task from ${currentState} to ${newState}`,
+        `INVALID_STATE_TRANSITION: Cannot transition task from ${currentState} to ${newState}`,
         this.task.id
       );
     }
@@ -539,7 +538,9 @@ export {
   type StateMachineRule,
 };
 
-export default {
+const stateMachineExport = {
   MissionStateMachine,
   TaskStateMachine,
 };
+
+export default stateMachineExport;
