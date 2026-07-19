@@ -176,8 +176,8 @@ export class ReferenceMissionExecutor {
 
         // Transition
         if (result.exit_code === 0) {
-          missionModel.transitionTaskTo(nextTask.task_id, 'COMPLETE', result.exit_code);
-          missionModel.transitionTaskTo(nextTask.task_id, 'VERIFYING');
+          missionModel.transitionTaskTo(nextTask.task_id, 'VERIFYING', result.exit_code);
+          missionModel.transitionTaskTo(nextTask.task_id, 'COMPLETE');
           successCount++;
         } else {
           missionModel.transitionTaskTo(nextTask.task_id, 'FAILED', result.exit_code);
@@ -201,6 +201,7 @@ export class ReferenceMissionExecutor {
             true,
             'All prior tasks passed'
           );
+          missionModel.transitionTaskTo(nextTask.task_id, 'VERIFYING');
           missionModel.transitionTaskTo(nextTask.task_id, 'COMPLETE');
           successCount++;
         } else {
@@ -213,6 +214,7 @@ export class ReferenceMissionExecutor {
             false,
             'Prior command tasks failed'
           );
+          missionModel.transitionTaskTo(nextTask.task_id, 'VERIFYING');
           missionModel.transitionTaskTo(nextTask.task_id, 'FAILED');
           failureCount++;
         }
@@ -226,6 +228,8 @@ export class ReferenceMissionExecutor {
     // Step 6: Finalize mission
     const duration_ms = Date.now() - startTime;
     const overallSuccess = failureCount === 0 && successCount === tasks.length;
+
+    missionModel.transitionTo('VERIFYING', 'Final verification of all tasks');
 
     if (overallSuccess) {
       console.log('\n✅ Mission COMPLETE (all tasks succeeded)');
