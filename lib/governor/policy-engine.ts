@@ -57,7 +57,7 @@ export class PolicyEngine {
    * Only commands matching these patterns are allowed
    */
   private static readonly ALLOWLIST = [
-    /^npm\s+(install|ci|lint|type-check|test|build)/,
+    /^npm\s+(install|ci|lint|type-check|test|build|run)/,
     /^git\s+(status|log|show|diff|checkout|reset|fetch|pull|push|commit|add|branch|tag|rebase|merge)/,
     /^bash\s+-c\s+/,
     /^npx\s+/,
