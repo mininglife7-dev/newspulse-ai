@@ -1,0 +1,515 @@
+organ_registry_version: "1.0.0"
+created: "2026-07-19T04:05:00Z"
+description: "Explicit definition of Cathedral organs, their services, dependencies, and Governor OS integration points"
+
+organs:
+  engineering:
+    organ_id: "engineering"
+    name: "Engineering Organ"
+    purpose: "Build, test, deploy, maintain application code and infrastructure"
+    category: "production_operations"
+
+    existing_assets:
+      - "lib/ — domain logic (40+ modules)"
+      - ".github/workflows/ — CI/CD (13 workflows)"
+      - "tests/ — test suites (vitest, Playwright)"
+      - "supabase/ — database schema and migrations"
+      - "app/ — Next.js application code"
+
+    governor_os_services:
+      - "mission_planning: Decompose deployment into tasks"
+      - "capability_selection: Choose providers (npm, git, bash)"
+      - "policy_enforcement: ALLOW_WITH_AUDIT for build/test"
+      - "safe_execution: Bounded command execution with timeout"
+      - "independent_verification: Verify build succeeds"
+      - "evidence_storage: Record deployment and test results"
+
+    required_capabilities:
+      - "repository_read"
+      - "approved_command_execution (npm, bash)"
+      - "test_execution (vitest, Playwright)"
+      - "build_generation (Next.js)"
+      - "git_push (via runner)"
+
+    primary_providers:
+      - "npm (build, test, lint)"
+      - "git (version control)"
+      - "GitHub Actions (CI/CD runner)"
+      - "Vercel (deployment platform)"
+
+    fallback_providers:
+      - "manual_engineering (Founder or developer)"
+      - "git_history_rollback (restore previous commits)"
+      - "local_build_verification (developer machine)"
+
+    health_indicators:
+      - "ci_pass_rate (target: >95%)"
+      - "test_coverage (target: >70%)"
+      - "deployment_frequency (target: multiple per day)"
+      - "defect_escape_rate (target: <0.05)"
+      - "build_duration_seconds (target: <300s)"
+
+    failure_modes:
+      - "CI broken (tests fail, lint errors, build fails)"
+      - "test_regression (more tests failing than passing)"
+      - "deployment_failure (Vercel deploy fails)"
+      - "code_quality_drift (lint errors increase)"
+      - "performance_regression (build time exceeds threshold)"
+
+    immune_checks:
+      - "unsupported_deployment_claims (GO without evidence)"
+      - "missing_test_evidence (claim passed without test output)"
+      - "code_changes_without_tests (new code without test coverage)"
+      - "secret_exposure (credentials in logs or code)"
+      - "configuration_drift (env vars not documented)"
+
+    homeostasis_thresholds:
+      max_consecutive_ci_failures: 3
+      max_test_regression_ratio: 0.05
+      max_build_duration_seconds: 600
+      min_test_coverage: 0.70
+      escalation_on_ci_failure: true
+
+    regeneration_procedure: |
+      1. Detect CI failure
+      2. Isolate broken component (which commit, which test)
+      3. Restore from last-known-good commit
+      4. Re-run full test suite
+      5. Verify health indicators
+      6. Return to service if green
+
+    memory_dependencies:
+      - "PROJECT_STATE.md (for deployment status)"
+      - "DECISION_LOG.md (for architectural decisions)"
+      - "LESSONS.md (for learned patterns)"
+      - "docs/governor/deployments/ (deployment records)"
+
+    learning_outputs:
+      - "test_reliability_improvements (which tests are flaky)"
+      - "build_optimization_lessons (how to reduce build time)"
+      - "deployment_safety_adaptations (fallback procedures)"
+      - "common_breakage_patterns (recurring CI failures)"
+
+    status: "active"
+
+  compliance:
+    organ_id: "compliance"
+    name: "Compliance Organ"
+    purpose: "Track EU AI Act obligations, collect evidence, generate reports, manage risks"
+    category: "customer_operations"
+
+    existing_assets:
+      - "docs/governor/risks/RISK-REGISTER.md"
+      - "DEMO_READINESS.md (customer-journey checklist)"
+      - "docs/governance/EU-PRODUCTION-DEPLOYMENT-VERIFICATION-2026-07-16.md"
+
+    governor_os_services:
+      - "mission_planning: Anne's ten-step customer journey"
+      - "capability_selection: Compliance agents, report generators"
+      - "evidence_collection: Automated + manual evidence"
+      - "verification: Independent assessment verification"
+      - "evidence_storage: Immutable compliance evidence"
+
+    required_capabilities:
+      - "compliance_analysis"
+      - "evidence_collection"
+      - "report_generation"
+      - "risk_assessment"
+
+    primary_providers:
+      - "Claude (compliance analysis agent)"
+      - "pdf-lib (report generation)"
+      - "GitHub Actions (journey automation via runner)"
+      - "Supabase (future: evidence persistence)"
+
+    fallback_providers:
+      - "manual_compliance_review (Founder)"
+      - "spreadsheet_storage (Excel tracking)"
+      - "founder_assessment (manual AI Act analysis)"
+
+    health_indicators:
+      - "evidence_completeness_ratio (target: >=95%)"
+      - "customer_understanding_score (feedback-based)"
+      - "report_accuracy (founder verification)"
+      - "obligation_coverage (all obligations tracked)"
+      - "unresolved_findings (target: 0)"
+
+    failure_modes:
+      - "missing_evidence (required artifact not collected)"
+      - "inaccurate_assessment (wrong risk classification)"
+      - "customer_confusion (customer doesn't understand report)"
+      - "compliance_gap (obligation left untracked)"
+      - "stale_assessment (last assessment >30 days old)"
+
+    immune_checks:
+      - "fabricated_evidence (claim without artifact)"
+      - "unsupported_findings (conclusion without evidence)"
+      - "missing_risk_classification (risk without severity)"
+      - "customer_unexplained (obligation list without explanation)"
+
+    homeostasis_thresholds:
+      min_evidence_completeness: 0.95
+      max_unresolved_obligations: 0
+      max_customer_confusion_ratio: 0.0
+      max_assessment_staleness_days: 30
+      escalation_on_missing_evidence: true
+
+    regeneration_procedure: |
+      1. Detect compliance issue (missing evidence, stale assessment)"
+      2. Restore evidence from audit trail"
+      3. Rerun AI Act assessment"
+      4. Regenerate report with new findings"
+      5. Customer revalidation (does customer agree?)"
+      6. Return to service if verified
+
+    memory_dependencies:
+      - "NEXT_ACTION.md (Anne's journey mission)"
+      - "docs/governance/DECISION_REGISTER.md (compliance decisions)"
+      - "Evidence ledger (all collected evidence)"
+      - "DEMO_READINESS.md (journey tracking)"
+
+    learning_outputs:
+      - "assessment_methodology_improvements"
+      - "evidence_collection_efficiency"
+      - "compliance_pattern_recognition"
+      - "customer_explanation_clarity"
+
+    status: "active"
+
+  memory:
+    organ_id: "memory"
+    name: "Memory Organ"
+    purpose: "Preserve facts, decisions, evidence, and history with full provenance and conflict resolution"
+    category: "foundation"
+
+    existing_assets:
+      - "AGENTS.md (operational manual)"
+      - "GOVERNOR_CONSTITUTION.md (permanent laws)"
+      - "PROJECT_STATE.md (verified facts)"
+      - "NEXT_ACTION.md (current mission)"
+      - "DECISION_LOG.md (decision pointer)"
+      - "docs/governance/DECISION_REGISTER.md (canonical decisions, DR-0001+)"
+      - "docs/governor/lessons/LESSONS.md (validated lessons)"
+      - "docs/governor/risks/RISK-REGISTER.md (risk tracking)"
+
+    governor_os_services:
+      - "evidence_storage: Append-only ledger with provenance"
+      - "provenance_tracking: Who, what, when, why for each fact"
+      - "conflict_detection: Identify contradictions"
+      - "temporal_validity: Mark stale vs current facts"
+
+    required_capabilities:
+      - "repository_read"
+      - "file_writing"
+      - "local_persistence"
+      - "hash_computation"
+
+    primary_providers:
+      - "git (document version control, immutability)"
+      - "SQLite (evidence ledger)"
+      - "markdown (human-readable facts)"
+      - "YAML (structured decisions)"
+
+    fallback_providers:
+      - "file_storage (backup documents)"
+      - "git_history_restore (recovery from corruption)"
+
+    health_indicators:
+      - "evidence_immutability (no retroactive changes)"
+      - "provenance_completeness (every fact has source)"
+      - "conflict_detection_rate (contradictions found)"
+      - "fact_staleness (facts marked with review date)"
+
+    failure_modes:
+      - "lost_evidence (fact irretrievably lost)"
+      - "conflicting_truth_claims (two contradictory facts, both marked true)"
+      - "evidence_tampering (fact retroactively changed)"
+      - "unsourced_claims (fact without evidence link)"
+
+    immune_checks:
+      - "stale_facts_not_marked (old fact still treated as current)"
+      - "conflicting_sources_not_detected (contradiction hidden)"
+      - "unsourced_claims (claim without evidence)"
+      - "evidence_gaps (required evidence missing)"
+
+    homeostasis_thresholds:
+      min_evidence_retention: "forever"
+      max_unresolved_conflicts: 0
+      max_fact_staleness_days: 30
+      provenance_completeness_required: true
+
+    regeneration_procedure: |
+      1. Restore from git history"
+      2. Verify content hashes"
+      3. Revalidate all facts"
+      4. Rebuild evidence index"
+      5. Detect and mark conflicts"
+      6. Resume service
+
+    memory_dependencies:
+      - self_referential (Memory Organ stores memory)
+
+    learning_outputs:
+      - "fact_staleness_detection (which facts need refresh)"
+      - "better_conflict_resolution (improve contradiction handling)"
+      - "evidence_collection_improvements"
+
+    status: "active"
+
+  immune:
+    organ_id: "immune"
+    name: "Immune Organ"
+    purpose: "Detect and contain corruption, security violations, architectural drift, and malicious behavior"
+    category: "security"
+
+    existing_assets:
+      - "GOVERNOR_CONSTITUTION.md (prohibited actions)"
+      - "AGENTS.md (escalation rules)"
+      - ".github/workflows/dna-security-scan.yml (dependency scanning)"
+
+    governor_os_services:
+      - "threat_detection: Fabrication, injection, drift detection"
+      - "quarantine: Isolate suspicious inputs and capabilities"
+      - "investigation: Structured threat analysis"
+      - "immune_learning: Record and improve detection"
+
+    required_capabilities:
+      - "output_inspection"
+      - "policy_violation_detection"
+      - "anomaly_detection"
+
+    primary_providers:
+      - "Governor OS Policy Engine (rule-based detection)"
+      - "Evidence Ledger (historical pattern analysis)"
+
+    fallback_providers:
+      - "founder_review (human investigation)"
+
+    health_indicators:
+      - "detection_rate (threats detected per period)"
+      - "false_positive_rate (incorrect threat flags)"
+      - "quarantine_effectiveness (threats contained successfully)"
+      - "investigation_resolution_time"
+
+    failure_modes:
+      - "silent_corruption (threat undetected)"
+      - "false_positive_storm (over-alerting, ignoring real threats)"
+      - "quarantine_escape (threat evades containment)"
+
+    immune_checks:
+      - Detect fabricated completion (verification returns VERIFIED_FAIL)
+      - Detect unsupported claims (evidence artifact missing)
+      - Detect prompt injection (policy parser rejects unsafe syntax)
+      - Detect secret exposure (redaction scan finds API key in output)
+      - Detect permission drift (phenotype check fails)
+      - Detect memory contradiction (conflict detector alerts)
+      - Detect provider failure pattern (retry limit exceeded)
+      - Detect architectural drift (genome validation fails)
+
+    homeostasis_thresholds:
+      max_unquarantined_threats: 0
+      escalation_on_security_alert: true
+      investigation_timeout: 3600
+
+    regeneration_procedure: |
+      1. Identify threat class
+      2. Quarantine affected component
+      3. Isolate from downstream consumers
+      4. Investigate root cause
+      5. Determine fix or escalation
+      6. Retest with threat injection
+      7. Resume if safe
+
+    memory_dependencies:
+      - "DECISION_LOG.md (past security decisions)"
+      - "LESSONS.md (threat patterns)"
+
+    learning_outputs:
+      - "threat_pattern_recognition (common attacks)"
+      - "false_positive_reduction"
+      - "detection_rule_improvements"
+
+    status: "active"
+
+  learning:
+    organ_id: "learning"
+    name: "Learning Organ"
+    purpose: "Convert observations and outcomes into validated behavioral changes"
+    category: "adaptation"
+
+    existing_assets:
+      - "docs/governor/lessons/LESSONS.md (L-001+)"
+      - "DECISION_LOG.md (decision rationale, outcomes)"
+
+    governor_os_services:
+      - "lesson_candidate_generation: Automated pattern detection"
+      - "validation_framework: Test lessons in sandbox"
+      - "policy_update: Incorporate lessons into decision rules"
+
+    required_capabilities:
+      - "observation_collection"
+      - "baseline_preservation"
+      - "sandbox_testing"
+      - "fitness_comparison"
+
+    primary_providers:
+      - "Governor OS Learning Candidate generator"
+      - "Claude (analysis agent)"
+      - "founder_review (approval)"
+
+    fallback_providers:
+      - "manual_lesson_creation"
+      - "founder_override"
+
+    health_indicators:
+      - "lesson_validation_rate (% of lessons validated)"
+      - "lesson_application_rate (% of validated lessons applied)"
+      - "fitness_improvement_per_lesson (measurable benefit)"
+
+    failure_modes:
+      - "invalid_lesson (false pattern, causes regression)"
+      - "lesson_never_applied (validated but blocked)"
+      - "contradictory_lessons (two lessons conflict)"
+
+    immune_checks:
+      - "fabricated_lesson (no evidence for pattern)"
+      - "lesson_causes_regression (fitness declined after application)"
+      - "lesson_exceeds_authority (autonomous modification of DNA)"
+
+    homeostasis_thresholds:
+      min_lesson_validation_rate: 0.95
+      max_lesson_approval_time_days: 7
+      max_pending_lessons: 10
+
+    regeneration_procedure: |
+      1. Review archived lessons
+      2. Revalidate applicability"
+      3. Resume learning cycle"
+
+    memory_dependencies:
+      - "LESSONS.md (lesson repository)"
+      - "DECISION_LOG.md (outcome tracking)"
+
+    learning_outputs:
+      - "self_improving_governance (policy improves from experience)"
+
+    status: "active"
+
+  observability:
+    organ_id: "observability"
+    name: "Observability Organ"
+    purpose: "Collect, correlate, and report on system state, performance, and health"
+    category: "foundation"
+
+    existing_assets:
+      - ".github/workflows/dna-*.yml (monitoring workflows)"
+      - "docs/governor/deployments/ (deployment records)"
+
+    governor_os_services:
+      - "structured_logging: Correlated mission/task events"
+      - "metrics_collection: Health indicator tracking"
+      - "alerting: Homeostasis threshold violations"
+
+    required_capabilities:
+      - "event_collection"
+      - "log_correlation"
+      - "metric_storage"
+
+    primary_providers:
+      - "GitHub Actions logs"
+      - "SQLite event log"
+      - "structured JSON output"
+
+    fallback_providers:
+      - "manual_log_inspection"
+      - "founder_dashboard"
+
+    health_indicators:
+      - "log_completeness (% of events logged)"
+      - "correlation_id_coverage (% with mission/task IDs)"
+      - "query_latency (log retrieval time)"
+
+    failure_modes:
+      - "lost_logs (events unrecorded)"
+      - "uncorrelated_events (can't trace back to mission)"
+      - "performance_blindness (no metrics to detect issues)"
+
+    immune_checks:
+      - "missing_evidence_trail (event without provenance)"
+      - "log_tampering (event retroactively modified)"
+
+    regeneration_procedure: |
+      1. Rebuild indices from raw logs"
+      2. Restore from backup"
+      3. Resume collection"
+
+    memory_dependencies:
+      - "All organs (observability serves entire system)"
+
+    status: "active"
+
+  knowledge:
+    organ_id: "knowledge"
+    name: "Knowledge Organ"
+    purpose: "Research, document, educate, and provide guidance"
+    category: "support"
+
+    existing_assets:
+      - "README.md (project overview)"
+      - "docs/ (comprehensive documentation)"
+      - ".github/CONTRIBUTING.md"
+
+    governor_os_services:
+      - "documentation_generation: Automated docs"
+      - "guidance_provision: Answer questions"
+
+    required_capabilities:
+      - "research"
+      - "documentation_writing"
+      - "web_search (if available)"
+
+    primary_providers:
+      - "Claude (knowledge agent)"
+      - "file_storage (documentation)"
+
+    fallback_providers:
+      - "archive_documentation"
+
+    health_indicators:
+      - "documentation_currency (docs updated with code)"
+      - "search_effectiveness (users find answers)"
+
+    status: "active"
+
+  customer:
+    organ_id: "customer"
+    name: "Customer Organ"
+    purpose: "Manage customer relationships, support, onboarding, and success tracking"
+    category: "customer_operations"
+
+    existing_assets:
+      - "DEMO_READINESS.md (journey checklist)"
+      - "docs/ (customer documentation)"
+
+    governor_os_services:
+      - "journey_orchestration: Anne's ten-step mission"
+      - "support_request_routing"
+
+    required_capabilities:
+      - "customer_communication"
+      - "onboarding_automation"
+      - "success_measurement"
+
+    primary_providers:
+      - "founder_engagement"
+      - "compliance_organ"
+
+    fallback_providers:
+      - "founder_direct_management"
+
+    health_indicators:
+      - "customer_satisfaction"
+      - "onboarding_success_rate"
+      - "support_response_time"
+
+    status: "active"

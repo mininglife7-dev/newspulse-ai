@@ -1,0 +1,551 @@
+version: "1.0.0"
+dna_ref: "CATHEDRAL_DNA.yaml:1.0.0"
+created: "2026-07-19T04:00:00Z"
+parent_version: null
+description: "Initial Cathedral genome for EURO AI. Defines organs, capabilities, policies, and operating thresholds for the complete institution."
+source: "Derived from existing EURO AI architecture, AGENTS.md, GOVERNOR_CONSTITUTION.md, PROJECT_STATE.md, and deployment evidence"
+
+# ORGANS (Functional systems within Cathedral)
+organs:
+  - organ_id: "engineering"
+    name: "Engineering Organ"
+    purpose: "Build, test, deploy, maintain application code and infrastructure"
+    inputs:
+      - "feature_requests"
+      - "bug_reports"
+      - "deployment_decisions"
+      - "refactoring_missions"
+    outputs:
+      - "code_changes"
+      - "test_results"
+      - "deployments"
+      - "evidence_and_logs"
+    authority_scope: "autonomous_with_audit"
+    health_indicators:
+      - "ci_pass_rate"
+      - "test_coverage"
+      - "deployment_frequency"
+      - "defect_escape_rate"
+      - "build_duration_seconds"
+    dependencies:
+      - "memory"
+      - "observability"
+      - "immune"
+    fallback_provider: "manual_engineering"
+    regeneration_procedure: "Restore from git history; re-run tests; verify health; return to service"
+    status: "active"
+
+  - organ_id: "compliance"
+    name: "Compliance Organ"
+    purpose: "Track EU AI Act obligations, collect evidence, generate reports, manage risks"
+    inputs:
+      - "ai_systems_inventory"
+      - "risk_assessments"
+      - "evidence_artifacts"
+      - "customer_journey_data"
+    outputs:
+      - "obligations_list"
+      - "evidence_collection"
+      - "compliance_reports"
+      - "risk_register"
+      - "remediation_tracking"
+    authority_scope: "autonomous_with_audit"
+    health_indicators:
+      - "evidence_completeness_ratio"
+      - "customer_understanding_score"
+      - "report_accuracy"
+      - "obligation_coverage"
+      - "unresolved_findings"
+    dependencies:
+      - "memory"
+      - "observability"
+      - "knowledge"
+    fallback_provider: "manual_compliance_tracking"
+    regeneration_procedure: "Restore evidence from audit trail; rerun assessment; regenerate report; customer revalidation"
+    status: "active"
+
+  - organ_id: "memory"
+    name: "Memory Organ"
+    purpose: "Preserve facts, decisions, evidence, and history with full provenance and conflict resolution"
+    inputs:
+      - "events"
+      - "decisions"
+      - "evidence"
+      - "lessons"
+      - "contradictions"
+    outputs:
+      - "verified_state"
+      - "decision_history"
+      - "evidence_ledger"
+      - "conflict_detection"
+    authority_scope: "autonomous"
+    health_indicators:
+      - "evidence_immutability"
+      - "provenance_completeness"
+      - "conflict_detection_rate"
+      - "fact_staleness_age"
+    dependencies:
+      - "observability"
+    fallback_provider: "file_storage_and_git_history"
+    regeneration_procedure: "Restore from git history; verify hashes; revalidate all facts; rebuild index"
+    status: "active"
+
+  - organ_id: "learning"
+    name: "Learning Organ"
+    purpose: "Convert observations and outcomes into validated behavioral changes"
+    inputs:
+      - "observations"
+      - "mission_outcomes"
+      - "failures"
+      - "efficiency_opportunities"
+    outputs:
+      - "lesson_candidates"
+      - "validated_lessons"
+      - "improved_policies"
+      - "evolved_procedures"
+    authority_scope: "requires_approval"
+    health_indicators:
+      - "lesson_validation_rate"
+      - "lesson_application_rate"
+      - "fitness_improvement_per_lesson"
+    dependencies:
+      - "memory"
+      - "immune"
+    fallback_provider: "manual_review_and_decision"
+    regeneration_procedure: "Review archived lessons; revalidate applicability; resume learning cycle"
+    status: "active"
+
+  - organ_id: "immune"
+    name: "Immune Organ"
+    purpose: "Detect and contain corruption, security violations, architectural drift, and malicious behavior"
+    inputs:
+      - "all_outputs"
+      - "all_evidence"
+      - "policy_violations"
+      - "anomalous_behavior"
+    outputs:
+      - "alerts"
+      - "quarantines"
+      - "investigations"
+      - "immunity_lessons"
+    authority_scope: "autonomous"
+    health_indicators:
+      - "detection_rate"
+      - "false_positive_rate"
+      - "quarantine_effectiveness"
+      - "investigation_resolution_time"
+    dependencies:
+      - "observability"
+      - "memory"
+    fallback_provider: "founder_review_and_decision"
+    regeneration_procedure: "Review detection rules; test against known threats; resume surveillance"
+    status: "active"
+
+  - organ_id: "observability"
+    name: "Observability Organ"
+    purpose: "Collect, correlate, and report on system state, performance, and health"
+    inputs:
+      - "mission_events"
+      - "task_execution_records"
+      - "capability_health_checks"
+      - "provider_performance"
+    outputs:
+      - "correlated_logs"
+      - "health_dashboards"
+      - "performance_metrics"
+      - "trend_analysis"
+    authority_scope: "autonomous"
+    health_indicators:
+      - "log_completeness"
+      - "correlation_id_coverage"
+      - "query_latency"
+    dependencies:
+      - "memory"
+    fallback_provider: "manual_log_inspection"
+    regeneration_procedure: "Rebuild indices; restore from backup logs; resume collection"
+    status: "active"
+
+  - organ_id: "knowledge"
+    name: "Knowledge Organ"
+    purpose: "Research, document, educate, and provide guidance"
+    inputs:
+      - "research_questions"
+      - "documentation_requests"
+      - "guidance_requests"
+    outputs:
+      - "documentation"
+      - "analysis"
+      - "educational_materials"
+      - "guidance"
+    authority_scope: "autonomous"
+    health_indicators:
+      - "documentation_currency"
+      - "user_satisfaction"
+      - "search_effectiveness"
+    dependencies:
+      - "memory"
+    fallback_provider: "archive_documentation"
+    regeneration_procedure: "Restore from version control; re-publish; resume service"
+    status: "active"
+
+  - organ_id: "operations"
+    name: "Operations Organ"
+    purpose: "Manage deployments, infrastructure, uptime, and operational procedures"
+    inputs:
+      - "deployment_requests"
+      - "infrastructure_changes"
+      - "operational_procedures"
+    outputs:
+      - "deployments"
+      - "infrastructure_status"
+      - "operational_logs"
+      - "incident_records"
+    authority_scope: "requires_approval"
+    health_indicators:
+      - "deployment_success_rate"
+      - "uptime_percentage"
+      - "incident_response_time"
+    dependencies:
+      - "memory"
+      - "observability"
+      - "immune"
+    fallback_provider: "manual_operations"
+    regeneration_procedure: "Restore from infrastructure-as-code; re-provision; verify health; return to service"
+    status: "active"
+
+  - organ_id: "customer"
+    name: "Customer Organ"
+    purpose: "Manage customer relationships, support, onboarding, and success tracking"
+    inputs:
+      - "customer_requests"
+      - "onboarding_data"
+      - "success_metrics"
+      - "feedback"
+    outputs:
+      - "support_responses"
+      - "onboarding_guidance"
+      - "success_reports"
+      - "customer_health_score"
+    authority_scope: "autonomous_with_audit"
+    health_indicators:
+      - "customer_satisfaction"
+      - "onboarding_success_rate"
+      - "support_response_time"
+      - "customer_churn"
+    dependencies:
+      - "memory"
+      - "compliance"
+      - "knowledge"
+    fallback_provider: "founder_engagement"
+    regeneration_procedure: "Restore customer records; re-establish communication; resume support"
+    status: "active"
+
+  - organ_id: "evolution"
+    name: "Evolution Organ"
+    purpose: "Govern controlled mutation and improvement of the Cathedral organism"
+    inputs:
+      - "lessons"
+      - "fitness_improvements"
+      - "capability_proposals"
+      - "risk_assessments"
+    outputs:
+      - "evolution_decisions"
+      - "version_increments"
+      - "rollback_plans"
+      - "lineage_records"
+    authority_scope: "requires_approval"
+    health_indicators:
+      - "evolution_cycle_time"
+      - "fitness_trend"
+      - "rollback_frequency"
+    dependencies:
+      - "memory"
+      - "learning"
+      - "immune"
+    fallback_provider: "manual_evolution_governance"
+    regeneration_procedure: "Review decision history; restore last stable genome; resume controlled evolution"
+    status: "active"
+
+# CAPABILITIES (Services required by organs)
+capabilities:
+  - capability_id: "repository_read"
+    name: "Repository Read"
+    description: "Read git history, file contents, branch information, commit SHAs"
+    required_by: ["engineering", "memory", "observability"]
+    providers:
+      - provider_id: "git_cli"
+        name: "Git CLI"
+        type: "tool"
+        primary: true
+        availability: "always"
+      - provider_id: "bash_file_read"
+        name: "Bash file operations"
+        type: "tool"
+        availability: "always"
+    danger_class: "read_only"
+    requires_approval: false
+    permissions_required: []
+    health_check: "git status, git log, file listing"
+
+  - capability_id: "approved_command_execution"
+    name: "Approved Command Execution"
+    description: "Run allowlisted repository scripts (npm, bash) with bounds"
+    required_by: ["engineering"]
+    providers:
+      - provider_id: "npm"
+        name: "npm (Node Package Manager)"
+        type: "tool"
+        primary: true
+        availability: "cloud_only"
+      - provider_id: "bash_allowlisted"
+        name: "Bash (allowlisted commands)"
+        type: "tool"
+        availability: "cloud_only"
+    danger_class: "write"
+    requires_approval: true
+    permissions_required: ["command_allowlist_entry", "timeout_policy"]
+    health_check: "npm --version, bash version"
+
+  - capability_id: "test_execution"
+    name: "Test Execution"
+    description: "Run vitest and Playwright test suites"
+    required_by: ["engineering"]
+    providers:
+      - provider_id: "vitest"
+        name: "vitest"
+        type: "tool"
+        primary: true
+        availability: "cloud_only"
+      - provider_id: "playwright"
+        name: "Playwright"
+        type: "tool"
+        availability: "cloud_only"
+        fallback_for: "browser_testing"
+    danger_class: "write"
+    requires_approval: true
+    permissions_required: ["test_allowlist_entry"]
+    health_check: "npm test --version, playwright --version"
+
+  - capability_id: "build_generation"
+    name: "Build Generation"
+    description: "Generate production build artifacts"
+    required_by: ["engineering"]
+    providers:
+      - provider_id: "nextjs"
+        name: "Next.js CLI"
+        type: "tool"
+        primary: true
+        availability: "cloud_only"
+    danger_class: "write"
+    requires_approval: true
+    permissions_required: ["build_allowlist_entry"]
+    health_check: "next --version"
+
+  - capability_id: "local_persistence"
+    name: "Local Persistence"
+    description: "Append-only SQLite or JSON Lines file storage"
+    required_by: ["memory", "observability", "immune"]
+    providers:
+      - provider_id: "sqlite_local"
+        name: "SQLite (local file)"
+        type: "tool"
+        primary: true
+        availability: "always"
+      - provider_id: "json_lines_file"
+        name: "JSON Lines file"
+        type: "tool"
+        availability: "always"
+    danger_class: "write"
+    requires_approval: false
+    permissions_required: ["local_write"]
+    health_check: "File creation, basic SQL query"
+
+  - capability_id: "evidence_ledger"
+    name: "Evidence Ledger"
+    description: "Immutable, append-only evidence storage with hashing"
+    required_by: ["memory", "immune", "observability"]
+    providers:
+      - provider_id: "sqlite_evidence_store"
+        name: "SQLite Evidence Ledger"
+        type: "tool"
+        primary: true
+        availability: "always"
+    danger_class: "write"
+    requires_approval: false
+    permissions_required: ["local_write", "hash_computation"]
+    health_check: "Evidence table present, hash verification working"
+
+  - capability_id: "github_push"
+    name: "GitHub Push"
+    description: "Push commits to remote repository"
+    required_by: ["engineering"]
+    providers:
+      - provider_id: "git_ssh"
+        name: "Git via SSH"
+        type: "tool"
+        availability: "runner_only"
+      - provider_id: "github_cli"
+        name: "GitHub CLI (gh)"
+        type: "tool"
+        availability: "runner_only"
+    danger_class: "external"
+    requires_approval: true
+    permissions_required: ["github_write_access", "ssh_key"]
+    health_check: "git push --dry-run"
+
+  - capability_id: "compliance_analysis"
+    name: "Compliance Analysis"
+    description: "Analyze EU AI Act obligations and generate assessment"
+    required_by: ["compliance"]
+    providers:
+      - provider_id: "claude_compliance_agent"
+        name: "Claude (compliance specialist)"
+        type: "agent"
+        availability: "always"
+      - provider_id: "manual_compliance_review"
+        name: "Founder manual review"
+        type: "human"
+        fallback_for: "all"
+    danger_class: "read_only"
+    requires_approval: false
+    permissions_required: []
+    health_check: "Agent health check endpoint"
+
+  - capability_id: "report_generation"
+    name: "Report Generation"
+    description: "Generate compliance and mission reports (PDF, markdown)"
+    required_by: ["compliance", "customer"]
+    providers:
+      - provider_id: "pdf_lib"
+        name: "pdf-lib (PDF generation)"
+        type: "tool"
+        primary: true
+        availability: "always"
+      - provider_id: "markdown_template"
+        name: "Markdown templates"
+        type: "tool"
+        availability: "always"
+    danger_class: "write"
+    requires_approval: false
+    permissions_required: []
+    health_check: "Library import and basic generation test"
+
+# POLICIES (Authority and decision rules)
+policies:
+  autonomous_actions:
+    - "repository_read"
+    - "project_inspection"
+    - "file_writing"
+    - "documentation_generation"
+    - "analysis_and_research"
+    - "local_persistence"
+    - "evidence_ledger_append"
+    - "immune_detection"
+    - "compliance_analysis"
+
+  audit_required_actions:
+    - "approved_command_execution"
+    - "test_running"
+    - "build_generation"
+    - "observability_data_collection"
+    - "knowledge_base_update"
+
+  approval_required_actions:
+    - "github_push"
+    - "code_modification"
+    - "deployment"
+    - "learning_lesson_application"
+    - "evolution_mutation"
+    - "customer_onboarding"
+    - "external_api_call"
+    - "paid_service_activation"
+
+  prohibited_actions:
+    - "secret_exposure"
+    - "production_data_deletion"
+    - "autonomous_dna_modification"
+    - "bypassing_approval_gates"
+    - "uncontrolled_resource_spending"
+    - "disabling_immune_system"
+    - "silently_rewriting_memory"
+
+  founder_override: true
+  override_rationale: "Founder may override any policy but must record decision and reasoning"
+
+# THRESHOLDS (Homeostasis operating limits)
+thresholds:
+  max_retries: 3
+  max_command_duration_seconds: 300
+  max_consecutive_failures: 5
+  max_queue_size: 100
+  max_unresolved_blockers: 3
+  escalation_on_security_alert: true
+  min_evidence_completeness: 0.95
+  min_test_coverage: 0.70
+  max_test_failure_rate: 0.05
+  max_build_duration_seconds: 600
+
+# EVOLUTION (Rules for controlled mutation)
+evolution:
+  versioning_scheme: "semantic"
+  baseline_preservation_required: true
+  rollback_mandatory: true
+  fitness_measurement_required: true
+  dna_modifications_forbidden: true
+  approval_required_for_class:
+    operational: "autonomous"
+    organ: "approval"
+    genome: "approval"
+    dna: "founder_only"
+
+# MEMORY (Kernel specifications)
+memory:
+  canonical_documents:
+    - document_id: "agents_manual"
+      path: "AGENTS.md"
+      purpose: "Operational manual and execution loop"
+      authority: "Governor Ω authority"
+      immutable: false
+      supersession_allowed: false
+
+    - document_id: "constitution"
+      path: "GOVERNOR_CONSTITUTION.md"
+      purpose: "Permanent laws"
+      authority: "Founder (DNA protection)"
+      immutable: true
+      supersession_allowed: false
+
+    - document_id: "project_state"
+      path: "PROJECT_STATE.md"
+      purpose: "Verified facts only"
+      authority: "Evidence-based, temporal validity required"
+      immutable: false
+      supersession_allowed: true
+
+    - document_id: "next_action"
+      path: "NEXT_ACTION.md"
+      purpose: "Single active mission"
+      authority: "Current mission authority"
+      immutable: false
+      supersession_allowed: true
+
+    - document_id: "decision_log"
+      path: "DECISION_LOG.md"
+      purpose: "Decision history pointer"
+      authority: "Reflects decision register"
+      immutable: false
+      supersession_allowed: false
+
+  conflict_resolution:
+    preserve_both_originals: true
+    mark_contradiction: true
+    require_explicit_resolution: true
+    silent_overwrite_forbidden: true
+
+# OBSERVABILITY
+observability:
+  correlation_id_required: true
+  structured_logging: true
+  evidence_immutability: true
+  deterministic_fields_separate: true
+  correlation_scheme: "mission_id + task_id"
