@@ -283,7 +283,7 @@ export class ReferenceMissionExecutor {
     }
 
     // Step 7: Generate report
-    const report = this.generateReport(mission, tasks, duration_ms);
+    const report = this.generateReport(mission, mission.task_list, duration_ms);
 
     console.log('\n📈 Execution Report:');
     console.log(`   Mission ID: ${report.mission_id}`);
