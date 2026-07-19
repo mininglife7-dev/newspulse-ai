@@ -218,7 +218,8 @@ export class ReferenceMissionExecutor {
         }
       } else if (nextTask.class === 'VERIFICATION') {
         // For VERIFICATION: check if prior tasks passed
-        const priorCommandTasks = tasks.filter(
+        const allTasks = missionModel.getTasks();
+        const priorCommandTasks = allTasks.filter(
           (t) => t.sequence < nextTask.sequence && t.class === 'COMMAND'
         );
 
