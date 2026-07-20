@@ -80,7 +80,7 @@ jobs:
       # Cache the browser binaries (~100 MB) so E2E doesn't re-download them
       # every run — the single biggest Actions-minute cost in this workflow.
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
