@@ -90,7 +90,9 @@ describe('MissionStateMachine', () => {
 
   describe('Valid Transitions', () => {
     it('should allow CREATED → VALIDATED', async () => {
-      await sm.transitionTo('VALIDATED', 'Validating mission', 'test-user');
+      await sm.transitionTo('VALIDATED', 'Validating mission', 'test-user', {
+        authority: 'A_AUTONOMOUS',
+      });
       expect(sm.getState()).toBe('VALIDATED');
     });
 
@@ -99,7 +101,9 @@ describe('MissionStateMachine', () => {
       mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
-      await sm.transitionTo('PLANNED', 'Planning mission', 'test-user');
+      await sm.transitionTo('PLANNED', 'Planning mission', 'test-user', {
+        authority: 'A_AUTONOMOUS',
+      });
       expect(sm.getState()).toBe('PLANNED');
     });
 
@@ -109,6 +113,7 @@ describe('MissionStateMachine', () => {
       sm = new MissionStateMachine(mission);
 
       await sm.transitionTo('AUTHORIZED', 'Authorizing mission', 'test-user', {
+        authority: 'A_AUTONOMOUS',
         policyDecision: {
           schemaVersion: '1.0.0',
           id: 'policy_001',
@@ -138,6 +143,7 @@ describe('MissionStateMachine', () => {
       sm = new MissionStateMachine(mission);
 
       await sm.transitionTo('EXECUTING', 'Starting execution', 'test-user', {
+        authority: 'A_AUTONOMOUS',
         policyDecision: {
           schemaVersion: '1.0.0',
           id: 'policy_001',
@@ -169,6 +175,7 @@ describe('MissionStateMachine', () => {
       sm = new MissionStateMachine(mission);
 
       await sm.transitionTo('VERIFYING', 'Starting verification', 'test-user', {
+        authority: 'A_AUTONOMOUS',
         executionResult: {
           schemaVersion: '1.0.0',
           taskId: 'task_001',
@@ -205,16 +212,30 @@ describe('MissionStateMachine', () => {
     it('should allow VERIFYING → COMPLETED', async () => {
       mission.state = 'VERIFYING';
       mission.evidence = ['evidence_001'];
+      mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
       await sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
-        verificationResult: {
+        authority: 'A_AUTONOMOUS',
+        missionVerificationResult: {
           schemaVersion: '1.0.0',
-          taskId: 'task_001',
-          status: 'VERIFIED',
+          missionId: 'mission_test_001',
+          overallStatus: 'VERIFIED',
           confidence: 100,
           verifiedAt: new Date().toISOString(),
           verifiedBy: 'test-verifier',
+          taskSummaries: [
+            {
+              schemaVersion: '1.0.0',
+              taskId: 'task_001',
+              required: true,
+              executionState: 'COMPLETED',
+              verificationStatus: 'VERIFIED',
+              gapCount: 0,
+              contradictionCount: 0,
+              reasoning: 'All evidence supports success',
+            },
+          ],
           supportingEvidence: ['evidence_001'],
           gaps: [],
           contradictions: [],
@@ -230,7 +251,9 @@ describe('MissionStateMachine', () => {
   describe('Invalid Transitions', () => {
     it('should reject CREATED → COMPLETED (skipping states)', async () => {
       await expect(
-        sm.transitionTo('COMPLETED', 'Trying to skip states', 'test-user')
+        sm.transitionTo('COMPLETED', 'Trying to skip states', 'test-user', {
+          authority: 'A_AUTONOMOUS',
+        })
       ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
@@ -243,14 +266,17 @@ describe('MissionStateMachine', () => {
         sm.transitionTo(
           'FAILED',
           'Trying to transition from terminal state',
-          'test-user'
+          'test-user',
+          { authority: 'A_AUTONOMOUS' }
         )
       ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
     it('should reject CREATED → EXECUTING (invalid path)', async () => {
       await expect(
-        sm.transitionTo('EXECUTING', 'Invalid transition', 'test-user')
+        sm.transitionTo('EXECUTING', 'Invalid transition', 'test-user', {
+          authority: 'A_AUTONOMOUS',
+        })
       ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
@@ -259,7 +285,9 @@ describe('MissionStateMachine', () => {
       sm = new MissionStateMachine(mission);
 
       await expect(
-        sm.transitionTo('EXECUTING', 'Already executing', 'test-user')
+        sm.transitionTo('EXECUTING', 'Already executing', 'test-user', {
+          authority: 'A_AUTONOMOUS',
+        })
       ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
   });
@@ -268,10 +296,13 @@ describe('MissionStateMachine', () => {
     it('should reject VERIFYING → COMPLETED without verification result', async () => {
       mission.state = 'VERIFYING';
       mission.evidence = ['evidence_001'];
+      mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
       await expect(
-        sm.transitionTo('COMPLETED', 'No verification result', 'test-user', {})
+        sm.transitionTo('COMPLETED', 'No verification result', 'test-user', {
+          authority: 'A_AUTONOMOUS',
+        })
       ).rejects.toThrow(/POLICY_VIOLATION/);
     });
 
@@ -281,24 +312,40 @@ describe('MissionStateMachine', () => {
       sm = new MissionStateMachine(mission);
 
       await expect(
-        sm.transitionTo('EXECUTING', 'No policy decision', 'test-user', {})
+        sm.transitionTo('EXECUTING', 'No policy decision', 'test-user', {
+          authority: 'A_AUTONOMOUS',
+        })
       ).rejects.toThrow(/POLICY_VIOLATION/);
     });
 
     it('should reject VERIFYING → COMPLETED with gaps in verification', async () => {
       mission.state = 'VERIFYING';
       mission.evidence = ['evidence_001'];
+      mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
       await expect(
         sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
-          verificationResult: {
+          authority: 'A_AUTONOMOUS',
+          missionVerificationResult: {
             schemaVersion: '1.0.0',
-            taskId: 'task_001',
-            status: 'VERIFIED',
+            missionId: 'mission_test_001',
+            overallStatus: 'VERIFIED',
             confidence: 80,
             verifiedAt: new Date().toISOString(),
             verifiedBy: 'test-verifier',
+            taskSummaries: [
+              {
+                schemaVersion: '1.0.0',
+                taskId: 'task_001',
+                required: true,
+                executionState: 'COMPLETED',
+                verificationStatus: 'VERIFIED',
+                gapCount: 1,
+                contradictionCount: 0,
+                reasoning: 'Evidence gap exists',
+              },
+            ],
             supportingEvidence: ['evidence_001'],
             gaps: ['evidence_002_missing'],
             contradictions: [],
@@ -311,17 +358,31 @@ describe('MissionStateMachine', () => {
     it('should reject VERIFYING → COMPLETED with contradictions', async () => {
       mission.state = 'VERIFYING';
       mission.evidence = ['evidence_001'];
+      mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
       await expect(
         sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
-          verificationResult: {
+          authority: 'A_AUTONOMOUS',
+          missionVerificationResult: {
             schemaVersion: '1.0.0',
-            taskId: 'task_001',
-            status: 'VERIFIED',
+            missionId: 'mission_test_001',
+            overallStatus: 'VERIFIED',
             confidence: 100,
             verifiedAt: new Date().toISOString(),
             verifiedBy: 'test-verifier',
+            taskSummaries: [
+              {
+                schemaVersion: '1.0.0',
+                taskId: 'task_001',
+                required: true,
+                executionState: 'COMPLETED',
+                verificationStatus: 'VERIFIED',
+                gapCount: 0,
+                contradictionCount: 1,
+                reasoning: 'Evidence contradiction exists',
+              },
+            ],
             supportingEvidence: ['evidence_001'],
             gaps: [],
             contradictions: ['evidence_002_contradicts'],
@@ -334,17 +395,31 @@ describe('MissionStateMachine', () => {
     it('should reject VERIFYING → COMPLETED with non-VERIFIED status', async () => {
       mission.state = 'VERIFYING';
       mission.evidence = ['evidence_001'];
+      mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
       await expect(
         sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
-          verificationResult: {
+          authority: 'A_AUTONOMOUS',
+          missionVerificationResult: {
             schemaVersion: '1.0.0',
-            taskId: 'task_001',
-            status: 'PARTIALLY_VERIFIED',
+            missionId: 'mission_test_001',
+            overallStatus: 'PARTIALLY_VERIFIED',
             confidence: 60,
             verifiedAt: new Date().toISOString(),
             verifiedBy: 'test-verifier',
+            taskSummaries: [
+              {
+                schemaVersion: '1.0.0',
+                taskId: 'task_001',
+                required: true,
+                executionState: 'COMPLETED',
+                verificationStatus: 'PARTIALLY_VERIFIED',
+                gapCount: 0,
+                contradictionCount: 0,
+                reasoning: 'Only partial verification achieved',
+              },
+            ],
             supportingEvidence: ['evidence_001'],
             gaps: [],
             contradictions: [],
@@ -357,16 +432,30 @@ describe('MissionStateMachine', () => {
     it('should allow VERIFYING → COMPLETED with VERIFIED status and no gaps', async () => {
       mission.state = 'VERIFYING';
       mission.evidence = ['evidence_001'];
+      mission.tasks = ['task_001'];
       sm = new MissionStateMachine(mission);
 
       await sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
-        verificationResult: {
+        authority: 'A_AUTONOMOUS',
+        missionVerificationResult: {
           schemaVersion: '1.0.0',
-          taskId: 'task_001',
-          status: 'VERIFIED',
+          missionId: 'mission_test_001',
+          overallStatus: 'VERIFIED',
           confidence: 100,
           verifiedAt: new Date().toISOString(),
           verifiedBy: 'test-verifier',
+          taskSummaries: [
+            {
+              schemaVersion: '1.0.0',
+              taskId: 'task_001',
+              required: true,
+              executionState: 'COMPLETED',
+              verificationStatus: 'VERIFIED',
+              gapCount: 0,
+              contradictionCount: 0,
+              reasoning: 'All evidence supports success',
+            },
+          ],
           supportingEvidence: ['evidence_001'],
           gaps: [],
           contradictions: [],
@@ -380,9 +469,13 @@ describe('MissionStateMachine', () => {
 
   describe('Audit Trail', () => {
     it('should record all transitions in audit', async () => {
-      await sm.transitionTo('VALIDATED', 'Validating', 'test-user');
+      await sm.transitionTo('VALIDATED', 'Validating', 'test-user', {
+        authority: 'A_AUTONOMOUS',
+      });
       mission.tasks = ['task_001'];
-      await sm.transitionTo('PLANNED', 'Planning', 'test-user');
+      await sm.transitionTo('PLANNED', 'Planning', 'test-user', {
+        authority: 'A_AUTONOMOUS',
+      });
 
       const history = sm.getHistory();
       expect(history).toHaveLength(2);
@@ -401,7 +494,9 @@ describe('MissionStateMachine', () => {
     });
 
     it('should include audit entries in mission state', async () => {
-      await sm.transitionTo('VALIDATED', 'Validating', 'test-user');
+      await sm.transitionTo('VALIDATED', 'Validating', 'test-user', {
+        authority: 'A_AUTONOMOUS',
+      });
 
       expect(mission.audit).toHaveLength(1);
       expect(mission.audit[0]).toMatchObject({
@@ -422,10 +517,10 @@ describe('MissionStateMachine', () => {
       expect(mission.audit[0].authority).toBe('C_FOUNDER_ONLY');
     });
 
-    it('should default to autonomous authority when not provided', async () => {
-      await sm.transitionTo('VALIDATED', 'Validating', 'test-user');
-
-      expect(mission.audit[0].authority).toBe('A_AUTONOMOUS');
+    it('should require authority and reject when not provided', async () => {
+      await expect(
+        sm.transitionTo('VALIDATED', 'Validating', 'test-user', {} as any)
+      ).rejects.toThrow();
     });
 
     it('should record guardrails authority', async () => {
@@ -434,6 +529,73 @@ describe('MissionStateMachine', () => {
       });
 
       expect(mission.audit[0].authority).toBe('B_GUARDRAILS');
+    });
+
+    it('should reject AUTHORIZED → EXECUTING without authority', async () => {
+      mission.state = 'AUTHORIZED';
+      mission.tasks = ['task_001'];
+      sm = new MissionStateMachine(mission);
+
+      await expect(
+        sm.transitionTo('EXECUTING', 'Missing authority', 'test-user', {
+          policyDecision: {
+            schemaVersion: '1.0.0',
+            id: 'policy_001',
+            taskId: 'task_001',
+            decision: 'ALLOW',
+            authority: 'A_AUTONOMOUS',
+            rule: {
+              schemaVersion: '1.0.0',
+              action: 'test',
+              requiredAuthority: 'A_AUTONOMOUS',
+              rationale: 'Test action',
+              riskLevel: 'LOW',
+            },
+            reasoning: 'Test policy',
+            madeAt: new Date().toISOString(),
+            madeBy: 'test-user',
+            evidence: [],
+          },
+        } as any)
+      ).rejects.toThrow();
+    });
+
+    it('should record founder-only authority', async () => {
+      await sm.transitionTo('VALIDATED', 'Validating', 'test-user', {
+        authority: 'C_FOUNDER_ONLY',
+      });
+
+      expect(mission.audit[0].authority).toBe('C_FOUNDER_ONLY');
+    });
+
+    it('should verify all three authority classes are recorded distinctly', async () => {
+      mission.state = 'CREATED';
+      sm = new MissionStateMachine(mission);
+
+      // Record autonomous
+      await sm.transitionTo('CANCELLED', 'Cancel 1', 'test-user', {
+        authority: 'A_AUTONOMOUS',
+      });
+
+      mission.state = 'CREATED';
+      sm = new MissionStateMachine(mission);
+
+      // Record guardrails
+      await sm.transitionTo('CANCELLED', 'Cancel 2', 'test-user', {
+        authority: 'B_GUARDRAILS',
+      });
+
+      mission.state = 'CREATED';
+      sm = new MissionStateMachine(mission);
+
+      // Record founder-only
+      await sm.transitionTo('CANCELLED', 'Cancel 3', 'test-user', {
+        authority: 'C_FOUNDER_ONLY',
+      });
+
+      expect(mission.audit[0].authority).toBe('A_AUTONOMOUS');
+      expect(mission.audit[1].authority).toBe('B_GUARDRAILS');
+      expect(mission.audit[2].authority).toBe('C_FOUNDER_ONLY');
     });
   });
 
@@ -466,6 +628,7 @@ describe('MissionStateMachine', () => {
       sm = new MissionStateMachine(mission);
 
       await sm.transitionTo('BLOCKED', 'Blocker detected', 'test-user', {
+        authority: 'A_AUTONOMOUS',
         blockingCondition: 'Database migration in progress',
       });
 
@@ -477,7 +640,9 @@ describe('MissionStateMachine', () => {
       mission.blockedAt = new Date().toISOString();
       sm = new MissionStateMachine(mission);
 
-      await sm.transitionTo('AUTHORIZED', 'Blocker resolved', 'test-user');
+      await sm.transitionTo('AUTHORIZED', 'Blocker resolved', 'test-user', {
+        authority: 'A_AUTONOMOUS',
+      });
 
       expect(sm.isBlocked()).toBe(false);
       expect(sm.getState()).toBe('AUTHORIZED');
@@ -488,6 +653,7 @@ describe('MissionStateMachine', () => {
       sm = new MissionStateMachine(mission);
 
       await sm.transitionTo('FAILED', 'Execution failed', 'test-user', {
+        authority: 'A_AUTONOMOUS',
         failureReason: 'Database connection timeout',
       });
 
@@ -529,7 +695,9 @@ describe('TaskStateMachine', () => {
 
   describe('Valid Task Transitions', () => {
     it('should allow QUEUED → RUNNING', async () => {
-      await sm.transitionTo('RUNNING', 'Starting task', 'test-executor');
+      await sm.transitionTo('RUNNING', 'Starting task', 'test-executor', {
+        authority: 'A_AUTONOMOUS',
+      });
       expect(sm.getState()).toBe('RUNNING');
       expect(task.startedAt).toBeDefined();
     });
@@ -544,6 +712,7 @@ describe('TaskStateMachine', () => {
         'Starting verification',
         'test-executor',
         {
+          authority: 'A_AUTONOMOUS',
           executionResult: {
             schemaVersion: '1.0.0',
             taskId: 'task_test_001',
@@ -565,6 +734,7 @@ describe('TaskStateMachine', () => {
       sm = new TaskStateMachine(task);
 
       await sm.transitionTo('COMPLETED', 'Task verified', 'test-verifier', {
+        authority: 'A_AUTONOMOUS',
         verificationResult: {
           schemaVersion: '1.0.0',
           taskId: 'task_test_001',
@@ -589,7 +759,9 @@ describe('TaskStateMachine', () => {
       task.retryCount = 0;
       sm = new TaskStateMachine(task);
 
-      await sm.transitionTo('QUEUED', 'Retrying task', 'test-executor');
+      await sm.transitionTo('QUEUED', 'Retrying task', 'test-executor', {
+        authority: 'A_AUTONOMOUS',
+      });
 
       expect(sm.getState()).toBe('QUEUED');
     });
@@ -598,7 +770,9 @@ describe('TaskStateMachine', () => {
   describe('Invalid Task Transitions', () => {
     it('should reject QUEUED → COMPLETED (skipping states)', async () => {
       await expect(
-        sm.transitionTo('COMPLETED', 'Skipping states', 'test-executor')
+        sm.transitionTo('COMPLETED', 'Skipping states', 'test-executor', {
+          authority: 'A_AUTONOMOUS',
+        })
       ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });
 
@@ -611,7 +785,8 @@ describe('TaskStateMachine', () => {
         sm.transitionTo(
           'FAILED',
           'Cannot revert from terminal',
-          'test-executor'
+          'test-executor',
+          { authority: 'A_AUTONOMOUS' }
         )
       ).rejects.toThrow(/INVALID_STATE_TRANSITION/);
     });

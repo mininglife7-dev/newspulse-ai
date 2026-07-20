@@ -250,6 +250,31 @@ export type VerificationStatus =
   | 'CONTRADICTED'
   | 'FAILED_VERIFICATION';
 
+export interface TaskVerificationSummary extends Versioned {
+  schemaVersion: '1.0.0';
+  taskId: string;
+  required: boolean; // Is this task required for mission success?
+  executionState: TaskState; // QUEUED, RUNNING, VERIFYING, COMPLETED, BLOCKED, FAILED, CANCELLED
+  verificationStatus: VerificationStatus;
+  gapCount: number; // Number of evidence gaps
+  contradictionCount: number; // Number of contradictions
+  reasoning: string; // Why this verification state?
+}
+
+export interface MissionVerificationResult extends Versioned {
+  schemaVersion: '1.0.0';
+  missionId: string;
+  overallStatus: VerificationStatus;
+  confidence: number; // 0-100: how confident in overall mission success?
+  verifiedAt: string; // ISO 8601
+  verifiedBy: string;
+  taskSummaries: TaskVerificationSummary[]; // Per-task verification state
+  supportingEvidence: string[]; // Evidence IDs for mission-level proof
+  gaps: string[]; // Missing evidence at mission level
+  contradictions: string[]; // Evidence that contradicts mission success
+  reasoning: string; // Overall reasoning
+}
+
 export interface VerificationResult extends Versioned {
   schemaVersion: '1.0.0';
   taskId: string;

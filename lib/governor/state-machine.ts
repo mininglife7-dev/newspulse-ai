@@ -21,6 +21,7 @@ import type {
   PolicyDecision,
   ExecutionResult,
   VerificationResult,
+  MissionVerificationResult,
   GovernorError,
   GovernorErrorCode,
   AuditEntry,
@@ -109,7 +110,7 @@ const MISSION_STATE_RULES: StateMachineRule[] = [
   {
     fromState: 'VERIFYING',
     toState: 'COMPLETED',
-    requires: ['verificationResult'],
+    requires: ['missionVerificationResult'],
     forbids: ['unverifiedTasks'],
     description: 'Mission complete only after verification confirms success',
   },
@@ -169,16 +170,25 @@ export class MissionStateMachine {
     newState: MissionState,
     reason: string,
     actor: string,
-    context?: {
-      authority?: AuthorityClass;
+    context: {
+      authority: AuthorityClass;
       policyDecision?: PolicyDecision;
       executionResult?: ExecutionResult;
-      verificationResult?: VerificationResult;
+      missionVerificationResult?: MissionVerificationResult;
       failureReason?: string;
       blockingCondition?: string;
     }
   ): Promise<void> {
     const currentState = this.mission.state;
+
+    // Validate authority is provided (required, no default fallback)
+    if (!context.authority) {
+      throw this.createError(
+        'POLICY_VIOLATION',
+        `POLICY_VIOLATION: Authority must be explicitly specified for state transitions`,
+        this.mission.id
+      );
+    }
 
     // Check if transition is valid
     if (!this.isValidTransition(currentState, newState)) {
@@ -229,7 +239,7 @@ export class MissionStateMachine {
       newState,
       reason,
       actor,
-      authority: context?.authority ?? 'A_AUTONOMOUS',
+      authority: context.authority,
     };
 
     this.mission.audit.push(auditEntry);
@@ -281,8 +291,8 @@ export class MissionStateMachine {
         case 'evidence':
           satisfied = this.mission.evidence.length > 0;
           break;
-        case 'verificationResult':
-          satisfied = !!context?.verificationResult;
+        case 'missionVerificationResult':
+          satisfied = !!context?.missionVerificationResult;
           break;
         case 'failureReason':
           satisfied = !!context?.failureReason;
@@ -314,14 +324,46 @@ export class MissionStateMachine {
 
       switch (forbidden) {
         case 'unverifiedTasks':
-          // Mission completion requires verification status to be VERIFIED with no gaps or contradictions
-          const verResult = context?.verificationResult as
-            VerificationResult | undefined;
-          if (verResult) {
-            violated =
-              verResult.status !== 'VERIFIED' ||
-              (verResult.gaps && verResult.gaps.length > 0) ||
-              (verResult.contradictions && verResult.contradictions.length > 0);
+          // Mission completion requires per-task verification: every required task must be verified
+          const missionVerResult = context?.missionVerificationResult as
+            MissionVerificationResult | undefined;
+          if (missionVerResult) {
+            // Check overall status
+            if (missionVerResult.overallStatus !== 'VERIFIED') {
+              violated = true;
+              break;
+            }
+            // Check mission-level gaps/contradictions
+            if (
+              (missionVerResult.gaps && missionVerResult.gaps.length > 0) ||
+              (missionVerResult.contradictions &&
+                missionVerResult.contradictions.length > 0)
+            ) {
+              violated = true;
+              break;
+            }
+            // Check each required task: must have matching task in this mission, must be VERIFIED
+            for (const taskId of this.mission.tasks) {
+              const taskSummary = missionVerResult.taskSummaries.find(
+                (ts) => ts.taskId === taskId
+              );
+              if (!taskSummary) {
+                // Required task missing from verification summary
+                violated = true;
+                break;
+              }
+              if (
+                taskSummary.required &&
+                (taskSummary.verificationStatus !== 'VERIFIED' ||
+                  taskSummary.gapCount > 0 ||
+                  taskSummary.contradictionCount > 0 ||
+                  taskSummary.executionState !== 'COMPLETED')
+              ) {
+                // Required task not properly verified or completed
+                violated = true;
+                break;
+              }
+            }
           } else {
             violated = true; // No verification result = unverified tasks
           }
@@ -428,14 +470,23 @@ export class TaskStateMachine {
     newState: TaskState,
     reason: string,
     actor: string,
-    context?: {
-      authority?: AuthorityClass;
+    context: {
+      authority: AuthorityClass;
       executionResult?: ExecutionResult;
       verificationResult?: VerificationResult;
       failureReason?: string;
     }
   ): Promise<void> {
     const currentState = this.task.state;
+
+    // Validate authority is provided (required, no default fallback)
+    if (!context.authority) {
+      throw this.createError(
+        'POLICY_VIOLATION',
+        `POLICY_VIOLATION: Authority must be explicitly specified for state transitions`,
+        this.task.id
+      );
+    }
 
     // Check validity
     if (!this.isValidTransition(currentState, newState)) {
@@ -477,7 +528,7 @@ export class TaskStateMachine {
       newState,
       reason,
       actor,
-      authority: context?.authority ?? 'A_AUTONOMOUS',
+      authority: context.authority,
     };
 
     this.task.audit.push(auditEntry);
