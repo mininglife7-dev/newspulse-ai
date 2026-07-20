@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload encrypted backup artifact
         if: steps.guard.outputs.enabled == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: db-backup-${{ env.stamp }}
           path: euro-ai-db-*.dump.gpg
