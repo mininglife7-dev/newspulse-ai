@@ -284,6 +284,98 @@ describe('MissionStateMachine', () => {
         sm.transitionTo('EXECUTING', 'No policy decision', 'test-user', {})
       ).rejects.toThrow(/POLICY_VIOLATION/);
     });
+
+    it('should reject VERIFYING → COMPLETED with gaps in verification', async () => {
+      mission.state = 'VERIFYING';
+      mission.evidence = ['evidence_001'];
+      sm = new MissionStateMachine(mission);
+
+      await expect(
+        sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
+          verificationResult: {
+            schemaVersion: '1.0.0',
+            taskId: 'task_001',
+            status: 'VERIFIED',
+            confidence: 80,
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: 'test-verifier',
+            supportingEvidence: ['evidence_001'],
+            gaps: ['evidence_002_missing'],
+            contradictions: [],
+            reasoning: 'Evidence gap exists',
+          },
+        })
+      ).rejects.toThrow(/POLICY_VIOLATION/);
+    });
+
+    it('should reject VERIFYING → COMPLETED with contradictions', async () => {
+      mission.state = 'VERIFYING';
+      mission.evidence = ['evidence_001'];
+      sm = new MissionStateMachine(mission);
+
+      await expect(
+        sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
+          verificationResult: {
+            schemaVersion: '1.0.0',
+            taskId: 'task_001',
+            status: 'VERIFIED',
+            confidence: 100,
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: 'test-verifier',
+            supportingEvidence: ['evidence_001'],
+            gaps: [],
+            contradictions: ['evidence_002_contradicts'],
+            reasoning: 'Evidence contradiction exists',
+          },
+        })
+      ).rejects.toThrow(/POLICY_VIOLATION/);
+    });
+
+    it('should reject VERIFYING → COMPLETED with non-VERIFIED status', async () => {
+      mission.state = 'VERIFYING';
+      mission.evidence = ['evidence_001'];
+      sm = new MissionStateMachine(mission);
+
+      await expect(
+        sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
+          verificationResult: {
+            schemaVersion: '1.0.0',
+            taskId: 'task_001',
+            status: 'PARTIALLY_VERIFIED',
+            confidence: 60,
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: 'test-verifier',
+            supportingEvidence: ['evidence_001'],
+            gaps: [],
+            contradictions: [],
+            reasoning: 'Only partial verification achieved',
+          },
+        })
+      ).rejects.toThrow(/POLICY_VIOLATION/);
+    });
+
+    it('should allow VERIFYING → COMPLETED with VERIFIED status and no gaps', async () => {
+      mission.state = 'VERIFYING';
+      mission.evidence = ['evidence_001'];
+      sm = new MissionStateMachine(mission);
+
+      await sm.transitionTo('COMPLETED', 'Mission succeeded', 'test-user', {
+        verificationResult: {
+          schemaVersion: '1.0.0',
+          taskId: 'task_001',
+          status: 'VERIFIED',
+          confidence: 100,
+          verifiedAt: new Date().toISOString(),
+          verifiedBy: 'test-verifier',
+          supportingEvidence: ['evidence_001'],
+          gaps: [],
+          contradictions: [],
+          reasoning: 'All evidence supports success',
+        },
+      });
+
+      expect(sm.getState()).toBe('COMPLETED');
+    });
   });
 
   describe('Audit Trail', () => {
@@ -319,6 +411,29 @@ describe('MissionStateMachine', () => {
         actor: 'test-user',
       });
       expect(mission.audit[0].timestamp).toBeDefined();
+    });
+
+    it('should record authority in audit trail', async () => {
+      await sm.transitionTo('VALIDATED', 'Validating', 'test-user', {
+        authority: 'C_FOUNDER_ONLY',
+      });
+
+      expect(mission.audit).toHaveLength(1);
+      expect(mission.audit[0].authority).toBe('C_FOUNDER_ONLY');
+    });
+
+    it('should default to autonomous authority when not provided', async () => {
+      await sm.transitionTo('VALIDATED', 'Validating', 'test-user');
+
+      expect(mission.audit[0].authority).toBe('A_AUTONOMOUS');
+    });
+
+    it('should record guardrails authority', async () => {
+      await sm.transitionTo('VALIDATED', 'Validating', 'test-user', {
+        authority: 'B_GUARDRAILS',
+      });
+
+      expect(mission.audit[0].authority).toBe('B_GUARDRAILS');
     });
   });
 

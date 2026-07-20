@@ -24,6 +24,7 @@ import type {
   GovernorError,
   GovernorErrorCode,
   AuditEntry,
+  AuthorityClass,
 } from './contracts';
 
 // ============================================================================
@@ -169,6 +170,7 @@ export class MissionStateMachine {
     reason: string,
     actor: string,
     context?: {
+      authority?: AuthorityClass;
       policyDecision?: PolicyDecision;
       executionResult?: ExecutionResult;
       verificationResult?: VerificationResult;
@@ -227,7 +229,7 @@ export class MissionStateMachine {
       newState,
       reason,
       actor,
-      authority: 'A_AUTONOMOUS', // TODO: pass from caller
+      authority: context?.authority ?? 'A_AUTONOMOUS',
     };
 
     this.mission.audit.push(auditEntry);
@@ -312,8 +314,17 @@ export class MissionStateMachine {
 
       switch (forbidden) {
         case 'unverifiedTasks':
-          // If verificationResult is present, mission is verified; no tasks are unverified
-          violated = false;
+          // Mission completion requires verification status to be VERIFIED with no gaps or contradictions
+          const verResult = context?.verificationResult as
+            VerificationResult | undefined;
+          if (verResult) {
+            violated =
+              verResult.status !== 'VERIFIED' ||
+              (verResult.gaps && verResult.gaps.length > 0) ||
+              (verResult.contradictions && verResult.contradictions.length > 0);
+          } else {
+            violated = true; // No verification result = unverified tasks
+          }
           break;
         case 'blockingCondition':
           violated = !!context?.blockingCondition;
@@ -418,6 +429,7 @@ export class TaskStateMachine {
     reason: string,
     actor: string,
     context?: {
+      authority?: AuthorityClass;
       executionResult?: ExecutionResult;
       verificationResult?: VerificationResult;
       failureReason?: string;
@@ -465,6 +477,7 @@ export class TaskStateMachine {
       newState,
       reason,
       actor,
+      authority: context?.authority ?? 'A_AUTONOMOUS',
     };
 
     this.task.audit.push(auditEntry);

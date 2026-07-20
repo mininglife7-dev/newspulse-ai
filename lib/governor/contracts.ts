@@ -154,6 +154,7 @@ export interface TaskAuditEntry {
   newState: TaskState;
   reason: string;
   actor: string;
+  authority: AuthorityClass;
 }
 
 // ============================================================================
