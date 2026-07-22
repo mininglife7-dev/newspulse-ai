@@ -248,6 +248,8 @@ ARCH-M001 (Distributed Architecture)  ← Foundation
 
 ---
 
-**Last Updated:** 2026-07-22 13:35 UTC  
-**Status:** ARCHITECTURE ESTABLISHED, AWAITING WINDOWS ACTIVATION  
+**Last Updated:** 2026-07-22 16:40 UTC (cycle GOV-EVO-2026-07-D02-001)  
+**Status:** ARCHITECTURE ESTABLISHED, AWAITING WINDOWS ACTIVATION; Cloud-side experiment
+pipeline advancing independently (EXP-001 Stage 2 done, EXP-002 Paper Study done, genome
+Gene 2 → v1.1).  
 **Synchronization:** CURRENT (all registries version-controlled)

@@ -3,7 +3,7 @@
 **Purpose:** Structure hypothesis testing pipeline before production deployment  
 **Status:** ACTIVE  
 **Current Queue Size:** 3 items
-**Paper Study Completion:** 1 of 3 experiments (EXP-20260722-001)
+**Paper Study Completion:** 2 of 3 experiments (EXP-20260722-001, EXP-20260722-002)
 **Simulation Completion:** 1 of 3 experiments (EXP-20260722-001 — mechanism B validated)
 
 ---
@@ -274,14 +274,78 @@ Genes Updated: [RISK_TOLERANCE, EXECUTION_DISCIPLINE, GOVERNANCE_PRINCIPLES]
 **Priority:** HIGH
 
 **STAGE 1: PAPER STUDY**  
-Status: IN_PROGRESS  
-Key References:
+Status: COMPLETED  
+Completion Date: 2026-07-22 16:40 UTC  
+Cycle: GOV-EVO-2026-07-D02-001
 
-- arXiv: Market Microstructure research on execution optimization
-- Institutional implementations: JPMorgan VWAP, Barclays algorithms
-- Peer-reviewed: Almgren & Chriss optimal execution framework
-  Findings: [Awaiting research completion]
-  Completion Date: [Target: 2026-07-23]
+**Experiment ID:** EXP-20260722-002
+
+**Research Question:** Can an execution schedule that trades adaptively against
+market impact reduce implementation shortfall (slippage) versus a naive schedule,
+without increasing execution-timing risk?
+
+**Falsifiable Hypothesis:** For a fixed parent order in a liquid instrument, an
+Almgren–Chriss-style optimal-execution schedule (front-loaded, impact-aware) achieves
+lower expected implementation shortfall than a uniform (TWAP) schedule at matched
+timing risk; if measured slippage reduction is < 5% or timing-risk (variance of cost)
+rises, the hypothesis is rejected.
+
+**Source Evidence (provenance-verified this cycle):**
+
+- **Almgren, R. & Chriss, N. (2000). Optimal Execution of Portfolio Transactions.
+  Journal of Risk, 3(2).** — Tier **P1 (search-verified)**. Query:
+  "Almgren Chriss 2000 Optimal execution of portfolio transactions market impact model";
+  circulated author copy `smallake.kr/.../optliq.pdf`; confirmed: efficient frontier of
+  liquidation strategies, permanent + temporary linear impact, hyperbolic optimal
+  trajectory, Liquidity-adjusted VaR. Recorded in `scripts/governor/provenance-ledger.json`.
+- Institutional context (P0, asserted, not yet retrieved): VWAP/TWAP benchmark practice.
+
+**Mechanism (from verified source):** Total execution cost = permanent impact (moves the
+price for everyone, ∝ trade rate) + temporary impact (transient, ∝ trade rate, paid by the
+liquidator) + volatility risk over the trading horizon. Almgren–Chriss derives the
+schedule minimizing E[cost] + λ·Var[cost]; for linear impact the solution is a
+front-loaded hyperbolic trajectory (trade faster early to cut exposure to price
+volatility, slower later to limit temporary impact). Adaptivity = re-solving the
+trajectory as realized volatility/liquidity updates.
+
+**Expected Market Regime:** Benefit largest in liquid, higher-volatility instruments
+where timing risk dominates; marginal in thin/illiquid names where temporary impact
+dominates and front-loading is costly. Testable across calm vs stressed liquidity.
+
+**Expected Benefit:** 5–25% slippage reduction vs uniform schedule at matched timing
+risk (literature range); translates to execution-quality contribution toward VAJRA
+Phase 1 Category 5. NOT a raw-return claim — a transaction-cost reduction.
+
+**Expected Failure Conditions:** Slippage reduction < 5%; variance of execution cost
+rises (worse timing risk); front-loading degrades in low-liquidity regimes; impact
+parameters unstable/unidentifiable from data.
+
+**Data Requirements:** Per-order execution records (arrival price, fills, timestamps,
+sizes), intraday volatility and spread/depth estimates, permanent & temporary impact
+coefficients — all pending Windows Governor VAJRA extraction (SCI-001).
+
+**Transaction-Cost Assumptions:** Linear permanent + linear temporary impact (Almgren–
+Chriss baseline); explicit spread cost per fill; no rebates/latency modeled at Paper
+stage. These assumptions are the primary model risk and must be stress-tested at
+Simulation/Monte Carlo.
+
+**Leakage Risks:** Fitting impact coefficients on the same window used to evaluate
+slippage. Mitigation: fit impact model on an earlier window, evaluate on a later
+held-out window.
+
+**Overfitting Risks:** Tuning λ (risk-aversion) to minimize realized cost on the test
+set. Mitigation: fix λ a priori from a target timing-risk budget, not from backfit.
+
+**Evaluation Metrics:** Implementation shortfall vs TWAP baseline (bps); variance of
+execution cost (timing risk); cost-vs-risk efficient-frontier position; robustness of
+impact-parameter estimates.
+
+**Rejection Criteria:** < 5% slippage reduction at matched timing risk; timing-risk
+increase; unstable impact estimates; benefit disappears out-of-sample.
+
+**Next Validation Stage:** Simulation — synthetic order-book / arithmetic-Brownian price
+with linear impact; compare Almgren–Chriss schedule vs TWAP on shortfall and cost
+variance. (Deterministic Node artifact, same pattern as `cvar-simulation.mjs`.)
 
 **STAGE 2: SIMULATION**  
 Status: NOT_STARTED  
@@ -362,14 +426,14 @@ Genes Updated: [STRATEGY_EVOLUTION, LEARNING_VELOCITY, VALIDATION_DEPTH]
 
 ## EXPERIMENT QUEUE STATISTICS
 
-| Metric                   | Count |
-| ------------------------ | ----- |
-| Total Experiments        | 3     |
-| CRITICAL Priority        | 1     |
-| HIGH Priority            | 2     |
-| Paper Study: Queued      | 2     |
-| Paper Study: In Progress | 1     |
-| Total Stages Completed   | 2     |
+| Metric                 | Count |
+| ---------------------- | ----- |
+| Total Experiments      | 3     |
+| CRITICAL Priority      | 1     |
+| HIGH Priority          | 2     |
+| Paper Study: Queued    | 1     |
+| Paper Study: Completed | 2     |
+| Total Stages Completed | 3     |
 
 ---
 

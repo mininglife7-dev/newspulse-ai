@@ -12,16 +12,29 @@ The evidence-extraction critical path below is blocked on Founder activation of 
 Windows Governor. Independently, the Cloud Governor advances the experiment pipeline on
 synthetic data, which requires no VAJRA access.
 
-**Completed this cycle (2026-07-22):**
+**Completed in cycle GOV-EVO-2026-07-D02-001 (2026-07-22):**
 
-- EXP-20260722-001 **Stage 2 Simulation COMPLETE** — real, reproducible evidence via
-  `scripts/governor/cvar-simulation.mjs` (seed=20260722). Volatility-targeting validated
-  as the risk-control mechanism; procyclical drawdown-cut rejected. First scientific
-  learning recorded (L-3.2).
+- EXP-20260722-001 **Stage 2 Simulation COMPLETE** — `scripts/governor/cvar-simulation.mjs`
+  (seed=20260722). Volatility-targeting validated; procyclical drawdown-cut rejected (L-3.2).
+- **Research capability tested (Step 4):** WebSearch AVAILABLE, WebFetch 403-BLOCKED.
+  No scheduler → no autonomous-scanning claim (L-1.3).
+- **Provenance verification:** Rockafellar-Uryasev (2000) + Almgren-Chriss (2000) raised
+  P0→P1. Unverified-provenance rate for EXP-001 refs **100%→75% (25% reduction)**, gate PASS,
+  reproducible via `scripts/governor/verify-provenance.mjs`.
+- EXP-20260722-002 **Paper Study COMPLETE** (Almgren-Chriss, P1-verified).
+- Genome Gene 2 EVIDENCE_STANDARDS **v1.0→v1.1** (provenance tiers P0/P1/P2).
 
-**Single next Cloud-side action:** Begin **EXP-20260722-002 Paper Study** (Adaptive
-Execution Quality) — literature synthesis needs no VAJRA data. Backtest of EXP-001
-(Stage 3) remains blocked on Windows evidence and stays queued.
+**EXACT NEXT CYCLE — GOV-EVO-2026-07-D03-001 (bounded, Cloud-side, unblocked):**
+
+1. Build EXP-20260722-002 **Stage 2 Simulation** — deterministic Node artifact comparing an
+   Almgren-Chriss schedule vs TWAP on implementation shortfall + cost variance (same pattern
+   as `cvar-simulation.mjs`).
+2. Raise ≥1 more EXP-001 reference to P1 (Markowitz 1952 or Dowd 2007) via WebSearch →
+   target unverified-provenance rate ≤ 50%.
+3. Persist + commit with cycle ID GOV-EVO-2026-07-D03-001.
+
+EXP-001 Backtest (Stage 3) and all VAJRA-data stages remain **BLOCKED** on Windows Governor
+evidence extraction (VAJ-001 → GIT-001 → SCI-001).
 
 ---
 

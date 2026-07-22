@@ -47,6 +47,29 @@
 
 ---
 
+### Learning: External Research Capability Is Search-Only (Fetch Blocked)
+
+**Learning ID:** L1-003  
+**Timestamp:** 2026-07-22 16:40 UTC  
+**Cycle:** GOV-EVO-2026-07-D02-001  
+**Extracted By:** Cloud Governor  
+**Evidence Source:** EV-CLOUD-005 (research capability probe)
+
+**Lesson:** In this environment, WebSearch is available and returns verifiable third-party
+sources, but WebFetch is 403-blocked by egress policy (arxiv.org, sites.math.washington.edu
+tested). Therefore citation provenance can be raised to P1 (search-verified) but not P2
+(full-text-verified). No scheduler exists, so continuous/autonomous scanning must never be
+claimed — retrieval is on-demand within a session, and cross-session continuity comes from
+persisted registers, not a live loop.
+
+**Application Scope:** All research-acquisition and verification loops; permanent until
+capability changes.
+
+**Confidence:** HIGH  
+**Generalization Status:** ✅ Promoted (operational boundary; drives genome Gene 2 v1.1).
+
+---
+
 ## CUSTOMER-SUCCESS LEARNINGS (L-2)
 
 ### Learning: L-2.1 — Evidence Collection System
@@ -171,11 +194,11 @@
 
 | Classification           | Count | Status                 |
 | ------------------------ | ----- | ---------------------- |
-| L-1 Operational          | 2     | ✅ Active              |
+| L-1 Operational          | 3     | ✅ Active              |
 | L-2 Customer Success     | 2     | ✅ Active              |
 | L-3 Scientific           | 1     | ⏳ Pending Monte Carlo |
 | Pending Generalization   | 4     | ⏳ Awaiting validation |
-| **Total Learning Items** | **8** |                        |
+| **Total Learning Items** | **9** |                        |
 
 ---
 

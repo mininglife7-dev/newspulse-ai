@@ -234,19 +234,62 @@
 
 ---
 
+## EVIDENCE — EXTERNAL RESEARCH RETRIEVAL (GOV-EVO-2026-07-D02-001)
+
+### Research Capability Test (Step 4)
+
+**Evidence ID:** EV-CLOUD-005  
+**Type:** Capability probe (external research tools)  
+**Governor Authority:** Cloud Governor  
+**Extracted:** 2026-07-22 (this session)
+
+**Tools inventoried and tested:**
+
+- **WebSearch — AVAILABLE.** Real queries executed; returned verifiable third-party
+  sources. Distinguished from cached material: results include live URLs and matched
+  independent references.
+- **WebFetch — BLOCKED (HTTP 403).** Direct fetch of `sites.math.washington.edu` and
+  `arxiv.org` denied by org egress policy (confirmed via `$HTTPS_PROXY/__agentproxy/status`
+  and `/root/.ccr/README.md`: 403 = policy denial, do not retry). Full-text (P2)
+  verification NOT reachable this session.
+
+**Access limitation recorded:** No scheduler / persistent process exists — the Governor
+CANNOT claim continuous or autonomous scanning. Retrieval is on-demand, within a session.
+Resumable cycle state is persisted via registers + `scripts/governor/provenance-ledger.json`.
+
+### Provenance-Verified Citations
+
+**Evidence ID:** EV-CLOUD-006  
+**Type:** Search-verified academic citations (Tier P1)  
+**Extracted:** 2026-07-22
+
+1. **Rockafellar & Uryasev (2000), Optimization of Conditional Value-at-Risk,
+   Journal of Risk 2:21-41.** Query recorded in ledger. Confirms EXP-20260722-001 core
+   reference. Tier P0→P1.
+2. **Almgren & Chriss (2000), Optimal Execution of Portfolio Transactions,
+   Journal of Risk 3(2).** Query recorded in ledger. Confirms EXP-20260722-002 core
+   reference. Tier P0→P1.
+
+**Reproducible artifact:** `scripts/governor/verify-provenance.mjs` (deterministic;
+computes unverified-provenance rate from `provenance-ledger.json`).
+
+---
+
 ## EVIDENCE CONSOLIDATION STATUS
 
-| Evidence ID  | Type        | Source        | Status       | Governor | Next Action         |
-| ------------ | ----------- | ------------- | ------------ | -------- | ------------------- |
-| EV-CLOUD-001 | Git Repo    | EURO AI       | ✅ Available | Cloud    | Analyze if needed   |
-| EV-CLOUD-002 | Docs        | Governor      | ✅ Available | Cloud    | Reference           |
-| EV-CLOUD-003 | Code        | Utilities     | ✅ Available | Cloud    | Deploy in analysis  |
-| EV-CLOUD-004 | CI Logs     | Vercel        | ✅ Current   | Cloud    | Monitor             |
-| EV-WIN-001   | Git Repo    | C:\VAJRA      | ⏳ Pending   | Windows  | Extract via GIT-001 |
-| EV-WIN-002   | Git Repo    | C:\VAJRA Gold | ⏳ Pending   | Windows  | Extract via GIT-001 |
-| EV-WIN-003   | Backtest    | VAJRA         | ⏳ Pending   | Windows  | Extract via SCI-001 |
-| EV-WIN-004   | Metrics     | VAJRA         | ⏳ Pending   | Windows  | Extract via SCI-001 |
-| EV-WIN-005   | Experiments | VAJRA         | ⏳ Pending   | Windows  | Extract via SCI-001 |
+| Evidence ID  | Type        | Source          | Status       | Governor | Next Action             |
+| ------------ | ----------- | --------------- | ------------ | -------- | ----------------------- |
+| EV-CLOUD-001 | Git Repo    | EURO AI         | ✅ Available | Cloud    | Analyze if needed       |
+| EV-CLOUD-002 | Docs        | Governor        | ✅ Available | Cloud    | Reference               |
+| EV-CLOUD-003 | Code        | Utilities       | ✅ Available | Cloud    | Deploy in analysis      |
+| EV-CLOUD-004 | CI Logs     | Vercel          | ✅ Current   | Cloud    | Monitor                 |
+| EV-CLOUD-005 | Capability  | WebSearch/Fetch | ✅ Tested    | Cloud    | Search only (Fetch 403) |
+| EV-CLOUD-006 | Citations   | Web (P1)        | ✅ Verified  | Cloud    | Provenance ledger       |
+| EV-WIN-001   | Git Repo    | C:\VAJRA        | ⏳ Pending   | Windows  | Extract via GIT-001     |
+| EV-WIN-002   | Git Repo    | C:\VAJRA Gold   | ⏳ Pending   | Windows  | Extract via GIT-001     |
+| EV-WIN-003   | Backtest    | VAJRA           | ⏳ Pending   | Windows  | Extract via SCI-001     |
+| EV-WIN-004   | Metrics     | VAJRA           | ⏳ Pending   | Windows  | Extract via SCI-001     |
+| EV-WIN-005   | Experiments | VAJRA           | ⏳ Pending   | Windows  | Extract via SCI-001     |
 
 ---
 
@@ -260,7 +303,7 @@
 
 ---
 
-**Last Updated:** 2026-07-22 13:35 UTC  
-**Cloud Evidence:** ✅ COMPLETE  
+**Last Updated:** 2026-07-22 16:40 UTC (GOV-EVO-2026-07-D02-001)  
+**Cloud Evidence:** ✅ COMPLETE (+ EV-CLOUD-005/006 external-research retrieval)  
 **Windows Evidence:** ⏳ AWAITING EXTRACTION  
 **Status:** FRAMEWORK READY FOR DATA INGESTION

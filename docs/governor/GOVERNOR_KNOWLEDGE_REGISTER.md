@@ -216,6 +216,19 @@ Currently: NONE (no evidence recovered yet)
 
 ---
 
-**Last Updated:** 2026-07-22 13:35 UTC  
-**Status:** SKELETON FRAMEWORK READY FOR ACTIVATION  
+## PROVENANCE VERIFICATION (GOV-EVO-2026-07-D02-001)
+
+Citation provenance is now tracked via tiers P0/P1/P2 (see genome Gene 2 v1.1). Search-
+verified (P1) this cycle, recorded in `scripts/governor/provenance-ledger.json`:
+
+- Rockafellar & Uryasev (2000), Journal of Risk 2:21-41 — supports EXP-20260722-001.
+- Almgren & Chriss (2000), Journal of Risk 3(2) — supports EXP-20260722-002.
+
+Full-text (P2) not reachable this session (WebFetch 403). No source is counted above
+Strength Level 1 without at least P1.
+
+---
+
+**Last Updated:** 2026-07-22 16:40 UTC (GOV-EVO-2026-07-D02-001)  
+**Status:** SKELETON FRAMEWORK + PROVENANCE TIERS ACTIVE  
 **Next:** Awaiting Windows Governor evidence transfer

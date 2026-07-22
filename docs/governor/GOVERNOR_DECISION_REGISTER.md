@@ -245,19 +245,53 @@ If Windows Governor and Cloud Governor reach different conclusions about the sam
 
 ---
 
+### Decision: Provenance Tiers + Research Capability Boundary
+
+**Decision ID:** EVID-D008  
+**Date:** 2026-07-22 16:40 UTC  
+**Cycle:** GOV-EVO-2026-07-D02-001  
+**Governor:** Cloud Governor  
+**Authority:** Evidence-first execution order
+
+**Decision:**
+Adopt provenance tiers P0 (asserted) / P1 (search-verified) / P2 (full-text-verified) as
+a required attribute of every cited source (genome Gene 2 → v1.1). A source counts as
+evidence only at P1+; production/capital-affecting decisions require P2. Record the tool
+capability boundary honestly: WebSearch works; WebFetch is 403-blocked this session.
+
+**Supporting Evidence:**
+
+1. Step 4 test: WebSearch returned verifiable citations for Rockafellar & Uryasev (2000)
+   and Almgren & Chriss (2000); WebFetch of arxiv.org and sites.math.washington.edu → 403.
+2. Proxy status + `/root/.ccr/README.md`: 403 = org egress policy denial (report, do not retry).
+3. Prior Day-1 candidates asserted source provenance without any real retrieval.
+
+**Confidence:** HIGH  
+**Applicability:** All research verification; permanent until capability changes.
+
+**Implications:**
+
+- "Discovered from source X" requires P1+ retrieval, recorded in provenance-ledger.json.
+- No claim of continuous/autonomous scanning (no scheduler exists).
+
+**Conflict:** None  
+**Status:** ACTIVE
+
+---
+
 ## DECISION STATISTICS
 
 | Metric                        | Count                        |
 | ----------------------------- | ---------------------------- |
-| Total Decisions Recorded      | 7                            |
-| Decisions by Cloud Governor   | 6                            |
+| Total Decisions Recorded      | 8                            |
+| Decisions by Cloud Governor   | 7                            |
 | Decisions by Windows Governor | 0 (pending activation)       |
 | Conflicts Resolved            | 0                            |
 | Conflicts Escalated           | 0                            |
-| Active Decisions              | 7                            |
+| Active Decisions              | 8                            |
 | Pending Decisions             | 1 (Evidence Transfer Format) |
 
 ---
 
-**Last Updated:** 2026-07-22 13:35 UTC  
+**Last Updated:** 2026-07-22 16:40 UTC (GOV-EVO-2026-07-D02-001)  
 **Synchronization Status:** CURRENT

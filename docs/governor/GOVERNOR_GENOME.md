@@ -47,11 +47,38 @@ Each gene represents a decision-making principle that evolves through experiment
 
 **Acceptance Threshold:** Level 3+ for high-confidence knowledge
 
+**Provenance Tiers (added v1.1):** Every cited source carries a provenance tier
+independent of the strength levels above:
+
+- **P0 — Asserted:** cited from model memory; NOT verified against an external retrieval.
+- **P1 — Search-verified:** citation (author, year, venue, pages) confirmed via a real
+  external retrieval (e.g. WebSearch), query and source recorded.
+- **P2 — Full-text-verified:** primary source retrieved and the specific claim/formula
+  confirmed in the text.
+
+**Provenance Rule:** A source may not be counted above Strength Level 1, and no
+"discovered from source X" claim may be made, unless it is at least **P1**. Production-
+or capital-affecting decisions require **P2**. Provenance status is recorded in
+`scripts/governor/provenance-ledger.json`.
+
 **Version History:**
 
 - v1.0 (2026-07-22): 5-level scale established
+- v1.1 (2026-07-22, GOV-EVO-2026-07-D02-001): provenance tiers P0/P1/P2 added.
+  - Prior rule: strength levels only; provenance of citations was implicit/assumed.
+  - Evidence: cycle Step 4 tested real research capability — WebSearch verified
+    Rockafellar & Uryasev (2000) and Almgren & Chriss (2000) exactly; WebFetch full-text
+    was 403-blocked. Demonstrated provenance can and must be verified, and that full-text
+    retrieval cannot be assumed in this environment.
+  - New rule: P0/P1/P2 tiers; P1 minimum to count as evidence; P2 for production impact.
+  - Expected benefit: eliminates asserted provenance masquerading as retrieved research.
+  - Risk introduced: WebFetch 403 caps most sources at P1 → over-reliance on search
+    snippets; mitigated by explicit P1 labels and P2 gate before promotion.
+  - Rollback condition: if tiering blocks throughput for 2 cycles without catching a real
+    provenance error, revert to v1.0.
+  - Confidence: HIGH.
 
-**Recent Updates:** None yet
+**Recent Updates:** v1.1 — provenance tiers (this cycle).
 
 **Evolution Trigger:** Verification loop outcomes, experiment validations
 

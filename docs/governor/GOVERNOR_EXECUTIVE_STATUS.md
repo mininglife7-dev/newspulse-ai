@@ -155,3 +155,14 @@
 - Registries synchronized via Git
 
 **Status: FRAMEWORK OPERATIONAL, AWAITING WINDOWS GOVERNOR ACTIVATION**
+
+---
+
+## CYCLE GOV-EVO-2026-07-D02-001 (2026-07-22 16:40 UTC)
+
+- Improvement: unverified-provenance rate for EXP-001 refs **100%→75% (25% reduction)**,
+  reproducible via `scripts/governor/verify-provenance.mjs`, gate PASS.
+- Research capability tested: WebSearch AVAILABLE; WebFetch 403-BLOCKED (no autonomous scanning claimed).
+- EXP-20260722-002 Paper Study COMPLETE (Almgren-Chriss, P1-verified).
+- Genome Gene 2 EVIDENCE_STANDARDS v1.0→v1.1 (provenance tiers).
+- Next cycle: GOV-EVO-2026-07-D03-001 (EXP-002 Stage 2 Simulation; raise ≥1 more ref to P1).

@@ -256,7 +256,29 @@ Learning: L-3.2 recorded (procyclical drawdown-cutting degrades risk-adjusted re
 
 **Next Immediate Action:** Begin EXP-20260722-002 Paper Study (Cloud-side, unblocked); EXP-001 Backtest stays queued pending Windows evidence
 
+**Task: GOV-EVO-2026-07-D02-001-RESEARCH-CAP**  
+Description: Inventory + test external research capability (Step 4)  
+Status: ✅ COMPLETED — Created/Completed 2026-07-22 16:30 UTC  
+Result: WebSearch AVAILABLE; WebFetch 403-BLOCKED (arxiv.org, sites.math.washington.edu). No scheduler → no autonomous scanning claim.  
+Evidence: EV-CLOUD-005; `$HTTPS_PROXY/__agentproxy/status`; `/root/.ccr/README.md`
+
+**Task: GOV-EVO-2026-07-D02-001-PROVENANCE**  
+Description: Verify provenance of experiment core references; build reproducible metric  
+Status: ✅ COMPLETED — Completed 2026-07-22 16:40 UTC  
+Result: Rockafellar-Uryasev (2000) + Almgren-Chriss (2000) raised P0→P1. Unverified-provenance rate for EXP-001 refs 100%→75% (25% reduction). Gate PASS.  
+Deliverable: `scripts/governor/provenance-ledger.json`, `scripts/governor/verify-provenance.mjs` (deterministic)
+
+**Task: GOV-EVO-2026-07-D02-001-PAPER-STUDY-002**  
+Description: Complete EXP-20260722-002 Paper Study (Adaptive Execution / Almgren-Chriss)  
+Status: ✅ COMPLETED — Completed 2026-07-22 16:40 UTC  
+Result: All 15 required fields; core reference P1-verified; next stage = Simulation
+
+**Task: GOV-EVO-2026-07-D02-001-GENOME**  
+Description: Update genome Gene 2 EVIDENCE_STANDARDS with provenance tiers  
+Status: ✅ COMPLETED — Completed 2026-07-22 16:40 UTC  
+Result: v1.0→v1.1 (P0/P1/P2 tiers; P1 min to count; P2 for production); rollback condition recorded
+
 ---
 
-**Last Updated:** 2026-07-22 16:10 UTC  
+**Last Updated:** 2026-07-22 16:40 UTC  
 **Synchronization Status:** CURRENT

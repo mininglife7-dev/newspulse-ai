@@ -1,0 +1,62 @@
+{
+  "cycle": "GOV-EVO-2026-07-D02-001",
+  "purpose": "Provenance-verification ledger for research references cited in Governor experiments. Tier P0=asserted (model memory, unverified), P1=search-verified (citation confirmed via real external retrieval), P2=full-text-verified (primary source retrieved).",
+  "capability_boundary": {
+    "WebSearch": "AVAILABLE — real queries return verifiable sources (tested 2026-07-22)",
+    "WebFetch": "BLOCKED — HTTP 403 from org egress policy for arxiv.org and sites.math.washington.edu (tested 2026-07-22); full-text P2 verification not reachable this session",
+    "note": "Do not claim continuous/autonomous scanning: no scheduler or persistent process exists. Retrieval is on-demand within a session only."
+  },
+  "metric_set": "EXP-20260722-001 Paper Study core references",
+  "references": [
+    {
+      "id": "markowitz-1952",
+      "citation": "Markowitz, H. (1952). Portfolio Selection. Journal of Finance, 7(1), 77-91.",
+      "cited_in": ["EXP-20260722-001"],
+      "day1_tier": "P0",
+      "day2_tier": "P0",
+      "query": null,
+      "retrieved_source": null,
+      "verified_facts": null
+    },
+    {
+      "id": "rockafellar-uryasev-2000",
+      "citation": "Rockafellar, R.T. & Uryasev, S. (2000). Optimization of Conditional Value-at-Risk. Journal of Risk, 2, 21-41.",
+      "cited_in": ["EXP-20260722-001"],
+      "day1_tier": "P0",
+      "day2_tier": "P1",
+      "query": "Rockafellar Uryasev 2000 Optimization of Conditional Value-at-Risk CVaR paper",
+      "retrieved_source": "https://www.scirp.org/reference/referencespapers?referenceid=2282764 ; primary author copy referenced at sites.math.washington.edu/~rtr/papers (full-text fetch 403-blocked)",
+      "verified_facts": "Venue Journal of Risk, vol 2, pages 21-41, year 2000 confirmed by multiple independent search results; CVaR minimization via auxiliary function confirmed."
+    },
+    {
+      "id": "dowd-2007",
+      "citation": "Dowd, K. (2007). Measuring Market Risk (2nd ed.). Wiley.",
+      "cited_in": ["EXP-20260722-001"],
+      "day1_tier": "P0",
+      "day2_tier": "P0",
+      "query": null,
+      "retrieved_source": null,
+      "verified_facts": null
+    },
+    {
+      "id": "basel-iii-var-cvar",
+      "citation": "Basel III / BCBS market-risk framework — VaR/ES (CVaR) regulatory standards.",
+      "cited_in": ["EXP-20260722-001"],
+      "day1_tier": "P0",
+      "day2_tier": "P0",
+      "query": null,
+      "retrieved_source": null,
+      "verified_facts": null
+    },
+    {
+      "id": "almgren-chriss-2000",
+      "citation": "Almgren, R. & Chriss, N. (2000). Optimal Execution of Portfolio Transactions. Journal of Risk, 3(2), 5-39.",
+      "cited_in": ["EXP-20260722-002"],
+      "day1_tier": "P0",
+      "day2_tier": "P1",
+      "query": "Almgren Chriss 2000 Optimal execution of portfolio transactions market impact model",
+      "retrieved_source": "https://www.smallake.kr/wp-content/uploads/2016/03/optliq.pdf (circulated author copy); multiple independent search results",
+      "verified_facts": "Confirmed: efficient frontier of liquidation strategies, permanent+temporary linear market impact, hyperbolic optimal trajectory, Liquidity-adjusted VaR (L-VaR); year 2000."
+    }
+  ]
+}
