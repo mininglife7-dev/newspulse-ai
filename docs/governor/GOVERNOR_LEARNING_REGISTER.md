@@ -181,7 +181,35 @@ optimization presented as "better execution."
 
 ---
 
-### Learning Placeholder: Phase 0.5 Recovery Outcomes
+### Learning: L-3.4 — Simple RRL Yields No Stable Edge; Negative Controls Prevent False Discovery
+
+**Learning ID:** L3-004  
+**Timestamp:** 2026-07-22 18:10 UTC  
+**Cycle:** GOV-EVO-2026-07-D05-001  
+**Extracted By:** Cloud Governor  
+**Evidence Source:** EXP-20260722-003 Stage 2 Simulation (`scripts/governor/rrl-simulation.mjs`, deterministic, 5 seeds)
+
+**Lesson (negative result):** A simple recurrent-reinforcement-learning trader trained to
+maximize net-return Sharpe did **not** beat directional buy-and-hold out-of-sample on a
+synthetic AR(1) momentum signal, and its edge was **seed-unstable** (edge −0.353 vs
+cross-seed std 0.456). This empirically confirms the DRL fragility risk flagged in the
+EXP-003 Paper Study — DRL trading edges are easily illusory. The transferable positive
+finding: **cost-aware training robustly prevents over-trading** (turnover 0.019 vs 0.426
+cost-blind; net Sharpe −0.017 vs −0.547), matching Moody & Saffell (2001). Critically, the
+**pure-noise negative control passed** (Sharpe 0.045) — the harness did not manufacture
+alpha, so its rejection of the momentum case is trustworthy.
+
+**Methodological principle (promoted):** Every strategy-simulation harness MUST include a
+negative control (pure-noise input) and a multi-seed stability gate. A result that fails to
+beat a null or is seed-unstable is a **rejection**, and rejecting it EARLY (before Backtest
+/ real data) is capital preservation, not wasted work.
+
+**Application Scope:** All strategy/ML experiments; VAJRA Phase 1 Categories 2 & 3; permanent.
+
+**Confidence:** HIGH for the methodological principle and the cost-aware finding; the
+negative edge result is specific to this simple RRL form (a proper recurrent gradient and
+authentic signal could differ — recorded as unknown, not disproven).  
+**Generalization Status:** ✅ Promoted (negative-control + seed-stability requirement).
 
 **Learning ID:** L3-001  
 **Status:** PENDING Windows Governor evidence extraction
@@ -244,9 +272,9 @@ optimization presented as "better execution."
 | ------------------------ | ------ | ---------------------- |
 | L-1 Operational          | 4      | ✅ Active              |
 | L-2 Customer Success     | 2      | ✅ Active              |
-| L-3 Scientific           | 2      | 1 promoted, 1 pending  |
+| L-3 Scientific           | 3      | 2 promoted, 1 pending  |
 | Pending Generalization   | 4      | ⏳ Awaiting validation |
-| **Total Learning Items** | **11** |                        |
+| **Total Learning Items** | **12** |                        |
 
 ---
 

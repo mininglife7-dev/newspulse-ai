@@ -24,29 +24,30 @@ synthetic data, which requires no VAJRA access.
 - EXP-20260722-002 **Paper Study COMPLETE** (Almgren-Chriss, P1-verified).
 - Genome Gene 2 EVIDENCE_STANDARDS **v1.0→v1.1** (provenance tiers P0/P1/P2).
 
-**Completed in cycle GOV-EVO-2026-07-D04-001 (2026-07-22 17:40 UTC):**
+**Completed in cycle GOV-EVO-2026-07-D05-001 (2026-07-22 18:10 UTC):**
 
-- EXP-20260722-003 **Paper Study COMPLETE** (Deep RL / direct reinforcement), grounded in
-  Moody & Saffell (2001) P1-verified. Inflated "3-5% daily" benefit claim rejected/reframed;
-  DRL overfitting flagged as primary risk. All 3 experiments now past Paper Study.
-- Dowd + Basel III raised to P1. Unverified-provenance rate **50%→0%** (cumulative 100%→0%).
-  **Caught + corrected a citation error** (Dowd 2nd ed. is 2005, not 2007). Learning L-1.4.
+- EXP-20260722-003 **Stage 2 Simulation executed → NOT VALIDATED** (`rrl-simulation.mjs`).
+  RRL edge not established and seed-unstable — confirms DRL fragility. Cost-aware training
+  prevents over-trading; negative control passed. EXP-003 **PAUSED**. A false discovery was
+  prevented before Backtest. Learning L-3.4.
+- Capability gained: negative-control + seed-stability validation harness (false-discovery prevention).
 
-**EXACT NEXT CYCLE — GOV-EVO-2026-07-D05-001 (bounded, Cloud-side, unblocked):**
+**EXACT NEXT CYCLE — GOV-EVO-2026-07-D06-001 (bounded, Cloud-side):**
 
-1. Build EXP-20260722-003 **Stage 2 Simulation** — RRL (differential Sharpe, cost-aware) on
-   a synthetic autocorrelated signal; sanity-check that a cost-blind variant over-trades;
-   require ≥5-seed stability. Deterministic Node artifact.
-2. Begin EXP-002 or EXP-001 **provenance depth**: attempt P2 (full-text) if any allowed host
-   becomes reachable; otherwise record P2 as blocked.
-3. Persist + commit with cycle ID GOV-EVO-2026-07-D05-001.
+1. Add a **Monte Carlo (Stage 5) harness for EXP-001** (validated vol-target mechanism):
+   run the CVaR/vol-target control across many seeded paths to test whether the Sharpe
+   result (deferred at D02 as single-path-noisy) holds distributionally.
+2. If it holds, promote learning L-3.2 from pending → validated.
+3. Persist + commit with cycle ID GOV-EVO-2026-07-D06-001.
 
-All Backtest+ stages (EXP-001, EXP-002, EXP-003) remain **BLOCKED** on Windows Governor
-evidence extraction (VAJ-001 → GIT-001 → SCI-001). No production trading; no capital deployment.
-
-**Standing bottleneck (escalation):** The single largest blocker to the 1%/day North Star
-is the absence of real VAJRA data. Cloud-side cycles can validate mechanics and rigor but
-CANNOT measure real risk-adjusted return until Windows Governor executes VAJ-001→SCI-001.
+**⚠ STANDING BOTTLENECK — FOUNDER ACTION REQUIRED:**
+Cloud-side synthetic cycles (D02–D05) have validated _method and rigor_ but are at
+**diminishing value toward the 1%/day North Star**, because they cannot touch VAJRA's real
+risk-adjusted return. The rate-limiting step is **real VAJRA data**. To make North-Star
+progress, the **Windows Governor must execute VAJ-001 → GIT-001 → SCI-001** (repository
+access, Git history, scientific-evidence extraction) and transfer the results. Until then,
+all Backtest/Walk-Forward/Monte-Carlo-on-real-data/Shadow stages are BLOCKED. No production
+trading; no capital deployment.
 
 ---
 

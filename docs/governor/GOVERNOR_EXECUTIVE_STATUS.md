@@ -187,3 +187,15 @@
   Caught + corrected citation error (Dowd 2005 not 2007). Learning L-1.4.
 - Next cycle: GOV-EVO-2026-07-D05-001 (EXP-003 Stage 2 RRL Simulation).
 - Escalation: real VAJRA data (Windows VAJ-001→SCI-001) is the standing bottleneck to the North Star.
+
+---
+
+## CYCLE GOV-EVO-2026-07-D05-001 (2026-07-22 18:10 UTC)
+
+- EXP-20260722-003 Stage 2 (RRL) executed → **NOT VALIDATED** (edge not established,
+  seed-unstable — confirms DRL fragility). Cost-aware training prevents over-trading;
+  negative control passed. EXP-003 PAUSED. Learning L-3.4. `scripts/governor/rrl-simulation.mjs`.
+- Improvement: false-discovery-prevention harness (negative control + seed-stability).
+  A likely false positive was rejected before Backtest/real-data spend.
+- **Founder action required:** activate Windows Governor (VAJ-001→SCI-001). Cloud-side
+  synthetic cycles are at diminishing North-Star value without real VAJRA data.

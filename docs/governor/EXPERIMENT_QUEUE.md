@@ -4,7 +4,7 @@
 **Status:** ACTIVE  
 **Current Queue Size:** 3 items
 **Paper Study Completion:** 3 of 3 experiments (EXP-001, EXP-002, EXP-003)
-**Simulation Completion:** 2 of 3 experiments (EXP-001 vol-target validated; EXP-002 Almgren–Chriss validated)
+**Simulation Completion:** 3 of 3 experiments (EXP-001 validated; EXP-002 validated; EXP-003 executed → NOT VALIDATED, paused)
 
 ---
 
@@ -492,10 +492,47 @@ a synthetic signal with known autocorrelation; verify it recovers a sensible pol
 that a cost-blind variant over-trades (sanity check before any VAJRA data).
 
 **STAGE 2: SIMULATION**  
-Status: NOT_STARTED  
-Code: [RRL (differential Sharpe, cost-aware) on synthetic autocorrelated signal]
-Test Conditions: [Training on synthetic in-sample; validation on held-out; ≥5 seeds]
-Completion Date: [Target: next cycle]
+Status: COMPLETED (verdict: NOT VALIDATED — experiment PAUSED)  
+Completion Date: 2026-07-22 18:10 UTC  
+Cycle: GOV-EVO-2026-07-D05-001
+
+**Code:** `scripts/governor/rrl-simulation.mjs` — RRL policy F=tanh(w·[lagged returns,
+F_{t-1}, bias]) trained by finite-difference gradient ascent on net-return Sharpe.
+Deterministic (seeded), 5 seeds, cost in objective. Reproduce: `node scripts/governor/rrl-simulation.mjs`.
+
+**Test Conditions:** AR(1) momentum signal (φ=0.15) + pure-noise negative control (φ=0);
+train 1500 / test 1500; cost 5 bps per unit position change; seeds {11,22,33,44,55}.
+
+**Results (out-of-sample test Sharpe, mean over 5 seeds):**
+
+| Condition            | RRL cost-aware     | RRL cost-blind (net) | Buy-and-hold |
+| -------------------- | ------------------ | -------------------- | ------------ |
+| AR(1) momentum       | −0.017 (std 0.456) | −0.547               | +0.335       |
+| Pure noise (control) | +0.045             | −0.433               | +0.289       |
+
+Turnover: cost-aware 0.019 vs cost-blind 0.426 (per step).
+
+**Gate outcome (2 of 4 PASS):**
+
+- (1) Beats buy-and-hold — **FAIL** (−0.017 < 0.335).
+- (2) Cost-aware beats cost-blind net — **PASS** (over-trading penalty confirmed).
+- (3) Edge > cross-seed std (stable) — **FAIL** (edge −0.353 vs std 0.456; seed-unstable).
+- (4) No edge on pure noise (negative control) — **PASS** (0.045, no manufactured alpha).
+
+**Findings (honest, negative result):** The simple RRL form does **not** produce a stable
+out-of-sample risk-adjusted edge here, and results are **seed-unstable** — empirically
+confirming EXP-003's primary flagged risk (DRL fragility/overfitting). The robust,
+transferable win is that **cost-aware training prevents over-trading** (turnover 22× lower,
+far better net Sharpe than cost-blind), matching Moody & Saffell (2001). The negative
+control passed — the harness does not hallucinate alpha on noise.
+
+**Portfolio decision:** **PAUSE** EXP-003. Do NOT advance to Backtest on optimistic priors.
+Reconsider only with (a) a stronger/authentic signal model, (b) a proper recurrent RRL
+gradient (not finite-difference), and (c) a fairer benchmark than directional buy-and-hold.
+Value delivered: a false discovery was **prevented** — the harness rejected an unvalidated
+strategy before it consumed Backtest/real-data resources.
+
+**Next Validation Stage:** N/A while PAUSED (would be Backtest if revised and re-validated).
 
 **STAGE 3: BACKTEST**  
 Status: NOT_STARTED  
@@ -529,8 +566,9 @@ Genes Updated: [STRATEGY_EVOLUTION, LEARNING_VELOCITY, VALIDATION_DEPTH]
 | HIGH Priority          | 2     |
 | Paper Study: Queued    | 0     |
 | Paper Study: Completed | 3     |
-| Simulation: Completed  | 2     |
-| Total Stages Completed | 5     |
+| Simulation: Completed  | 3     |
+| Simulation: Rejected   | 1     |
+| Total Stages Completed | 6     |
 
 ---
 
