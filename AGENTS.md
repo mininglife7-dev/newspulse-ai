@@ -34,17 +34,18 @@ records, executive reports), `docs/governance/DECISION_REGISTER.md`
 ## Instruction precedence (highest wins)
 
 1. **`docs/governance/GOVERNOR_EXECUTIVE_LAW.md`** (foundation; precedence 0.5 — customer success North Star)
-2. **`docs/governance/GOVERNOR_EXECUTIVE_EXECUTION_POLICY.md`** (operationalizes Executive Law; precedence 1)
-3. Founder explicit instruction (live)
-4. Project-specific mission (when on that project — e.g., `docs/governance/GOVERNOR_MISSION_FOR_VAJRA.md` when operating on VAJRA)
-5. `GOVERNOR_OPERATIONAL_CHARTER.md` (operational phase guidance, 2026-07-22+)
-6. `GOVERNOR_CONSTITUTION.md` (permanent laws)
-7. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions, DR-numbered)
-8. `NEXT_ACTION.md`
-9. `AGENTS.md` (this manual)
-10. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
-11. Historical documentation (including `docs/archive/`)
-12. Chat history
+2. **`docs/governance/GOVERNOR_EXECUTIVE_STATUS_POLICY.md`** (evidence discipline; precedence 1 — all claims require proof)
+3. **`docs/governance/GOVERNOR_EXECUTIVE_EXECUTION_POLICY.md`** (operationalizes Executive Law; precedence 1)
+4. Founder explicit instruction (live)
+5. Project-specific mission (when on that project — e.g., `docs/governance/GOVERNOR_MISSION_FOR_VAJRA.md` when operating on VAJRA)
+6. `GOVERNOR_OPERATIONAL_CHARTER.md` (operational phase guidance, 2026-07-22+)
+7. `GOVERNOR_CONSTITUTION.md` (permanent laws)
+8. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions, DR-numbered)
+9. `NEXT_ACTION.md`
+10. `AGENTS.md` (this manual)
+11. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
+12. Historical documentation (including `docs/archive/`)
+13. Chat history
 
 Archived material (`docs/archive/`) NEVER overrides active governance.
 **Project Boundary Rule:** When operating on a governed project, that project's mission supersedes general Governor guidance. Governor maintains strict separation between EURO AI (observation-only) and VAJRA (autonomous improvement) execution contexts.
