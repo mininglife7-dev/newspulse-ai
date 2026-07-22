@@ -7,8 +7,8 @@ until verified. Update whenever verified reality changes.
 ## Governor OS Foundation Status
 
 - **Phase 1 (Reference Implementation):** ✅ **COMPLETE** — All 13 Governor OS modules implemented with TypeScript strict mode. Reference mission (health-check) executes end-to-end with proper state machines, policy enforcement, and evidence collection. Acceptance gate test 4/4 passing (test file: `tests/governor-acceptance-gate.test.ts`). Evidence: commit `bda1319`, branch `claude/governor-os-foundation-89zihp`. Build verified (`npm run build` passes). — Verified (tests + build + commit)
-- **Phase 2 (Customer-Journey Shadow Execution):** 🔄 IN PROGRESS — Observing first-customer (Anne Catherine) registration journey under observation-only authority. Step 1 complete (registration succeeded, email delivered, confirmation link issue detected but customer self-resolved). Awaiting Step 2 submission (workspace creation). Defects: Email confirmation link shows error despite successful authentication (blocking issue for production readiness). — Estimated (Step 1 complete, Step 2 pending)
-- **VAJRA Phase 0 (Environment Discovery):** ⏸️ BLOCKED — GitHub MCP tools temporarily unavailable for repository listing and cloning. VAJRA repository location unknown; parallel discovery blocked pending MCP reconnection. — Blocked
+- **Phase 2 (Customer-Journey Shadow Execution):** 🔄 IN PROGRESS — Step 1 complete (registration succeeded, email delivered 1 min, confirmation link error UX detected). Step 2+ BLOCKED on RISK-009 (Supabase "Confirm email" ON, built-in SMTP restricts to project-team only; real customers cannot receive verification emails). Evidence infrastructure prepared: `docs/governor/missions/PHASE-2-SHADOW-EXECUTION.md`, defect register at `PHASE-2-DEFECT-REGISTER.md`. Awaiting Founder decision: disable "Confirm email" or configure custom SMTP. — Verified (blocker RISK-009)
+- **VAJRA Phase 0 (Environment Discovery):** ⏸️ BLOCKED — Awaiting Founder to execute Windows discovery script (`tools/windows/START_VAJRA_RECOVERY.cmd` on Windows laptop running Claude Code Mobile bridge). Script will generate repository discovery report. — Blocked (awaiting Founder action)
 
 ## Current product status (EURO AI)
 
@@ -66,12 +66,11 @@ until verified. Update whenever verified reality changes.
 
 ## Founder-pending items
 
-1. **RISK-008 decision:** EU-region Supabase project (Frankfurt
-   `eu-central-1`) — create + provide project ref & credentials; Governor
-   executes and verifies the migration. Decide before first customer data.
-2. `CEIS_CRON_SECRET` in Vercel env (RISK-006, degraded CEIS until set).
-3. Branch protection on `main` (RISK-002; one force-push erasure already
-   occurred).
+1. **RISK-009 (CRITICAL for Phase 2):** Email verification undeliverable — Supabase "Confirm email" ON, built-in SMTP blocks all non-team emails. **Action:** Disable "Confirm email" in Supabase project settings (`cwbcvjiklrrkpmybefdp`) OR configure custom SMTP (Resend, SendGrid, etc.). Unblocks Phase 2 Steps 2–14.
+2. **VAJRA Phase 0 discovery:** Execute `tools/windows/START_VAJRA_RECOVERY.cmd` on Windows laptop (where Claude Code Mobile runs). Script generates repository discovery report with VAJRA location, Git status, branches, health. Results required to begin Phase 0 adapter integration.
+3. **RISK-008 decision:** EU-region Supabase project (Frankfurt `eu-central-1`) — create + provide project ref & credentials; Governor executes and verifies the migration. Decide before first customer data.
+4. `CEIS_CRON_SECRET` in Vercel env (RISK-006, degraded CEIS until set).
+5. Branch protection on `main` (RISK-002; one force-push erasure already occurred).
 
 ## Customer readiness
 
