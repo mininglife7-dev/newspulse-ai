@@ -6,48 +6,45 @@
 
 ---
 
-## AUTONOMOUS CLOUD-SIDE MISSION (unblocked — no Windows dependency)
+## PHASE CHANGE — SYNTHETIC RESEARCH COMPLETE (Founder directive 2026-07-22)
 
-The evidence-extraction critical path below is blocked on Founder activation of the
-Windows Governor. Independently, the Cloud Governor advances the experiment pipeline on
-synthetic data, which requires no VAJRA access.
+**Synthetic alpha research is FROZEN and declared COMPLETE (DR ALPHA-D009).** No further
+cycles will attempt to discover alpha from synthetic data. Cloud-side effort is reallocated
+to **real-data pipeline preparation**. Every experiment henceforth is evaluated against
+**real VAJRA data**; synthetic experiments are **support tools only**.
 
-**Completed in cycle GOV-EVO-2026-07-D02-001 (2026-07-22):**
+**Permitted cloud-side activities:** literature review · provenance verification · experiment
+planning · architecture improvements · research-portfolio management. (Alpha discovery from
+synthetic data is NOT permitted.)
 
-- EXP-20260722-001 **Stage 2 Simulation COMPLETE** — `scripts/governor/cvar-simulation.mjs`
-  (seed=20260722). Volatility-targeting validated; procyclical drawdown-cut rejected (L-3.2).
-- **Research capability tested (Step 4):** WebSearch AVAILABLE, WebFetch 403-BLOCKED.
-  No scheduler → no autonomous-scanning claim (L-1.3).
-- **Provenance verification:** Rockafellar-Uryasev (2000) + Almgren-Chriss (2000) raised
-  P0→P1. Unverified-provenance rate for EXP-001 refs **100%→75% (25% reduction)**, gate PASS,
-  reproducible via `scripts/governor/verify-provenance.mjs`.
-- EXP-20260722-002 **Paper Study COMPLETE** (Almgren-Chriss, P1-verified).
-- Genome Gene 2 EVIDENCE_STANDARDS **v1.0→v1.1** (provenance tiers P0/P1/P2).
+**Synthetic phase results (archived, support tools):**
 
-**Completed in cycle GOV-EVO-2026-07-D05-001 (2026-07-22 18:10 UTC):**
+- EXP-001 vol-target risk control — validated in synthetic isolation (`cvar-simulation.mjs`).
+- EXP-002 Almgren-Chriss execution — validated in synthetic isolation (`execution-simulation.mjs`).
+- EXP-003 RRL — NOT VALIDATED, PAUSED (`rrl-simulation.mjs`); false discovery prevented.
+- Provenance 100%→0% for EXP-001 refs; genome Gene 2 → v1.1; 5 lessons preserved.
 
-- EXP-20260722-003 **Stage 2 Simulation executed → NOT VALIDATED** (`rrl-simulation.mjs`).
-  RRL edge not established and seed-unstable — confirms DRL fragility. Cost-aware training
-  prevents over-trading; negative control passed. EXP-003 **PAUSED**. A false discovery was
-  prevented before Backtest. Learning L-3.4.
-- Capability gained: negative-control + seed-stability validation harness (false-discovery prevention).
+**Completed in cycle GOV-EVO-2026-07-D06-001 (real-data pipeline prep):**
 
-**EXACT NEXT CYCLE — GOV-EVO-2026-07-D06-001 (bounded, Cloud-side):**
+- Built `scripts/governor/vajra-data-contract.mjs` — the ingestion contract + validator for
+  real VAJRA delivery (returns, backtests, execution logs, scientific evidence). Self-tests
+  PASS; ready to validate a delivered payload the moment Windows Governor ships it.
 
-1. Add a **Monte Carlo (Stage 5) harness for EXP-001** (validated vol-target mechanism):
-   run the CVaR/vol-target control across many seeded paths to test whether the Sharpe
-   result (deferred at D02 as single-path-noisy) holds distributionally.
-2. If it holds, promote learning L-3.2 from pending → validated.
-3. Persist + commit with cycle ID GOV-EVO-2026-07-D06-001.
+## ⚠ HIGHEST-PRIORITY MISSION — ENABLE THE WINDOWS GOVERNOR (Founder action)
 
-**⚠ STANDING BOTTLENECK — FOUNDER ACTION REQUIRED:**
-Cloud-side synthetic cycles (D02–D05) have validated _method and rigor_ but are at
-**diminishing value toward the 1%/day North Star**, because they cannot touch VAJRA's real
-risk-adjusted return. The rate-limiting step is **real VAJRA data**. To make North-Star
-progress, the **Windows Governor must execute VAJ-001 → GIT-001 → SCI-001** (repository
-access, Git history, scientific-evidence extraction) and transfer the results. Until then,
-all Backtest/Walk-Forward/Monte-Carlo-on-real-data/Shadow stages are BLOCKED. No production
-trading; no capital deployment.
+Real-data alpha research cannot begin until the Windows Governor delivers VAJRA data. On the
+Windows machine, execute (already specified in GOVERNOR_TASK_REGISTER.md):
+
+1. **VAJ-001** — verify `C:\VAJRA` / `C:\VAJRA Gold` repository access.
+2. **GIT-001** — extract complete Git history (commits, decisions, experiments).
+3. **SCI-001** — recover scientific evidence: **historical return series, backtest results,
+   execution logs, experiment metadata**.
+4. **Deliver** as JSON conforming to `scripts/governor/vajra-data-contract.mjs`; validate with
+   `node scripts/governor/vajra-data-contract.mjs <file>` before transfer.
+
+On receipt, Cloud Governor runs **CONS-001** (validate → classify → populate
+GOVERNOR_KNOWLEDGE_REGISTER) and real-data alpha research resumes. No production trading;
+no capital deployment until validation stages pass on real data.
 
 ---
 

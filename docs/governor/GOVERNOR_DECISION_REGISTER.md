@@ -279,16 +279,57 @@ capability boundary honestly: WebSearch works; WebFetch is 403-blocked this sess
 
 ---
 
+### Decision: Freeze Synthetic Alpha Research — Reallocate to Real-Data Pipeline
+
+**Decision ID:** ALPHA-D009  
+**Date:** 2026-07-22 18:20 UTC  
+**Cycle:** GOV-EVO-2026-07-D06-001  
+**Governor:** Cloud Governor  
+**Authority:** Founder directive (2026-07-22)
+
+**Decision:**
+The **Synthetic Research Phase is declared COMPLETE**. Synthetic alpha discovery is
+**FROZEN** — no further cycles will attempt to discover alpha from synthetic data.
+Cloud-side effort is reallocated to **real-data pipeline preparation** and the
+highest-priority mission: **enable the Windows Governor** and acquire the VAJRA
+repository, historical datasets, backtest framework, execution logs, and scientific
+evidence. From this point, **every experiment is evaluated against real VAJRA data**;
+synthetic experiments are **support tools, not the primary research engine**.
+
+**Permitted maintenance activities only:** literature review, provenance verification,
+experiment planning, architecture improvements, research-portfolio management.
+
+**Supporting Evidence:**
+
+1. D02–D05 synthetic cycles validated method/rigor but cannot measure real risk-adjusted
+   return (no VAJRA data in the cloud environment).
+2. D05 rejected a fragile RRL strategy — synthetic value is now diminishing on the North Star.
+3. Founder explicitly reallocated effort to the real-data pipeline.
+
+**Confidence:** HIGH  
+**Applicability:** All research direction; until real VAJRA data is ingested.
+
+**Implications:**
+
+- Alpha-discovery experiments PAUSED until real data arrives.
+- Cloud-side deliverable: `scripts/governor/vajra-data-contract.mjs` (ingestion validator).
+- Windows Governor Tasks VAJ-001 → GIT-001 → SCI-001 are now the critical path.
+
+**Conflict:** None (supersedes the D06 synthetic Monte-Carlo plan, now cancelled).  
+**Status:** ACTIVE
+
+---
+
 ## DECISION STATISTICS
 
 | Metric                        | Count                        |
 | ----------------------------- | ---------------------------- |
-| Total Decisions Recorded      | 8                            |
-| Decisions by Cloud Governor   | 7                            |
+| Total Decisions Recorded      | 9                            |
+| Decisions by Cloud Governor   | 8                            |
 | Decisions by Windows Governor | 0 (pending activation)       |
 | Conflicts Resolved            | 0                            |
 | Conflicts Escalated           | 0                            |
-| Active Decisions              | 8                            |
+| Active Decisions              | 9                            |
 | Pending Decisions             | 1 (Evidence Transfer Format) |
 
 ---

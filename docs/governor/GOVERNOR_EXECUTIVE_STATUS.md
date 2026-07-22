@@ -199,3 +199,17 @@
   A likely false positive was rejected before Backtest/real-data spend.
 - **Founder action required:** activate Windows Governor (VAJ-001→SCI-001). Cloud-side
   synthetic cycles are at diminishing North-Star value without real VAJRA data.
+
+---
+
+## PHASE CHANGE — GOV-EVO-2026-07-D06-001 (2026-07-22 18:20 UTC)
+
+**SYNTHETIC RESEARCH PHASE DECLARED COMPLETE (Founder directive; DR ALPHA-D009).**
+
+- Synthetic alpha discovery FROZEN. Synthetic experiments are now support tools only.
+- Every experiment henceforth evaluated against REAL VAJRA data.
+- Delivered: `scripts/governor/vajra-data-contract.mjs` (ingestion contract + validator, self-tests PASS).
+- **Highest-priority mission:** enable Windows Governor — VAJ-001 → GIT-001 → SCI-001 —
+  and deliver returns / backtests / execution logs / scientific evidence per the data contract.
+- Cloud-side is now MAINTENANCE ONLY until real data arrives (literature, provenance,
+  planning, architecture, portfolio management).

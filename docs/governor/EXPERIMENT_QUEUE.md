@@ -1,9 +1,16 @@
 # Governor Ω — Experiment Queue
 
 **Purpose:** Structure hypothesis testing pipeline before production deployment  
-**Status:** ACTIVE  
+**Status:** ACTIVE — SYNTHETIC PHASE COMPLETE (DR ALPHA-D009, 2026-07-22)  
 **Current Queue Size:** 3 items
-**Paper Study Completion:** 3 of 3 experiments (EXP-001, EXP-002, EXP-003)
+
+> **PHASE NOTE:** Synthetic alpha research is FROZEN. The Simulation-stage results below
+> were obtained in synthetic isolation and are **support-tool evidence only** — they
+> establish mechanics/rigor, not real risk-adjusted return. All experiments now await
+> **real VAJRA data** (validate via `scripts/governor/vajra-data-contract.mjs`) before any
+> Backtest stage proceeds. No new synthetic alpha experiments will be run.
+
+**Paper Study Completion:** 3 of 3 experiments (EXP-001, EXP-002, EXP-003)  
 **Simulation Completion:** 3 of 3 experiments (EXP-001 validated; EXP-002 validated; EXP-003 executed → NOT VALIDATED, paused)
 
 ---
