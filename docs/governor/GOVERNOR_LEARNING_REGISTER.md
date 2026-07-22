@@ -1,0 +1,187 @@
+# Governor Ω — Learning Register
+
+**Purpose:** Track lessons extracted from evidence and validated through generalization gate
+
+**Format:** Learning items indexed by classification level (L-1, L-2, L-3) with evidence and application scope
+
+---
+
+## OPERATIONAL LEARNINGS (L-1)
+
+### Learning: Distributed Architecture Reduces Cross-Environment Friction
+
+**Learning ID:** L1-001  
+**Timestamp:** 2026-07-22 13:32 UTC  
+**Extracted By:** Cloud Governor  
+**Evidence Source:** Environment verification and architecture design
+
+**Lesson:** Attempting to treat Cloud Governor and Windows Governor as a single unified system creates false assumptions about capability. Acknowledging and structuring them as separate with synchronized state reduces integration complexity and improves reliability.
+
+**Application Scope:** Governor architecture; permanent guidance
+
+**Confidence:** HIGH  
+**Generalization Status:** ✅ Promoted (Architectural principle)
+
+---
+
+### Learning: Environment Verification Must Precede Capability Assumption
+
+**Learning ID:** L1-002  
+**Timestamp:** 2026-07-22 13:28 UTC  
+**Extracted By:** Cloud Governor  
+**Evidence Source:** Environment verification commands; failed Windows path access
+
+**Lesson:** Do not assume an execution environment has capabilities without explicit verification. Prior sessions assumed Windows discovery script would execute in cloud; verification confirmed this was false.
+
+**Application Scope:** All future environment setup; permanent
+
+**Confidence:** HIGH  
+**Generalization Status:** ✅ Promoted (Operational best practice)
+
+**Application Examples:**
+
+- Always run environment detection commands before claiming capability
+- Record output of verification commands as evidence
+- Never extrapolate from environment name or assumptions about setup
+- Document environment constraints explicitly
+
+---
+
+## CUSTOMER-SUCCESS LEARNINGS (L-2)
+
+### Learning: L-2.1 — Evidence Collection System
+
+**Learning ID:** L2-001  
+**Timestamp:** 2026-07-17 (promoted this session)  
+**Extracted By:** Cloud Governor (from Phase 2 planning)  
+**Status:** ✅ Validated and active
+
+**Lesson:** Establish capability verification before execution. Prior to Phase 2 execution (customer journey verification), audit all evidence collection pathways to identify and resolve blockers. Prevents surprise failures that kill customer trust.
+
+**Application Scope:** Any customer-facing delivery or measurement campaign
+
+**Confidence:** HIGH  
+**Promoted By:** PHASE-2-PRE-EXECUTION-CHECKLIST.md
+
+**Governance:** Applied to all Phase 2+ work
+
+---
+
+### Learning: L-2.2 — Email Delivery Capability Audit
+
+**Learning ID:** L2-002  
+**Timestamp:** 2026-07-17 (promoted this session)  
+**Extracted By:** Cloud Governor (from Phase 2 planning)  
+**Status:** ✅ Validated and active
+
+**Lesson:** Email delivery is a critical but fragile capability in many environments. Before any mission depending on email notifications, explicitly verify:
+
+1. SMTP service availability
+2. Credential configuration
+3. Test send capability
+4. Delivery confirmation
+
+**Application Scope:** Customer journey verification; notification systems; any mission requiring email
+
+**Confidence:** HIGH  
+**Promoted By:** PHASE-2-PRE-EXECUTION-CHECKLIST.md
+
+**Governance:** Mandatory verification before Phase 2 progression
+
+---
+
+## RESEARCH & SCIENTIFIC LEARNINGS (L-3)
+
+### Learning Placeholder: Phase 0.5 Recovery Outcomes
+
+**Learning ID:** L3-001  
+**Status:** PENDING Windows Governor evidence extraction
+
+**Expected Learning:** VAJRA Phase 0.5 will extract scientific principles from recovered evidence:
+
+- Experiment patterns that succeeded
+- Decision patterns that improved performance
+- Failed approaches to avoid
+- Research methodologies that worked
+
+**Extraction Trigger:** Task CONS-001 completion (evidence consolidation)
+
+---
+
+## GENERALIZATION GATE TRACKING
+
+### Promoted Learnings (L-1 → Operational)
+
+| Learning                 | Status    | Authority     | Application         |
+| ------------------------ | --------- | ------------- | ------------------- |
+| Distributed Architecture | ✅ Active | Architectural | Governor operations |
+| Environment Verification | ✅ Active | Operational   | System setup        |
+
+### Promoted Learnings (L-2 → Customer Success)
+
+| Learning                  | Status    | Authority | Application       |
+| ------------------------- | --------- | --------- | ----------------- |
+| L-2.1 Evidence Collection | ✅ Active | Verified  | Phase 2 execution |
+| L-2.2 Email Audit         | ✅ Active | Verified  | Phase 2 execution |
+
+### Pending Learnings (Awaiting Validation)
+
+| Learning                     | Source            | Status  | Gate Criteria                             |
+| ---------------------------- | ----------------- | ------- | ----------------------------------------- |
+| VAJRA Phase 0.5 Outcomes     | Windows evidence  | PENDING | Requires 5+ experiments, high confidence  |
+| EURO AI Customer Journey     | Phase 2 execution | PENDING | Post-Phase 2 analysis                     |
+| Alpha 1% Improvement Program | VAJRA Phase 1     | PENDING | Requires reproducible improvement metrics |
+
+---
+
+## LEARNING APPLICATION IN GOVERNANCE
+
+### Applied Learnings Guide Current Decisions
+
+| Governance Area          | Applied Learning | Rationale                         |
+| ------------------------ | ---------------- | --------------------------------- |
+| Distributed Architecture | L1-001, L1-002   | Avoid false unity assumptions     |
+| Environment Setup        | L1-002           | Verify before assuming capability |
+| Phase 2 Pre-Execution    | L-2.1, L-2.2     | Eliminate surprise blockers       |
+| Evidence Collection      | L-2.1            | Systematic capability audit       |
+| Email Verification       | L-2.2            | Critical path dependency          |
+
+---
+
+## LEARNING STATISTICS
+
+| Classification           | Count | Status                 |
+| ------------------------ | ----- | ---------------------- |
+| L-1 Operational          | 2     | ✅ Active              |
+| L-2 Customer Success     | 2     | ✅ Active              |
+| L-3 Scientific           | 0     | ⏳ Pending Phase 0.5   |
+| Pending Generalization   | 3     | ⏳ Awaiting validation |
+| **Total Learning Items** | **7** |                        |
+
+---
+
+## NEXT LEARNING EXTRACTION
+
+**Phase 0.5 Outcomes:** Upon completion of VAJRA evidence consolidation, Cloud Governor will analyze recovered knowledge for patterns:
+
+- Which experiments succeeded?
+- Which strategies improved performance?
+- What scientific principles emerged?
+- What decisions were pivotal?
+
+**Extraction Pipeline:**
+
+1. Windows Governor extracts evidence (Tasks GIT-001, SCI-001)
+2. Cloud Governor receives transfer (Task CONS-001)
+3. knowledge_quality_classifier.py identifies Level 3 scientific principles
+4. Learning extraction identifies generalizable patterns
+5. Validation confirms reproducibility
+6. Generalization gate assessment (10-point criteria)
+7. Promotion or deferral to Phase 1
+
+---
+
+**Last Updated:** 2026-07-22 13:35 UTC  
+**Active Learnings:** 4 (L-1: 2, L-2: 2)  
+**Pending Learnings:** 3  
+**Status:** FRAMEWORK READY FOR PHASE 0.5 EXECUTION
