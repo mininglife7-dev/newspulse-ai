@@ -4,7 +4,7 @@
 **Status:** ACTIVE  
 **Current Queue Size:** 3 items
 **Paper Study Completion:** 2 of 3 experiments (EXP-20260722-001, EXP-20260722-002)
-**Simulation Completion:** 1 of 3 experiments (EXP-20260722-001 — mechanism B validated)
+**Simulation Completion:** 2 of 3 experiments (EXP-001 vol-target validated; EXP-002 Almgren–Chriss validated)
 
 ---
 
@@ -348,11 +348,42 @@ with linear impact; compare Almgren–Chriss schedule vs TWAP on shortfall and c
 variance. (Deterministic Node artifact, same pattern as `cvar-simulation.mjs`.)
 
 **STAGE 2: SIMULATION**  
-Status: NOT_STARTED  
-Code: [Simple adaptive routing simulation on synthetic market data]
-Test Conditions: [Various market liquidity levels, volatility regimes]
-Results: [Pending]
-Completion Date: [Target: 2026-07-24]
+Status: COMPLETED  
+Completion Date: 2026-07-22 17:10 UTC  
+Cycle: GOV-EVO-2026-07-D03-001
+
+**Code:** `scripts/governor/execution-simulation.mjs` — closed-form, deterministic
+(no RNG), zero deps. Reproduce: `node scripts/governor/execution-simulation.mjs`.
+
+**Test Conditions:** Canonical Almgren–Chriss (2000) worked example (P1-verified):
+X=1,000,000 shares; σ=0.95 $/sh/day^0.5; γ=2.5e-7; η=2.5e-6; ε=0.0625; τ=1d; N=5;
+λ=2e-6. Compared the Almgren–Chriss risk-averse liquidation schedule vs uniform TWAP.
+
+**Results:**
+
+| Metric               | Almgren–Chriss       | TWAP                   |
+| -------------------- | -------------------- | ---------------------- |
+| Holdings path (k sh) | 1000→429→183→76→28→0 | 1000→800→600→400→200→0 |
+| E[cost]              | $1,140,715           | $662,500               |
+| Timing risk √V       | $449,368             | $1,040,673             |
+| Objective E+λV       | $1,544,578           | $2,828,500             |
+
+- **Timing-risk (std) reduction: 56.82%** · variance reduction 81.35%.
+- **Mean-variance objective reduction: 45.39%** (gate ≥1% → PASS).
+- **Expected-cost INCREASE: $478,215** — reported, not hidden. TWAP minimizes E[cost];
+  AC front-loads (more temporary impact) to cut volatility exposure.
+
+**Findings (honest):** The mechanism validates — AC materially reduces execution timing
+risk and lowers the risk-averse objective. But AC is only preferable for λ>0; a pure
+cost-minimizing desk would choose TWAP. The slippage-vs-timing-risk trade-off is the
+efficient frontier from Almgren–Chriss (2000), reproduced exactly. Per-share RETURN
+impact on VAJRA (the 1%/day objective) is NOT established here — deferred to Backtest on
+real fills with estimated impact coefficients.
+
+**Stage 2 Verdict:** MECHANISM VALIDATED → advance to Backtest (blocked on VAJRA data).
+
+**Next Validation Stage:** Backtest on VAJRA execution records once SCI-001 delivers fills
+and impact-coefficient estimates.
 
 **STAGE 3: BACKTEST**  
 Status: NOT_STARTED  
@@ -433,7 +464,8 @@ Genes Updated: [STRATEGY_EVOLUTION, LEARNING_VELOCITY, VALIDATION_DEPTH]
 | HIGH Priority          | 2     |
 | Paper Study: Queued    | 1     |
 | Paper Study: Completed | 2     |
-| Total Stages Completed | 3     |
+| Simulation: Completed  | 2     |
+| Total Stages Completed | 4     |
 
 ---
 

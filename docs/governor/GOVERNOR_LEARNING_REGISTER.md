@@ -133,6 +133,31 @@ capability changes.
 
 ---
 
+### Learning: L-3.3 — Execution Optimality Is a Risk Trade-off, Not a Free Lunch
+
+**Learning ID:** L3-003  
+**Timestamp:** 2026-07-22 17:10 UTC  
+**Cycle:** GOV-EVO-2026-07-D03-001  
+**Extracted By:** Cloud Governor  
+**Evidence Source:** EXP-20260722-002 Stage 2 Simulation (`scripts/governor/execution-simulation.mjs`, deterministic)
+
+**Lesson:** On the canonical Almgren–Chriss (2000) example, the "optimal" execution
+schedule does NOT reduce expected cost — TWAP minimizes E[cost]. Almgren–Chriss reduces
+execution **timing risk** (std −56.82%, variance −81.35%) at the price of a **material
+expected-cost increase** ($478k, ~72% higher temporary impact from front-loading). It
+wins only under a risk-averse objective (λ>0), where the mean-variance objective drops
+45.39%. Corollary for the 1%/day mission: execution "improvements" must be scored on the
+risk-adjusted objective actually being optimized, and the expected-cost cost must never be
+hidden. A raw-slippage or raw-return framing would wrongly reject AC or wrongly adopt it.
+
+**Application Scope:** All execution-quality experiments (VAJRA Phase 1 Category 5); any
+optimization presented as "better execution."
+
+**Confidence:** HIGH (closed-form, matches published Almgren–Chriss result).  
+**Generalization Status:** ✅ Promoted (execution scoring principle).
+
+---
+
 ### Learning Placeholder: Phase 0.5 Recovery Outcomes
 
 **Learning ID:** L3-001  
@@ -192,13 +217,13 @@ capability changes.
 
 ## LEARNING STATISTICS
 
-| Classification           | Count | Status                 |
-| ------------------------ | ----- | ---------------------- |
-| L-1 Operational          | 3     | ✅ Active              |
-| L-2 Customer Success     | 2     | ✅ Active              |
-| L-3 Scientific           | 1     | ⏳ Pending Monte Carlo |
-| Pending Generalization   | 4     | ⏳ Awaiting validation |
-| **Total Learning Items** | **9** |                        |
+| Classification           | Count  | Status                 |
+| ------------------------ | ------ | ---------------------- |
+| L-1 Operational          | 3      | ✅ Active              |
+| L-2 Customer Success     | 2      | ✅ Active              |
+| L-3 Scientific           | 2      | 1 promoted, 1 pending  |
+| Pending Generalization   | 4      | ⏳ Awaiting validation |
+| **Total Learning Items** | **10** |                        |
 
 ---
 

@@ -10,13 +10,13 @@
   "references": [
     {
       "id": "markowitz-1952",
-      "citation": "Markowitz, H. (1952). Portfolio Selection. Journal of Finance, 7(1), 77-91.",
+      "citation": "Markowitz, H. (1952). Portfolio Selection. Journal of Finance, 7, 77-91.",
       "cited_in": ["EXP-20260722-001"],
       "day1_tier": "P0",
-      "day2_tier": "P0",
-      "query": null,
-      "retrieved_source": null,
-      "verified_facts": null
+      "day2_tier": "P1",
+      "query": "Markowitz 1952 Portfolio Selection Journal of Finance mean-variance efficient frontier",
+      "retrieved_source": "https://www.scirp.org/reference/referencespapers?referenceid=1980472 ; multiple independent search results",
+      "verified_facts": "Venue Journal of Finance, vol 7, pages 77-91, year 1952 confirmed; mean-variance efficient frontier via quadratic programming confirmed. Raised P0->P1 in cycle GOV-EVO-2026-07-D03-001."
     },
     {
       "id": "rockafellar-uryasev-2000",
