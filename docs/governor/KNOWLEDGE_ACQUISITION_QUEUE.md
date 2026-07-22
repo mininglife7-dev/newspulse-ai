@@ -10,9 +10,9 @@
 
 | Metric                       | Count |
 | ---------------------------- | ----- |
-| Total Candidates Queued      | 0     |
-| Awaiting Verification        | 0     |
-| Verified (High Confidence)   | 0     |
+| Total Candidates Queued      | 10    |
+| Awaiting Verification        | 5     |
+| Verified (High Confidence)   | 5     |
 | Verified (Medium Confidence) | 0     |
 | Rejected                     | 0     |
 | Contradictory                | 0     |
