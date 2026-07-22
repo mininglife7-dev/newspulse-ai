@@ -23,6 +23,7 @@ the directive's own warning ("your purpose is not to accumulate software").
 | Test/build (jest, playwright, lint, type-check, smoke)             | ✅ Verified    | package.json scripts                        |
 | Backtest / walk-forward / Monte Carlo (Node-native, deterministic) | ✅ Implemented | cvar/execution/rrl-simulation.mjs ran       |
 | Data validation / ingestion contract                               | ✅ Implemented | vajra-data-contract.mjs self-tests PASS     |
+| Returns analysis (Sharpe/Sortino/maxDD/Calmar + North-Star gap)    | ✅ Implemented | analyze-returns.mjs verified on fixture     |
 | Provenance verification                                            | ✅ Implemented | verify-provenance.mjs                       |
 | Experiment mgmt / registers / genome / knowledge base              | ✅ Implemented | Git-versioned markdown                      |
 | Version control / audit trail / DR                                 | ✅ Verified    | Git + GitHub remote                         |
@@ -64,6 +65,14 @@ paid software is contemplated. No money will be spent without explicit approval.
   0 real payloads received.
 - **Highest-priority next capability:** NONE to install. The highest-priority _action_ is the
   first real VAJRA data drop (Windows-side), which unlocks the gated list.
+- **Capability added this cycle (Evolution Law):** returns analysis engine
+  (`analyze-returns.mjs`) — validates a payload via the contract, then computes Sharpe,
+  Sortino, max drawdown, Calmar, %days≥1%, and the North-Star gap (incl. the implied Sharpe
+  a sustained 1%/day would require). Verified on a labelled synthetic fixture; runs unchanged
+  on real data. Bug found + fixed during verification: the contract module ran its CLI
+  self-test on import (side-effect); guarded with an is-main check. This is the analysis
+  half of the critical path (validate → **analyze** → verdict) — built ahead of data so
+  time-to-verdict on arrival is ~zero.
 - **Current bottleneck:** Unchanged — no verified VAJRA data/edge. Not solvable by tooling.
 
 **Truthfulness note (Absolute Rules):** No capability above is fabricated; each ✅ line was

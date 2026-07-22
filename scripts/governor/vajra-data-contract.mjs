@@ -135,9 +135,11 @@ function runSelfTests() {
   return pass;
 }
 
-// --- entry point ---
+// --- entry point (only when run directly, not when imported) ---
+import { pathToFileURL } from 'node:url';
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 const arg = process.argv[2];
-if (arg) {
+if (isMain && arg) {
   let payload;
   try {
     payload = JSON.parse(readFileSync(arg, 'utf8'));
@@ -153,6 +155,6 @@ if (arg) {
   console.error(`INVALID — ${arg} failed the VAJRA data contract:`);
   for (const e of res.errors) console.error(`  - ${e}`);
   process.exit(1);
-} else {
+} else if (isMain) {
   process.exit(runSelfTests() ? 0 : 1);
 }
