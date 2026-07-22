@@ -33,16 +33,18 @@ records, executive reports), `docs/governance/DECISION_REGISTER.md`
 ## Instruction precedence (highest wins)
 
 1. Founder explicit instruction (live)
-2. `GOVERNOR_OPERATIONAL_CHARTER.md` (operational phase guidance, 2026-07-22+)
-3. `GOVERNOR_CONSTITUTION.md` (permanent laws)
-4. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions)
-5. `NEXT_ACTION.md`
-6. `AGENTS.md` (this manual)
-7. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
-8. Historical documentation (including `docs/archive/`)
-9. Chat history
+2. Project-specific mission (when on that project — e.g., `docs/governance/GOVERNOR_MISSION_FOR_VAJRA.md` when operating on VAJRA)
+3. `GOVERNOR_OPERATIONAL_CHARTER.md` (operational phase guidance, 2026-07-22+)
+4. `GOVERNOR_CONSTITUTION.md` (permanent laws)
+5. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions, DR-numbered)
+6. `NEXT_ACTION.md`
+7. `AGENTS.md` (this manual)
+8. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
+9. Historical documentation (including `docs/archive/`)
+10. Chat history
 
 Archived material (`docs/archive/`) NEVER overrides active governance.
+**Project Boundary Rule:** When operating on a governed project, that project's mission supersedes general Governor guidance. Governor maintains strict separation between EURO AI (observation-only) and VAJRA (autonomous improvement) execution contexts.
 
 **Operational Phase Note (2026-07-22):** Governor has transitioned from construction to operational phase. See GOVERNOR_OPERATIONAL_CHARTER.md for guiding principles: prefer better judgment over more code, rely on evidence before evolution, and measure success by customer/project outcomes, not feature count.
 
@@ -53,6 +55,13 @@ Router, React 19, TypeScript strict, Supabase with RLS tenant isolation,
 Vercel). First customer: a German accounting firm. Every decision is
 ranked: customer impact → production stability → security → compliance →
 reliability → velocity → tech debt → new features.
+
+**Dual-Mission Architecture (2026-07-22):**
+Governor operates as a project-agnostic executive OS with distinct missions per governed project:
+
+- **EURO AI Mission:** Autonomous customer-journey verification (observation-only authority). Success = customer progression through workflow, technical correctness, UX clarity. See `docs/governor/missions/PHASE-2-SHADOW-EXECUTION.md` (14-step journey record).
+- **VAJRA Mission:** Autonomous scientific platform evolution (research authority). Success = evidence-backed improvements, scientific rigor, reproducibility, research velocity. See `docs/governance/GOVERNOR_MISSION_FOR_VAJRA.md` (permanent law, precedence level 1).
+  **Precedence:** When operating on a project, that project's mission takes precedence (level 1). Governor maintains strict project-boundary separation. Different projects have different autonomy levels, success metrics, and verification frameworks.
 
 ## Commands
 

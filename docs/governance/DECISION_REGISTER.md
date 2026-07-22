@@ -21,6 +21,20 @@ are never requested from the Founder.
 
 ---
 
+## DR-0027 — VAJRA mission adopted; Governor redefined as Executive Scientific Operating System (2026-07-22)
+
+- **Decision:** Adopted GOVERNOR_MISSION_FOR_VAJRA.md as permanent law (precedence level 1, below only live Founder instruction), establishing Governor's distinct role when operating on the VAJRA quantitative trading platform. Governor role redefined from general governance platform (EURO AI) to Executive Scientific Operating System that continuously improves VAJRA through evidence, learning, verification, and disciplined execution. Establishes clear ownership separation: VAJRA owns market intelligence, trading models, execution logic, research algorithms, quantitative strategies; Governor owns mission management, planning, verification, evidence, learning, experimentation workflow, governance, audit, recovery, safety, continuous improvement. Implements scientific method loop (Observe → Hypothesize → Experiment → Measure → Verify → Learn → Adapt → Repeat) as core decision framework. Success metrics defined through scientific confidence, reproducibility, engineering quality, research velocity, Founder workload reduction, and capital protection.
+- **Authority:** Founder Executive Directive (formal VAJRA mission statement adopted).
+- **Reason:** Governor operates as dual-mission architecture (EURO AI observation-only for customer journeys; VAJRA autonomous improvement for scientific platform evolution). VAJRA mission supersedes general Governor guidance when operating on VAJRA project. Explicit mission statement prevents scope drift and establishes evidence-based decision discipline. Scientific method loop ensures all recommendations are reproducible and backed by evidence; success metrics prevent premature focus on profitability at expense of engineering rigor.
+- **Evidence:** GOVERNOR_MISSION_FOR_VAJRA.md (247 lines, 252 lines with metadata); commit `a14026f`.
+- **Expected outcome:** Governor operations on VAJRA henceforth guided by scientific method, evidence discipline, and autonomous improvement mandate. VAJRA Phase 0–10 integration proceeds with Governor as scientific executive, not governance platform.
+- **Actual outcome:** VAJRA mission law adopted; dual-mission architecture documented and ratified; precedence rules established (VAJRA mission = level 1 when on VAJRA project; EURO AI mission = level 1 when on EURO AI project; strict project-boundary separation enforced).
+- **Alternatives considered:** (a) Treating VAJRA as another EURO AI customer (rejected — VAJRA is Founder's internal research platform, not customer journey; observation-only governance inappropriate for autonomous improvement mandate). (b) Delaying mission adoption until Phase 0 discovery complete (rejected — mission statement establishes framework before discovery; discovery insights will be interpreted through this lens). (c) Single unified Governor mission (rejected — EURO AI and VAJRA have fundamentally different success criteria and autonomy levels; conflating them invites wrong decisions).
+- **Status:** Active. Dual-mission architecture now formally documented. EURO AI Phase 2 continues (WAITING on RISK-009 + customer submission); VAJRA Phase 0 continues (WAITING on Windows discovery script). Governor executes both missions independently with proper precedence and project-boundary separation.
+- **Lessons:** (Governor Architecture) Project-specific missions enable Governor to operate with appropriate autonomy levels and success metrics. VAJRA's scientific-improvement mission requires stronger autonomous authority than EURO AI's observation-only customer-journey mission. One Governor, two missions, clear boundaries.
+
+---
+
 ## DR-0025 — EU production database migration executed and certified
 
 - **Decision:** Executed the RISK-008 migration to Supabase project
