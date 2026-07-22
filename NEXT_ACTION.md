@@ -198,18 +198,34 @@ first customer?
 - Scientific rigor requirements formalized (hypothesis, test design, evidence collection, success criteria)
 - 10-point Generalization Gate applied to VAJRA research work
 
-**Governor Status:** All Phase 0 analysis frameworks prepared and ready for immediate execution
+**Governor Status:** All Phase 0 + Phase 1 mission frameworks prepared and ready for immediate execution
+
+**✅ MISSION ADOPTED: VAJRA Alpha 1% Improvement Program**
+
+Created `VAJRA-ALPHA-1-PERCENT-IMPROVEMENT.md` (comprehensive 300+ line mission blueprint):
+
+- Scientific method workflow (6-step experiment process: hypothesis → success criteria → experiment → measure → report → decide)
+- 8 improvement categories (entry filtering, exit logic, position sizing, risk management, execution quality, cost reduction, data quality, robustness)
+- Evidence standards (baseline, metrics, confidence, risks, sample size, statistical validity)
+- Experiment workflow (baseline establishment, selection, execution, integration, synthesis)
+- Success metrics: 1% measurable improvement through reproducible, validated changes
+- Escalation triggers and failure policy (negative results valued for learning)
+- Complete reporting templates and decision framework
+- Timeline: 5 weeks (Week 1: baseline + roadmap, Weeks 2-4: experiments, Week 5: synthesis)
+
+**Governing Principle:** A verified 1% improvement that can be repeated is more valuable than an unverified 20% improvement.
 
 **Next Action (IMMEDIATE):**
 
 1. Founder executes `START_VAJRA_RECOVERY.cmd` on Windows laptop
 2. Upon Windows discovery output received → Governor executes PHASE-0-ANALYSIS-READINESS playbook
-3. Phase 0.1-0.5 analysis (7-12 hours, non-blocking concurrent execution)
-4. Phase 1 (Autonomous Improvement & Research Velocity) begins immediately upon Phase 0 completion
+3. Phase 0 analysis (7-12 hours, non-blocking concurrent): Phase 0.1-0.5 complete
+4. **Phase 1 (VAJRA Alpha 1% Improvement Program)** begins immediately: Execute prioritized experiments
+5. Goal: Achieve ≥1% cumulative improvement through disciplined scientific research
 
 **Parallel Maintenance Work:**
 
-- P2: Quality monitoring (continuous, 1342 tests ✅)
+- P2: Quality monitoring (continuous, 1342 tests ✅, Vercel deployed ✅)
 - P3: Phase 2 readiness (standing by for RISK-009 resolution)
 
 ## Next owner
