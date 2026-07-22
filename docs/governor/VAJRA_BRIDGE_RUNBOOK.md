@@ -22,7 +22,27 @@ single real payload has been validated. Do not build it first.
 
 ---
 
-## Direction 1 (the only one that matters now): Windows → Cloud
+## FASTEST PATH (lowest Founder effort — added D-bridge2)
+
+Egress from the Cloud Governor to public data APIs is **verified blocked** (curl + WebFetch
+both denied by org policy), so the Cloud side cannot pull data itself. The two lowest-effort
+Founder actions, in order:
+
+1. **Drop a CSV.** Export VAJRA's daily net returns to a 2-column CSV — header exactly
+   `date,net_return` (date `YYYY-MM-DD`, net_return decimal e.g. `0.008`) — save as
+   `data/vajra/returns-<YYYYMMDD>.csv`, commit. Cloud runs:
+   `node scripts/governor/analyze-returns.mjs data/vajra/returns-<YYYYMMDD>.csv`
+   → full risk-adjusted verdict (Sharpe, Sortino, max drawdown, Calmar, gap to 1%/day).
+   **This is the single fastest way to unblock the North Star.** (CSV ingestion is built and
+   tested on the Cloud side.)
+2. **Run the discovery script.** `scripts/governor/windows-extract-vajra.ps1` (PowerShell,
+   read-only) inventories `C:\VAJRA` / `C:\VAJRA Gold`, lists candidate return/backtest files,
+   and writes `data/vajra/vajra-manifest.json`. Use it to find _which_ file holds the returns,
+   then do step 1. (Authored by Cloud; NOT executed on Windows — review before running.)
+
+---
+
+## Direction 1 (full contract path): Windows → Cloud
 
 ### Windows Governor steps (Founder runs on the Windows machine)
 

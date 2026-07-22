@@ -122,10 +122,38 @@ function makeFixture() {
 }
 
 // --- entry ---
+// CSV adapter: accept the simplest artifact a desk already has — a 2+ column CSV with a
+// header containing `date` and `net_return` (order-independent; extra columns ignored).
+function csvToPayload(text, sourceLabel) {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '');
+  if (lines.length < 2) throw new Error('CSV has no data rows');
+  const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+  const di = header.indexOf('date');
+  const ri = header.findIndex((h) => h === 'net_return' || h === 'return' || h === 'net');
+  if (di === -1 || ri === -1) {
+    throw new Error('CSV header must include "date" and "net_return" (or "return"/"net")');
+  }
+  const returns = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(',');
+    const date = (cells[di] || '').trim();
+    const nr = Number((cells[ri] || '').trim());
+    if (!Number.isFinite(nr)) continue; // skip unparseable rows
+    returns.push({ date, net_return: nr });
+  }
+  return {
+    meta: { source: sourceLabel, repo: 'csv', extracted_at_utc: '1970-01-01T00:00:00Z', governor: 'Cloud' },
+    returns,
+  };
+}
+
 const arg = process.argv[2];
 let payload;
 let label;
-if (arg) {
+if (arg && arg.toLowerCase().endsWith('.csv')) {
+  payload = csvToPayload(readFileSync(arg, 'utf8'), arg);
+  label = `${arg} (CSV)`;
+} else if (arg) {
   payload = JSON.parse(readFileSync(arg, 'utf8'));
   label = arg;
 } else {
