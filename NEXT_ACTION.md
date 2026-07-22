@@ -125,10 +125,23 @@ first customer?
 - Output: C:\VAJRA_EVIDENCE_EXPORT\[timestamp]\ with CSV/JSON/Markdown discovery files
 - Share: Discovery report files with Governor session for Phase 0 analysis
 
-## Autonomous Execution Status — 2026-07-22 12:30 UTC
+## Mission Priority Shift — VAJRA Phase 0 PRIMARY
 
-**WAITING missions:** Phase 2 (1 dependency), VAJRA Phase 0 (1 dependency)  
-**EXECUTING missions:** Priority 2 (quality monitoring, CONTINUOUS)
+**Effective:** 2026-07-22 12:35 UTC  
+**Authority:** Governor Executive Directive (VAJRA Primary Mission)
+
+**Mission State:**
+
+- **P1 (PRIMARY):** VAJRA Phase 0 – Recovery & Scientific Baseline (WAITING on Windows discovery execution)
+- **P2 (MAINTENANCE):** EURO AI Quality Monitoring (EXECUTING continuous)
+- **P3 (STANDBY):** Phase 2 Customer Journey (WAITING on RISK-009 resolution)
+
+**Status:** Governor prepared for immediate Phase 0.1-0.5 execution upon Windows discovery output
+
+## Autonomous Execution Status — 2026-07-22 12:35 UTC
+
+**PRIMARY mission:** VAJRA Phase 0 (awaiting discovery script output)  
+**MAINTENANCE missions:** Quality monitoring (continuous)
 
 **Completed This Session:**
 
@@ -157,7 +170,23 @@ first customer?
 - Impact: Future missions will have email pre-verified and independent verdicts
 - Status: Awaiting Phase 2 Step 2+ evidence to confirm reproducibility
 
-✅ **Priority 4 (VAJRA Phase 1+ Preparation):**
+✅ **Priority 4 (VAJRA Phase 0 – Primary Mission):**
+
+- Created `PHASE-0-ANALYSIS-READINESS.md` (comprehensive 400+ line execution framework)
+  - Part 1: Verified Facts (VAJRA is Windows-local only; discovery script ready)
+  - Part 2: Verified Unknowns (repository location, Git state, build status awaiting discovery)
+  - Part 3: Discovery Report Processing Playbook (step-by-step Phase 0.1-0.5 analysis automation)
+  - Part 4: Phase 0 Completion Gates (readiness checkpoints before Phase 1)
+  - Part 5: Success Metrics & Evidence Standards (all 8 executive questions mapped)
+  - Part 6: Governance & Authority (escalation triggers documented)
+  - **Status:** Ready for IMMEDIATE execution upon Windows discovery output
+
+- Created `PHASE-0-INVESTIGATION-FRAMEWORK.md` (350+ line detailed framework)
+  - Defines 5 sequential phases (Repository Discovery through Recovery Roadmap)
+  - Detailed verification checklists for each phase with evidence columns
+  - Success criteria and deliverables enumerated
+  - Constraints documented (no redesign, cloud migration, or new repos until baseline complete)
+  - Priority order enforced (Recover > Verify > Measure > Understand > Improve > Optimize > Scale)
 
 - Created `VAJRA-PHASE-1-ADAPTER-FRAMEWORK.md`
   - Defines Phase 1 (Autonomous Improvement & Research Velocity)
@@ -165,13 +194,23 @@ first customer?
   - Defines Phase 3 (Scientific Validation & Reproducibility)
   - Mission queue integration, autonomy boundaries, escalation triggers
   - Ready for Phase 0 completion → Phase 1 immediate start
+
 - Scientific rigor requirements formalized (hypothesis, test design, evidence collection, success criteria)
 - 10-point Generalization Gate applied to VAJRA research work
 
-**Next action:**
+**Governor Status:** All Phase 0 analysis frameworks prepared and ready for immediate execution
 
-- When RISK-009 resolved + customer submits Step 2 → Execute Phase 2 Pre-Execution Checklist → Phase 2 Steps 2–14 autonomous observation
-- When VAJRA Phase 0 discovery report received → Execute Phase 0 analysis → Proceed to Phase 1 recovery and research velocity work
+**Next Action (IMMEDIATE):**
+
+1. Founder executes `START_VAJRA_RECOVERY.cmd` on Windows laptop
+2. Upon Windows discovery output received → Governor executes PHASE-0-ANALYSIS-READINESS playbook
+3. Phase 0.1-0.5 analysis (7-12 hours, non-blocking concurrent execution)
+4. Phase 1 (Autonomous Improvement & Research Velocity) begins immediately upon Phase 0 completion
+
+**Parallel Maintenance Work:**
+
+- P2: Quality monitoring (continuous, 1342 tests ✅)
+- P3: Phase 2 readiness (standing by for RISK-009 resolution)
 
 ## Next owner
 
