@@ -66,7 +66,7 @@ until verified. Update whenever verified reality changes.
 
 ## Founder-pending items
 
-1. **RISK-009 (CRITICAL for Phase 2):** Email verification undeliverable — Supabase "Confirm email" ON, built-in SMTP blocks all non-team emails. **Action:** Disable "Confirm email" in Supabase project settings (`cwbcvjiklrrkpmybefdp`) OR configure custom SMTP (Resend, SendGrid, etc.). Unblocks Phase 2 Steps 2–14.
+1. **RISK-009 (CRITICAL for Phase 2):** Email verification undeliverable — Supabase "Confirm email" ON, built-in SMTP blocks all non-team emails. **Action Required:** Disable "Confirm email" in Supabase project settings (`cwbcvjiklrrkpmybefdp`) OR configure custom SMTP (Resend, SendGrid, etc.). Decision Guide available at `docs/governor/risks/RISK-009-DECISION-GUIDE.md`. Unblocks Phase 2 Steps 2–14.
 2. **VAJRA Phase 0 discovery:** Execute `tools/windows/START_VAJRA_RECOVERY.cmd` on Windows laptop (where Claude Code Mobile runs). Script generates repository discovery report with VAJRA location, Git status, branches, health. Results required to begin Phase 0 adapter integration.
 3. **RISK-008 decision:** EU-region Supabase project (Frankfurt `eu-central-1`) — create + provide project ref & credentials; Governor executes and verifies the migration. Decide before first customer data.
 4. `CEIS_CRON_SECRET` in Vercel env (RISK-006, degraded CEIS until set).
