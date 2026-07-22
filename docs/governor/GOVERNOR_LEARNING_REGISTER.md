@@ -92,6 +92,24 @@
 
 ## RESEARCH & SCIENTIFIC LEARNINGS (L-3)
 
+### Learning: L-3.2 — Procyclical Drawdown-Cutting Degrades Risk-Adjusted Return
+
+**Learning ID:** L3-002  
+**Timestamp:** 2026-07-22 16:10 UTC  
+**Extracted By:** Cloud Governor  
+**Evidence Source:** EXP-20260722-001 Stage 2 Simulation (`scripts/governor/cvar-simulation.mjs`, seed=20260722, reproducible)
+
+**Lesson:** A drawdown-triggered de-risking rule (cut exposure as trailing drawdown approaches a max-drawdown budget) is **procyclical** — it de-levers _into_ market recoveries and locks in low exposure during rebounds. On synthetic GARCH data with fat-tailed crashes it capped max drawdown (11.6% < 12% budget) and cut CVaR95 tail risk (−31%) but collapsed annualized return (21.3% → 5.4%) and halved Sharpe (1.009 → 0.443). Forward-looking **volatility targeting** achieved comparable tail-risk control (MDD 11.9%, CVaR95 −28%) at a fraction of the Sharpe cost (Δ −0.121 vs −0.566). Prefer causal, forward-looking risk estimators over reactive realized-loss triggers.
+
+**Corollary (evidence discipline):** Sharpe _improvement_ cannot be judged on a single simulated path — single-path Sharpe is statistically noisy. Claims about risk-adjusted return improvement must be deferred to the Monte Carlo stage over many paths. Recorded here as an explicit "unknown remains unknown" boundary (Mission Omega Law 5).
+
+**Application Scope:** All capital-preservation / risk-overlay mechanisms; VAJRA Phase 1 Category 4 (Risk Management); any experiment adding drawdown-based position control.
+
+**Confidence:** MEDIUM (single synthetic seed; mechanism logic robust, magnitude pending Monte Carlo)  
+**Generalization Status:** ⏳ Pending — promote after Monte Carlo (Stage 5) confirms the effect across paths and regimes.
+
+---
+
 ### Learning Placeholder: Phase 0.5 Recovery Outcomes
 
 **Learning ID:** L3-001  
@@ -131,6 +149,7 @@
 | VAJRA Phase 0.5 Outcomes     | Windows evidence  | PENDING | Requires 5+ experiments, high confidence  |
 | EURO AI Customer Journey     | Phase 2 execution | PENDING | Post-Phase 2 analysis                     |
 | Alpha 1% Improvement Program | VAJRA Phase 1     | PENDING | Requires reproducible improvement metrics |
+| L-3.2 Procyclical DD-cut     | EXP-001 Stage 2   | PENDING | Monte Carlo confirmation across paths     |
 
 ---
 
@@ -154,9 +173,9 @@
 | ------------------------ | ----- | ---------------------- |
 | L-1 Operational          | 2     | ✅ Active              |
 | L-2 Customer Success     | 2     | ✅ Active              |
-| L-3 Scientific           | 0     | ⏳ Pending Phase 0.5   |
-| Pending Generalization   | 3     | ⏳ Awaiting validation |
-| **Total Learning Items** | **7** |                        |
+| L-3 Scientific           | 1     | ⏳ Pending Monte Carlo |
+| Pending Generalization   | 4     | ⏳ Awaiting validation |
+| **Total Learning Items** | **8** |                        |
 
 ---
 
@@ -181,7 +200,7 @@
 
 ---
 
-**Last Updated:** 2026-07-22 13:35 UTC  
+**Last Updated:** 2026-07-22 16:10 UTC  
 **Active Learnings:** 4 (L-1: 2, L-2: 2)  
-**Pending Learnings:** 3  
+**Pending Learnings:** 4 (incl. L-3.2 first scientific learning from EXP-001 Stage 2)  
 **Status:** FRAMEWORK READY FOR PHASE 0.5 EXECUTION

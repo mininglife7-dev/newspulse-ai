@@ -14,7 +14,8 @@
 | Knowledge Candidates Discovered | 100+   | 10      | 10%    |
 | Knowledge Items Verified        | 20+    | 5       | 25%    |
 | Experiments Completed           | 10+    | 0       | 0%     |
-| Lessons Preserved               | 30+    | 0       | 0%     |
+| Experiment Stages Completed     | 70+    | 2       | 3%     |
+| Lessons Preserved               | 30+    | 1       | 3%     |
 | Genome Genes Evolved            | 5+     | 0       | 0%     |
 
 ---
@@ -72,15 +73,15 @@
 
 ## PERFORMANCE BY LOOP
 
-| Loop              | Purpose                | Status | Items   | Velocity                 |
-| ----------------- | ---------------------- | ------ | ------- | ------------------------ |
-| Acquisition       | Discover new knowledge | ACTIVE | 10      | Day 1 cycle complete     |
-| Verification      | Validate candidates    | ACTIVE | 5       | 50% verification rate    |
-| Research Queue    | Investigation queue    | ACTIVE | 7       | Prioritized (2 CRITICAL) |
-| Experiment Queue  | Hypothesis testing     | ACTIVE | 3       | Paper Study 1/3 done     |
-| Learning Register | Preserve all learning  | READY  | 0       | Awaiting experiments     |
-| Genome            | Evolution model        | LIVE   | 9 genes | Baseline initialized     |
-| Daily Briefing    | Progress summary       | READY  | 1       | Day 1 briefing complete  |
+| Loop              | Purpose                | Status | Items   | Velocity                  |
+| ----------------- | ---------------------- | ------ | ------- | ------------------------- |
+| Acquisition       | Discover new knowledge | ACTIVE | 10      | Day 1 cycle complete      |
+| Verification      | Validate candidates    | ACTIVE | 5       | 50% verification rate     |
+| Research Queue    | Investigation queue    | ACTIVE | 7       | Prioritized (2 CRITICAL)  |
+| Experiment Queue  | Hypothesis testing     | ACTIVE | 3       | Sim 1/3 (EXP-001 Stage 2) |
+| Learning Register | Preserve all learning  | ACTIVE | 1       | L-3.2 from EXP-001 sim    |
+| Genome            | Evolution model        | LIVE   | 9 genes | Baseline initialized      |
+| Daily Briefing    | Progress summary       | READY  | 1       | Day 1 briefing complete   |
 
 ---
 
@@ -107,14 +108,14 @@
 
 | Stage        | Queued | In Progress | Completed |
 | ------------ | ------ | ----------- | --------- |
-| Paper Study  | 0      | 0           | 0         |
-| Simulation   | 0      | 0           | 0         |
-| Backtest     | 0      | 0           | 0         |
+| Paper Study  | 1      | 1           | 1         |
+| Simulation   | 0      | 0           | 1         |
+| Backtest     | 1      | 0           | 0         |
 | Walk Forward | 0      | 0           | 0         |
 | Monte Carlo  | 0      | 0           | 0         |
 | Shadow       | 0      | 0           | 0         |
 | Promotion    | 0      | 0           | 0         |
-| **TOTAL**    | **0**  | **0**       | **0**     |
+| **TOTAL**    | **3**  | **1**       | **2**     |
 
 ---
 

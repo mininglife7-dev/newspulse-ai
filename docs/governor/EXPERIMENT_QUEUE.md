@@ -4,6 +4,7 @@
 **Status:** ACTIVE  
 **Current Queue Size:** 3 items
 **Paper Study Completion:** 1 of 3 experiments (EXP-20260722-001)
+**Simulation Completion:** 1 of 3 experiments (EXP-20260722-001 — mechanism B validated)
 
 ---
 
@@ -197,11 +198,42 @@ If VAJRA's historical returns are constrained by CVaR(95%) ≤ D_max (12% maximu
 **Next Validation Stage:** Simulation (build synthetic portfolio with CVaR constraint)
 
 **STAGE 2: SIMULATION**  
-Status: NOT_STARTED  
-Code: [Awaiting Paper Study completion]
-Test Conditions: [Will simulate on 2-year historical data with various constraint tightness levels]
-Results: [Pending]
-Completion Date: [Target: 2026-07-25]
+Status: COMPLETED  
+Completion Date: 2026-07-22 16:10 UTC
+
+**Code:** `scripts/governor/cvar-simulation.mjs` (self-contained, zero external deps, deterministic — seed=20260722). Reproduce: `node scripts/governor/cvar-simulation.mjs`.
+
+**Test Conditions:**
+
+- Synthetic daily returns: GARCH(1,1) volatility clustering (long-run ~18% annualized) + fat-tailed jump crashes (~every 150 days), ~12% annual drift, 756 trading days (3 synthetic years).
+- Constraint mechanisms compared (both causal, no lookahead):
+  - **B. Volatility-target only** — EWMA (λ=0.94) trailing vol estimate; exposure = min(1, 15% target / trailing vol).
+  - **C. Vol-target + drawdown-cut** — same, plus linear exposure reduction as trailing drawdown approaches D_max = 12%.
+- A-priori D_max = 12% (Mission Omega Law 1), NOT fitted to the realized path.
+
+**Results (seed 20260722, single path):**
+
+| Metric            | A. Baseline | B. Vol-target | C. Vol-target + DD-cut |
+| ----------------- | ----------- | ------------- | ---------------------- |
+| Annualized return | 21.26%      | 13.51%        | 5.37%                  |
+| Annualized vol    | 21.39%      | 15.67%        | 14.03%                 |
+| Sharpe            | 1.009       | 0.888         | 0.443                  |
+| Max drawdown      | 14.75%      | 11.86%        | 11.57%                 |
+| CVaR95 (daily)    | −3.13%      | −2.24%        | −2.15%                 |
+| CVaR95 reduction  | —           | 28.30%        | 31.21%                 |
+| MDD reduction     | —           | 19.59%        | 21.52%                 |
+| MDD ≤ 12% cap     | NO (14.75%) | YES (11.86%)  | YES (11.57%)           |
+
+**Findings (honest, evidence-based):**
+
+1. **Risk-control mechanics VALIDATED.** Both variants mechanically cap max drawdown below the a-priori 12% budget and reduce CVaR95 tail loss by 28–31% — the capital-preservation objective is achievable as a causal exposure control.
+2. **The naive drawdown-cut is HARMFUL (rejected).** Variant C is procyclical: it de-levers _into_ recoveries, collapsing return (21.3% → 5.4%) and halving Sharpe (1.009 → 0.443, Δ −0.566). This refutes the intuition that adding a drawdown trigger improves outcomes.
+3. **Forward-looking vol-targeting is the winning mechanism.** Variant B controls tail risk at a modest Sharpe cost (Δ −0.121) and is carried forward to Backtest.
+4. **The Paper Study's "Sharpe will improve" claim is NOT confirmed on a single path** and is explicitly deferred — single-path Sharpe is statistically noisy; a Sharpe verdict requires the Monte Carlo stage (Stage 5) over many paths. Recording this rather than overclaiming.
+
+**Stage 2 Verdict:** Mechanism **B (volatility-targeting)** VALIDATED for mechanics → advance to Backtest. Drawdown-cut variant REJECTED as procyclical.
+
+**Next Validation Stage:** Backtest B on VAJRA historical returns once Windows Governor evidence extraction (VAJ-001 → GIT-001 → SCI-001) delivers the data.
 
 **STAGE 3: BACKTEST**  
 Status: NOT_STARTED  
@@ -337,7 +369,7 @@ Genes Updated: [STRATEGY_EVOLUTION, LEARNING_VELOCITY, VALIDATION_DEPTH]
 | HIGH Priority            | 2     |
 | Paper Study: Queued      | 2     |
 | Paper Study: In Progress | 1     |
-| Total Stages Completed   | 0     |
+| Total Stages Completed   | 2     |
 
 ---
 

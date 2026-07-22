@@ -1,8 +1,27 @@
 # Governor Ω — Next Action
 
-**Last Updated:** 2026-07-22 13:40 UTC  
-**Current Status:** AWAITING WINDOWS GOVERNOR ACTIVATION  
+**Last Updated:** 2026-07-22 16:10 UTC  
+**Current Status:** AWAITING WINDOWS GOVERNOR ACTIVATION (primary) + CLOUD-SIDE AUTONOMOUS PROGRESS (unblocked)  
 **Authority:** Cloud Governor Executive Status
+
+---
+
+## AUTONOMOUS CLOUD-SIDE MISSION (unblocked — no Windows dependency)
+
+The evidence-extraction critical path below is blocked on Founder activation of the
+Windows Governor. Independently, the Cloud Governor advances the experiment pipeline on
+synthetic data, which requires no VAJRA access.
+
+**Completed this cycle (2026-07-22):**
+
+- EXP-20260722-001 **Stage 2 Simulation COMPLETE** — real, reproducible evidence via
+  `scripts/governor/cvar-simulation.mjs` (seed=20260722). Volatility-targeting validated
+  as the risk-control mechanism; procyclical drawdown-cut rejected. First scientific
+  learning recorded (L-3.2).
+
+**Single next Cloud-side action:** Begin **EXP-20260722-002 Paper Study** (Adaptive
+Execution Quality) — literature synthesis needs no VAJRA data. Backtest of EXP-001
+(Stage 3) remains blocked on Windows evidence and stays queued.
 
 ---
 
