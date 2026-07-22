@@ -30,23 +30,23 @@
     },
     {
       "id": "dowd-2007",
-      "citation": "Dowd, K. (2007). Measuring Market Risk (2nd ed.). Wiley.",
+      "citation": "Dowd, K. (2005). Measuring Market Risk (2nd ed.). Wiley. ISBN 978-0-470-01303-8. [CORRECTED from 2007 -> 2005]",
       "cited_in": ["EXP-20260722-001"],
       "day1_tier": "P0",
-      "day2_tier": "P0",
-      "query": null,
-      "retrieved_source": null,
-      "verified_facts": null
+      "day2_tier": "P1",
+      "query": "Dowd 2007 Measuring Market Risk second edition Wiley book value at risk",
+      "retrieved_source": "https://www.wiley.com/en-dk/Measuring+Market+Risk,+2nd+Edition-p-9780470013038",
+      "verified_facts": "CORRECTION: 2nd edition published 2005 (Wiley), NOT 2007 as originally cited in EXP-001. ISBN 978-0-470-01303-8. Provenance verification caught a citation-year error. Raised P0->P1 with correction in cycle GOV-EVO-2026-07-D04-001."
     },
     {
       "id": "basel-iii-var-cvar",
-      "citation": "Basel III / BCBS market-risk framework — VaR/ES (CVaR) regulatory standards.",
+      "citation": "BCBS (2016). Minimum Capital Requirements for Market Risk (FRTB) — Expected Shortfall replaces VaR. Basel III.",
       "cited_in": ["EXP-20260722-001"],
       "day1_tier": "P0",
-      "day2_tier": "P0",
-      "query": null,
-      "retrieved_source": null,
-      "verified_facts": null
+      "day2_tier": "P1",
+      "query": "Basel III FRTB Fundamental Review of Trading Book expected shortfall market risk capital framework BCBS",
+      "retrieved_source": "https://www.bis.org (BCBS FRTB, finalised Jan 2016); https://www.sifma.org/news/blog/the-fundamental-review-of-the-trading-book-frtb-an-introductory-guide",
+      "verified_facts": "FRTB finalised Jan 2016 by BCBS; Expected Shortfall (= CVaR) replaces VaR as the mainstream market-risk metric; desk-level model approval. Confirms EXP-001 regulatory-standard reference. Raised P0->P1 in cycle GOV-EVO-2026-07-D04-001."
     },
     {
       "id": "almgren-chriss-2000",

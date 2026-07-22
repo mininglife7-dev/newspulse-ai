@@ -47,6 +47,29 @@
 
 ---
 
+### Learning: Provenance Verification Catches Real Citation Errors
+
+**Learning ID:** L1-004  
+**Timestamp:** 2026-07-22 17:40 UTC  
+**Cycle:** GOV-EVO-2026-07-D04-001  
+**Extracted By:** Cloud Governor  
+**Evidence Source:** Provenance verification of EXP-001 references (EV-CLOUD-006)
+
+**Lesson:** Raising EXP-001's references from P0 (asserted) to P1 (search-verified)
+surfaced a concrete error: Dowd's _Measuring Market Risk_ 2nd ed. was cited as **2007**
+but was published **2005** (Wiley, ISBN 978-0-470-01303-8). Also refined the Basel III
+reference to the specific BCBS FRTB (2016, Expected Shortfall replaces VaR). This
+validates the v1.1 provenance rule empirically: asserted citations from model memory
+carry real, silent errors, and the P0→P1 step is not ceremony — it corrects the record.
+Justifies keeping the P1-minimum-to-count rule.
+
+**Application Scope:** All cited research; permanent.
+
+**Confidence:** HIGH (direct evidence — one error found in the first 4 references checked).  
+**Generalization Status:** ✅ Promoted (reinforces genome Gene 2 v1.1).
+
+---
+
 ### Learning: External Research Capability Is Search-Only (Fetch Blocked)
 
 **Learning ID:** L1-003  
@@ -219,11 +242,11 @@ optimization presented as "better execution."
 
 | Classification           | Count  | Status                 |
 | ------------------------ | ------ | ---------------------- |
-| L-1 Operational          | 3      | ✅ Active              |
+| L-1 Operational          | 4      | ✅ Active              |
 | L-2 Customer Success     | 2      | ✅ Active              |
 | L-3 Scientific           | 2      | 1 promoted, 1 pending  |
 | Pending Generalization   | 4      | ⏳ Awaiting validation |
-| **Total Learning Items** | **10** |                        |
+| **Total Learning Items** | **11** |                        |
 
 ---
 

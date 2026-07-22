@@ -24,23 +24,29 @@ synthetic data, which requires no VAJRA access.
 - EXP-20260722-002 **Paper Study COMPLETE** (Almgren-Chriss, P1-verified).
 - Genome Gene 2 EVIDENCE_STANDARDS **v1.0→v1.1** (provenance tiers P0/P1/P2).
 
-**Completed in cycle GOV-EVO-2026-07-D03-001 (2026-07-22 17:10 UTC):**
+**Completed in cycle GOV-EVO-2026-07-D04-001 (2026-07-22 17:40 UTC):**
 
-- EXP-20260722-002 **Stage 2 Simulation COMPLETE** — `scripts/governor/execution-simulation.mjs`
-  (Almgren–Chriss vs TWAP, deterministic). Timing risk −56.82%, mean-variance objective
-  −45.39% (gate PASS); expected-cost increase $478k reported honestly. Learning L-3.3.
-- Markowitz (1952) raised P0→P1. Unverified-provenance rate **75%→50%** (cumulative 100%→50%).
+- EXP-20260722-003 **Paper Study COMPLETE** (Deep RL / direct reinforcement), grounded in
+  Moody & Saffell (2001) P1-verified. Inflated "3-5% daily" benefit claim rejected/reframed;
+  DRL overfitting flagged as primary risk. All 3 experiments now past Paper Study.
+- Dowd + Basel III raised to P1. Unverified-provenance rate **50%→0%** (cumulative 100%→0%).
+  **Caught + corrected a citation error** (Dowd 2nd ed. is 2005, not 2007). Learning L-1.4.
 
-**EXACT NEXT CYCLE — GOV-EVO-2026-07-D04-001 (bounded, Cloud-side, unblocked):**
+**EXACT NEXT CYCLE — GOV-EVO-2026-07-D05-001 (bounded, Cloud-side, unblocked):**
 
-1. Complete EXP-20260722-003 **Paper Study** (Deep RL position sizing / exit) — grounded in
-   a P1 search-verified source (e.g. Schulman et al. PPO, or Moody & Saffell RL-for-trading).
-2. Raise the remaining EXP-001 references (Dowd 2007, Basel III) toward P1 → target
-   unverified-provenance rate ≤ 25%.
-3. Persist + commit with cycle ID GOV-EVO-2026-07-D04-001.
+1. Build EXP-20260722-003 **Stage 2 Simulation** — RRL (differential Sharpe, cost-aware) on
+   a synthetic autocorrelated signal; sanity-check that a cost-blind variant over-trades;
+   require ≥5-seed stability. Deterministic Node artifact.
+2. Begin EXP-002 or EXP-001 **provenance depth**: attempt P2 (full-text) if any allowed host
+   becomes reachable; otherwise record P2 as blocked.
+3. Persist + commit with cycle ID GOV-EVO-2026-07-D05-001.
 
-All Backtest+ stages (EXP-001 & EXP-002) remain **BLOCKED** on Windows Governor evidence
-extraction (VAJ-001 → GIT-001 → SCI-001). No production trading; no capital deployment.
+All Backtest+ stages (EXP-001, EXP-002, EXP-003) remain **BLOCKED** on Windows Governor
+evidence extraction (VAJ-001 → GIT-001 → SCI-001). No production trading; no capital deployment.
+
+**Standing bottleneck (escalation):** The single largest blocker to the 1%/day North Star
+is the absence of real VAJRA data. Cloud-side cycles can validate mechanics and rigor but
+CANNOT measure real risk-adjusted return until Windows Governor executes VAJ-001→SCI-001.
 
 ---
 

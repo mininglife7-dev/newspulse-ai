@@ -176,3 +176,14 @@
   $478k reported. `scripts/governor/execution-simulation.mjs` (deterministic). Learning L-3.3.
 - Provenance: Markowitz (1952) → P1. Unverified rate **75%→50%** (cumulative 100%→50%).
 - Next cycle: GOV-EVO-2026-07-D04-001 (EXP-003 Paper Study; refs toward ≤25% unverified).
+
+---
+
+## CYCLE GOV-EVO-2026-07-D04-001 (2026-07-22 17:40 UTC)
+
+- EXP-20260722-003 Paper Study COMPLETE (Deep RL / Moody & Saffell 2001, P1). Inflated
+  "3-5% daily" claim rejected → reframed to risk-adjusted Sharpe. All 3 experiments past Paper Study.
+- Provenance: Dowd + Basel III → P1. Unverified rate **50%→0%** (cumulative 100%→0%).
+  Caught + corrected citation error (Dowd 2005 not 2007). Learning L-1.4.
+- Next cycle: GOV-EVO-2026-07-D05-001 (EXP-003 Stage 2 RRL Simulation).
+- Escalation: real VAJRA data (Windows VAJ-001→SCI-001) is the standing bottleneck to the North Star.

@@ -3,7 +3,7 @@
 **Purpose:** Structure hypothesis testing pipeline before production deployment  
 **Status:** ACTIVE  
 **Current Queue Size:** 3 items
-**Paper Study Completion:** 2 of 3 experiments (EXP-20260722-001, EXP-20260722-002)
+**Paper Study Completion:** 3 of 3 experiments (EXP-001, EXP-002, EXP-003)
 **Simulation Completion:** 2 of 3 experiments (EXP-001 vol-target validated; EXP-002 Almgren–Chriss validated)
 
 ---
@@ -122,7 +122,7 @@ Completion Date: 2026-07-22 15:30 UTC
 **Key References:**
 
 - Portfolio Theory: Markowitz (1952) mean-variance optimization; Rockafellar & Uryasev (2000) CVaR formulation
-- Risk Management: Dowd (2007) "Measuring Market Risk" CVaR framework; regulatory VaR/CVaR standards (Basel III)
+- Risk Management: Dowd (2005) "Measuring Market Risk" (2nd ed., Wiley) CVaR framework; regulatory ES/CVaR standards (Basel III FRTB, BCBS 2016) [Dowd year corrected 2007→2005 via provenance verification, GOV-EVO-2026-07-D04-001]
 - VAJRA Phase 1: Mission Omega Immutable Law 1 (Capital Before Profit) quantification requirement
 - Institutional Practice: Goldman Sachs risk limit frameworks, JPMorgan VaR backtesting
 
@@ -418,19 +418,84 @@ Genes Updated: [EXECUTION_DISCIPLINE, STRATEGY_EVOLUTION, LEARNING_VELOCITY]
 **Priority:** HIGH
 
 **STAGE 1: PAPER STUDY**  
-Status: QUEUED  
-Key References:
+Status: COMPLETED  
+Completion Date: 2026-07-22 17:40 UTC  
+Cycle: GOV-EVO-2026-07-D04-001
 
-- DeepMind: Policy gradient methods (PPO, A3C)
-- Trading applications: RL for portfolio management
-- Risk: Stable learning with financial constraints
-  Completion Date: [Target: 2026-07-25]
+**Experiment ID:** EXP-20260722-003
+
+**Research Question:** Can a reinforcement-learning policy that directly optimizes a
+risk-adjusted objective (e.g. Sharpe/differential Sharpe) improve position sizing and
+exit timing versus a fixed-rule baseline, _out-of-sample_, without overfitting?
+
+**Falsifiable Hypothesis:** A direct-reinforcement policy trained on pre-2020 data yields
+a higher out-of-sample (2020-2026) Sharpe than the fixed-rule baseline by a margin that
+survives walk-forward and multiple random seeds; if the out-of-sample Sharpe gain is
+≤ 0 or is not stable across seeds/regimes, the hypothesis is rejected.
+
+**Source Evidence (provenance-verified this cycle):**
+
+- **Moody, J. & Saffell, M. (2001). Learning to Trade via Direct Reinforcement.
+  IEEE Transactions on Neural Networks, 12(4), 875-889.** — Tier **P1 (search-verified)**.
+  Query in `scripts/governor/provenance-ledger.json`. Confirmed: recurrent reinforcement
+  learning (RRL) optimizes a differential Sharpe ratio directly (not raw profit), avoids
+  building a forecasting model, and sidesteps the curse of dimensionality of value-based RL.
+- Modern policy-gradient methods (PPO/A3C): **P0 (asserted)** — not retrieved this cycle;
+  cited as background, not evidence.
+
+**Mechanism (from verified source):** Direct reinforcement parameterizes the trading
+policy F_t = f(θ; returns, position_{t-1}) and updates θ by gradient ascent on a
+risk-adjusted utility (differential Sharpe ratio), including transaction-cost terms in the
+reward. Because the objective is risk-adjusted and cost-aware, the learned policy targets
+_sustainable_ rather than raw return — directly aligned with the 1%/day-net objective and
+with capital preservation.
+
+**Expected Market Regime:** RRL adapts to slow regime drift but is fragile to abrupt
+regime breaks not seen in training. Most credible where the traded signal has persistent
+autocorrelation; least credible in pure random-walk regimes.
+
+**Expected Benefit (CORRECTED — original claim rejected):** The original card claimed
+"3-5% cumulative _daily_ return improvement." This is **rejected as unrealistic** — a
+sustained multi-percent daily edge from position sizing alone contradicts the 1%/day
+_sustainable_ North Star and the capital-preservation law. Reframed expected benefit:
+a modest, _risk-adjusted_ Sharpe improvement (target: out-of-sample Sharpe uplift with
+stability across seeds), value measured on Sharpe/Sortino, not raw return.
+
+**Expected Failure Conditions:** Out-of-sample Sharpe ≤ baseline; policy unstable across
+random seeds; performance collapses in held-out regimes; benefit vanishes once realistic
+transaction costs are included.
+
+**Data Requirements:** Long clean return series with regime diversity; realistic
+transaction-cost model; VAJRA signal/feature set — all pending Windows Governor extraction.
+
+**Transaction-Cost Assumptions:** Costs MUST be in the reward from the start (Moody &
+Saffell show cost-blind RRL over-trades). Model per-trade cost + slippage; stress at
+Simulation/Monte Carlo.
+
+**Leakage Risks (HIGH for RL):** Look-ahead via feature normalization over the full
+sample; training/test contamination through overlapping windows; hyperparameter tuning on
+the test set. Mitigations: strict temporal splits, walk-forward only, no test-set tuning.
+
+**Overfitting Risks (HIGH — primary risk):** DRL for trading is notoriously
+non-reproducible and prone to fitting noise. Mitigations: fix architecture/hyperparameters
+a priori; require stability across ≥5 random seeds; reject if variance across seeds exceeds
+the mean edge; prefer the simplest policy (RRL) over deep value-based methods.
+
+**Evaluation Metrics:** Out-of-sample Sharpe & Sortino vs baseline; seed-stability
+(std of edge across seeds); regime-conditional performance; turnover and net-of-cost PnL.
+
+**Rejection Criteria:** No positive out-of-sample risk-adjusted edge; edge not stable
+across seeds; edge disappears net of costs; cannot converge to a stable policy.
+
+**Next Validation Stage:** Simulation — implement RRL (differential Sharpe, cost-aware) on
+a synthetic signal with known autocorrelation; verify it recovers a sensible policy and
+that a cost-blind variant over-trades (sanity check before any VAJRA data).
 
 **STAGE 2: SIMULATION**  
 Status: NOT_STARTED  
-Code: [PPO policy gradient on synthetic trading environment]
-Test Conditions: [Training on 3-year synthetic data; validation on held-out period]
-Completion Date: [Target: 2026-07-27]
+Code: [RRL (differential Sharpe, cost-aware) on synthetic autocorrelated signal]
+Test Conditions: [Training on synthetic in-sample; validation on held-out; ≥5 seeds]
+Completion Date: [Target: next cycle]
 
 **STAGE 3: BACKTEST**  
 Status: NOT_STARTED  
@@ -462,10 +527,10 @@ Genes Updated: [STRATEGY_EVOLUTION, LEARNING_VELOCITY, VALIDATION_DEPTH]
 | Total Experiments      | 3     |
 | CRITICAL Priority      | 1     |
 | HIGH Priority          | 2     |
-| Paper Study: Queued    | 1     |
-| Paper Study: Completed | 2     |
+| Paper Study: Queued    | 0     |
+| Paper Study: Completed | 3     |
 | Simulation: Completed  | 2     |
-| Total Stages Completed | 4     |
+| Total Stages Completed | 5     |
 
 ---
 

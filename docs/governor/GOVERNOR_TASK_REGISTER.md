@@ -305,5 +305,30 @@ Paper Study (Deep RL, Cloud-side unblocked).
 
 ---
 
-**Last Updated:** 2026-07-22 17:10 UTC  
+## DAY 4 EVOLUTION CYCLE (GOV-EVO-2026-07-D04-001)
+
+**Cycle Objective:** Complete EXP-003 Paper Study; drive EXP-001 provenance to 0% unverified.
+
+**Task: GOV-EVO-2026-07-D04-001-PAPER-STUDY-003**  
+Description: EXP-20260722-003 Paper Study (Deep RL / direct reinforcement)  
+Status: ✅ COMPLETED — 2026-07-22 17:40 UTC  
+Result: All 15 fields; core reference Moody & Saffell (2001) P1-verified; inflated
+"3-5% daily return" claim REJECTED and reframed to risk-adjusted Sharpe uplift; DRL
+overfitting flagged as primary risk with seed-stability rejection criteria.
+
+**Task: GOV-EVO-2026-07-D04-001-PROVENANCE-3**  
+Description: Raise Dowd + Basel III to P1; re-measure  
+Status: ✅ COMPLETED — 2026-07-22 17:40 UTC  
+Result: All 4 EXP-001 refs now P1. Unverified-provenance rate **50%→0%** (cumulative
+100%→0%). **Caught citation error:** Dowd 2nd ed. is 2005, not 2007 (corrected). Learning L-1.4.
+
+**Improvement Achieved (D04):** Unverified-provenance rate 50%→0% (eliminated); EXP-003
+Paper Study complete (all 3 experiments now past Paper Study); 1 real citation error fixed.
+
+**Next Immediate Action:** EXP-003 Stage 2 Simulation (RRL, Cloud-side unblocked); all
+Backtest+ stages remain blocked on Windows Governor VAJRA evidence.
+
+---
+
+**Last Updated:** 2026-07-22 17:40 UTC  
 **Synchronization Status:** CURRENT
