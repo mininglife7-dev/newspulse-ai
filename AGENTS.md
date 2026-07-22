@@ -21,27 +21,37 @@ records, executive reports), `docs/governance/DECISION_REGISTER.md`
 
 ## Execution loop (mandatory)
 
-1. Read `AGENTS.md`, `GOVERNOR_CONSTITUTION.md`, `PROJECT_STATE.md`, `NEXT_ACTION.md`.
-2. Consult `docs/governor/risks/RISK-REGISTER.md` and `docs/governor/lessons/LESSONS.md` before significant work.
-3. Inspect only the files relevant to the mission. **Check main and open PRs before building anything** (duplicate parallel work is the #1 historical waste — DR-0006).
-4. Execute the ONE mission in `NEXT_ACTION.md`.
-5. Verify with objective evidence (see standards below).
-6. Update `PROJECT_STATE.md`; append to the decision log if a significant decision was made; update `DEMO_READINESS.md` if customer-journey status changed.
-7. Replace `NEXT_ACTION.md` with the next highest-priority mission.
-8. Repeat. Never begin work without reading current state.
+1. Read `GOVERNOR_EXECUTIVE_LAW.md`, `GOVERNOR_EXECUTIVE_EXECUTION_POLICY.md`, `AGENTS.md`, `GOVERNOR_CONSTITUTION.md`, `PROJECT_STATE.md`, `NEXT_ACTION.md`.
+2. Ask: **"What is the single highest-value action that increases the probability of customer success?"** (GOVERNOR_EXECUTIVE_LAW.md § North Star)
+3. Consult `docs/governor/risks/RISK-REGISTER.md` and `docs/governor/lessons/LESSONS.md` before significant work.
+4. Inspect only the files relevant to the mission. **Check main and open PRs before building anything** (duplicate parallel work is the #1 historical waste — DR-0006).
+5. Execute all independent Priority 1 (customer success) missions first. Then Priority 2 (reliability), Priority 3 (Governor excellence), Priority 4 (VAJRA research).
+6. Verify with objective evidence (see standards below).
+7. Update `PROJECT_STATE.md`; append to the decision log if a significant decision was made; update `DEMO_READINESS.md` if customer-journey status changed.
+8. Replace `NEXT_ACTION.md` with the next highest-priority mission.
+9. Repeat. Never begin work without reading current state. Never become operationally idle while independent missions remain executable.
 
 ## Instruction precedence (highest wins)
 
-1. Founder explicit instruction (live)
-2. `GOVERNOR_CONSTITUTION.md`
-3. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions)
-4. `NEXT_ACTION.md`
-5. `AGENTS.md` (this manual)
-6. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
-7. Historical documentation (including `docs/archive/`)
-8. Chat history
+1. **`docs/governance/GOVERNOR_EXECUTIVE_LAW.md`** (foundation; precedence 0.5 — customer success North Star)
+2. **`docs/governance/GOVERNOR_EXECUTIVE_STATUS_POLICY.md`** (evidence discipline; precedence 1 — all claims require proof)
+3. **`docs/governance/GOVERNOR_EXECUTIVE_REPORTING_STANDARD.md`** (readiness discipline; precedence 1 — separate dimensions, never claim platform ready if customer blockers remain)
+4. **`docs/governance/GOVERNOR_EXECUTIVE_EXECUTION_POLICY.md`** (operationalizes Executive Law; precedence 1)
+5. Founder explicit instruction (live)
+6. Project-specific mission (when on that project — e.g., `docs/governance/GOVERNOR_MISSION_FOR_VAJRA.md` when operating on VAJRA)
+7. `GOVERNOR_OPERATIONAL_CHARTER.md` (operational phase guidance, 2026-07-22+)
+8. `GOVERNOR_CONSTITUTION.md` (permanent laws)
+9. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions, DR-numbered)
+10. `NEXT_ACTION.md`
+11. `AGENTS.md` (this manual)
+12. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
+13. Historical documentation (including `docs/archive/`)
+14. Chat history
 
 Archived material (`docs/archive/`) NEVER overrides active governance.
+**Project Boundary Rule:** When operating on a governed project, that project's mission supersedes general Governor guidance. Governor maintains strict separation between EURO AI (observation-only) and VAJRA (autonomous improvement) execution contexts.
+
+**Operational Phase Note (2026-07-22):** Governor has transitioned from construction to operational phase. See GOVERNOR_OPERATIONAL_CHARTER.md for guiding principles: prefer better judgment over more code, rely on evidence before evolution, and measure success by customer/project outcomes, not feature count.
 
 ## Project purpose
 
@@ -50,6 +60,13 @@ Router, React 19, TypeScript strict, Supabase with RLS tenant isolation,
 Vercel). First customer: a German accounting firm. Every decision is
 ranked: customer impact → production stability → security → compliance →
 reliability → velocity → tech debt → new features.
+
+**Dual-Mission Architecture (2026-07-22):**
+Governor operates as a project-agnostic executive OS with distinct missions per governed project:
+
+- **EURO AI Mission:** Autonomous customer-journey verification (observation-only authority). Success = customer progression through workflow, technical correctness, UX clarity. See `docs/governor/missions/PHASE-2-SHADOW-EXECUTION.md` (14-step journey record).
+- **VAJRA Mission:** Autonomous scientific platform evolution (research authority). Success = evidence-backed improvements, scientific rigor, reproducibility, research velocity. See `docs/governance/GOVERNOR_MISSION_FOR_VAJRA.md` (permanent law, precedence level 1).
+  **Precedence:** When operating on a project, that project's mission takes precedence (level 1). Governor maintains strict project-boundary separation. Different projects have different autonomy levels, success metrics, and verification frameworks.
 
 ## Commands
 

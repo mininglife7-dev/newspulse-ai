@@ -1,0 +1,293 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cathedral Genome Schema",
+  "description": "Machine-readable specification of the complete Cathedral organism, defining all organs, capabilities, policies, workflows, memory schemas, and operating requirements.",
+  "type": "object",
+  "required": ["version", "dna_ref", "created", "organs", "capabilities", "policies"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Genome semantic version (e.g., 1.0.0)"
+    },
+    "dna_ref": {
+      "type": "string",
+      "description": "Reference to CATHEDRAL_DNA.yaml version this genome implements"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this genome version was created"
+    },
+    "parent_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Previous genome version this evolved from (null for initial)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable summary of this genome"
+    },
+    "organs": {
+      "type": "array",
+      "description": "Functional organ definitions",
+      "items": {
+        "type": "object",
+        "required": ["organ_id", "name", "purpose"],
+        "properties": {
+          "organ_id": {
+            "type": "string",
+            "pattern": "^[a-z_]+$",
+            "description": "Unique organ identifier (e.g., engineering, compliance)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable organ name"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "What this organ does"
+          },
+          "inputs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "What this organ receives"
+          },
+          "outputs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "What this organ produces"
+          },
+          "authority_scope": {
+            "type": "string",
+            "enum": ["autonomous", "autonomous_with_audit", "requires_approval", "founder_only"],
+            "description": "How much authority this organ has"
+          },
+          "health_indicators": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Metrics indicating this organ's health (e.g., ci_pass_rate, test_coverage)"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Other organs or services this organ depends on"
+          },
+          "fallback_provider": {
+            "type": "string",
+            "description": "Manual or alternative provider if automated capability fails"
+          },
+          "regeneration_procedure": {
+            "type": "string",
+            "description": "Steps to recover this organ from failure"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "degraded", "disabled", "experimental"],
+            "description": "Current operational status of this organ"
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "Capabilities required by organs; providers deliver them",
+      "items": {
+        "type": "object",
+        "required": ["capability_id", "name", "required_by"],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z_]+$",
+            "description": "Unique capability identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable capability name"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this capability does"
+          },
+          "required_by": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Organ IDs that need this capability"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["provider_id", "name"],
+              "properties": {
+                "provider_id": { "type": "string" },
+                "name": { "type": "string" },
+                "type": {
+                  "type": "string",
+                  "enum": ["human", "tool", "agent", "service", "workflow"],
+                  "description": "What kind of provider"
+                },
+                "primary": { "type": "boolean" },
+                "fallback_for": { "type": "string" },
+                "availability": {
+                  "type": "string",
+                  "enum": ["always", "cloud_only", "runner_only", "manual_only"],
+                  "description": "When this provider is available"
+                }
+              }
+            }
+          },
+          "danger_class": {
+            "type": "string",
+            "enum": ["read_only", "write", "destructive", "external", "financial"],
+            "description": "Risk level of this capability"
+          },
+          "requires_approval": {
+            "type": "boolean",
+            "description": "Must this be explicitly approved before use"
+          },
+          "permissions_required": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "What permissions must be granted to use this capability"
+          },
+          "health_check": {
+            "type": "string",
+            "description": "How to verify this capability is working"
+          }
+        }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "description": "Authority and decision rules",
+      "required": ["autonomous_actions", "approval_required_actions", "prohibited_actions"],
+      "properties": {
+        "autonomous_actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Actions that can execute without approval"
+        },
+        "audit_required_actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Actions that can execute but must be recorded"
+        },
+        "approval_required_actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Actions requiring Founder or organ approval"
+        },
+        "prohibited_actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Actions that can never execute, even with approval"
+        },
+        "founder_override": {
+          "type": "boolean",
+          "description": "May Founder override any policy"
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "description": "Homeostasis operating limits",
+      "properties": {
+        "max_retries": { "type": "integer", "minimum": 1 },
+        "max_command_duration_seconds": { "type": "integer", "minimum": 10 },
+        "max_consecutive_failures": { "type": "integer", "minimum": 1 },
+        "max_queue_size": { "type": "integer", "minimum": 1 },
+        "max_unresolved_blockers": { "type": "integer", "minimum": 0 },
+        "escalation_on_security_alert": { "type": "boolean" },
+        "min_evidence_completeness": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "evolution": {
+      "type": "object",
+      "description": "Rules for controlled genome evolution",
+      "properties": {
+        "versioning_scheme": {
+          "type": "string",
+          "enum": ["semantic", "linear"],
+          "description": "How versions are numbered"
+        },
+        "baseline_preservation_required": {
+          "type": "boolean",
+          "description": "Must baseline metrics be recorded before changes"
+        },
+        "rollback_mandatory": {
+          "type": "boolean",
+          "description": "Must every change have a tested rollback procedure"
+        },
+        "fitness_measurement_required": {
+          "type": "boolean",
+          "description": "Must improvements be measured against fitness model"
+        },
+        "dna_modifications_forbidden": {
+          "type": "boolean",
+          "description": "Can genome autonomously modify DNA"
+        },
+        "approval_required_for_class": {
+          "type": "object",
+          "properties": {
+            "operational": {
+              "type": "string",
+              "enum": ["autonomous", "audit", "approval", "founder_only"]
+            },
+            "organ": {
+              "type": "string",
+              "enum": ["autonomous", "audit", "approval", "founder_only"]
+            },
+            "genome": {
+              "type": "string",
+              "enum": ["autonomous", "audit", "approval", "founder_only"]
+            },
+            "dna": {
+              "type": "string",
+              "enum": ["founder_only"]
+            }
+          }
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "description": "Memory kernel specifications",
+      "properties": {
+        "canonical_documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "document_id": { "type": "string" },
+              "path": { "type": "string" },
+              "purpose": { "type": "string" },
+              "authority": { "type": "string" },
+              "immutable": { "type": "boolean" }
+            }
+          }
+        },
+        "conflict_resolution": {
+          "type": "object",
+          "properties": {
+            "preserve_both_originals": { "type": "boolean" },
+            "mark_contradiction": { "type": "boolean" },
+            "require_explicit_resolution": { "type": "boolean" },
+            "silent_overwrite_forbidden": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "observability": {
+      "type": "object",
+      "description": "How system state is monitored and recorded",
+      "properties": {
+        "correlation_id_required": { "type": "boolean" },
+        "structured_logging": { "type": "boolean" },
+        "evidence_immutability": { "type": "boolean" },
+        "deterministic_fields_separate": { "type": "boolean" }
+      }
+    }
+  },
+  "additionalProperties": false
+}
