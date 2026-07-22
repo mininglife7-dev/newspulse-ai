@@ -1,7 +1,14 @@
-# NEXT_ACTION — The One Active Mission
+# NEXT_ACTION — Mission Queue (Autonomous Scheduler)
 
-> Exactly one mission lives here. Finish it, verify it, replace it.
-> **NOTE:** Phase 1 COMPLETE; Phase 2 PRIMARY MISSION. VAJRA Phase 0 running in parallel under Founder directive (DR-TBD).
+> Under the Autonomous Scheduler Model (GOVERNOR_OPERATIONAL_CHARTER.md), missions are prioritized and executed by state:
+>
+> - **EXECUTING:** In progress; continue autonomously
+> - **WAITING:** Blocked on external dependency; continue independent missions
+> - **READY:** Prepared; execute immediately upon blocker resolution
+>
+> When a mission enters WAITING, do NOT idle. Execute all independent Priority 2-3 missions. A Governor never waits for work.
+>
+> **NOTE:** Phase 1 COMPLETE (commit bda1319). Phase 2 PRIMARY (WAITING on RISK-009 + customer submission). VAJRA Phase 0 PARALLEL (WAITING on Windows discovery script). Autonomous Scheduler EXECUTING Priority 2-3 work continuously (DR-0026, adopted 2026-07-22).
 
 ## Current Mission (Phase 2: Shadow Execution — EURO AI Customer-Journey Verification)
 
@@ -79,13 +86,50 @@ first customer?
 7. PROJECT_STATE.md updated with customer-readiness evidence
 8. DEMO_READINESS.md rows 1–11 updated per step completion
 
-## Parallel missions (Founder directive override to "one mission" rule)
+## Mission Queue (Autonomous Scheduler Model — 2026-07-22)
 
-**VAJRA Phase 0** (environment discovery) runs in parallel under read-only observation authority.
+### Priority 1: Phase 2 Shadow Execution (EURO AI Customer-Journey) — **WAITING**
 
-- Discover VAJRA repository location, branches, existing Governor integration
-- Baseline reconstruction of VAJRA build/test/backtest systems
-- Blocked pending GitHub MCP tool access
+**State:** WAITING (blocked on RISK-009 email config + customer submission)  
+**Dependency:** RISK-009 resolution (Founder decision) + Anne Catherine Step 2 submission  
+**Steps 1–2:** Step 1 COMPLETE (registration succeeded, email arrived, confirmation link UX error detected); Step 2+ BLOCKED  
+**Auto-Resume Condition:** When RISK-009 resolved AND customer submits Step 2 → Phase 2 Steps 2–14 execute immediately
+
+**Founder Action Required (RISK-009):**
+
+- Option A (5 min): Disable "Confirm email" in Supabase project cwbcvjiklrrkpmybefdp settings
+- Option B (15-30 min): Configure custom SMTP (Resend, SendGrid, etc.) in Supabase settings
+
+### Priority 2: EURO AI Quality & Stability Verification — **EXECUTING (continuous)**
+
+**State:** EXECUTING autonomously  
+**Status:** ✅ VERIFIED (1342 tests passed, type-check passing, build passing, Vercel preview ready)  
+**Current:** Continuous capability monitoring (watching for regressions in tests, build, deployment)
+
+### Priority 3: Governor Learning Candidates (L-C-2.1, L-C-2.2) — **EXECUTING (promotion stage)**
+
+**State:** EXECUTING (candidates ready for promotion, awaiting Phase 2 Step 2+ confirmation)  
+**Status:** L-C-2.1 (9/10 Generalization Gate) and L-C-2.2 (10/10 Generalization Gate) assessment complete  
+**Current:** Prepared for integration into Governor Learning Layer + Core Policy after Phase 2 Step 2+ evidence
+
+### Priority 4: VAJRA Phase 0 Environment Discovery — **WAITING**
+
+**State:** WAITING (blocked on Windows discovery script execution)  
+**Dependency:** Founder executes `tools/windows/START_VAJRA_RECOVERY.cmd` on Windows laptop  
+**Discovery Scope:** VAJRA repository location, Git branches, existing code state, build/backtest systems  
+**Auto-Resume Condition:** Upon receiving discovery report → VAJRA Phase 0 analysis begins immediately; Phase 1+ adapter design follows
+
+**Founder Action Required (VAJRA):**
+
+- Execute: `START_VAJRA_RECOVERY.cmd` from Windows laptop newspulse-ai\tools\windows\
+- Output: C:\VAJRA_EVIDENCE_EXPORT\[timestamp]\ with CSV/JSON/Markdown discovery files
+- Share: Discovery report files with Governor session for Phase 0 analysis
+
+## Autonomous Execution Status
+
+**WAITING missions:** Phase 2 (1 dependency), VAJRA Phase 0 (1 dependency)  
+**EXECUTING missions:** Priority 2 (quality monitoring), Priority 3 (learning promotion)  
+**Next action when blocker resolves:** Auto-resume Phase 2 when RISK-009 + customer submission; auto-resume VAJRA Phase 0 when discovery output received
 
 ## Next owner
 
