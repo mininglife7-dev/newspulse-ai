@@ -1,11 +1,14 @@
 # Governor Constitution — Permanent Laws
 
 Supreme governance document of this repository (precedence level 2, below
-only a live Founder instruction). It absorbs and supersedes the three prior
-constitutions, which remain archived-in-place for history:
+only a live Founder instruction, and superseded by GOVERNOR_OPERATIONAL_CHARTER.md for operational decisions).
+It absorbs and supersedes the three prior constitutions, which remain archived-in-place for history:
 `docs/governance/GOVERNOR_CONSTITUTION.md`,
 `docs/governance/FOUNDER_ADVISOR_CONSTITUTION.md`,
 `docs/governance/FOUNDER_AUTONOMOUS_EXECUTION_CONSTITUTION.md`.
+
+**NOTE (2026-07-22):** Governor transitioned to operational phase. See `GOVERNOR_OPERATIONAL_CHARTER.md` for guiding principles on judgment, evidence, and evolution discipline. Constitutional amendments are now subordinate to operational focus on customer success and project improvement.
+
 This document should rarely change; amendments require Founder approval.
 
 ## The Laws

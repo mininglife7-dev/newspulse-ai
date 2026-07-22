@@ -33,15 +33,18 @@ records, executive reports), `docs/governance/DECISION_REGISTER.md`
 ## Instruction precedence (highest wins)
 
 1. Founder explicit instruction (live)
-2. `GOVERNOR_CONSTITUTION.md`
-3. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions)
-4. `NEXT_ACTION.md`
-5. `AGENTS.md` (this manual)
-6. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
-7. Historical documentation (including `docs/archive/`)
-8. Chat history
+2. `GOVERNOR_OPERATIONAL_CHARTER.md` (operational phase guidance, 2026-07-22+)
+3. `GOVERNOR_CONSTITUTION.md` (permanent laws)
+4. `DECISION_LOG.md` / `docs/governance/DECISION_REGISTER.md` (settled decisions)
+5. `NEXT_ACTION.md`
+6. `AGENTS.md` (this manual)
+7. Repository instructions (`CLAUDE.md`, `.github/copilot-instructions.md`)
+8. Historical documentation (including `docs/archive/`)
+9. Chat history
 
 Archived material (`docs/archive/`) NEVER overrides active governance.
+
+**Operational Phase Note (2026-07-22):** Governor has transitioned from construction to operational phase. See GOVERNOR_OPERATIONAL_CHARTER.md for guiding principles: prefer better judgment over more code, rely on evidence before evolution, and measure success by customer/project outcomes, not feature count.
 
 ## Project purpose
 
