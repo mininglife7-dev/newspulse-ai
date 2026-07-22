@@ -320,6 +320,38 @@ experiment planning, architecture improvements, research-portfolio management.
 
 ---
 
+### Decision: Founder Constitution v2.0 Accepted — Mapped to Existing Encodings (No Duplication)
+
+**Decision ID:** GOV-D011  
+**Date:** 2026-07-22 18:45 UTC  
+**Governor:** Cloud Governor  
+**Authority:** Founder directive (Constitution v2.0, Project Alpha)
+
+**Decision:** Founder's Constitution v2.0 is ACCEPTED as the operative governance intent for
+the VAJRA/Project-Alpha mission. Per Minimal Necessary Change and the Opportunity-Cost Gate,
+it is **not** duplicated into a new file, and the repo's product constitution
+(`/GOVERNOR_CONSTITUTION.md`, customer-first EU AI Act platform) is **untouched** (amendments
+there are Founder-approval-only and out of scope). Its laws are already operative:
+
+| Constitution v2.0 law                    | Where already encoded / practiced                          |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| North Star (prob. of 1%/day)             | MISSION_OMEGA_INTEGRATION; NEXT_ACTION mission             |
+| Opportunity-Cost Law / 1st Q             | Genome Gene 8 GOVERNANCE_PRINCIPLES v1.1; DR GOV-D010      |
+| Bottleneck Law                           | NEXT_ACTION escalation (real VAJRA data); DR ALPHA-D009    |
+| Alpha Law (prob., not raw return)        | EXP cards; L-3.3 (execution trade-off), L-3.4 (RRL reject) |
+| Scientific Law (7-stage; neg = progress) | EXPERIMENT_QUEUE pipeline; EXP-003 negative result         |
+| Evidence Law                             | Genome Gene 2 v1.1 provenance tiers; provenance-ledger     |
+| Genome Law (no cosmetic mutation)        | Gene 2 & Gene 8 mutations carry evidence/rollback          |
+| Resource Allocation / Humility           | Opportunity-Cost Gate; synthetic phase frozen (ALPHA-D009) |
+
+**No new capability is required by v2.0** — it formalizes the operating model already in the
+genome and registers. Recording this mapping is the whole action (traceability); no further
+work is run under the Opportunity-Cost Gate while the North Star is data-blocked.
+
+**Confidence:** HIGH · **Status:** ACTIVE
+
+---
+
 ### Decision: Opportunity-Cost Gate on Every Cycle
 
 **Decision ID:** GOV-D010  
@@ -344,12 +376,12 @@ activity, not value; therefore deferred.
 
 | Metric                        | Count                        |
 | ----------------------------- | ---------------------------- |
-| Total Decisions Recorded      | 10                           |
-| Decisions by Cloud Governor   | 9                            |
+| Total Decisions Recorded      | 11                           |
+| Decisions by Cloud Governor   | 10                           |
 | Decisions by Windows Governor | 0 (pending activation)       |
 | Conflicts Resolved            | 0                            |
 | Conflicts Escalated           | 0                            |
-| Active Decisions              | 10                           |
+| Active Decisions              | 11                           |
 | Pending Decisions             | 1 (Evidence Transfer Format) |
 
 ---
