@@ -7,6 +7,20 @@ are never requested from the Founder.
 
 ---
 
+## DR-0026 — Phase 1 closure and Phase 2 shadow-execution initiation (2026-07-22)
+
+- **Decision:** (a) Closed Phase 1 (Governor OS Reference Implementation) after all 13 modules completed, 4/4 acceptance-gate tests passing, and TypeScript strict build verified. (b) Adopted GOVERNOR_OPERATIONAL_CHARTER.md as permanent law (precedence level 2), establishing operational-phase discipline. (c) Initiated Phase 2 (Customer-Journey Shadow Execution) under observation-only authority with Phase 1 Step 1 (registration) complete. (d) Documented RISK-009 (email verification undeliverable in production) as critical blocker preventing Phase 2 Steps 2–14 progression. (e) Identified and assessed two learning candidates (L-C-2.1, L-C-2.2) ready for promotion to Governor Learning Layer / Core Policy.
+- **Authority:** Governor autonomous (Phases 1–2 metrics, capability audit, learning assessment); Founder decision required (RISK-009 email configuration choice).
+- **Reason:** Phase 1 demonstrated end-to-end Governor OS Foundation capability (evidence ledger, policy engine, authority model, deterministic hashing). Phase 2 represents first real customer-journey observation. RISK-009 must be resolved before customer can progress beyond registration. Learning candidates emerged from Phase 2 Step 1 observations and exceed Generalization Gate criteria.
+- **Evidence:** (Phase 1) Acceptance-gate test file `tests/governor-acceptance-gate.test.ts` 4/4 passing; build logs from `npm run build` (no errors); commit `bda1319`. (Phase 2) Defect register `docs/governor/missions/PHASE-2-DEFECT-REGISTER.md` (D-2.1, D-2.2); mission record `docs/governor/missions/PHASE-2-SHADOW-EXECUTION.md` (14-step checklist); registration run `29599513287` (email confirmation link UX error despite successful authentication); Supabase project `cwbcvjiklrrkpmybefdp` "Confirm email" setting ON blocking real customer email delivery. (Learning) Generalization Gate assessments in `docs/governor/learning/PHASE-2-LEARNING-CANDIDATES.md` (L-C-2.1 9/10 criteria, L-C-2.2 10/10 criteria).
+- **Expected outcome:** Phase 2 resumes when Founder resolves RISK-009; customer submits Step 2; Governor records dual verdicts for Steps 2–14. Learning candidates promote to Governor rules.
+- **Actual outcome:** Phase 2 suspended on RISK-009 dependency. Autonomous work continues: capabilities audited (11 verified operational, 5 healthy, 6 needs exercise, 4 blocked); documentation audit complete (no L-003 violations); test suite verified (1342 passed / 20 skipped). Founder action required: disable "Confirm email" OR configure custom SMTP in Supabase; execute VAJRA Phase 0 discovery script (`tools/windows/START_VAJRA_RECOVERY.cmd`).
+- **Alternatives considered:** (a) Proceeding without Phase 1 verification (rejected — acceptance gate proves end-to-end functionality, per Constitutional Law 2). (b) Deferring Phase 2 until VAJRA integrated (rejected — parallel execution per Dependency Management Policy; VAJRA discovery script is independent blocker). (c) Engineering fix for RISK-009 (rejected — email config is a Founder policy decision; Supabase platform constraint requires config choice, not code change).
+- **Status:** Active. Phase 1 COMPLETE; Phase 2 WAITING (suspended on RISK-009 + customer submission); VAJRA Phase 0 WAITING (suspended on Windows discovery script).
+- **Lessons:** (L-C-2.1) Technical correctness ≠ customer-success perception; dual verdicts must be independent (see LESSONS.md candidate). (L-C-2.2) Email delivery is prerequisite, not polish; must verify BEFORE mission execution (see LESSONS.md candidate). (Governor Learning Policy) Two candidates exceeded Generalization Gate; ready for promotion after Phase 2 Step 2+ confirms reproducibility.
+
+---
+
 ## DR-0025 — EU production database migration executed and certified
 
 - **Decision:** Executed the RISK-008 migration to Supabase project
