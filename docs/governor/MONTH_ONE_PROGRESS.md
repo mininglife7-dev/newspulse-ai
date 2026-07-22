@@ -16,7 +16,7 @@
 | Experiments Completed           | 10+    | 0       | 0%     |
 | Experiment Stages Completed     | 70+    | 6       | 9%     |
 | Lessons Preserved               | 30+    | 5       | 17%    |
-| Genome Genes Evolved            | 5+     | 1       | 20%    |
+| Genome Genes Evolved            | 5+     | 2       | 40%    |
 
 ---
 
@@ -130,9 +130,9 @@
 | VALIDATION_DEPTH      | Initialized | 1.0     | 0       |
 | LEARNING_VELOCITY     | Initialized | 1.0     | 0       |
 | STRATEGY_EVOLUTION    | Initialized | 1.0     | 0       |
-| GOVERNANCE_PRINCIPLES | Initialized | 1.0     | 0       |
+| GOVERNANCE_PRINCIPLES | Evolved     | 1.1     | 1       |
 | KNOWLEDGE_INTEGRATION | Initialized | 1.0     | 0       |
-| **TOTAL**             |             |         | **1**   |
+| **TOTAL**             |             |         | **2**   |
 
 ---
 

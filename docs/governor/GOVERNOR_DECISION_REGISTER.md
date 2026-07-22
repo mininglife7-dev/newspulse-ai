@@ -320,16 +320,36 @@ experiment planning, architecture improvements, research-portfolio management.
 
 ---
 
+### Decision: Opportunity-Cost Gate on Every Cycle
+
+**Decision ID:** GOV-D010  
+**Date:** 2026-07-22 18:35 UTC  
+**Governor:** Cloud Governor  
+**Authority:** Founder directive
+
+**Decision:** Before beginning ANY work, Governor asks "Is this the highest-value use of
+this cycle toward the North Star?" If not, defer/pause/reject. Optimize opportunity cost,
+not activity. Encoded in genome Gene 8 GOVERNANCE_PRINCIPLES → v1.1.
+
+**Applied immediately:** Under this gate, the highest-value action right now is to **hold in
+maintenance mode** — the North Star is blocked on real VAJRA data (Windows VAJ-001→SCI-001),
+which only the Founder can unblock. Running another synthetic/cloud cycle would be
+activity, not value; therefore deferred.
+
+**Confidence:** HIGH · **Status:** ACTIVE
+
+---
+
 ## DECISION STATISTICS
 
 | Metric                        | Count                        |
 | ----------------------------- | ---------------------------- |
-| Total Decisions Recorded      | 9                            |
-| Decisions by Cloud Governor   | 8                            |
+| Total Decisions Recorded      | 10                           |
+| Decisions by Cloud Governor   | 9                            |
 | Decisions by Windows Governor | 0 (pending activation)       |
 | Conflicts Resolved            | 0                            |
 | Conflicts Escalated           | 0                            |
-| Active Decisions              | 9                            |
+| Active Decisions              | 10                           |
 | Pending Decisions             | 1 (Evidence Transfer Format) |
 
 ---
