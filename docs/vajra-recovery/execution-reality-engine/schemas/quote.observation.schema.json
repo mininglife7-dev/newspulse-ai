@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/execution-reality/quote.observation.schema.json",
+  "title": "Quote Observation",
+  "description": "A top-of-book (or L2) market quote. Feeds effective/quoted spread and market-condition context. Contains no order-specific fields.",
+  "allOf": [{ "$ref": "./observation.envelope.schema.json" }],
+  "properties": {
+    "observation_type": { "const": "quote" },
+    "quote": {
+      "type": "object",
+      "required": ["best_bid", "best_ask", "bid_qty", "ask_qty"],
+      "properties": {
+        "best_bid": { "type": "number", "exclusiveMinimum": 0 },
+        "best_ask": { "type": "number", "exclusiveMinimum": 0 },
+        "bid_qty": { "type": "number", "minimum": 0 },
+        "ask_qty": { "type": "number", "minimum": 0 },
+        "book": {
+          "type": ["array", "null"],
+          "description": "Optional L2 ladder, best-to-worse. Enables queue-position analysis.",
+          "items": {
+            "type": "object",
+            "required": ["side", "price", "qty", "level"],
+            "properties": {
+              "side": { "type": "string", "enum": ["bid", "ask"] },
+              "price": { "type": "number", "exclusiveMinimum": 0 },
+              "qty": { "type": "number", "minimum": 0 },
+              "level": { "type": "integer", "minimum": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["quote"]
+}

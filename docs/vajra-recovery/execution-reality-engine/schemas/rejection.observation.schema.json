@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/execution-reality/rejection.observation.schema.json",
+  "title": "Order Rejection Observation",
+  "description": "A broker/exchange rejection of one of OUR orders. The evidence unit for order-rejection frequency and its causes.",
+  "allOf": [{ "$ref": "./observation.envelope.schema.json" }],
+  "properties": {
+    "observation_type": { "const": "rejection" },
+    "rejection": {
+      "type": "object",
+      "required": ["client_order_id", "side", "order_size", "reject_stage"],
+      "properties": {
+        "client_order_id": { "type": "string", "minLength": 1 },
+        "broker_order_id": { "type": ["string", "null"] },
+        "side": { "type": "string", "enum": ["buy", "sell"] },
+        "order_size": { "type": "number", "exclusiveMinimum": 0, "description": "Mandatory per Founder directive." },
+        "reject_stage": { "type": "string", "enum": ["pre_risk", "broker", "exchange", "unknown"] },
+        "reject_code": { "type": ["string", "null"], "description": "Verbatim code from the rejecting system." },
+        "reject_reason": { "type": ["string", "null"], "description": "Verbatim human-readable reason; do not paraphrase in a way that loses the code." },
+        "submit_to_reject_ms": { "type": ["number", "null"], "minimum": 0, "description": "Measured latency to rejection; null = not measured." }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["rejection"]
+}

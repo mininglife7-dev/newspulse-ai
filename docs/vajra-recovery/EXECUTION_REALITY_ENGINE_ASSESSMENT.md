@@ -7,6 +7,15 @@
 **Branch:** `claude/execution-reality-engine-mwuh56`
 **Status label convention:** Verified / Estimated / Unknown / Blocked (Constitution Law 2)
 
+> **Founder ruling (2026-07-23):** Mission status **PARTIALLY COMPLETE** —
+> Research Gate **WAITING FOR WINDOWS ACCESS**. The absence of VAJRA
+> infrastructure is an **environment boundary** (VAJRA lives on the Founder's
+> Windows workstation), **not** an engineering failure. Distinguish
+> *environment capability* from *mission capability*. **Cycle 2 (this update):**
+> built every data-independent component — see the portable kit at
+> [`execution-reality-engine/`](execution-reality-engine/README.md). Boundary
+> phase continues; measured observation begins when `C:\vajra` becomes readable.
+
 ---
 
 ## 0. One-paragraph summary for the Founder

@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/execution-reality/observation.envelope.schema.json",
+  "title": "Observation Envelope",
+  "description": "Common envelope for every execution-reality observation. Enforces the Founder-mandated provenance and confidence fields. Structural invariants only — no empirical values are asserted here.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "observation_id",
+    "observation_type",
+    "event_timestamp",
+    "ingest_timestamp",
+    "instrument",
+    "venue",
+    "data_provenance",
+    "confidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "SemVer of the schema this record was written against.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "observation_id": {
+      "type": "string",
+      "description": "Globally unique id for this observation (uniqueness is a validation rule; see SPEC-05).",
+      "minLength": 1
+    },
+    "observation_type": {
+      "type": "string",
+      "enum": ["quote", "trade", "order_lifecycle", "fill", "rejection"]
+    },
+    "event_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Time the event occurred at the source/exchange, RFC3339 with timezone. Must be within a valid session window (SPEC-05 R-TS-*)."
+    },
+    "ingest_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Time this observation was captured by the collector. ingest_timestamp >= event_timestamp within clock-skew tolerance (SPEC-05 R-TS-3)."
+    },
+    "instrument": {
+      "type": "object",
+      "required": ["symbol", "segment"],
+      "properties": {
+        "symbol": { "type": "string", "minLength": 1, "description": "Exchange trading symbol, e.g. RELIANCE." },
+        "isin": { "type": "string", "description": "ISIN if known; sourced from exchange contract master, never inferred." },
+        "segment": { "type": "string", "enum": ["EQ", "FUT", "OPT", "CUR", "COM", "OTHER"] },
+        "lot_size": { "type": ["integer", "null"], "description": "Contract/lot size from exchange master. null = UNKNOWN until sourced." },
+        "tick_size": { "type": ["number", "null"], "exclusiveMinimum": 0, "description": "Minimum price increment from exchange master. null = UNKNOWN until sourced; never assumed." }
+      },
+      "additionalProperties": true
+    },
+    "venue": {
+      "type": "string",
+      "enum": ["NSE", "BSE", "OTHER"],
+      "description": "Execution/quote venue. Extend enum only from verified venue list."
+    },
+    "market_conditions": {
+      "$ref": "#/$defs/market_conditions"
+    },
+    "data_provenance": {
+      "$ref": "#/$defs/data_provenance"
+    },
+    "confidence": {
+      "$ref": "#/$defs/confidence"
+    }
+  },
+  "$defs": {
+    "data_provenance": {
+      "type": "object",
+      "description": "Where this observation came from and how it was captured. Mandatory per Founder directive.",
+      "required": ["source", "capture_method", "clock_source"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1, "description": "Named feed/broker/API, e.g. 'broker-x-ws', 'exchange-tbt'." },
+        "capture_method": { "type": "string", "enum": ["websocket", "rest_poll", "fix", "file_replay", "manual", "other"] },
+        "feed_id": { "type": ["string", "null"] },
+        "capture_host": { "type": ["string", "null"], "description": "Host that captured the record (e.g. the Windows workstation id)." },
+        "clock_source": { "type": "string", "enum": ["ntp", "ptp", "exchange", "system_unsynced", "unknown"], "description": "Basis of the capture clock; drives clock-skew tolerance." },
+        "clock_offset_ms": { "type": ["number", "null"], "description": "Measured offset vs reference clock if known; null = UNKNOWN." },
+        "replay_of": { "type": ["string", "null"], "description": "If this is a replay, the id/batch of the original capture." }
+      },
+      "additionalProperties": false
+    },
+    "confidence": {
+      "type": "object",
+      "description": "Evidence quality of this record. UNKNOWN is a first-class value and must never be silently upgraded.",
+      "required": ["level"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["measured", "derived", "modeled", "unknown"],
+          "description": "measured = direct observation; derived = computed only from measured inputs; modeled = involves an explicit model/assumption (must name it); unknown = insufficient evidence."
+        },
+        "basis": { "type": ["string", "null"], "description": "Human-readable justification for the level." },
+        "sample_size": { "type": ["integer", "null"], "minimum": 0, "description": "Supporting observation count where applicable." },
+        "interval": {
+          "type": ["object", "null"],
+          "description": "Confidence interval for a derived quantity. Present only when computed from real samples; never fabricated.",
+          "required": ["low", "high", "coverage", "method"],
+          "properties": {
+            "low": { "type": "number" },
+            "high": { "type": "number" },
+            "coverage": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1, "description": "e.g. 0.95 for a 95% interval." },
+            "method": { "type": "string", "enum": ["bootstrap", "normal_approx", "t_interval", "wilson", "other"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "market_conditions": {
+      "type": "object",
+      "description": "Snapshot of market state at event time. All fields optional and nullable — absent evidence stays absent, it is not defaulted.",
+      "properties": {
+        "mid_price": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "best_bid": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "best_ask": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "quoted_spread": { "type": ["number", "null"], "minimum": 0, "description": "best_ask - best_bid; must be >= 0 (SPEC-05 R-PX-2)." },
+        "depth_bid_qty": { "type": ["number", "null"], "minimum": 0 },
+        "depth_ask_qty": { "type": ["number", "null"], "minimum": 0 },
+        "session_phase": { "type": ["string", "null"], "enum": ["pre_open", "continuous", "closing", "post_close", "halt", null] },
+        "volatility_proxy": { "type": ["number", "null"], "minimum": 0, "description": "e.g. rolling realized vol; label its definition in provenance." }
+      },
+      "additionalProperties": false
+    }
+  }
+}
