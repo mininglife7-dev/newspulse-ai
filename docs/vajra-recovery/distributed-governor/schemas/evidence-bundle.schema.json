@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/omega/evidence-bundle.schema.json",
+  "title": "Evidence Bundle",
+  "description": "The unit the Windows Governor publishes across the Secure Evidence Bridge and the Cloud Governor consumes. Append-only and hash-chained (mirrors the Execution Reality Engine raw store). Carries verified observations and capability statuses. No field may be fabricated; absent evidence is null/unknown, never defaulted. Secret VALUES never appear here — only secret presence-by-type (mirrors Collect-VajraEvidence.ps1 guarantee).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "publisher",
+    "sequence",
+    "produced_at",
+    "integrity",
+    "capability_statuses",
+    "observations",
+    "self_declared_confidence"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "bundle_id": { "type": "string", "minLength": 1, "description": "Globally unique id for this bundle." },
+    "publisher": {
+      "type": "object",
+      "required": ["governor", "host_fingerprint", "collector_version"],
+      "properties": {
+        "governor": { "type": "string", "const": "windows_governor" },
+        "host_fingerprint": { "type": "string", "description": "Stable, non-secret host identifier (e.g. hashed machine id). No hostnames that leak PII if avoidable." },
+        "collector_version": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "sequence": { "type": "integer", "minimum": 0, "description": "Monotonic per-publisher sequence number; gaps are detectable by the consumer." },
+    "produced_at": { "type": "string", "format": "date-time", "description": "When the Windows Governor produced this bundle (its clock)." },
+    "observation_window": {
+      "type": ["object", "null"],
+      "properties": {
+        "from": { "type": "string", "format": "date-time" },
+        "to": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["prev_bundle_hash", "bundle_hash", "hash_algo"],
+      "properties": {
+        "prev_bundle_hash": { "type": ["string", "null"], "description": "bundle_hash of sequence-1; null for the first bundle. Forms the chain." },
+        "bundle_hash": { "type": "string", "description": "H(canonical(bundle-without-this-field) ‖ prev_bundle_hash)." },
+        "hash_algo": { "type": "string", "enum": ["sha256", "sha512"] },
+        "signature": { "type": ["string", "null"], "description": "Optional detached signature over bundle_hash. Verifier trusts only known keys." }
+      },
+      "additionalProperties": false
+    },
+    "capability_statuses": {
+      "type": "array",
+      "description": "Verified status per Windows capability at production time.",
+      "items": {
+        "type": "object",
+        "required": ["capability_id", "status", "observed_at"],
+        "properties": {
+          "capability_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["unknown", "absent", "not_started", "unverified", "healthy", "degraded", "unhealthy"] },
+          "observed_at": { "type": "string", "format": "date-time" },
+          "last_artifact_at": { "type": ["string", "null"], "format": "date-time", "description": "When this capability last produced its expected artifact; null = never/unknown." },
+          "checks_passed": { "type": ["array", "null"], "items": { "type": "string" } },
+          "checks_failed": { "type": ["array", "null"], "items": { "type": "string" } },
+          "evidence_ref": { "type": ["string", "null"], "description": "Pointer (path/hash) to the observed artifact, not the artifact's secret contents." }
+        },
+        "additionalProperties": false
+      }
+    },
+    "observations": {
+      "type": "array",
+      "description": "Execution Reality Engine observation records (see ../../execution-reality-engine/schemas). May be empty when nothing was observable in the window (a legitimate, recorded state).",
+      "items": { "type": "object" }
+    },
+    "anomalies": {
+      "type": ["array", "null"],
+      "description": "Facts the Windows Governor flags for Cloud attention (e.g. stale collector, missing artifact). Observations, not conclusions.",
+      "items": {
+        "type": "object",
+        "required": ["kind", "detail", "confidence"],
+        "properties": {
+          "kind": { "type": "string" },
+          "detail": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["measured", "derived", "modeled", "unknown"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "self_declared_confidence": {
+      "type": "string",
+      "enum": ["measured", "derived", "modeled", "unknown"],
+      "description": "Overall evidence grade of this bundle. The Cloud Governor re-verifies; it never trusts this blindly."
+    },
+    "secret_exposure_guard": {
+      "type": "object",
+      "description": "Assertion that no secret values are included; secrets are reported by presence/type only.",
+      "required": ["scrubbed"],
+      "properties": {
+        "scrubbed": { "type": "boolean", "const": true },
+        "secret_findings_by_type": { "type": ["array", "null"], "items": { "type": "string" }, "description": "e.g. ['aws_key:1','broker_token:2'] — counts/types only, never values." }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

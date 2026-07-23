@@ -1,0 +1,126 @@
+{
+  "$schema_ref": "../schemas/omega-capability-contract.schema.json",
+  "generated_purpose": "Capability registry for the Windows Governor's read-only domain. Every status is 'unknown' because nothing has yet been observed on the Windows environment (READ authority not yet exercised). Freshness thresholds are null pending calibration. This registry is the checklist the Windows Governor fills in on its first understanding pass — it fabricates nothing.",
+  "capabilities": [
+    {
+      "capability_id": "vajra_repository",
+      "owner": "windows_governor",
+      "purpose": "Authoritative VAJRA source, history, and configuration on C:\\vajra.",
+      "entry_point": { "kind": "repository", "reference": "C:\\vajra", "host": "windows" },
+      "expected_artifact": { "description": "Repository inventory: branches, HEAD, dirty state, subsystem map", "location": null, "format": "json" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": "on change + periodic", "session_aware": false },
+      "success_criteria": ["repo readable", "git metadata captured", "subsystems enumerated", "no secret values emitted"],
+      "automated_verification": { "method": "observed_artifact", "checks": ["R-PROV-1"], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "vajra_gold_repository",
+      "owner": "windows_governor",
+      "purpose": "VAJRA Gold variant/backup on C:\\vajra_gold; reconcile against vajra_repository.",
+      "entry_point": { "kind": "repository", "reference": "C:\\vajra_gold", "host": "windows" },
+      "expected_artifact": { "description": "Inventory + divergence report vs C:\\vajra", "location": null, "format": "json" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": "on change + periodic", "session_aware": false },
+      "success_criteria": ["repo readable", "divergence vs vajra captured"],
+      "automated_verification": { "method": "observed_artifact", "checks": [], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "market_data_collector",
+      "owner": "windows_governor",
+      "purpose": "Continuously capture quotes/trades for tracked instruments.",
+      "entry_point": { "kind": "unknown", "reference": "TBD — discovered during first understanding pass", "host": "windows" },
+      "expected_artifact": { "description": "Fresh Execution Reality Engine quote/trade observations", "location": null, "format": "jsonl" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": true },
+      "success_criteria": ["observations present during session", "pass R-PX-1/R-PX-2/R-TS-1/R-TS-3", "coverage of required instruments"],
+      "automated_verification": { "method": "rule_checks", "checks": ["R-PX-1", "R-PX-2", "R-TS-1", "R-TS-3"], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "scheduler",
+      "owner": "windows_governor",
+      "purpose": "Trigger collection/research/paper-trading tasks on the correct cadence and calendar.",
+      "entry_point": { "kind": "scheduler_job", "reference": "TBD (Task Scheduler / cron-equivalent)", "host": "windows" },
+      "expected_artifact": { "description": "On-time, calendar-correct task fires with run logs", "location": null, "format": "log" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": true },
+      "success_criteria": ["fires on trading days only", "within tolerance window", "no fire during closed session"],
+      "automated_verification": { "method": "rule_checks", "checks": ["R-CAL-1"], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "paper_trading",
+      "owner": "windows_governor",
+      "purpose": "Simulated execution producing fill/latency/rejection evidence WITHOUT live capital.",
+      "entry_point": { "kind": "unknown", "reference": "TBD", "host": "windows" },
+      "expected_artifact": { "description": "Order-lifecycle + fill + rejection observations from paper trades", "location": null, "format": "jsonl" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": true },
+      "success_criteria": ["lifecycle trail complete", "arrival references present (R-REF-1)", "no live orders"],
+      "automated_verification": { "method": "rule_checks", "checks": ["R-QTY-1", "R-TS-2", "R-REF-1"], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "execution_evidence_store",
+      "owner": "windows_governor",
+      "purpose": "Local historical datasets / execution records preserved on the workstation.",
+      "entry_point": { "kind": "dataset", "reference": "TBD", "host": "windows" },
+      "expected_artifact": { "description": "Historical observation datasets + integrity metadata", "location": null, "format": "mixed" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": false },
+      "success_criteria": ["datasets enumerated", "row counts + date ranges captured", "checksums recorded"],
+      "automated_verification": { "method": "hash_compare", "checks": ["R-STORE-2"], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "logs_and_artifacts",
+      "owner": "windows_governor",
+      "purpose": "Application/research logs and generated reports.",
+      "entry_point": { "kind": "dataset", "reference": "TBD", "host": "windows" },
+      "expected_artifact": { "description": "Log/artifact inventory with freshness + size, no secret values", "location": null, "format": "json" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": false },
+      "success_criteria": ["inventory captured", "freshness computed", "secrets reported by type only"],
+      "automated_verification": { "method": "observed_artifact", "checks": ["R-PROV-1"], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "system_health",
+      "owner": "windows_governor",
+      "purpose": "Workstation health that affects capability delivery (disk, uptime, clock sync).",
+      "entry_point": { "kind": "service", "reference": "read-only host queries", "host": "windows" },
+      "expected_artifact": { "description": "Health snapshot: disk free, clock source/offset, process liveness", "location": null, "format": "json" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": "periodic", "session_aware": false },
+      "success_criteria": ["disk headroom captured", "clock_source + offset captured", "critical processes enumerated"],
+      "automated_verification": { "method": "observed_artifact", "checks": ["R-TS-3"], "runs_on": "windows_governor" },
+      "status": "unknown",
+      "status_evidence": null
+    },
+    {
+      "capability_id": "evidence_bridge_publish",
+      "owner": "windows_governor",
+      "purpose": "Publish verified evidence bundles to the Cloud Governor (append-only, integrity-checked).",
+      "entry_point": { "kind": "script", "reference": "windows-governor/observe.reference.ps1 (reference)", "host": "windows" },
+      "expected_artifact": { "description": "Evidence bundles conforming to evidence-bundle.schema.json, hash-chained", "location": null, "format": "json" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": "per learning-loop cycle", "session_aware": false },
+      "success_criteria": ["bundle validates against schema", "hash chain intact", "no secret values", "sequence monotonic"],
+      "automated_verification": { "method": "hash_compare", "checks": ["R-STORE-2"], "runs_on": "cloud_governor" },
+      "status": "not_started",
+      "status_evidence": "Bridge protocol specified (ARCH-02); publisher not yet instantiated on Windows."
+    },
+    {
+      "capability_id": "evidence_bridge_consume",
+      "owner": "cloud_governor",
+      "purpose": "Ingest, verify, and record bridged evidence into organizational memory.",
+      "entry_point": { "kind": "service", "reference": "cloud consumer (ARCH-06)", "host": "cloud" },
+      "expected_artifact": { "description": "Verified observations in memory + updated capability statuses", "location": null, "format": "jsonl" },
+      "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": "per publish", "session_aware": false },
+      "success_criteria": ["integrity verified before use", "sequence-gap detection", "rejected bundles quarantined not dropped"],
+      "automated_verification": { "method": "rule_checks", "checks": ["R-STORE-1", "R-STORE-2"], "runs_on": "cloud_governor" },
+      "status": "not_started",
+      "status_evidence": "Consumer contract specified (ARCH-06); awaiting first real bundle."
+    }
+  ]
+}
