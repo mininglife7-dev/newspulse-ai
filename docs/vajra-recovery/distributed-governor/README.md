@@ -36,6 +36,9 @@ the two-governor split, organizational memory, and the learning loop.
 | `EXECUTIVE-CYCLE-PROTOCOL.md` | the executive decision discipline every cycle runs (value test, loop, Daily Review, gates) |
 | `research-gate.json` | **canonical** Alpha Campaign 2 gate (5 preconditions) — single source of truth |
 | `CYCLE-LEDGER.jsonl` | append-only record of each executive cycle (the permanent product: learning) |
+| `paper-trading/SUPERVISION-PROTOCOL.md` | Trade Gate + pre-registered journal + stop conditions for supervised PAPER sessions |
+| `paper-trading/schemas/trade-journal.schema.json` | pre-registered paper-trade record (hypothesis locked at entry) |
+| `paper-trading/SESSION-REPORT-2026-07-23.md` | session report: Governor STOPPED (system absent) — honest, zero fabricated trades |
 
 ## Safety laws (default mode)
 
