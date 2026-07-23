@@ -5,8 +5,8 @@
     {
       "capability_id": "vajra_repository",
       "owner": "windows_governor",
-      "purpose": "Authoritative VAJRA source, history, and configuration on C:\\vajra.",
-      "entry_point": { "kind": "repository", "reference": "C:\\vajra", "host": "windows" },
+      "purpose": "Authoritative VAJRA source, history, and configuration on C:\\VAJRA.",
+      "entry_point": { "kind": "repository", "reference": "C:\\VAJRA", "host": "windows" },
       "expected_artifact": { "description": "Repository inventory: branches, HEAD, dirty state, subsystem map", "location": null, "format": "json" },
       "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": "on change + periodic", "session_aware": false },
       "success_criteria": ["repo readable", "git metadata captured", "subsystems enumerated", "no secret values emitted"],
@@ -17,8 +17,8 @@
     {
       "capability_id": "vajra_gold_repository",
       "owner": "windows_governor",
-      "purpose": "VAJRA Gold variant/backup on C:\\vajra_gold; reconcile against vajra_repository.",
-      "entry_point": { "kind": "repository", "reference": "C:\\vajra_gold", "host": "windows" },
+      "purpose": "VAJRA Gold variant/backup on C:\\vajra_gold_20260503; reconcile against vajra_repository.",
+      "entry_point": { "kind": "repository", "reference": "C:\\vajra_gold_20260503", "host": "windows" },
       "expected_artifact": { "description": "Inventory + divergence report vs C:\\vajra", "location": null, "format": "json" },
       "freshness_requirement": { "max_staleness_seconds": null, "expected_cadence": "on change + periodic", "session_aware": false },
       "success_criteria": ["repo readable", "divergence vs vajra captured"],

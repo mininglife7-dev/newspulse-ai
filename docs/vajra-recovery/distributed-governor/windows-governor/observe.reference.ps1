@@ -18,7 +18,7 @@
 # Aligns with the existing read-only precedent: tools/windows/Collect-VajraEvidence.ps1
 # -----------------------------------------------------------------------------
 param(
-  [string[]] $Roots        = @('C:\vajra', 'C:\vajra_gold'),
+  [string[]] $Roots        = @('C:\VAJRA', 'C:\vajra_gold_20260503'),   # authoritative paths (Founder, 2026-07-23)
   [string]   $EvidenceDir  = 'C:\VAJRA_EVIDENCE_EXPORT\bundles',
   [int]      $Sequence     = 0,          # caller supplies monotonic sequence
   [string]   $PrevHash     = $null       # bundle_hash of sequence-1, or $null
