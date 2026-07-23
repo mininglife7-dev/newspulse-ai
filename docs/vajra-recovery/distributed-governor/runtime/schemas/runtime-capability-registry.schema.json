@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/omega/runtime-capability-registry.schema.json",
+  "title": "Runtime Capability Registry",
+  "description": "Output of Governor Ω Phase-0 runtime discovery. One Governor Ω, no assumed environment: every capability carries exactly one verified state, produced by an actual probe. Governor plans only with capabilities that are AVAILABLE/READ_WRITE/READ_ONLY and verification PASS.",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "runtime_context", "capabilities", "planning_rule"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "runtime_context": {
+      "type": "object",
+      "required": ["operating_system", "hostname", "current_user", "current_working_directory"],
+      "properties": {
+        "operating_system": { "type": "string" },
+        "hostname": { "type": "string" },
+        "current_user": { "type": "string" },
+        "current_working_directory": { "type": "string" },
+        "os_family": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Keyed by capability name; each value is a probed state.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "verification", "evidence"],
+        "properties": {
+          "status": { "type": "string", "enum": ["AVAILABLE", "READ_ONLY", "READ_WRITE", "UNAVAILABLE", "UNKNOWN"] },
+          "verification": { "type": "string", "enum": ["PASS", "FAIL", "N/A"] },
+          "evidence": { "type": "string", "description": "Verbatim probe result. Required — a state with no evidence is invalid." },
+          "location": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "planning_rule": { "type": "string" }
+  },
+  "additionalProperties": false
+}

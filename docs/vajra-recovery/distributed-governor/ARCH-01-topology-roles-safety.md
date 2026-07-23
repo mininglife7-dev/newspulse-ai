@@ -1,5 +1,14 @@
 # ARCH-01 — Topology, Roles & Safety
 
+> **Superseding framing (2026-07-23):** there is **one Governor Ω**, not a
+> "Cloud Governor" and a "Windows Governor." Those names denote two *runtime
+> contexts* the same Governor Ω may discover itself in. Before any mission it
+> runs Phase-0 discovery ([`runtime/`](runtime/README.md)) and plans only with
+> verified-`AVAILABLE` capabilities. Read "Cloud Governor" below as "Governor Ω
+> in a cloud/observer context" and "Windows Governor" as "Governor Ω in a
+> context where VAJRA is locally reachable." Roles are assigned by the
+> Capability Registry, never assumed.
+
 **Mission:** OMEGA — Distributed Scientific Governor
 **Posture:** READ-ONLY by default. The first mission is *understanding, not
 changing.*

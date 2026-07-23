@@ -1,5 +1,11 @@
 # MISSION OMEGA — Distributed Scientific Governor
 
+> **One Governor Ω (2026-07-23):** "Cloud Governor" and "Windows Governor" are
+> two *runtime contexts* of a single Governor Ω, not two entities. Every mission
+> begins with Phase-0 runtime discovery → verified Capability Registry → plan
+> with `AVAILABLE` capabilities only. See [`runtime/`](runtime/README.md); the
+> latest verified registry is `runtime/RUNTIME-REGISTRY.latest.json`.
+
 **Objective:** unify Cloud Governor and Windows Governor into one scientific
 organization for continuous observation, evidence, learning, and evolution —
 **not remote control.**
