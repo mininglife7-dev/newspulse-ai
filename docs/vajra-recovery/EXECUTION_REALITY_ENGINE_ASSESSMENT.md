@@ -149,6 +149,11 @@ the uncertainty precisely, which is the first step to eliminating it.**
 
 ## 6. Research Gate status (Deliverable 10 input)
 
+> **Superseded (2026-07-23):** the canonical, machine-readable Research Gate is
+> now [`distributed-governor/research-gate.json`](distributed-governor/research-gate.json)
+> (5 preconditions, adds the Physics-Law economic-feasibility gate). The table
+> below is retained for history; the JSON is the source of truth.
+
 Per the directive, no new strategy family may enter research until all four
 gates pass. Current state:
 

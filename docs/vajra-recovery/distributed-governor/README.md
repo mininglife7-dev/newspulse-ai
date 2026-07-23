@@ -33,6 +33,9 @@ the two-governor split, organizational memory, and the learning loop.
 | `schemas/learning-record.schema.json` | append-only organizational-memory record |
 | `contracts/windows-capabilities.json` | concrete Windows capability registry (all `unknown` until observed) |
 | `windows-governor/observe.reference.ps1` | **unverified** read-only observer skeleton |
+| `EXECUTIVE-CYCLE-PROTOCOL.md` | the executive decision discipline every cycle runs (value test, loop, Daily Review, gates) |
+| `research-gate.json` | **canonical** Alpha Campaign 2 gate (5 preconditions) — single source of truth |
+| `CYCLE-LEDGER.jsonl` | append-only record of each executive cycle (the permanent product: learning) |
 
 ## Safety laws (default mode)
 

@@ -1,0 +1,51 @@
+{
+  "$comment": "Canonical Alpha Campaign 2 research gate (Research Law + Physics Law). Single source of truth for whether new strategy search may begin. Supersedes the prose Research Gate in ../EXECUTION_REALITY_ENGINE_ASSESSMENT.md and execution-reality-engine/SPEC-06. A precondition is 'met' ONLY with cited evidence; UNKNOWN/unmet blocks the campaign. No precondition may be marked met by assumption.",
+  "gate_id": "alpha-campaign-2",
+  "evaluated_at": "2026-07-23",
+  "overall_state": "CLOSED",
+  "rule": "Alpha Campaign 2 opens only when every precondition.state == 'met' with evidence.",
+  "preconditions": [
+    {
+      "id": "P1_observation_trustworthy",
+      "statement": "Observation is trustworthy — evidence bundles verified end-to-end (integrity + schema + rules).",
+      "state": "unmet",
+      "reason": "No evidence bundles have been produced; bridge not instantiated.",
+      "evidence": null,
+      "collapses_when": "First verified bundles flow across the Secure Evidence Bridge (ARCH-02/06)."
+    },
+    {
+      "id": "P2_instruments_healthy",
+      "statement": "Scientific instruments (collectors, scheduler, store) are healthy by capability output, not uptime.",
+      "state": "unknown",
+      "reason": "All Windows capabilities status=unknown until observed (contracts/windows-capabilities.json).",
+      "evidence": null,
+      "collapses_when": "Capability contracts verified healthy with output evidence."
+    },
+    {
+      "id": "P3_data_collection_continuous",
+      "statement": "Data collection is continuous — no undetected staleness during sessions.",
+      "state": "unmet",
+      "reason": "Collector absent/unobserved; freshness thresholds uncalibrated (null).",
+      "evidence": null,
+      "collapses_when": "Collector produces fresh output across multiple sessions and freshness_detector confirms."
+    },
+    {
+      "id": "P4_execution_reality_measured",
+      "statement": "Execution reality is measured — spread/slippage/latency/fills observed, not estimated (Execution Law).",
+      "state": "unmet",
+      "reason": "All 10 execution parameters UNKNOWN; zero observations (EXECUTION_REALITY_ENGINE_ASSESSMENT.md).",
+      "evidence": null,
+      "collapses_when": "Parameters promoted UNKNOWN->measured with confidence intervals (SPEC-06)."
+    },
+    {
+      "id": "P5_economic_feasibility_established",
+      "statement": "Economic feasibility established — the market is shown to PERMIT alpha net of measured costs (Physics Law).",
+      "state": "unmet",
+      "reason": "Feasibility Map cannot be updated with observed execution because execution is unmeasured (depends on P4).",
+      "evidence": null,
+      "collapses_when": "Feasibility Map recomputed from measured net execution costs shows a non-empty viable region."
+    }
+  ],
+  "binding_constraint": "Windows READ access not yet granted (environment boundary). Every precondition is downstream of it.",
+  "note": "Physics Law: never optimize inside an economically impossible region. Until P5 is met, strategy search is not merely premature — it may be searching a region the market forbids."
+}
