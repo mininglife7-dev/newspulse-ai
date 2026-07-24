@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/execution-reality/fill.observation.schema.json",
+  "title": "Fill Observation",
+  "description": "A single execution (full or partial) of one of OUR orders. The atomic evidence unit for realized spread, slippage, and market impact.",
+  "allOf": [{ "$ref": "./observation.envelope.schema.json" }],
+  "properties": {
+    "observation_type": { "const": "fill" },
+    "fill": {
+      "type": "object",
+      "required": ["client_order_id", "side", "fill_price", "fill_qty", "order_size", "is_partial"],
+      "properties": {
+        "client_order_id": { "type": "string", "minLength": 1 },
+        "broker_order_id": { "type": ["string", "null"] },
+        "fill_id": { "type": ["string", "null"] },
+        "side": { "type": "string", "enum": ["buy", "sell"] },
+        "fill_price": { "type": "number", "exclusiveMinimum": 0 },
+        "fill_qty": { "type": "number", "exclusiveMinimum": 0 },
+        "order_size": { "type": "number", "exclusiveMinimum": 0, "description": "Parent order quantity. Mandatory per Founder directive. fill_qty <= order_size (SPEC-05 R-QTY-1)." },
+        "cumulative_filled_qty": { "type": ["number", "null"], "minimum": 0, "description": "Running fill total for the parent order; enables partial-fill sequencing." },
+        "is_partial": { "type": "boolean" },
+        "reference_mid_at_fill": { "type": ["number", "null"], "exclusiveMinimum": 0, "description": "Mid at fill time for realized-spread; null = UNKNOWN." },
+        "post_trade_mid": {
+          "type": ["object", "null"],
+          "description": "Mid at fixed horizons after the fill, for market-impact decay. Keys are horizons; values null until measured.",
+          "additionalProperties": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+        },
+        "fees": {
+          "type": ["object", "null"],
+          "description": "Realized cost components for THIS fill, as charged. Component taxonomy is known; rates are sourced from the broker/regulator, never assumed. null members = not yet attributed.",
+          "properties": {
+            "brokerage": { "type": ["number", "null"], "minimum": 0 },
+            "stt": { "type": ["number", "null"], "minimum": 0, "description": "Securities Transaction Tax." },
+            "exchange_txn_charge": { "type": ["number", "null"], "minimum": 0 },
+            "sebi_turnover_fee": { "type": ["number", "null"], "minimum": 0 },
+            "stamp_duty": { "type": ["number", "null"], "minimum": 0 },
+            "gst": { "type": ["number", "null"], "minimum": 0 },
+            "other": { "type": ["number", "null"], "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["fill"]
+}

@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-07-24T08:49:13Z",
+  "overall_status": "GREEN",
+  "founder_view": {
+    "current_mission": "Scientific Standby (Maintain \u00b7 Observe \u00b7 Verify)",
+    "current_phase": "Standing by \u2014 no manufactured progress",
+    "waiting_condition": "Resume only on a Founder trigger (see Governor view)",
+    "blockers": [
+      "VAJRA repository UNAVAILABLE (executor not on the VAJRA host)",
+      "No market-data feed connected"
+    ],
+    "next_buildable_task": "Retire buildable scientific debt on request (e.g. SD-07 benchmark) \u2014 otherwise await trigger"
+  },
+  "governor_view": {
+    "governor_status": "SCIENTIFIC STANDBY (approved)",
+    "measured_by": "integrity, not activity",
+    "resume_triggers": [
+      "VAJRA repository becomes reachable",
+      "New scientific evidence is acquired",
+      "Founder authorizes a new research mission",
+      "Scientific debt is explicitly selected for retirement"
+    ],
+    "standby_duties": [
+      "preserve integrity",
+      "supervise CI/PRs",
+      "reject fabricated evidence",
+      "protect research assets",
+      "record blockers"
+    ],
+    "cycles_completed": 12
+  },
+  "engineering_view": {
+    "git_branch": "claude/execution-reality-engine-mwuh56",
+    "latest_commit": {
+      "sha": "24eda3a",
+      "subject": "feat(vajra): scientific-integrity platform \u2014 8 engines (data/backtest/stats/regime/autopsy/memory/skeptic/readiness)"
+    },
+    "test_status": "79/79 PASS",
+    "pull_request": "#196 (draft, CI green)",
+    "repository_availability": {
+      "vajra": "UNAVAILABLE",
+      "market_data": "UNAVAILABLE",
+      "broker": "UNAVAILABLE",
+      "verified_at": "2026-07-24T07:58:39Z"
+    },
+    "delivered": [
+      "Execution Reality Engine kit",
+      "Distributed Governor",
+      "Learning OS",
+      "Validation Framework (metric+WFO oracle)",
+      "8 scientific-integrity engines"
+    ]
+  },
+  "scientific_view": {
+    "integrity_status": "MAINTAINED \u2014 no fabricated evidence; VAJRA code OUT OF SCOPE",
+    "verification": "suite 79/79 PASS (normal & python -O)",
+    "reproducibility": "first-class (all resampling seeded)",
+    "scientific_debt": {
+      "open": 14,
+      "retired": 1,
+      "total": 15
+    },
+    "authority": "every claim references ASSURANCE_BOUNDARY.md"
+  }
+}

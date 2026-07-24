@@ -1,0 +1,57 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta http-equiv=refresh content=60><title>VAJRA Mission Control</title><style>
+:root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--mut:#57606a;--line:#d0d7de}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--mut:#9198a1;--line:#30363d}}
+:root[data-theme=dark]{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--mut:#9198a1;--line:#30363d}
+:root[data-theme=light]{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--mut:#57606a;--line:#d0d7de}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+.mc-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg)}
+.mc-head h1{font-size:18px;margin:0}.dot{width:12px;height:12px;border-radius:50%}
+.status{font-weight:700;letter-spacing:.05em}.gen{color:var(--mut);font-size:12px;margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:16px 20px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px;color:var(--mut)}
+.card.founder{border-top:3px solid #0969da}.card.governor{border-top:3px solid #8250df}
+.card.engineering{border-top:3px solid #1a7f37}.card.scientific{border-top:3px solid #bf3989}
+.row{display:flex;gap:12px;padding:3px 0;border-bottom:1px dotted var(--line)}
+.k{color:var(--mut);min-width:130px}.v{font-weight:600;word-break:break-word}
+.sub{margin:10px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+ul{margin:2px 0 0;padding-left:18px}li{padding:1px 0}
+.mc-foot{padding:12px 20px;color:var(--mut);font-size:12px;border-top:1px solid var(--line)}
+</style></head><body>
+<header class="mc-head">
+  <div class="dot" style="background:#1a7f37"></div>
+  <h1>VAJRA Mission Control</h1>
+  <span class="status" style="color:#1a7f37">GREEN</span>
+  <span class="gen">generated <time id="gen" datetime="2026-07-24T08:49:13Z">2026-07-24T08:49:13Z</time> · <span id="ago"></span></span>
+</header>
+<main class="grid">
+  <section class="card founder"><h2>Founder View</h2>
+    <div class="row"><span class="k">Current mission</span><span class="v">Scientific Standby (Maintain · Observe · Verify)</span></div><div class="row"><span class="k">Phase</span><span class="v">Standing by — no manufactured progress</span></div><div class="row"><span class="k">Waiting on</span><span class="v">Resume only on a Founder trigger (see Governor view)</span></div><div class="row"><span class="k">Next buildable</span><span class="v">Retire buildable scientific debt on request (e.g. SD-07 benchmark) — otherwise await trigger</span></div>
+    <div class="sub">Blockers</div><ul><li>VAJRA repository UNAVAILABLE (executor not on the VAJRA host)</li><li>No market-data feed connected</li></ul>
+  </section>
+  <section class="card governor"><h2>Governor View</h2>
+    <div class="row"><span class="k">Status</span><span class="v">SCIENTIFIC STANDBY (approved)</span></div><div class="row"><span class="k">Measured by</span><span class="v">integrity, not activity</span></div><div class="row"><span class="k">Cycles completed</span><span class="v">12</span></div>
+    <div class="sub">Resume triggers</div><ul><li>VAJRA repository becomes reachable</li><li>New scientific evidence is acquired</li><li>Founder authorizes a new research mission</li><li>Scientific debt is explicitly selected for retirement</li></ul>
+    <div class="sub">Standby duties</div><ul><li>preserve integrity</li><li>supervise CI/PRs</li><li>reject fabricated evidence</li><li>protect research assets</li><li>record blockers</li></ul>
+  </section>
+  <section class="card engineering"><h2>Engineering View</h2>
+    <div class="row"><span class="k">Branch</span><span class="v">claude/execution-reality-engine-mwuh56</span></div><div class="row"><span class="k">Latest commit</span><span class="v">24eda3a — feat(vajra): scientific-integrity platform — 8 engines (data/backtest/stats/regime/autopsy/memory/skeptic/readiness)</span></div><div class="row"><span class="k">Tests</span><span class="v">79/79 PASS</span></div><div class="row"><span class="k">Pull request</span><span class="v">#196 (draft, CI green)</span></div><div class="row"><span class="k">VAJRA repo</span><span class="v">UNAVAILABLE</span></div><div class="row"><span class="k">Market data</span><span class="v">UNAVAILABLE</span></div><div class="row"><span class="k">Broker</span><span class="v">UNAVAILABLE</span></div><div class="row"><span class="k">Capability verified</span><span class="v">2026-07-24T07:58:39Z</span></div>
+    <div class="sub">Delivered</div><ul><li>Execution Reality Engine kit</li><li>Distributed Governor</li><li>Learning OS</li><li>Validation Framework (metric+WFO oracle)</li><li>8 scientific-integrity engines</li></ul>
+  </section>
+  <section class="card scientific"><h2>Scientific View</h2>
+    <div class="row"><span class="k">Integrity</span><span class="v">MAINTAINED — no fabricated evidence; VAJRA code OUT OF SCOPE</span></div><div class="row"><span class="k">Verification</span><span class="v">suite 79/79 PASS (normal & python -O)</span></div><div class="row"><span class="k">Reproducibility</span><span class="v">first-class (all resampling seeded)</span></div><div class="row"><span class="k">Scientific debt</span><span class="v">14 open · 1 retired · 15 total</span></div><div class="row"><span class="k">Authority</span><span class="v">every claim references ASSURANCE_BOUNDARY.md</span></div>
+  </section>
+</main>
+<footer class="mc-foot">Single source of truth · regenerated by mission_control.py · governance is never mixed with implementation</footer>
+<script>
+  (function(){
+    var g=document.getElementById('gen'); if(!g)return;
+    function upd(){var t=new Date(g.getAttribute('datetime')); var s=Math.max(0,Math.round((Date.now()-t)/1000));
+      var el=document.getElementById('ago'); if(!el)return;
+      var txt=s<60?s+'s ago':(s<3600?Math.round(s/60)+'m ago':Math.round(s/3600)+'h ago');
+      el.textContent=txt; if(s>900){el.style.color='#9a6700';el.textContent=txt+' (stale — re-run mission_control.py)';} }
+    upd(); setInterval(upd,1000);
+  })();
+</script>
+</body></html>

@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-24T07:58:39Z",
+  "runtime_context": {
+    "operating_system": "Linux 6.18.5 (x86_64)",
+    "hostname": "vm",
+    "current_user": "root",
+    "current_working_directory": "/home/user/newspulse-ai",
+    "os_family": "posix"
+  },
+  "capabilities": {
+    "filesystem": {
+      "status": "READ_WRITE",
+      "verification": "PASS",
+      "evidence": "wrote+removed temp file in /home/user/newspulse-ai",
+      "location": "/home/user/newspulse-ai"
+    },
+    "internet_access": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "tcp connect github.com:443 ok (egress proxy=yes)"
+    },
+    "git": {
+      "status": "READ_WRITE",
+      "verification": "PASS",
+      "evidence": "branch=claude/execution-reality-engine-mwuh56 commit=265aedb tree=dirty(4 files)",
+      "location": "/home/user/newspulse-ai"
+    },
+    "github_auth": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "git ls-remote origin ok (67 heads)"
+    },
+    "python": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "which -> /usr/local/bin/python3",
+      "location": "/usr/local/bin/python3"
+    },
+    "powershell": {
+      "status": "UNAVAILABLE",
+      "verification": "FAIL",
+      "evidence": "powershell not found on PATH"
+    },
+    "node": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "which -> /opt/node22/bin/node",
+      "location": "/opt/node22/bin/node"
+    },
+    "docker": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "which -> /usr/bin/docker",
+      "location": "/usr/bin/docker"
+    },
+    "task_scheduler": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "systemd present (timers/services)"
+    },
+    "execution_environment": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "kind=container markers=['egress-proxy']"
+    },
+    "vercel_access": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "tcp connect vercel.com:443 ok"
+    },
+    "supabase_access": {
+      "status": "AVAILABLE",
+      "verification": "PASS",
+      "evidence": "tcp connect supabase.com:443 ok"
+    },
+    "euro_ai_repository": {
+      "status": "READ_WRITE",
+      "verification": "PASS",
+      "evidence": "EURO AI (newspulse-ai) git repo branch=claude/execution-reality-engine-mwuh56 commit=265aedb",
+      "location": "/home/user/newspulse-ai"
+    },
+    "vajra_repository": {
+      "status": "UNAVAILABLE",
+      "verification": "FAIL",
+      "evidence": "VAJRA not found in ['C:\\\\VAJRA', 'C:\\\\vajra_gold_20260503', './VAJRA', './vajra']"
+    },
+    "market_data": {
+      "status": "UNAVAILABLE",
+      "verification": "FAIL",
+      "evidence": "no market-data source configured/discovered"
+    },
+    "broker": {
+      "status": "UNAVAILABLE",
+      "verification": "FAIL",
+      "evidence": "no broker configured (paper or live)"
+    }
+  },
+  "planning_rule": "Governor \u03a9 plans ONLY with capabilities whose status is AVAILABLE/READ_WRITE/READ_ONLY and verification PASS. UNAVAILABLE/UNKNOWN capabilities may not appear in any plan as operational."
+}

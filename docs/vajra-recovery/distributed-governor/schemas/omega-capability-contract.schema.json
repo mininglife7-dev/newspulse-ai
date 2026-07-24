@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/omega/omega-capability-contract.schema.json",
+  "title": "OMEGA Capability Contract",
+  "description": "Distributed-Governor capability contract. Superset of the Execution Reality Engine capability contract, adding the seven fields MISSION OMEGA mandates (owner, purpose, entry_point, expected_artifact, freshness_requirement, success_criteria, automated_verification). A capability is healthy ONLY when its intended artifact is produced correctly and on time. Empirical thresholds stay null (UNKNOWN) until observed on the Windows environment.",
+  "type": "object",
+  "required": [
+    "capability_id",
+    "owner",
+    "purpose",
+    "entry_point",
+    "expected_artifact",
+    "freshness_requirement",
+    "success_criteria",
+    "automated_verification",
+    "status"
+  ],
+  "properties": {
+    "capability_id": { "type": "string", "minLength": 1 },
+    "owner": {
+      "type": "string",
+      "enum": ["cloud_governor", "windows_governor"],
+      "description": "Which governor is accountable for this capability's health."
+    },
+    "purpose": { "type": "string", "minLength": 1, "description": "Why this capability exists, in one sentence." },
+    "entry_point": {
+      "type": "object",
+      "description": "How the capability is invoked/where its work originates. Paths/commands are declared but not executed by Cloud Governor (READ-ONLY default).",
+      "required": ["kind", "reference"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["script", "service", "scheduler_job", "manual", "dataset", "repository", "unknown"] },
+        "reference": { "type": "string", "description": "e.g. 'C:\\vajra\\collectors\\run.py' or a job name. Verbatim; never inferred." },
+        "host": { "type": "string", "enum": ["cloud", "windows", "exchange", "broker", "unknown"] }
+      },
+      "additionalProperties": false
+    },
+    "expected_artifact": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": { "type": "string", "description": "The concrete output that proves the capability works." },
+        "location": { "type": ["string", "null"], "description": "Where the artifact lands; null = UNKNOWN until observed." },
+        "format": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "freshness_requirement": {
+      "type": "object",
+      "required": ["max_staleness_seconds", "session_aware"],
+      "properties": {
+        "max_staleness_seconds": { "type": ["number", "null"], "exclusiveMinimum": 0, "description": "null = UNKNOWN, calibrated from observed cadence. Never guessed." },
+        "expected_cadence": { "type": ["string", "null"] },
+        "session_aware": { "type": "boolean", "description": "If true, freshness only evaluated during active market sessions." }
+      },
+      "additionalProperties": false
+    },
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Objective, checkable statements that together define 'working correctly'."
+    },
+    "automated_verification": {
+      "type": "object",
+      "required": ["method", "checks"],
+      "properties": {
+        "method": { "type": "string", "enum": ["observed_artifact", "hash_compare", "rule_checks", "count_threshold", "not_yet_defined"] },
+        "checks": { "type": "array", "items": { "type": "string" }, "description": "Named checks (may reference Execution Reality Engine SPEC-05 rule ids)." },
+        "runs_on": { "type": "string", "enum": ["cloud_governor", "windows_governor"], "description": "Verification must run where the evidence is; cloud verifies bridged evidence, windows verifies local artifacts." }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["unknown", "absent", "not_started", "unverified", "healthy", "degraded", "unhealthy"],
+      "description": "Verified status. 'unknown' = not yet observed; 'absent' = observed-absent."
+    },
+    "status_evidence": { "type": ["string", "null"], "description": "Evidence-bundle id / artifact citation. Required to claim 'healthy' (no unsupported readiness)." }
+  },
+  "additionalProperties": false
+}

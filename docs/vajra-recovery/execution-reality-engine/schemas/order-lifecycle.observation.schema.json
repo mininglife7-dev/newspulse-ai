@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/execution-reality/order-lifecycle.observation.schema.json",
+  "title": "Order Lifecycle Observation",
+  "description": "A state transition of one of OUR orders (new/ack/partial/filled/cancelled/rejected/replaced). Carries the timestamps required to measure fill latency, and the reference prices required to measure slippage. order_size is mandatory here (Founder directive).",
+  "allOf": [{ "$ref": "./observation.envelope.schema.json" }],
+  "properties": {
+    "observation_type": { "const": "order_lifecycle" },
+    "order": {
+      "type": "object",
+      "required": ["client_order_id", "side", "order_type", "order_size", "state", "state_transition"],
+      "properties": {
+        "client_order_id": { "type": "string", "minLength": 1 },
+        "broker_order_id": { "type": ["string", "null"] },
+        "side": { "type": "string", "enum": ["buy", "sell"] },
+        "order_type": { "type": "string", "enum": ["market", "limit", "sl", "sl_m", "other"] },
+        "order_size": { "type": "number", "exclusiveMinimum": 0, "description": "Order quantity. Mandatory per Founder directive." },
+        "limit_price": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "state": { "type": "string", "enum": ["new", "acknowledged", "partially_filled", "filled", "cancelled", "rejected", "replaced", "expired"] },
+        "state_transition": {
+          "type": "object",
+          "required": ["from", "to"],
+          "properties": {
+            "from": { "type": ["string", "null"] },
+            "to": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "arrival_reference": {
+          "type": ["object", "null"],
+          "description": "Market reference captured at decision/arrival time — the anchor for slippage. Absent = slippage UNKNOWN for this order.",
+          "required": ["arrival_timestamp", "arrival_mid"],
+          "properties": {
+            "arrival_timestamp": { "type": "string", "format": "date-time" },
+            "arrival_mid": { "type": "number", "exclusiveMinimum": 0 },
+            "arrival_bid": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            "arrival_ask": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "latency_ms": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Measured latency for this transition (e.g. submit->ack). null = not measured for this transition; never estimated."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["order"]
+}

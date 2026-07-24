@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/execution-reality/capability-contract.schema.json",
+  "title": "Capability Contract",
+  "description": "Machine-readable contract for capability monitoring. A capability is healthy ONLY if its intended output is produced, correct, and on time (Founder directive: replace heartbeat monitoring with capability monitoring). Freshness/coverage thresholds that depend on VAJRA's real cadence are declared but left null (UNKNOWN) until calibrated from observed reality — they are never guessed.",
+  "type": "object",
+  "required": ["capability_id", "intended_output", "healthy_definition", "correctness_checks", "freshness", "failure_signals", "status"],
+  "properties": {
+    "capability_id": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "intended_output": {
+      "type": "object",
+      "required": ["artifact", "produced_by"],
+      "properties": {
+        "artifact": { "type": "string", "description": "The concrete output that proves the capability works, e.g. 'fresh quote observations in raw store'." },
+        "produced_by": { "type": "string", "description": "Subsystem responsible (collector/scheduler/execution_pipeline/store)." }
+      },
+      "additionalProperties": false
+    },
+    "healthy_definition": {
+      "type": "string",
+      "description": "Plain statement of health in terms of produced+correct+on-time output."
+    },
+    "correctness_checks": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Named checks (reference SPEC-05 rule ids) that must pass for output to count as correct."
+    },
+    "freshness": {
+      "type": "object",
+      "description": "On-time criterion. Thresholds null until calibrated from observed cadence.",
+      "required": ["max_staleness_seconds", "expected_cadence"],
+      "properties": {
+        "max_staleness_seconds": { "type": ["number", "null"], "exclusiveMinimum": 0, "description": "null = UNKNOWN, to be set from measured cadence + tolerance." },
+        "expected_cadence": { "type": ["string", "null"], "description": "e.g. 'per-tick during continuous session'; null = UNKNOWN." },
+        "session_aware": { "type": "boolean", "description": "If true, freshness is only evaluated during active session windows." }
+      },
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": ["object", "null"],
+      "description": "Optional completeness criterion (e.g. instruments/venues that must be covered). null members = UNKNOWN.",
+      "properties": {
+        "required_instruments": { "type": ["array", "null"], "items": { "type": "string" } },
+        "required_venues": { "type": ["array", "null"], "items": { "type": "string" } },
+        "max_gap_seconds": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "failure_signals": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Observable conditions that mark the capability UNHEALTHY (e.g. 'no output within max_staleness_seconds during session')."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["absent", "not_started", "unverified", "healthy", "degraded", "unhealthy"],
+      "description": "Current verified status. 'absent' = component does not exist in the observable environment."
+    },
+    "status_evidence": { "type": ["string", "null"], "description": "Artifact/citation for the current status. Required to claim 'healthy' (Constitution Law 2/3)." }
+  },
+  "additionalProperties": false
+}

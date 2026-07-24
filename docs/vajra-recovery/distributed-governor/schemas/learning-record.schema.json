@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/omega/learning-record.schema.json",
+  "title": "Organizational Learning Record",
+  "description": "One append-only JSONL line of shared organizational memory (aligned with the repo's existing docs/governance/KNOWLEDGE-MEMORY.jsonl convention, DNA-GOV-007). Learning belongs to BOTH governors. Every record is evidence-cited; a learning with no evidence is not recorded.",
+  "type": "object",
+  "required": ["timestamp", "record_id", "type", "title", "description", "evidence", "confidence"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "record_id": { "type": "string", "minLength": 1 },
+    "author_governor": { "type": "string", "enum": ["cloud_governor", "windows_governor"] },
+    "type": {
+      "type": "string",
+      "enum": ["observation", "learning", "hypothesis", "decision", "bottleneck", "risk", "fix", "recommendation"]
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Evidence-bundle ids, artifact hashes, run ids, or file paths. A record with no evidence is rejected (Evidence before Assumption)."
+    },
+    "confidence": { "type": "string", "enum": ["measured", "derived", "modeled", "unknown"] },
+    "supersedes": { "type": ["string", "null"], "description": "record_id this revises. New evidence supersedes; it never edits history." },
+    "hypothesis_state": {
+      "type": ["string", "null"],
+      "enum": ["proposed", "under_test", "supported", "refuted", "inconclusive", null],
+      "description": "Only for type=hypothesis. Moves on evidence, never on preference."
+    },
+    "impact": { "type": ["string", "null"], "enum": ["high", "medium", "low", null] },
+    "tags": { "type": ["array", "null"], "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

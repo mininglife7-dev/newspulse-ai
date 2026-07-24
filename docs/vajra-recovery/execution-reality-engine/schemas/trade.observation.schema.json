@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/execution-reality/trade.observation.schema.json",
+  "title": "Public Trade (Print) Observation",
+  "description": "A public trade print from the tape. Used for market-impact context and realized-spread baselines. This is market data, not our own order.",
+  "allOf": [{ "$ref": "./observation.envelope.schema.json" }],
+  "properties": {
+    "observation_type": { "const": "trade" },
+    "trade": {
+      "type": "object",
+      "required": ["price", "qty"],
+      "properties": {
+        "price": { "type": "number", "exclusiveMinimum": 0 },
+        "qty": { "type": "number", "exclusiveMinimum": 0 },
+        "aggressor_side": { "type": ["string", "null"], "enum": ["buy", "sell", null], "description": "Trade-sign classification if provided by feed; null = UNKNOWN (do not infer with a rule unless the rule is named in provenance)." },
+        "trade_id": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["trade"]
+}

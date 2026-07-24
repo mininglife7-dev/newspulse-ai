@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vajra.local/omega/trade-journal.schema.json",
+  "title": "Paper Trade Journal Record",
+  "description": "One paper-trading experiment. Structurally enforces pre-registration: the Trade Gate fields (regime, hypothesis, expected edge, invalidation, risk) are recorded AT/BEFORE entry, and outcome fields at exit — so a hypothesis can never be invented after seeing the result. PAPER ONLY. No live orders. Every field is measured/observed; nothing is fabricated. This schema is an experimental control, not a runtime — it produces no trades on its own.",
+  "type": "object",
+  "required": ["record_id", "execution_mode", "instrument", "pre_registration", "governor_gate", "outcome", "review"],
+  "properties": {
+    "record_id": { "type": "string", "minLength": 1 },
+    "execution_mode": { "type": "string", "const": "paper_simulation", "description": "Hard invariant: paper only. A live value is schema-invalid." },
+    "instrument": { "type": "object", "required": ["symbol", "venue"], "properties": { "symbol": { "type": "string" }, "venue": { "type": "string", "enum": ["NSE", "BSE", "OTHER"] } }, "additionalProperties": true },
+
+    "pre_registration": {
+      "type": "object",
+      "description": "Recorded AT or BEFORE entry. Immutable once entry_timestamp is set.",
+      "required": ["entry_timestamp", "market_regime", "signal", "signal_confidence", "hypothesis", "expected_edge", "invalidation", "estimated_risk"],
+      "properties": {
+        "entry_timestamp": { "type": "string", "format": "date-time" },
+        "market_regime": { "type": "string", "description": "Identified regime at decision time (measured, not assumed)." },
+        "signal": { "type": "string", "description": "The signal that fired." },
+        "signal_confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "VAJRA's stated confidence. Below the session threshold -> Governor STOP (no trade)." },
+        "hypothesis": { "type": "string", "description": "The falsifiable claim this trade tests. 'Every trade is an experiment.'" },
+        "expected_edge": { "type": "string", "description": "The stated edge and its direction/magnitude basis." },
+        "invalidation": { "type": "string", "description": "Pre-defined condition that would prove the hypothesis wrong. Required BEFORE entry." },
+        "estimated_risk": { "type": "object", "required": ["max_adverse_estimate", "acceptable"], "properties": { "max_adverse_estimate": { "type": ["number", "null"] }, "acceptable": { "type": "boolean" } }, "additionalProperties": false },
+        "entry_price": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+      },
+      "additionalProperties": false
+    },
+
+    "governor_gate": {
+      "type": "object",
+      "description": "Governor's verification BEFORE the paper trade may execute. All six must be true, else no_trade with reason.",
+      "required": ["regime_identified", "hypothesis_documented", "expected_edge_stated", "invalidation_defined", "risk_acceptable", "no_policy_violation", "verdict"],
+      "properties": {
+        "regime_identified": { "type": "boolean" },
+        "hypothesis_documented": { "type": "boolean" },
+        "expected_edge_stated": { "type": "boolean" },
+        "invalidation_defined": { "type": "boolean" },
+        "risk_acceptable": { "type": "boolean" },
+        "no_policy_violation": { "type": "boolean" },
+        "verdict": { "type": "string", "enum": ["approved", "blocked", "no_trade"] },
+        "block_reason": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+
+    "outcome": {
+      "type": "object",
+      "description": "Recorded at exit. Simulated fills only. Empty/null while the trade is open.",
+      "required": ["exit_timestamp", "exit_price", "duration_seconds", "pnl", "mfe", "mae", "exit_reason"],
+      "properties": {
+        "exit_timestamp": { "type": ["string", "null"], "format": "date-time" },
+        "exit_price": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "duration_seconds": { "type": ["number", "null"], "minimum": 0 },
+        "pnl": { "type": ["number", "null"], "description": "Simulated PnL net of MEASURED execution costs (Execution Reality Engine), never assumed costs." },
+        "mfe": { "type": ["number", "null"], "description": "Maximum favourable excursion." },
+        "mae": { "type": ["number", "null"], "description": "Maximum adverse excursion." },
+        "exit_reason": { "type": ["string", "null"], "enum": ["target", "invalidation_hit", "stop", "time", "governor_stop", "session_close", null] }
+      },
+      "additionalProperties": false
+    },
+
+    "review": {
+      "type": "object",
+      "description": "Scientific review of the experiment. Filled after exit.",
+      "required": ["hypothesis_supported", "unexpected_observations", "scientific_lesson", "evidence_confidence"],
+      "properties": {
+        "hypothesis_supported": { "type": ["string", "null"], "enum": ["supported", "refuted", "inconclusive", null] },
+        "unexpected_observations": { "type": ["string", "null"] },
+        "scientific_lesson": { "type": ["string", "null"] },
+        "evidence_confidence": { "type": "string", "enum": ["measured", "derived", "modeled", "unknown"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

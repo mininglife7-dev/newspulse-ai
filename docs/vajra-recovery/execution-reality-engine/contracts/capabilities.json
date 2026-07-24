@@ -1,0 +1,62 @@
+{
+  "$schema_ref": "../schemas/capability-contract.schema.json",
+  "generated_purpose": "Concrete capability contracts for the Execution Reality Engine. status='absent' reflects verified reality: these subsystems are not observable from the current cloud environment (environment boundary, not engineering failure). Freshness thresholds are null (UNKNOWN) until calibrated from VAJRA's real cadence once Windows access is granted.",
+  "contracts": [
+    {
+      "capability_id": "market_data_collector",
+      "description": "Continuously captures quotes/trades for the tracked instruments and writes raw observations.",
+      "intended_output": { "artifact": "fresh quote+trade observations in raw_observations during session", "produced_by": "collector" },
+      "healthy_definition": "During an active session window, quote/trade observations for every required instrument land in the raw store within max_staleness_seconds, each passing correctness_checks.",
+      "correctness_checks": ["R-PX-1", "R-PX-2", "R-TS-1", "R-TS-3", "R-PROV-1", "R-ID-1"],
+      "freshness": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": true },
+      "coverage": { "required_instruments": null, "required_venues": null, "max_gap_seconds": null },
+      "failure_signals": ["no output within max_staleness_seconds during session", "coverage gap exceeds max_gap_seconds", "correctness_check failure rate above tolerance"],
+      "status": "absent",
+      "status_evidence": "docs/vajra-recovery/CLOUD_REPOSITORY_INVENTORY.md (2026-07-17) + branch/PR scan 2026-07-23: no collector present in observable environment."
+    },
+    {
+      "capability_id": "scheduler",
+      "description": "Triggers collection/execution tasks on the correct cadence and session calendar.",
+      "intended_output": { "artifact": "on-time task invocations aligned to the session calendar", "produced_by": "scheduler" },
+      "healthy_definition": "Every scheduled task fires within its tolerance window on trading days, and does not fire on holidays/halts.",
+      "correctness_checks": ["R-CAL-1"],
+      "freshness": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": true },
+      "failure_signals": ["missed scheduled fire", "fire during closed session", "drift beyond tolerance"],
+      "status": "absent",
+      "status_evidence": "Not present in observable environment (same evidence as market_data_collector)."
+    },
+    {
+      "capability_id": "execution_pipeline",
+      "description": "Submits our orders and captures their full lifecycle: ack, partials, fills, rejections, latencies.",
+      "intended_output": { "artifact": "order_lifecycle + fill + rejection observations with latency and reference prices", "produced_by": "execution_pipeline" },
+      "healthy_definition": "Every order our system emits produces a complete, timestamped lifecycle trail with arrival reference prices, enabling slippage/latency/fill measurement.",
+      "correctness_checks": ["R-QTY-1", "R-TS-2", "R-TS-3", "R-REF-1", "R-PROV-1", "R-ID-1"],
+      "freshness": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": true },
+      "failure_signals": ["order with no lifecycle trail", "fill missing arrival reference", "latency not captured"],
+      "status": "absent",
+      "status_evidence": "Not present in observable environment; also gated on broker/API credentials (Founder-only)."
+    },
+    {
+      "capability_id": "raw_observation_store",
+      "description": "Immutable, append-only, tamper-evident storage of all raw observations.",
+      "intended_output": { "artifact": "append-only rows with intact hash chain; no mutations", "produced_by": "store" },
+      "healthy_definition": "Every accepted observation is persisted immutably; hash chain verifies; invalid records are quarantined not dropped.",
+      "correctness_checks": ["R-STORE-1", "R-STORE-2"],
+      "freshness": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": false },
+      "failure_signals": ["hash-chain break", "UPDATE/DELETE attempt on raw table", "silent drop of invalid record"],
+      "status": "not_started",
+      "status_evidence": "DDL specified (storage/raw_observations.sql) but not yet instantiated against a real store."
+    },
+    {
+      "capability_id": "freshness_detector",
+      "description": "Detects stale datasets automatically; distinguishes 'no data because market closed' from 'no data because capability failed'.",
+      "intended_output": { "artifact": "staleness verdicts per capability, session-aware", "produced_by": "store" },
+      "healthy_definition": "For each capability, emits FRESH/STALE using its calibrated max_staleness_seconds, suppressed during legitimately closed sessions.",
+      "correctness_checks": ["R-FRESH-1"],
+      "freshness": { "max_staleness_seconds": null, "expected_cadence": null, "session_aware": true },
+      "failure_signals": ["stale dataset not flagged", "false-stale during closed session"],
+      "status": "not_started",
+      "status_evidence": "Depends on calibrated thresholds (UNKNOWN until cadence observed) and on capability_output_log being populated."
+    }
+  ]
+}
