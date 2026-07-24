@@ -22,6 +22,11 @@ from .evidence_engine import EvidenceEngine  # noqa: F401
 from .lesson_ledger import LessonLedger  # noqa: F401
 from .policy_engine import PolicyEvolutionEngine  # noqa: F401
 from .confidence import score_confidence  # noqa: F401
+from . import metrics  # noqa: F401
+from .walkforward import generate_windows, Window  # noqa: F401
+from .experiment import (  # noqa: F401
+    Experiment, ExperimentLedger, EvidenceLedger, DecisionLedger,
+)
 
 __all__ = [
     "Observation", "Hypothesis", "EvidenceResult", "Lesson", "Recommendation",
@@ -29,4 +34,6 @@ __all__ = [
     "LearningCategory", "PROTECTED_ZONES",
     "ObservationEngine", "ReflectionEngine", "EvidenceEngine",
     "LessonLedger", "PolicyEvolutionEngine", "score_confidence",
+    "metrics", "generate_windows", "Window",
+    "Experiment", "ExperimentLedger", "EvidenceLedger", "DecisionLedger",
 ]

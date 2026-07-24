@@ -75,6 +75,28 @@ Observe → Reflect → Hypothesize → Test → Validate → Record lesson
 | 19 Sequence diagram | cycle diagram above (ASCII) |
 | 20 Future roadmap | below |
 
+## Validation Framework (OPERATION VAJRA — trusted validation)
+
+Added for "I trust every number VAJRA produces":
+
+- **Metric oracle** (`learning/metrics.py`) — independent reference
+  implementations of Sharpe, Sortino, Profit Factor, Max Drawdown, Expectancy,
+  Kelly, Win Rate, CAGR, plus `verify_metric()` to check a reported number
+  against a recomputation. Covered by numerical known-answer **and** property
+  tests (`tests/test_metrics.py`) — e.g. Sharpe scale-invariance, drawdown ≤ 0,
+  zero-volatility → 0.0 (documented convention).
+- **Walk-forward reference** (`learning/walkforward.py`) — leakage-safe **by
+  construction**: test always after train, no overlap, in-bounds; each window
+  self-validates. Regression tests assert no look-ahead / no leakage
+  (`tests/test_walkforward.py`).
+- **Experiment framework + evidence infra** (`learning/experiment.py`) —
+  pre-registered `Experiment` (hypothesis/objective/data/metrics/success/
+  failure/rollback/evidence/verification, all required) + append-only
+  Experiment / Evidence / Decision ledgers (Learning Ledger already present).
+
+These are the **trusted oracles** VAJRA's real numbers and WFO will be checked
+against once reachable — they audit VAJRA; they are not VAJRA's own code.
+
 ## Honest limitations (truth over completeness-theater)
 
 - Statistics are **stdlib-only**: Welch two-sample with a **normal-approximation**
