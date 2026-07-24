@@ -15,6 +15,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+class WalkForwardError(ValueError):
+    """Raised when a walk-forward invariant is violated."""
+
+
 @dataclass(frozen=True)
 class Window:
     train_start: int
@@ -23,9 +27,15 @@ class Window:
     test_end: int     # exclusive
 
     def validate(self, n: int) -> None:
-        assert 0 <= self.train_start < self.train_end, "empty/invalid train"
-        assert self.train_end <= self.test_start, "look-ahead: test not after train"
-        assert self.test_start < self.test_end <= n, "test out of bounds"
+        # Explicit raises (NOT assert): asserts are stripped under `python -O`,
+        # which would silently disable this leakage-safety check. (Self-audit
+        # Day 2, Probe 4.)
+        if not (0 <= self.train_start < self.train_end):
+            raise WalkForwardError("empty/invalid train window")
+        if self.train_end > self.test_start:
+            raise WalkForwardError("look-ahead: test window is not strictly after train")
+        if not (self.test_start < self.test_end <= n):
+            raise WalkForwardError("test window out of bounds")
 
 
 def generate_windows(n: int, *, train_size: int, test_size: int,

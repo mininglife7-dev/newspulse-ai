@@ -33,6 +33,12 @@ class TestKnownAnswers(unittest.TestCase):
         # +10% then -50% -> equity 1.1 then 0.55; peak 1.1 -> dd = 0.55/1.1 - 1 = -0.5
         self.assertAlmostEqual(M.max_drawdown([0.10, -0.50]), -0.5, places=9)
 
+    def test_max_drawdown_ruin_is_capped_at_minus_one(self):
+        # Day 2 self-audit Probe 1: returns <= -100% are capital ruin, capped -1.0
+        self.assertEqual(M.max_drawdown([-2.0]), -1.0)
+        self.assertEqual(M.max_drawdown([0.1, -1.5]), -1.0)
+        self.assertEqual(M.max_drawdown([-1.0]), -1.0)
+
     def test_cagr_known(self):
         # one year (252 periods) doubling -> CAGR ~ 100%
         r = [(2 ** (1 / 252)) - 1] * 252

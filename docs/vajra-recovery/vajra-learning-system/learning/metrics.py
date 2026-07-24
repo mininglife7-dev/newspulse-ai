@@ -59,11 +59,20 @@ def profit_factor(pnls: Sequence[float]) -> float:
 
 
 def max_drawdown(returns: Sequence[float]) -> float:
-    """Return the worst peak-to-trough decline as a non-positive fraction."""
+    """Return the worst peak-to-trough decline as a fraction in [-1, 0].
+
+    A per-period return <= -1 (equity reaches or crosses zero) is capital ruin:
+    drawdown is capped at -1.0 (total loss). Without this guard, negative equity
+    makes the peak-ratio meaningless — e.g. a -200% return would otherwise report
+    0.0 drawdown. (Self-audit Day 2, Probe 1.)
+    """
     if not returns:
         return 0.0
-    peak, mdd = -math.inf, 0.0
-    for eq in _equity_curve(returns):
+    peak, mdd, eq = -math.inf, 0.0, 1.0
+    for r in returns:
+        eq *= (1.0 + r)
+        if eq <= 0.0:            # capital ruin — cannot lose more than 100%
+            return -1.0
         peak = max(peak, eq)
         mdd = min(mdd, eq / peak - 1.0)
     return mdd

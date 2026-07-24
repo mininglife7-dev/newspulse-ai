@@ -1,7 +1,7 @@
 """Walk-forward audit tests — no leakage, no look-ahead, correct windows."""
 import unittest
 
-from learning.walkforward import generate_windows, Window
+from learning.walkforward import generate_windows, Window, WalkForwardError
 
 
 class TestWalkForwardInvariants(unittest.TestCase):
@@ -44,8 +44,11 @@ class TestWalkForwardInvariants(unittest.TestCase):
 
     def test_window_self_validation_catches_lookahead(self):
         bad = Window(train_start=0, train_end=50, test_start=40, test_end=60)  # overlap
-        with self.assertRaises(AssertionError):
+        # Explicit exception (subclass of ValueError), NOT assert — so it is not
+        # stripped under `python -O`. (Day 2 self-audit, Probe 4.)
+        with self.assertRaises(WalkForwardError):
             bad.validate(100)
+        self.assertTrue(issubclass(WalkForwardError, ValueError))
 
 
 if __name__ == "__main__":
