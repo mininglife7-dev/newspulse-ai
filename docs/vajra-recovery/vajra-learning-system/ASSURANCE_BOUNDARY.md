@@ -24,6 +24,21 @@ same suite **41/41 PASS under `python3 -O`** (optimized mode).
 | Protected Zone cannot auto-apply without Founder token | `test_protected_target_requires_approval` |
 | Anti-overfit gate (in-sample+OOS required) | `test_in_sample_only_is_refuted_as_overfit` |
 
+### Scientific infrastructure engines (added 2026-07-24, test-covered)
+
+| Engine | Evidence | Note |
+| ------ | -------- | ---- |
+| Data Integrity (Phase 1) | `tests/test_data_integrity.py` | rejects dupes/out-of-order/bad-ticks/corruption; SHA-256 fingerprint |
+| Backtest Integrity (Phase 2) | `tests/test_science_infra.py` | flags look-ahead/leakage/survivorship/cost/sizing — **declared spec only** (SD-14) |
+| Statistical Validation (Phase 3) | `tests/test_stats_regime.py` | seeded bootstrap CI + Monte-Carlo + Cohen's d + Benjamini-Hochberg FDR — **reproducible** |
+| Market Regime (Phase 4) | `tests/test_stats_regime.py` | rule-based, transparent — **thresholds are heuristics** (SD-13) |
+| Strategy Autopsy (Phase 5) | `tests/test_science_infra.py` | requires cited evidence; derives regime-of-failure |
+| Research Memory (Phase 6) | `tests/test_science_infra.py` | append-only; traceability fields required |
+| Skeptic (Phase 7) | `tests/test_science_infra.py` | 5 mandatory questions; unanswered → REJECTED |
+| Readiness Score (Phase 8) | `tests/test_science_infra.py` | weighted + hard gates (data_quality, reproducibility) |
+
+Full suite **79/79 PASS**, normal **and** `python -O`.
+
 ## PARTIALLY VERIFIED (correct within a stated model/convention)
 
 | Item | Caveat |

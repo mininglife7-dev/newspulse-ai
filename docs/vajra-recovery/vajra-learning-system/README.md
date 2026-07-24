@@ -97,6 +97,24 @@ Added for "I trust every number VAJRA produces":
 These are the **trusted oracles** VAJRA's real numbers and WFO will be checked
 against once reachable — they audit VAJRA; they are not VAJRA's own code.
 
+## Scientific Infrastructure (8 engines — makes bad science impossible)
+
+Built to make it impossible to trust corrupted data, biased backtests, weak
+statistics, or lost/forgotten research. All test-covered (79/79, incl. `-O`).
+
+| Phase | Engine | File | Guarantee |
+| ----- | ------ | ---- | --------- |
+| 1 | Data Integrity | `learning/data_integrity.py` | rejects invalid datasets; SHA-256 fingerprint ties an experiment to exact bytes |
+| 2 | Backtest Integrity | `learning/backtest_integrity.py` | flags look-ahead/leakage/survivorship/cost/sizing bias (declared spec) |
+| 3 | Statistical Validation | `learning/stats_validation.py` | **reproducible** (seeded) bootstrap CIs, Monte-Carlo, effect size, FDR control |
+| 4 | Market Regime | `learning/regime.py` | transparent rule-based regime labels + evidence |
+| 5 | Strategy Autopsy | `learning/autopsy.py` | failures → structured, evidence-cited institutional knowledge |
+| 6 | Research Memory | `learning/research_memory.py` | append-only; nothing lost; traceability required |
+| 7 | Skeptic | `learning/skeptic.py` | every success must answer 5 falsification questions or be REJECTED |
+| 8 | Readiness Score | `learning/readiness.py` | weighted gate + hard gates on data-quality & reproducibility |
+
+Reproducibility is first-class: all resampling takes an explicit `seed`.
+
 ## Honest limitations (truth over completeness-theater)
 
 - Statistics are **stdlib-only**: Welch two-sample with a **normal-approximation**

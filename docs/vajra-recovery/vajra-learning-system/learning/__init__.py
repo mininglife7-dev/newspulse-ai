@@ -27,6 +27,11 @@ from .walkforward import generate_windows, Window  # noqa: F401
 from .experiment import (  # noqa: F401
     Experiment, ExperimentLedger, EvidenceLedger, DecisionLedger,
 )
+from . import data_integrity, stats_validation, regime, backtest_integrity  # noqa: F401
+from .autopsy import StrategyAutopsy, derive_regime_of_failure  # noqa: F401
+from .research_memory import ResearchRecord, ResearchMemory  # noqa: F401
+from . import skeptic  # noqa: F401
+from .readiness import readiness_score  # noqa: F401
 
 __all__ = [
     "Observation", "Hypothesis", "EvidenceResult", "Lesson", "Recommendation",
